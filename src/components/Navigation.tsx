@@ -14,7 +14,6 @@ export function Navigation() {
 
       <div className="flex gap-8 text-[11px] uppercase tracking-widest font-semibold font-sans items-center">
         <span className="hidden md:inline cursor-pointer hover:text-cobalt">KR / EN</span>
-        <Link to="/admin" className="text-ink hover:text-cobalt px-4 py-2 bg-silver/20 rounded-full transition-colors hidden sm:block">Admin</Link>
       </div>
     </nav>
   );

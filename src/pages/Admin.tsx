@@ -100,6 +100,9 @@ const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange:
 
 
 export default function Admin() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  
   const [activeTab, setActiveTab] = useState<'collection'|'journal'|'space'|'shop'>('shop');
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -113,8 +116,55 @@ export default function Admin() {
   const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, [activeTab]);
+    const savedAuth = localStorage.getItem('admin_auth');
+    if (savedAuth === 'true') setIsAuthenticated(true);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) loadData();
+  }, [activeTab, isAuthenticated]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simple password check - in production use environment variables and server-side verification
+    if (password === 'amph123') {
+      setIsAuthenticated(true);
+      localStorage.setItem('admin_auth', 'true');
+    } else {
+      alert('Incorrect password');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('admin_auth');
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center flex-grow bg-off-white font-sans p-6">
+        <div className="w-full max-w-md bg-white p-12 rounded-[32px] shadow-xl border border-black/5">
+          <h1 className="text-3xl font-bold mb-8 tracking-tighter uppercase">Admin Access</h1>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-ink/50 mb-2">Password</label>
+              <input 
+                type="password" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)}
+                className="w-full border-b-2 border-black/10 focus:border-cobalt outline-none py-3 text-xl transition-colors bg-transparent"
+                placeholder="••••••••"
+                autoFocus
+              />
+            </div>
+            <button type="submit" className="w-full bg-ink text-white py-4 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-cobalt transition-colors">
+              Enter Dashboard
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const loadData = () => {
     getProducts().then(setProducts); // Always load products for both collection and shop
@@ -196,7 +246,10 @@ export default function Admin() {
 
   return (
     <div className="flex flex-col flex-grow p-6 md:p-12 max-w-[1400px] mx-auto w-full">
-      <h1 className="text-4xl font-bold font-sans tracking-tight mb-6">Admin Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-4xl font-bold font-sans tracking-tight">Admin Dashboard</h1>
+        <button onClick={handleLogout} className="text-[10px] font-bold uppercase tracking-widest text-ink/40 hover:text-orange transition-colors">Logout</button>
+      </div>
       
       <div className="flex gap-6 mb-8 border-b border-black/10 pb-4">
         {[
