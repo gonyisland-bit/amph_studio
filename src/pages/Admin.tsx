@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { 
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
-  getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace
+  getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
+  HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings
 } from "../lib/data";
 import { upload } from '@vercel/blob/client';
 
@@ -77,6 +78,9 @@ export default function Admin() {
   const [form, setForm] = useState<any>(emptyProduct);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const [homeSettings, setHomeSettings] = useState<HomeSettings>(defaultHomeSettings);
+  const [savingSettings, setSavingSettings] = useState(false);
+
   useEffect(() => {
     loadData();
   }, [activeTab]);
@@ -85,6 +89,7 @@ export default function Admin() {
     getProducts().then(setProducts); // Always load products for both collection and shop
     if (activeTab === 'journal') getJournals().then(setJournals);
     if (activeTab === 'space') getSpaces().then(setSpaces);
+    if (activeTab === 'collection') getHomeSettings().then(setHomeSettings);
   };
 
   const switchTab = (tab: 'collection'|'journal'|'space'|'shop') => {
@@ -176,8 +181,82 @@ export default function Admin() {
           <form onSubmit={handleSave} className="space-y-4 font-sans text-sm">
             
             {activeTab === 'collection' && (
-              <div className="text-ink/60 leading-relaxed font-serif italic text-sm border-l-2 border-cobalt pl-4">
-                Select products from the right list to feature them on the Home page (Collection view).
+              <div className="space-y-6">
+                <div className="border-b border-black/10 pb-6 mb-6">
+                  <h3 className="font-bold text-lg mb-4">Collection Page Copy</h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Subtitle (e.g. The Muse - Vol 01)</label>
+                      <input value={homeSettings.subtitle} onChange={e => setHomeSettings({...homeSettings, subtitle: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title (use Enter for line breaks)</label>
+                      <textarea value={homeSettings.title} onChange={e => setHomeSettings({...homeSettings, title: e.target.value})} rows={3} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
+                      <textarea value={homeSettings.description} onChange={e => setHomeSettings({...homeSettings, description: e.target.value})} rows={2} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Marquee Text</label>
+                      <input value={homeSettings.marquee} onChange={e => setHomeSettings({...homeSettings, marquee: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" />
+                    </div>
+                    <button type="button" onClick={async () => {
+                      setSavingSettings(true);
+                      await updateHomeSettings(homeSettings);
+                      setSavingSettings(false);
+                      alert('Settings saved!');
+                    }} className="bg-cobalt text-white px-6 py-2 uppercase text-xs tracking-widest font-bold hover:bg-orange transition-colors self-start">
+                      {savingSettings ? 'Saving...' : 'Save Settings'}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-end mb-4">
+                    <h3 className="font-bold text-lg">Selected Featured Products</h3>
+                    <a href="/" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-cobalt hover:text-orange underline">Preview Collection Page ↗</a>
+                  </div>
+                  {homeSettings.featuredProductIds.length === 0 ? (
+                    <div className="text-sm text-ink/50 italic">No products selected. Select from the right panel.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {homeSettings.featuredProductIds.map((id, index) => {
+                        const product = products.find(p => p.id === id);
+                        if (!product) return null;
+                        return (
+                          <div key={id} className="flex items-center justify-between p-3 border border-black/10 bg-white shadow-sm">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold w-4">{index + 1}.</span>
+                              <img src={product.images[0]} className="w-10 h-10 object-cover bg-silver/20" />
+                              <span className="font-semibold text-sm">{product.name}</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <button type="button" onClick={() => {
+                                const newIds = [...homeSettings.featuredProductIds];
+                                if (index > 0) { [newIds[index-1], newIds[index]] = [newIds[index], newIds[index-1]]; }
+                                setHomeSettings({...homeSettings, featuredProductIds: newIds});
+                              }} disabled={index === 0} className="px-2 py-1 text-xs border border-black/20 hover:bg-black/5 disabled:opacity-30">↑</button>
+                              
+                              <button type="button" onClick={() => {
+                                const newIds = [...homeSettings.featuredProductIds];
+                                if (index < newIds.length - 1) { [newIds[index+1], newIds[index]] = [newIds[index], newIds[index+1]]; }
+                                setHomeSettings({...homeSettings, featuredProductIds: newIds});
+                              }} disabled={index === homeSettings.featuredProductIds.length - 1} className="px-2 py-1 text-xs border border-black/20 hover:bg-black/5 disabled:opacity-30">↓</button>
+
+                              <button type="button" onClick={async () => {
+                                const newIds = homeSettings.featuredProductIds.filter(pid => pid !== id);
+                                const newSettings = {...homeSettings, featuredProductIds: newIds};
+                                setHomeSettings(newSettings);
+                                await updateHomeSettings(newSettings);
+                              }} className="px-3 py-1 text-xs text-orange border border-orange hover:bg-orange/10 ml-2">Remove</button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             
@@ -281,10 +360,15 @@ export default function Admin() {
                           </>
                         ) : (
                           <button onClick={async () => {
-                            await updateProduct(p.id, { isFeatured: !p.isFeatured });
-                            loadData();
-                          }} className={`text-xs font-semibold px-3 py-1 rounded-full border ${p.isFeatured ? 'bg-cobalt text-white border-cobalt' : 'bg-transparent text-ink/40 border-black/20 hover:border-cobalt'}`}>
-                            {p.isFeatured ? 'Selected' : 'Select'}
+                            const isSelected = homeSettings.featuredProductIds.includes(p.id);
+                            const newIds = isSelected 
+                              ? homeSettings.featuredProductIds.filter(id => id !== p.id)
+                              : [...homeSettings.featuredProductIds, p.id];
+                            const newSettings = {...homeSettings, featuredProductIds: newIds};
+                            setHomeSettings(newSettings);
+                            await updateHomeSettings(newSettings);
+                          }} className={`text-xs font-semibold px-3 py-1 rounded-full border ${homeSettings.featuredProductIds.includes(p.id) ? 'bg-cobalt text-white border-cobalt' : 'bg-transparent text-ink/40 border-black/20 hover:border-cobalt'}`}>
+                            {homeSettings.featuredProductIds.includes(p.id) ? 'Selected' : 'Select'}
                           </button>
                         )}
                       </td>

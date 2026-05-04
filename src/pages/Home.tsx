@@ -1,16 +1,20 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getProducts, Product } from "../lib/data";
+import { getProducts, Product, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
 
   useEffect(() => {
     getProducts().then(setProducts);
+    getHomeSettings().then(setSettings);
   }, []);
 
-  const featured = products.filter(p => p.isFeatured);
+  const featured = settings.featuredProductIds
+    .map(id => products.find(p => p.id === id))
+    .filter((p): p is Product => p !== undefined);
 
   return (
     <div className="flex flex-col flex-grow w-full overflow-hidden relative">
@@ -19,12 +23,12 @@ export default function Home() {
         {/* Left Side: Editorial Typography & Marquee */}
         <section className="flex-1 p-8 md:p-14 mb-[80px] lg:mb-0 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-black/10 relative">
           <div className="z-10 relative">
-            <span className="text-[11px] uppercase tracking-widest text-ink/60 mb-6 block font-sans">The Muse — Vol 01</span>
-            <h1 className="text-[15vw] lg:text-[7.5vw] leading-[0.85] font-black tracking-tighter mb-8 font-sans">
-              Amplify<br />Your<br />Ordinary.
+            <span className="text-[11px] uppercase tracking-widest text-ink/60 mb-6 block font-sans whitespace-pre-wrap">{settings.subtitle}</span>
+            <h1 className="text-[15vw] lg:text-[7.5vw] leading-[0.85] font-black tracking-tighter mb-8 font-sans whitespace-pre-wrap">
+              {settings.title}
             </h1>
-            <p className="text-xl md:text-2xl leading-relaxed max-w-[360px] font-serif italic text-ink/80 border-l border-ink/20 pl-4">
-              Transforming the mundane into unique experiences through chrome, steel, and vivid textures.
+            <p className="text-xl md:text-2xl leading-relaxed max-w-[360px] font-serif italic text-ink/80 border-l border-ink/20 pl-4 whitespace-pre-wrap">
+              {settings.description}
             </p>
           </div>
 
@@ -32,7 +36,7 @@ export default function Home() {
             <div className="flex whitespace-nowrap animate-marquee">
               {[...Array(6)].map((_, i) => (
                 <span key={i} className="text-xs uppercase tracking-widest font-semibold font-sans px-8 flex items-center gap-8">
-                  Amplify Your Ordinary <ArrowRight size={14} className="text-orange" />
+                  {settings.marquee} <ArrowRight size={14} className="text-orange" />
                 </span>
               ))}
             </div>
@@ -99,7 +103,7 @@ export default function Home() {
           <div className="flex whitespace-nowrap animate-marquee">
             {[...Array(6)].map((_, i) => (
               <span key={i} className="text-[10px] uppercase tracking-widest font-semibold font-sans px-6 flex items-center gap-6">
-                Amplify Your Ordinary <ArrowRight size={12} className="text-orange" />
+                {settings.marquee} <ArrowRight size={12} className="text-orange" />
               </span>
             ))}
           </div>

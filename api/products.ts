@@ -43,7 +43,20 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'PUT') {
     if (!id) return res.status(400).json({ error: 'ID is required' });
     try {
-      const { name, category, description, material, price, images, hoverImages, contentBlocks, isFeatured } = req.body;
+      const existing = await sql`SELECT * FROM products WHERE id = ${id}`;
+      if (existing.rowCount === 0) return res.status(404).json({ error: 'Product not found' });
+      const current = existing.rows[0];
+
+      const name = req.body.name !== undefined ? req.body.name : current.name;
+      const category = req.body.category !== undefined ? req.body.category : current.category;
+      const description = req.body.description !== undefined ? req.body.description : current.description;
+      const material = req.body.material !== undefined ? req.body.material : current.material;
+      const price = req.body.price !== undefined ? req.body.price : current.price;
+      const images = req.body.images !== undefined ? req.body.images : (typeof current.images === 'string' ? JSON.parse(current.images) : current.images);
+      const hoverImages = req.body.hoverImages !== undefined ? req.body.hoverImages : (typeof current.hoverImages === 'string' ? JSON.parse(current.hoverImages) : current.hoverImages);
+      const contentBlocks = req.body.contentBlocks !== undefined ? req.body.contentBlocks : (typeof current.contentBlocks === 'string' ? JSON.parse(current.contentBlocks) : current.contentBlocks);
+      const isFeatured = req.body.isFeatured !== undefined ? req.body.isFeatured : current.isFeatured;
+
       await sql`
         UPDATE products SET 
           name = ${name}, 
@@ -54,7 +67,7 @@ export default async function handler(req: any, res: any) {
           images = ${JSON.stringify(images || [])}, 
           "hoverImages" = ${JSON.stringify(hoverImages || [])}, 
           "contentBlocks" = ${JSON.stringify(contentBlocks || [])}, 
-          "isFeatured" = ${isFeatured || false}
+          "isFeatured" = ${isFeatured}
         WHERE id = ${id}
       `;
       return res.status(200).json({ success: true, id });

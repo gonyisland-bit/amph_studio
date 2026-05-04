@@ -241,3 +241,45 @@ export const updateSpace = (id: string, updates: Partial<SpaceModel>) => {
   return Promise.reject(new Error("Space not found"));
 };
 export const deleteSpace = (id: string) => { spacesStore = spacesStore.filter(s => s.id !== id); return Promise.resolve(); };
+
+export interface HomeSettings {
+  title: string;
+  subtitle: string;
+  description: string;
+  marquee: string;
+  featuredProductIds: string[];
+}
+
+export const defaultHomeSettings: HomeSettings = {
+  title: "Amplify\nYour\nOrdinary.",
+  subtitle: "The Muse — Vol 01",
+  description: "Transforming the mundane into unique experiences through chrome, steel, and vivid textures.",
+  marquee: "Amplify Your Ordinary",
+  featuredProductIds: []
+};
+
+export const getHomeSettings = async (): Promise<HomeSettings> => {
+  try {
+    const res = await fetch('/api/settings?id=home');
+    if (!res.ok) throw new Error('Network error');
+    const data = await res.json();
+    return { ...defaultHomeSettings, ...data };
+  } catch (err) {
+    console.error(err);
+    return defaultHomeSettings;
+  }
+};
+
+export const updateHomeSettings = async (settings: HomeSettings): Promise<void> => {
+  try {
+    const res = await fetch('/api/settings?id=home', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    });
+    if (!res.ok) throw new Error('Failed to update settings');
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
