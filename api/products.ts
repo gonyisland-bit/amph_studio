@@ -21,16 +21,19 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST') {
     try {
-      const { id: newId, name, category, description, material, price, images, hoverImages, contentBlocks, isFeatured } = req.body;
+      const { id: newId, name, category, description, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku } = req.body;
       await sql`
         INSERT INTO products (
-          id, name, category, description, material, price, images, "hoverImages", "contentBlocks", "isFeatured"
+          id, name, category, description, material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku
         ) VALUES (
           ${newId}, ${name}, ${category}, ${description}, ${material}, ${price}, 
           ${JSON.stringify(images || [])}, 
           ${JSON.stringify(hoverImages || [])}, 
           ${JSON.stringify(contentBlocks || [])}, 
-          ${isFeatured || false}
+          ${isFeatured || false},
+          ${dimensions || ''},
+          ${shipping || ''},
+          ${sku || ''}
         )
       `;
       return res.status(201).json({ success: true, id: newId });
@@ -57,6 +60,10 @@ export default async function handler(req: any, res: any) {
       const contentBlocks = req.body.contentBlocks !== undefined ? req.body.contentBlocks : (typeof current.contentBlocks === 'string' ? JSON.parse(current.contentBlocks) : current.contentBlocks);
       const isFeatured = req.body.isFeatured !== undefined ? req.body.isFeatured : current.isFeatured;
 
+      const dimensions = req.body.dimensions !== undefined ? req.body.dimensions : current.dimensions;
+      const shipping = req.body.shipping !== undefined ? req.body.shipping : current.shipping;
+      const sku = req.body.sku !== undefined ? req.body.sku : current.sku;
+
       await sql`
         UPDATE products SET 
           name = ${name}, 
@@ -67,7 +74,10 @@ export default async function handler(req: any, res: any) {
           images = ${JSON.stringify(images || [])}, 
           "hoverImages" = ${JSON.stringify(hoverImages || [])}, 
           "contentBlocks" = ${JSON.stringify(contentBlocks || [])}, 
-          "isFeatured" = ${isFeatured}
+          "isFeatured" = ${isFeatured},
+          dimensions = ${dimensions},
+          shipping = ${shipping},
+          sku = ${sku}
         WHERE id = ${id}
       `;
       return res.status(200).json({ success: true, id });

@@ -24,7 +24,9 @@ const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange:
   const handleUpload = async (file: File) => {
     setUploading(true);
     try {
-      const newBlob = await upload(file.name, file, {
+      // Append timestamp to avoid duplicate name issues on some servers/browsers
+      const uniqueName = `${Date.now()}-${file.name}`;
+      const newBlob = await upload(uniqueName, file, {
         access: 'public',
         handleUploadUrl: '/api/upload',
       });
@@ -312,10 +314,36 @@ export default function Admin() {
                   <input required value={form.material || ''} onChange={e => setForm({...form, material: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
                   <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={3} /></div>
-                <div><ImageUploadInput label="Primary Image URL" value={form.images?.[0] || ''} onChange={val => {
-                    const newImages = [...(form.images || [''])]; newImages[0] = val; setForm({...form, images: newImages});
-                  }} /></div>
-                <div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Dimensions</label>
+                    <input value={form.dimensions || ''} onChange={e => setForm({...form, dimensions: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. H 45cm x W 40cm" /></div>
+                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Shipping</label>
+                    <input value={form.shipping || ''} onChange={e => setForm({...form, shipping: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. 2-3 Business Days" /></div>
+                </div>
+
+                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">SKU</label>
+                  <input value={form.sku || ''} onChange={e => setForm({...form, sku: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
+
+                <div className="border-t border-black/10 pt-4 mt-4">
+                  <h3 className="font-bold text-xs uppercase mb-4 text-cobalt">1. Gallery Images (Main + Others)</h3>
+                  {form.images?.map((img:string, i:number) => (
+                    <div key={i} className="flex gap-2 mb-2 items-end">
+                       <div className="flex-1">
+                        <ImageUploadInput label={i === 0 ? "Main Gallery Image" : `Gallery Image ${i+1}`} value={img} onChange={val => {
+                          const newI = [...form.images]; newI[i] = val; setForm({...form, images: newI});
+                        }} />
+                       </div>
+                       {i > 0 && (
+                         <button type="button" onClick={() => setForm({...form, images: form.images.filter((_:any, idx:number) => idx !== i)})} className="mb-8 text-orange text-xs hover:underline font-bold px-2">Remove</button>
+                       )}
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => setForm({...form, images: [...(form.images || []), '']})} className="text-xs font-bold text-cobalt hover:underline">+ Add Gallery Image</button>
+                </div>
+
+                <div className="border-t border-black/10 pt-4 mt-4">
+                  <h3 className="font-bold text-xs uppercase mb-4 text-cobalt">2. Hover Image</h3>
                   <ImageUploadInput 
                     label="Hover Image URL (One Only)" 
                     value={form.hoverImages?.[0] || ''} 
@@ -324,7 +352,11 @@ export default function Admin() {
                     }} 
                   />
                 </div>
-                {renderContentBlocksEditor()}
+
+                <div className="border-t border-black/10 pt-4 mt-4">
+                  <h3 className="font-bold text-xs uppercase mb-4 text-cobalt">3. Content Description Blocks</h3>
+                  {renderContentBlocksEditor()}
+                </div>
               </>
             )}
 

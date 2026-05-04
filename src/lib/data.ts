@@ -16,6 +16,9 @@ export interface Product {
   hoverImages?: string[];
   contentBlocks?: ContentBlock[];
   isFeatured?: boolean;
+  dimensions?: string;
+  shipping?: string;
+  sku?: string;
 }
 
 export interface JournalArticle {

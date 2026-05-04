@@ -21,7 +21,10 @@ export default function ProductDetail() {
 
   if (!product) return <div className="p-12 font-sans">Loading...</div>;
 
-  const displayImages = [product.images[0], ...(product.hoverImages || [])].filter(Boolean);
+  const displayImages = [
+    ...(product.images || []),
+    ...(product.hoverImages || [])
+  ].filter(Boolean);
 
   return (
     <div className="flex flex-col flex-grow bg-white">
@@ -93,17 +96,17 @@ export default function ProductDetail() {
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">Dimensions</span>
-                <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">H 45cm x W 40cm x D 40cm</span>
+                <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">{product.dimensions || '—'}</span>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-8">
                <div>
                 <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">Shipping</span>
-                <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">2-3 Business Days</span>
+                <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">{product.shipping || '—'}</span>
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">SKU</span>
-                <span className="text-sm font-mono font-semibold border-b border-black/20 pb-1">{product.id.toUpperCase()}</span>
+                <span className="text-sm font-mono font-semibold border-b border-black/20 pb-1">{product.sku || product.id.toUpperCase()}</span>
               </div>
             </div>
           </div>
