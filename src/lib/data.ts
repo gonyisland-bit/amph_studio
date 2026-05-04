@@ -1,0 +1,193 @@
+export type Category = 'Chairs' | 'Tables' | 'Lighting' | 'Objects';
+
+export interface ContentBlock {
+  type: 'text' | 'image';
+  value: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  category: Category;
+  description: string;
+  material: string;
+  price: number;
+  images: string[];
+  hoverImages?: string[];
+  contentBlocks?: ContentBlock[];
+  isFeatured?: boolean;
+}
+
+export interface JournalArticle {
+  id: string;
+  title: string;
+  category: string;
+  date: string;
+  image: string;
+  contentBlocks?: ContentBlock[];
+}
+
+export interface SpaceModel {
+  id: string;
+  title: string;
+  location: string;
+  description: string;
+  address: string;
+  hours: string;
+  image: string;
+}
+
+const aiImg = (prompt: string) => `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=1000&nologo=true`;
+const _a = aiImg;
+
+const mockProducts: Product[] = [
+  {
+    id: "prod-1",
+    name: "Cylinder Chrome Lamp",
+    category: "Lighting",
+    description: "A geometric study in reflection. This lamp uses its environment to complete its form.",
+    material: "Polished Chrome",
+    price: 420,
+    images: [
+      aiImg("Minimalist geometric cylinder chrome table lamp, soft white studio background, Hay Muuto style product photography, high detail"),
+      aiImg("Minimalist geometric cylinder chrome table lamp turned on, warm glowing light, dark room, interior design photography")
+    ],
+    hoverImages: [
+      aiImg("Minimalist geometric cylinder chrome table lamp turned on, warm glowing light, dark room, interior design photography")
+    ],
+    contentBlocks: [
+      { type: 'text', value: 'This lamp illuminates spaces dynamically. Crafted from solid brass and plated in polished chrome, each piece is painstakingly hand-finished to achieve a mirror-like perfection.' },
+      { type: 'image', value: aiImg("Close up of polished chrome texture mirroring light") }
+    ],
+    isFeatured: true
+  },
+  {
+    id: "prod-2",
+    name: "Alloy Tray",
+    category: "Objects",
+    description: "Brushed steel catch-all for your everyday items. Subtly curved edges.",
+    material: "Brushed Steel",
+    price: 180,
+    images: [
+      aiImg("Brushed steel minimalist curved tray object, top down view on soft pink background, elegant product photography"),
+      aiImg("Brushed steel minimalist curved tray with a modern keychain on it, lifestyle photography, vibrant orange accent")
+    ],
+    hoverImages: [aiImg("Brushed steel minimalist curved tray with a modern keychain on it, lifestyle photography, vibrant orange accent")],
+    isFeatured: true
+  },
+  {
+    id: "prod-3",
+    name: "Soft Stool",
+    category: "Chairs",
+    description: "Vivid pink fabric stretched over a minimalist steel frame. A pop of color for brutalist spaces.",
+    material: "Steel Frame, Pink Velvet",
+    price: 350,
+    images: [
+      aiImg("Vivid soft pink velvet stool with thin chrome steel legs, minimalist white studio background, Scandinavian design chair"),
+      aiImg("Vivid soft pink velvet stool in a concrete brutalist interior space, natural sunlight, architectural digest style")
+    ],
+    hoverImages: [aiImg("Vivid soft pink velvet stool in a concrete brutalist interior space, natural sunlight, architectural digest style")],
+    isFeatured: true
+  },
+  {
+    id: "prod-4",
+    name: "Tubular Lounge",
+    category: "Chairs",
+    description: "A continuous tube creating an impossibly comfortable lounge chair.",
+    material: "Powder-coated Aluminum, Cobalt Boucle",
+    price: 890,
+    images: [
+      aiImg("Cobalt blue boucle lounge chair with thick tubular aluminum frame, modern trendy design, clean off-white background"),
+      aiImg("Cobalt blue boucle lounge chair in a modern living room with large windows, minimalist scandinavian interior design")
+    ],
+    hoverImages: [aiImg("Cobalt blue boucle lounge chair in a modern living room with large windows, minimalist scandinavian interior design")]
+  },
+  {
+    id: "prod-5",
+    name: "Glass Block Table",
+    category: "Tables",
+    description: "Solid, translucent block resting on thin metal legs.",
+    material: "Cast Glass, Steel",
+    price: 1200,
+    images: [
+      aiImg("Translucent cast glass block side table with thin silver metal legs, elegant simple product photography, studio light"),
+      aiImg("Translucent cast glass block side table casting caustic light refractions on the floor, bright sunny room")
+    ],
+    hoverImages: [aiImg("Translucent cast glass block side table casting caustic light refractions on the floor, bright sunny room")]
+  }
+];
+
+const mockJournals: JournalArticle[] = [
+  { 
+    id: "j-1",
+    title: "The Chrome Revival", 
+    category: "Material Study", 
+    date: "Oct 12",
+    image: _a("close up of polished chrome texture mirroring blue room, abstract photography, minimalist"),
+    contentBlocks: [
+      { type: 'text', value: 'Chrome is back and it is better than ever. We explore the industrial aesthetics inside our modern living spaces.' },
+      { type: 'image', value: _a("modern loft showcasing chrome elements and vivid accent colors") },
+      { type: 'text', value: 'By reflecting their surroundings, chrome objects effectively camouflage themselves while simultaneously asserting their presence. This duality makes polished metals endlessly fascinating.'}
+    ]
+  },
+  { 
+    id: "j-2",
+    title: "Defining Casual Uniqueness", 
+    category: "Brand Ethos", 
+    date: "Sep 28",
+    image: _a("minimalist interior design featuring vivid pink and brushed steel, editorial lighting, architectural digest") 
+  },
+  { 
+    id: "j-3",
+    title: "Behind the Tube Lounge", 
+    category: "Process", 
+    date: "Sep 15",
+    image: _a("behind the scenes design studio, sketches of tubular chairs, industrial workshop aesthetic") 
+  }
+];
+
+const mockSpaces: SpaceModel[] = [
+  {
+    id: "s-1",
+    title: "Physical Showroom",
+    location: "Seoul Space",
+    description: "Experience the interplay of industrial minimalism and vivid comfort in our flagship space. A curated environment where ordinary objects become extraordinary touchpoints.",
+    address: "123 Design District\nSeongdong-gu, Seoul",
+    hours: "Wed - Sun\n11:00 - 20:00",
+    image: _a("modern minimalist showroom space in Seoul, curved walls, industrial brushed steel accents, vivid pink lighting, architectural design")
+  }
+];
+
+// Simple in-memory management
+let productsStore = [...mockProducts];
+let journalsStore = [...mockJournals];
+let spacesStore = [...mockSpaces];
+
+export const getProducts = () => Promise.resolve([...productsStore]);
+export const getProductById = (id: string) => Promise.resolve(productsStore.find(p => p.id === id) || null);
+export const addProduct = (product: Product) => { productsStore.push(product); return Promise.resolve(product); };
+export const updateProduct = (id: string, updates: Partial<Product>) => {
+  const index = productsStore.findIndex(p => p.id === id);
+  if(index !== -1) { productsStore[index] = { ...productsStore[index], ...updates }; return Promise.resolve(productsStore[index]); }
+  return Promise.reject(new Error("Product not found"));
+};
+export const deleteProduct = (id: string) => { productsStore = productsStore.filter(p => p.id !== id); return Promise.resolve(); };
+
+export const getJournals = () => Promise.resolve([...journalsStore]);
+export const getJournalById = (id: string) => Promise.resolve(journalsStore.find(j => j.id === id) || null);
+export const addJournal = (journal: JournalArticle) => { journalsStore.push(journal); return Promise.resolve(journal); };
+export const updateJournal = (id: string, updates: Partial<JournalArticle>) => {
+  const index = journalsStore.findIndex(j => j.id === id);
+  if(index !== -1) { journalsStore[index] = { ...journalsStore[index], ...updates }; return Promise.resolve(journalsStore[index]); }
+  return Promise.reject(new Error("Journal not found"));
+};
+export const deleteJournal = (id: string) => { journalsStore = journalsStore.filter(j => j.id !== id); return Promise.resolve(); };
+
+export const getSpaces = () => Promise.resolve([...spacesStore]);
+export const addSpace = (space: SpaceModel) => { spacesStore.push(space); return Promise.resolve(space); };
+export const updateSpace = (id: string, updates: Partial<SpaceModel>) => {
+  const index = spacesStore.findIndex(s => s.id === id);
+  if(index !== -1) { spacesStore[index] = { ...spacesStore[index], ...updates }; return Promise.resolve(spacesStore[index]); }
+  return Promise.reject(new Error("Space not found"));
+};
+export const deleteSpace = (id: string) => { spacesStore = spacesStore.filter(s => s.id !== id); return Promise.resolve(); };
