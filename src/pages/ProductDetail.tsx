@@ -28,7 +28,7 @@ export default function ProductDetail() {
       {/* Sticky Header */}
       <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md px-6 md:px-12 py-4 border-b border-black/10 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-4">
-          <Link to="/shop" className="text-xs uppercase tracking-widest font-semibold hover:text-cobalt transition-colors hidden md:block mr-4 border-r border-black/10 pr-4">Shop</Link>
+          <Link to="/shop" className="text-xs uppercase tracking-widest font-semibold hover:text-cobalt transition-colors hidden md:block mr-4 border-r border-black/10 pr-4">Collection</Link>
           <div>
             <span className="text-[10px] uppercase font-bold text-orange font-sans block mb-1">{product.category}</span>
             <h1 className="text-xl font-bold font-sans tracking-tight">{product.name}</h1>
@@ -115,7 +115,7 @@ export default function ProductDetail() {
         <div className="flex justify-between items-end mb-12">
           <h3 className="text-4xl lg:text-5xl font-bold tracking-tighter uppercase font-sans">Amplify With</h3>
           <Link to="/shop" className="flex items-center gap-2 text-xs uppercase font-semibold hover:text-cobalt transition-colors group">
-            Full Archive <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            Full Collection <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
         

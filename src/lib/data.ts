@@ -278,6 +278,7 @@ export interface HomeSettings {
   description: string;
   marquee: string;
   featuredProductIds: string[];
+  globalProductOrder: string[];
 }
 
 export const defaultHomeSettings: HomeSettings = {
@@ -285,7 +286,8 @@ export const defaultHomeSettings: HomeSettings = {
   subtitle: "The Muse — Vol 01",
   description: "Transforming the mundane into unique experiences through chrome, steel, and vivid textures.",
   marquee: "Amplify Your Ordinary",
-  featuredProductIds: []
+  featuredProductIds: [],
+  globalProductOrder: []
 };
 
 let cachedHomeSettings: HomeSettings | null = null;

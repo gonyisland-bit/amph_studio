@@ -167,17 +167,26 @@ export default function Admin() {
     <div className="flex flex-col flex-grow p-6 md:p-12 max-w-[1400px] mx-auto w-full">
       <h1 className="text-4xl font-bold font-sans tracking-tight mb-6">Admin Dashboard</h1>
       
-      <div className="flex gap-4 mb-8 border-b border-black/10 pb-4">
-        {['collection', 'journal', 'space', 'shop'].map(tab => (
-          <button key={tab} onClick={() => switchTab(tab as any)} className={`capitalize text-sm font-bold tracking-widest ${activeTab === tab ? 'text-cobalt border-b-2 border-cobalt pb-1' : 'text-ink/40 hover:text-ink'}`}>
-            {tab}
+      <div className="flex gap-6 mb-8 border-b border-black/10 pb-4">
+        {[
+          { id: 'collection', label: 'Home' },
+          { id: 'journal', label: 'Journal' },
+          { id: 'space', label: 'Space' },
+          { id: 'shop', label: 'Collection' }
+        ].map(tab => (
+          <button key={tab.id} onClick={() => switchTab(tab.id as any)} className={`uppercase text-[11px] font-bold tracking-widest transition-all ${activeTab === tab.id ? 'text-cobalt border-b-2 border-cobalt pb-1' : 'text-ink/40 hover:text-ink'}`}>
+            {tab.label}
           </button>
         ))}
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="col-span-1 lg:col-span-1">
-          <h2 className="text-xl font-semibold mb-6 font-sans capitalize">{editingId ? `Edit ${activeTab.slice(0,-1)}` : `Add New ${activeTab.slice(0,-1)}`}</h2>
+          <h2 className="text-xl font-semibold mb-6 font-sans">
+            {editingId 
+              ? `Edit ${activeTab === 'collection' ? 'Home' : activeTab === 'shop' ? 'Item' : activeTab === 'journal' ? 'Journal' : 'Space'}` 
+              : `Add New ${activeTab === 'collection' ? 'Home' : activeTab === 'shop' ? 'Item' : activeTab === 'journal' ? 'Journal' : 'Space'}`}
+          </h2>
           <form onSubmit={handleSave} className="space-y-4 font-sans text-sm">
             
             {activeTab === 'collection' && (
@@ -278,16 +287,13 @@ export default function Admin() {
                     const newImages = [...(form.images || [''])]; newImages[0] = val; setForm({...form, images: newImages});
                   }} /></div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Hover Images URLs</label>
-                  {form.hoverImages?.map((img:string, i:number) => (
-                    <div key={i} className="flex gap-2 mb-2">
-                       <ImageUploadInput value={img} onChange={val => {
-                         const newH = [...form.hoverImages]; newH[i] = val; setForm({...form, hoverImages: newH});
-                       }} />
-                       <button type="button" onClick={() => setForm({...form, hoverImages: form.hoverImages.filter((_:any, idx:number) => idx !== i)})} className="text-orange text-xs hover:underline font-bold px-2">X</button>
-                    </div>
-                  ))}
-                  <button type="button" onClick={() => setForm({...form, hoverImages: [...(form.hoverImages || []), '']})} className="text-xs font-bold text-cobalt hover:underline">+ Add Hover Image</button>
+                  <ImageUploadInput 
+                    label="Hover Image URL (One Only)" 
+                    value={form.hoverImages?.[0] || ''} 
+                    onChange={val => {
+                      setForm({...form, hoverImages: [val]});
+                    }} 
+                  />
                 </div>
                 {renderContentBlocksEditor()}
               </>
@@ -334,19 +340,60 @@ export default function Admin() {
         </div>
 
         <div className="col-span-1 lg:col-span-2">
-          <h2 className="text-xl font-semibold mb-6 font-sans capitalize">{activeTab} Inventory</h2>
+          <h2 className="text-xl font-semibold mb-6 font-sans">
+            {activeTab === 'collection' ? 'Home Content' : activeTab === 'shop' ? 'Collection Inventory' : `${activeTab} Inventory`}
+          </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left font-sans">
               <thead className="text-[10px] uppercase font-bold text-ink/50 border-b border-black/20">
                 <tr>
+                  <th className="pb-2 w-16">Order</th>
                   <th className="pb-2">Image</th>
                   <th className="pb-2">Details</th>
                   <th className="pb-2 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                  {(activeTab === 'shop' || activeTab === 'collection') && products.map(p => (
-                    <tr key={p.id} className="border-b border-black/10 hover:bg-black/5">
+                  {(activeTab === 'shop' || activeTab === 'collection') && [...products].sort((a,b) => {
+                    const aIdx = homeSettings.globalProductOrder.indexOf(a.id);
+                    const bIdx = homeSettings.globalProductOrder.indexOf(b.id);
+                    if (aIdx === -1 && bIdx === -1) return 0;
+                    if (aIdx === -1) return 1;
+                    if (bIdx === -1) return -1;
+                    return aIdx - bIdx;
+                  }).map((p, index, arr) => (
+                    <tr key={p.id} className="border-b border-black/10 hover:bg-black/5 group">
+                      <td className="py-3">
+                        <div className="flex flex-col items-center gap-1">
+                          <button type="button" onClick={async () => {
+                            const newOrder = [...homeSettings.globalProductOrder];
+                            if (newOrder.indexOf(p.id) === -1) {
+                              newOrder.push(...products.map(x => x.id).filter(id => !newOrder.includes(id)));
+                            }
+                            const idx = newOrder.indexOf(p.id);
+                            if (idx > 0) {
+                              [newOrder[idx-1], newOrder[idx]] = [newOrder[idx], newOrder[idx-1]];
+                              const newSettings = {...homeSettings, globalProductOrder: newOrder};
+                              setHomeSettings(newSettings);
+                              await updateHomeSettings(newSettings);
+                            }
+                          }} className="text-ink/20 hover:text-cobalt">▲</button>
+                          <span className="text-[10px] font-bold text-ink/30">{index + 1}</span>
+                          <button type="button" onClick={async () => {
+                            const newOrder = [...homeSettings.globalProductOrder];
+                            if (newOrder.indexOf(p.id) === -1) {
+                              newOrder.push(...products.map(x => x.id).filter(id => !newOrder.includes(id)));
+                            }
+                            const idx = newOrder.indexOf(p.id);
+                            if (idx < newOrder.length - 1) {
+                              [newOrder[idx+1], newOrder[idx]] = [newOrder[idx], newOrder[idx+1]];
+                              const newSettings = {...homeSettings, globalProductOrder: newOrder};
+                              setHomeSettings(newSettings);
+                              await updateHomeSettings(newSettings);
+                            }
+                          }} className="text-ink/20 hover:text-cobalt">▼</button>
+                        </div>
+                      </td>
                       <td className="py-3"><div className="w-12 h-12 bg-silver"><img src={p.images[0]} className="w-full h-full object-cover mix-blend-multiply" referrerPolicy="no-referrer" /></div></td>
                       <td className="py-3">
                         <div className="font-semibold">{p.name}</div>

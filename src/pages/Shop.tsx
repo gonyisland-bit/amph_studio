@@ -1,25 +1,36 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getProducts, Product, Category } from "../lib/data";
+import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 
 const CATEGORIES: Category[] = ['Chairs', 'Tables', 'Lighting', 'Objects'];
 
 export default function Shop() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
 
   useEffect(() => {
     getProducts().then(setProducts);
+    getHomeSettings().then(setSettings);
   }, []);
 
+  const sortedProducts = [...products].sort((a, b) => {
+    const aIdx = settings.globalProductOrder.indexOf(a.id);
+    const bIdx = settings.globalProductOrder.indexOf(b.id);
+    if (aIdx === -1 && bIdx === -1) return 0;
+    if (aIdx === -1) return 1;
+    if (bIdx === -1) return -1;
+    return aIdx - bIdx;
+  });
+
   const filteredProducts = activeCategory === 'All' 
-    ? products 
-    : products.filter(p => p.category === activeCategory);
+    ? sortedProducts 
+    : sortedProducts.filter(p => p.category === activeCategory);
 
   return (
     <div className="flex flex-col flex-grow">
       <div className="px-6 md:px-12 py-12 md:py-20 border-b border-black/10 flex flex-col md:flex-row justify-between items-baseline gap-6 bg-off-white">
-        <h1 className="text-6xl md:text-8xl font-bold tracking-tighter uppercase font-sans">Archive</h1>
+        <h1 className="text-6xl md:text-8xl font-bold tracking-tighter uppercase font-sans">Collection</h1>
         <div className="flex flex-wrap gap-6 text-xs uppercase tracking-widest font-semibold font-sans">
           <button 
             className={`transition-all border-b pb-1 ${activeCategory === 'All' ? 'border-cobalt text-cobalt' : 'border-transparent hover:text-cobalt hover:border-cobalt/30'}`}
@@ -62,9 +73,9 @@ export default function Shop() {
                 referrerPolicy="no-referrer"
               />
               {/* Secondary Hover Image */}
-              {product.images[1] && (
+              {product.hoverImages?.[0] && (
                 <img 
-                  src={product.images[1]} 
+                  src={product.hoverImages[0]} 
                   alt={`${product.name} alternative view`}
                   className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100 group-hover:scale-105"
                   referrerPolicy="no-referrer"
