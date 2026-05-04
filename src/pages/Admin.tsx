@@ -8,7 +8,7 @@ import {
 import { upload } from '@vercel/blob/client';
 
 const emptyProduct: Omit<Product, 'id'> = {
-  name: '', category: 'Chairs', description: '', material: '', price: 0, images: [''], hoverImages: [], contentBlocks: []
+  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [], contentBlocks: []
 };
 const emptyJournal: Omit<JournalArticle, 'id'> = {
   title: '', category: '', date: '', image: '', contentBlocks: []
@@ -100,7 +100,7 @@ const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange:
 
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState<'collection'|'journal'|'space'|'shop'>('collection');
+  const [activeTab, setActiveTab] = useState<'collection'|'journal'|'space'|'shop'>('shop');
   
   const [products, setProducts] = useState<Product[]>([]);
   const [journals, setJournals] = useState<JournalArticle[]>([]);
@@ -201,9 +201,9 @@ export default function Admin() {
       <div className="flex gap-6 mb-8 border-b border-black/10 pb-4">
         {[
           { id: 'collection', label: 'Home' },
-          { id: 'journal', label: 'Journal' },
+          { id: 'shop', label: 'Collection' },
           { id: 'space', label: 'Space' },
-          { id: 'shop', label: 'Collection' }
+          { id: 'journal', label: 'Journal' }
         ].map(tab => (
           <button key={tab.id} onClick={() => switchTab(tab.id as any)} className={`uppercase text-[11px] font-bold tracking-widest transition-all ${activeTab === tab.id ? 'text-cobalt border-b-2 border-cobalt pb-1' : 'text-ink/40 hover:text-ink'}`}>
             {tab.label}
@@ -310,19 +310,23 @@ export default function Admin() {
                   </select></div>
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Price</label>
                   <input type="number" required value={form.price || 0} onChange={e => setForm({...form, price: Number(e.target.value)})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Material</label>
-                  <input required value={form.material || ''} onChange={e => setForm({...form, material: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
+                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Sub Title</label>
+                  <input required value={form.subTitle || ''} onChange={e => setForm({...form, subTitle: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
                   <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={3} /></div>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Dimensions</label>
-                    <input value={form.dimensions || ''} onChange={e => setForm({...form, dimensions: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. H 45cm x W 40cm" /></div>
+                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Material</label>
+                    <input required value={form.material || ''} onChange={e => setForm({...form, material: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. Chrome / Wood" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Color</label>
                     <input value={form.color || ''} onChange={e => setForm({...form, color: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. Chrome / Black" /></div>
                 </div>
-                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Shipping</label>
-                  <input value={form.shipping || ''} onChange={e => setForm({...form, shipping: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. 2-3 Business Days" /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Dimensions</label>
+                    <input value={form.dimensions || ''} onChange={e => setForm({...form, dimensions: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. H 45cm x W 40cm" /></div>
+                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Shipping</label>
+                    <input value={form.shipping || ''} onChange={e => setForm({...form, shipping: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. 2-3 Business Days" /></div>
+                </div>
 
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">SKU</label>
                   <input value={form.sku || ''} onChange={e => setForm({...form, sku: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
@@ -425,10 +429,11 @@ export default function Admin() {
                     if (bIdx === -1) return -1;
                     return aIdx - bIdx;
                   }).map((p, index, arr) => (
-                    <tr key={p.id} className="border-b border-black/10 hover:bg-black/5 group">
+                    <tr key={p.id} className="border-b border-black/10 hover:bg-black/5 group cursor-pointer" onClick={() => handleEdit(p)}>
                       <td className="py-3">
                         <div className="flex flex-col items-center gap-1">
-                          <button type="button" onClick={async () => {
+                          <button type="button" onClick={async (e) => {
+                            e.stopPropagation();
                             const newOrder = [...homeSettings.globalProductOrder];
                             if (newOrder.indexOf(p.id) === -1) {
                               newOrder.push(...products.map(x => x.id).filter(id => !newOrder.includes(id)));
@@ -442,7 +447,8 @@ export default function Admin() {
                             }
                           }} className="text-ink/20 hover:text-cobalt">▲</button>
                           <span className="text-[10px] font-bold text-ink/30">{index + 1}</span>
-                          <button type="button" onClick={async () => {
+                          <button type="button" onClick={async (e) => {
+                            e.stopPropagation();
                             const newOrder = [...homeSettings.globalProductOrder];
                             if (newOrder.indexOf(p.id) === -1) {
                               newOrder.push(...products.map(x => x.id).filter(id => !newOrder.includes(id)));
@@ -459,17 +465,19 @@ export default function Admin() {
                       </td>
                       <td className="py-3"><div className="w-12 h-12 bg-silver"><img src={p.images[0]} className="w-full h-full object-cover mix-blend-multiply" referrerPolicy="no-referrer" /></div></td>
                       <td className="py-3">
-                        <div className="font-semibold">{p.name}</div>
-                        <div className="text-[10px] text-orange uppercase">{p.category} - ${p.price}</div>
+                        <div className="font-semibold text-ink">{p.name}</div>
+                        <div className="text-[10px] text-orange font-bold uppercase tracking-wider">{p.category}</div>
+                        <div className="text-[10px] text-ink/40 uppercase">${p.price}</div>
                       </td>
                       <td className="py-3 text-right">
                         {activeTab === 'shop' ? (
                           <>
-                            <button onClick={() => handleEdit(p)} className="text-cobalt text-xs font-semibold mr-4 hover:underline">Edit</button>
-                            <button onClick={() => handleDelete(p.id)} className="text-orange text-xs font-semibold hover:underline">Delete</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleEdit(p); }} className="text-cobalt text-xs font-semibold mr-4 hover:underline">Edit</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }} className="text-orange text-xs font-semibold hover:underline">Delete</button>
                           </>
                         ) : (
-                          <button onClick={async () => {
+                          <button onClick={async (e) => {
+                            e.stopPropagation();
                             const isSelected = homeSettings.featuredProductIds.includes(p.id);
                             const newIds = isSelected 
                               ? homeSettings.featuredProductIds.filter(id => id !== p.id)

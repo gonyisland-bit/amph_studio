@@ -12,6 +12,7 @@ export interface Product {
   description: string;
   material: string;
   price: number;
+  subTitle?: string;
   images: string[];
   hoverImages?: string[];
   contentBlocks?: ContentBlock[];
@@ -51,6 +52,7 @@ const mockProducts: Product[] = [
     category: "Lighting",
     description: "A geometric study in reflection. This lamp uses its environment to complete its form.",
     material: "Polished Chrome",
+    subTitle: "Geometric Reflection",
     price: 420,
     images: [
       aiImg("Minimalist geometric cylinder chrome table lamp, soft white studio background, Hay Muuto style product photography, high detail"),
@@ -71,6 +73,7 @@ const mockProducts: Product[] = [
     category: "Objects",
     description: "Brushed steel catch-all for your everyday items. Subtly curved edges.",
     material: "Brushed Steel",
+    subTitle: "Everyday Catch-all",
     price: 180,
     images: [
       aiImg("Brushed steel minimalist curved tray object, top down view on soft pink background, elegant product photography"),
@@ -85,6 +88,7 @@ const mockProducts: Product[] = [
     category: "Chairs",
     description: "Vivid pink fabric stretched over a minimalist steel frame. A pop of color for brutalist spaces.",
     material: "Steel Frame, Pink Velvet",
+    subTitle: "Vivid Comfort",
     price: 350,
     images: [
       aiImg("Vivid soft pink velvet stool with thin chrome steel legs, minimalist white studio background, Scandinavian design chair"),
@@ -99,6 +103,7 @@ const mockProducts: Product[] = [
     category: "Chairs",
     description: "A continuous tube creating an impossibly comfortable lounge chair.",
     material: "Powder-coated Aluminum, Cobalt Boucle",
+    subTitle: "Continuous Form",
     price: 890,
     images: [
       aiImg("Cobalt blue boucle lounge chair with thick tubular aluminum frame, modern trendy design, clean off-white background"),
@@ -112,6 +117,7 @@ const mockProducts: Product[] = [
     category: "Tables",
     description: "Solid, translucent block resting on thin metal legs.",
     material: "Cast Glass, Steel",
+    subTitle: "Translucent Block",
     price: 1200,
     images: [
       aiImg("Translucent cast glass block side table with thin silver metal legs, elegant simple product photography, studio light"),

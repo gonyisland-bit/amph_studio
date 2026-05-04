@@ -76,7 +76,7 @@ export default function ProductDetail() {
           <h2 className="text-sm font-semibold uppercase tracking-widest mb-6 font-sans text-ink/40">Product Overview</h2>
           <p className="text-3xl leading-snug mb-12 font-serif italic text-ink/90">{product.description}</p>
           
-          <div className="grid grid-cols-2 gap-y-10 gap-x-8">
+          <div className="grid grid-cols-2 gap-y-10 gap-x-8 mt-auto">
             <div>
               <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">Material</span>
               <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">{product.material}</span>

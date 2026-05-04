@@ -85,7 +85,7 @@ export default function Shop() {
 
             <div className="mt-auto z-10 relative">
               <h2 className="text-xl font-bold font-sans tracking-tight">{product.name}</h2>
-              <p className="text-sm text-ink/60 mt-1 font-serif italic">{product.material}</p>
+              <p className="text-sm text-ink/60 mt-1 font-serif italic">{product.subTitle}</p>
             </div>
           </Link>
         ))}
