@@ -163,15 +163,36 @@ let productsStore = [...mockProducts];
 let journalsStore = [...mockJournals];
 let spacesStore = [...mockSpaces];
 
+let cachedProducts: Product[] | null = null;
+let productsFetchPromise: Promise<Product[]> | null = null;
+
 export const getProducts = async (): Promise<Product[]> => {
-  try {
-    const res = await fetch('/api/products');
-    if (!res.ok) throw new Error('Network response was not ok');
-    return res.json();
-  } catch (error) {
-    console.error("Failed to fetch products from DB, falling back to mock store:", error);
-    return Promise.resolve([...productsStore]);
+  if (cachedProducts) {
+    revalidateProducts(); // Background fetch
+    return [...cachedProducts];
   }
+  return revalidateProducts();
+};
+
+const revalidateProducts = async (): Promise<Product[]> => {
+  if (productsFetchPromise) return productsFetchPromise;
+  
+  productsFetchPromise = (async () => {
+    try {
+      const res = await fetch('/api/products');
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      cachedProducts = data;
+      return [...cachedProducts!];
+    } catch (error) {
+      console.error("Failed to fetch products from DB, falling back to mock store:", error);
+      cachedProducts = [...productsStore];
+      return [...cachedProducts];
+    } finally {
+      productsFetchPromise = null;
+    }
+  })();
+  return productsFetchPromise;
 };
 
 export const getProductById = async (id: string): Promise<Product | null> => {
@@ -187,10 +208,12 @@ export const addProduct = async (product: Product): Promise<Product> => {
       body: JSON.stringify(product)
     });
     if (!res.ok) throw new Error('Failed to add product via API');
+    if (cachedProducts) cachedProducts = [product, ...cachedProducts];
     return product;
   } catch (error) {
     console.error("Failed to add product to DB, adding to mock store:", error);
     productsStore.push(product);
+    if (cachedProducts) cachedProducts = [product, ...cachedProducts];
     return Promise.resolve(product);
   }
 };
@@ -203,11 +226,16 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
       body: JSON.stringify(updates)
     });
     if (!res.ok) throw new Error('Failed to update product via API');
+    if (cachedProducts) cachedProducts = cachedProducts.map(p => p.id === id ? { ...p, ...updates } : p);
     return { id, ...updates } as Product;
   } catch (error) {
     console.error("Failed to update product in DB, updating mock store:", error);
     const index = productsStore.findIndex(p => p.id === id);
-    if(index !== -1) { productsStore[index] = { ...productsStore[index], ...updates }; return Promise.resolve(productsStore[index]); }
+    if(index !== -1) { 
+      productsStore[index] = { ...productsStore[index], ...updates }; 
+      if (cachedProducts) cachedProducts = cachedProducts.map(p => p.id === id ? { ...p, ...updates } : p);
+      return Promise.resolve(productsStore[index]); 
+    }
     return Promise.reject(new Error("Product not found"));
   }
 };
@@ -216,9 +244,11 @@ export const deleteProduct = async (id: string): Promise<void> => {
   try {
     const res = await fetch(`/api/products?id=${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete product via API');
+    if (cachedProducts) cachedProducts = cachedProducts.filter(p => p.id !== id);
   } catch (error) {
     console.error("Failed to delete product in DB, deleting from mock store:", error);
     productsStore = productsStore.filter(p => p.id !== id);
+    if (cachedProducts) cachedProducts = cachedProducts.filter(p => p.id !== id);
     return Promise.resolve();
   }
 };
@@ -258,16 +288,36 @@ export const defaultHomeSettings: HomeSettings = {
   featuredProductIds: []
 };
 
+let cachedHomeSettings: HomeSettings | null = null;
+let homeSettingsFetchPromise: Promise<HomeSettings> | null = null;
+
 export const getHomeSettings = async (): Promise<HomeSettings> => {
-  try {
-    const res = await fetch('/api/settings?id=home');
-    if (!res.ok) throw new Error('Network error');
-    const data = await res.json();
-    return { ...defaultHomeSettings, ...data };
-  } catch (err) {
-    console.error(err);
-    return defaultHomeSettings;
+  if (cachedHomeSettings) {
+    revalidateHomeSettings();
+    return { ...cachedHomeSettings };
   }
+  return revalidateHomeSettings();
+};
+
+const revalidateHomeSettings = async (): Promise<HomeSettings> => {
+  if (homeSettingsFetchPromise) return homeSettingsFetchPromise;
+
+  homeSettingsFetchPromise = (async () => {
+    try {
+      const res = await fetch('/api/settings?id=home');
+      if (!res.ok) throw new Error('Network error');
+      const data = await res.json();
+      cachedHomeSettings = { ...defaultHomeSettings, ...data };
+      return { ...cachedHomeSettings! };
+    } catch (err) {
+      console.error(err);
+      cachedHomeSettings = defaultHomeSettings;
+      return { ...cachedHomeSettings };
+    } finally {
+      homeSettingsFetchPromise = null;
+    }
+  })();
+  return homeSettingsFetchPromise;
 };
 
 export const updateHomeSettings = async (settings: HomeSettings): Promise<void> => {
@@ -278,6 +328,7 @@ export const updateHomeSettings = async (settings: HomeSettings): Promise<void> 
       body: JSON.stringify(settings)
     });
     if (!res.ok) throw new Error('Failed to update settings');
+    cachedHomeSettings = settings;
   } catch (err) {
     console.error(err);
     throw err;
