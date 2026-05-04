@@ -197,7 +197,7 @@ export const addProduct = async (product: Product): Promise<Product> => {
 
 export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product> => {
   try {
-    const res = await fetch(`/api/products/${id}`, {
+    const res = await fetch(`/api/products?id=${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates)
@@ -214,7 +214,7 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
 
 export const deleteProduct = async (id: string): Promise<void> => {
   try {
-    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/products?id=${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete product via API');
   } catch (error) {
     console.error("Failed to delete product in DB, deleting from mock store:", error);

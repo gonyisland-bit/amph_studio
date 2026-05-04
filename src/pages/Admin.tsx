@@ -4,6 +4,7 @@ import {
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace
 } from "../lib/data";
+import { upload } from '@vercel/blob/client';
 
 const emptyProduct: Omit<Product, 'id'> = {
   name: '', category: 'Chairs', description: '', material: '', price: 0, images: [''], hoverImages: [], contentBlocks: []
@@ -23,18 +24,11 @@ const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange:
     const file = e.target.files[0];
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
       });
-      const data = await res.json();
-      if (data.url) {
-        onChange(data.url);
-      } else {
-        alert('Upload failed: ' + (data.error || 'Unknown error'));
-      }
+      onChange(newBlob.url);
     } catch (err) {
       console.error(err);
       alert('Error uploading file');
