@@ -282,13 +282,33 @@ export const updateSpace = (id: string, updates: Partial<SpaceModel>) => {
 };
 export const deleteSpace = (id: string) => { spacesStore = spacesStore.filter(s => s.id !== id); return Promise.resolve(); };
 
-export interface HomeSettings {
+export interface HeroSlide {
+  id: string;
   title: string;
   subtitle: string;
+  image: string;
+}
+
+export interface CategoryIntro {
+  title: string;
+  description: string;
+  image: string;
+}
+
+export interface HomeSettings {
+  title: string; // legacy, keeping for compatibility
+  subtitle: string; // legacy
   description: string;
   marquee: string;
   featuredProductIds: string[];
   globalProductOrder: string[];
+  heroSlides: HeroSlide[];
+  heroTransitionSpeed: number; // in seconds
+  intros: {
+    collection: CategoryIntro;
+    space: CategoryIntro;
+    journal: CategoryIntro;
+  };
 }
 
 export const defaultHomeSettings: HomeSettings = {
@@ -297,7 +317,16 @@ export const defaultHomeSettings: HomeSettings = {
   description: "Transforming the mundane into unique experiences through chrome, steel, and vivid textures.",
   marquee: "Amplify Your Ordinary",
   featuredProductIds: [],
-  globalProductOrder: []
+  globalProductOrder: [],
+  heroSlides: [
+    { id: '1', title: "Amplify\nYour\nOrdinary.", subtitle: "The Muse — Vol 01", image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=2158&auto=format&fit=crop' }
+  ],
+  heroTransitionSpeed: 5,
+  intros: {
+    collection: { title: 'Collection', description: 'Curated objects for modern living.', image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?q=80&w=1974&auto=format&fit=crop' },
+    space: { title: 'Space', description: 'Industrial minimalism in Seoul.', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2070&auto=format&fit=crop' },
+    journal: { title: 'Journal', description: 'Studies in chrome and steel.', image: 'https://images.unsplash.com/photo-1554469384-e58fac16e23a?q=80&w=1974&auto=format&fit=crop' }
+  }
 };
 
 let cachedHomeSettings: HomeSettings | null = null;

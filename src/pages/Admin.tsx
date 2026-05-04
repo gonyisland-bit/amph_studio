@@ -305,9 +305,127 @@ export default function Admin() {
                   </div>
                 </div>
 
+                <div className="border-b border-black/10 pb-10 mb-10">
+                  <h3 className="font-bold text-lg mb-6">1. Hero Slideshow Editor</h3>
+                  <div className="space-y-8">
+                    {homeSettings.heroSlides?.map((slide, idx) => (
+                      <div key={slide.id} className="p-6 border border-black/10 bg-white rounded-xl shadow-sm relative">
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            const newSlides = homeSettings.heroSlides.filter(s => s.id !== slide.id);
+                            setHomeSettings({...homeSettings, heroSlides: newSlides});
+                          }} 
+                          className="absolute top-4 right-4 text-orange text-[10px] font-bold uppercase hover:underline"
+                        >
+                          Remove Slide
+                        </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Slide Subtitle</label>
+                              <input value={slide.subtitle} onChange={e => {
+                                const newSlides = [...homeSettings.heroSlides];
+                                newSlides[idx].subtitle = e.target.value;
+                                setHomeSettings({...homeSettings, heroSlides: newSlides});
+                              }} className="w-full border border-black/20 p-2 text-xs bg-transparent outline-none focus:border-cobalt" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Slide Title (Enter for line breaks)</label>
+                              <textarea value={slide.title} onChange={e => {
+                                const newSlides = [...homeSettings.heroSlides];
+                                newSlides[idx].title = e.target.value;
+                                setHomeSettings({...homeSettings, heroSlides: newSlides});
+                              }} rows={3} className="w-full border border-black/20 p-2 text-xs bg-transparent outline-none focus:border-cobalt" />
+                            </div>
+                          </div>
+                          <div>
+                            <ImageUploadInput label="Slide Image" value={slide.image} onChange={val => {
+                              const newSlides = [...homeSettings.heroSlides];
+                              newSlides[idx].image = val;
+                              setHomeSettings({...homeSettings, heroSlides: newSlides});
+                            }} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const newSlides = [...(homeSettings.heroSlides || []), { id: Date.now().toString(), title: '', subtitle: '', image: '' }];
+                        setHomeSettings({...homeSettings, heroSlides: newSlides});
+                      }} 
+                      className="text-xs font-bold text-cobalt hover:underline"
+                    >
+                      + Add New Hero Slide
+                    </button>
+                    <div className="mt-4">
+                      <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Transition Speed (seconds)</label>
+                      <input type="number" value={homeSettings.heroTransitionSpeed || 5} onChange={e => setHomeSettings({...homeSettings, heroTransitionSpeed: Number(e.target.value)})} className="w-20 border border-black/20 p-2 text-xs bg-transparent outline-none focus:border-cobalt" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-b border-black/10 pb-10 mb-10">
+                  <h3 className="font-bold text-lg mb-6">2. Category Introduction Editor</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {(['collection', 'space', 'journal'] as const).map(cat => (
+                      <div key={cat} className="p-4 border border-black/10 bg-white rounded-xl">
+                        <h4 className="text-xs font-black uppercase mb-4 text-cobalt border-b border-black/5 pb-2">{cat} Intro</h4>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
+                            <input value={homeSettings.intros?.[cat]?.title || ''} onChange={e => {
+                              setHomeSettings({
+                                ...homeSettings, 
+                                intros: { ...homeSettings.intros, [cat]: { ...homeSettings.intros[cat], title: e.target.value } }
+                              });
+                            }} className="w-full border border-black/20 p-2 text-xs bg-transparent outline-none focus:border-cobalt" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
+                            <textarea value={homeSettings.intros?.[cat]?.description || ''} onChange={e => {
+                               setHomeSettings({
+                                ...homeSettings, 
+                                intros: { ...homeSettings.intros, [cat]: { ...homeSettings.intros[cat], description: e.target.value } }
+                              });
+                            }} rows={2} className="w-full border border-black/20 p-2 text-xs bg-transparent outline-none focus:border-cobalt" />
+                          </div>
+                          <div>
+                            <ImageUploadInput label="Intro Image" value={homeSettings.intros?.[cat]?.image || ''} onChange={val => {
+                               setHomeSettings({
+                                ...homeSettings, 
+                                intros: { ...homeSettings.intros, [cat]: { ...homeSettings.intros[cat], image: val } }
+                              });
+                            }} />
+                            <div className="mt-2 flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-black/5 rounded">
+                              <span className="text-[9px] font-bold text-ink/40 w-full uppercase">Pick from category images:</span>
+                              {cat === 'collection' && products.map(p => (
+                                <img key={p.id} src={p.images[0]} onClick={() => {
+                                  setHomeSettings({ ...homeSettings, intros: { ...homeSettings.intros, collection: { ...homeSettings.intros.collection, image: p.images[0] } } });
+                                }} className="w-8 h-8 object-cover cursor-pointer hover:border-2 border-cobalt" />
+                              ))}
+                              {cat === 'space' && spaces.map(s => (
+                                <img key={s.id} src={s.image} onClick={() => {
+                                  setHomeSettings({ ...homeSettings, intros: { ...homeSettings.intros, space: { ...homeSettings.intros.space, image: s.image } } });
+                                }} className="w-8 h-8 object-cover cursor-pointer hover:border-2 border-cobalt" />
+                              ))}
+                              {cat === 'journal' && journals.map(j => (
+                                <img key={j.id} src={j.image} onClick={() => {
+                                  setHomeSettings({ ...homeSettings, intros: { ...homeSettings.intros, journal: { ...homeSettings.intros.journal, image: j.image } } });
+                                }} className="w-8 h-8 object-cover cursor-pointer hover:border-2 border-cobalt" />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
                   <div className="flex justify-between items-end mb-4">
-                    <h3 className="font-bold text-lg">Selected Featured Products</h3>
+                    <h3 className="font-bold text-lg">3. Featured Products Grid Selection</h3>
                     <a href="/" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-cobalt hover:text-orange underline">Preview Collection Page ↗</a>
                   </div>
                   {homeSettings.featuredProductIds.length === 0 ? (
