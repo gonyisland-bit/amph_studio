@@ -336,3 +336,16 @@ export const updateHomeSettings = async (settings: HomeSettings): Promise<void> 
     throw err;
   }
 };
+
+export const deleteBlob = async (url: string): Promise<void> => {
+  if (!url || !url.includes('public.blob.vercel-storage.com')) return;
+  try {
+    await fetch('/api/delete-blob', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+  } catch (error) {
+    console.error("Failed to delete blob:", error);
+  }
+};

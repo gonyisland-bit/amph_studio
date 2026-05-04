@@ -3,7 +3,7 @@ import {
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
-  HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings
+  HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob
 } from "../lib/data";
 import { upload } from '@vercel/blob/client';
 
@@ -48,13 +48,42 @@ const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange:
       <div 
         className={`relative border-2 border-dashed rounded-[12px] flex flex-col items-center justify-center p-4 transition-colors cursor-pointer min-h-[120px] ${dragActive ? 'border-cobalt bg-cobalt/5' : 'border-black/20 bg-black/5 hover:bg-black/10'}`}
         onDragEnter={onDrag} onDragLeave={onDrag} onDragOver={onDrag} onDrop={onDrop}
-        onClick={() => document.getElementById(`file-${idSafeLabel}`)?.click()}
+        onClick={(e) => {
+          if ((e.target as HTMLElement).closest('.remove-btn')) return;
+          document.getElementById(`file-${idSafeLabel}`)?.click();
+        }}
       >
-        <input id={`file-${idSafeLabel}`} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleUpload(e.target.files[0]); }} />
+        <input 
+          id={`file-${idSafeLabel}`} 
+          type="file" 
+          accept="image/*" 
+          className="hidden" 
+          onChange={async (e) => { 
+            if (e.target.files?.[0]) {
+              await handleUpload(e.target.files[0]);
+              e.target.value = ''; // Reset to allow re-uploading same file
+            }
+          }} 
+        />
         {uploading ? (
            <div className="text-orange text-xs animate-pulse font-bold">Uploading...</div>
         ) : value ? (
-           <img src={value} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" />
+           <div className="relative group/preview">
+             <img src={value} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" />
+             <button 
+              type="button"
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (confirm('Delete this image from server?')) {
+                  await deleteBlob(value);
+                  onChange('');
+                }
+              }}
+              className="remove-btn absolute -top-2 -right-2 bg-orange text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-md hover:scale-110 transition-transform"
+             >
+               ✕
+             </button>
+           </div>
         ) : (
            <div className="text-center text-xs text-ink/50"><span className="text-cobalt font-bold">Click to upload</span> or drag and drop</div>
         )}
