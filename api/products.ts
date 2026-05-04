@@ -21,12 +21,12 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST') {
     try {
-      const { id: newId, name, category, description, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color } = req.body;
+      const { id: newId, name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color } = req.body;
       await sql`
         INSERT INTO products (
-          id, name, category, description, material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color
+          id, name, category, description, "subTitle", material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color
         ) VALUES (
-          ${newId}, ${name}, ${category}, ${description}, ${material}, ${price}, 
+          ${newId}, ${name}, ${category}, ${description}, ${subTitle || ''}, ${material}, ${price}, 
           ${JSON.stringify(images || [])}, 
           ${JSON.stringify(hoverImages || [])}, 
           ${JSON.stringify(contentBlocks || [])}, 
@@ -55,6 +55,7 @@ export default async function handler(req: any, res: any) {
       const category = req.body.category !== undefined ? req.body.category : current.category;
       const description = req.body.description !== undefined ? req.body.description : current.description;
       const material = req.body.material !== undefined ? req.body.material : current.material;
+      const subTitle = req.body.subTitle !== undefined ? req.body.subTitle : current.subTitle;
       const price = req.body.price !== undefined ? req.body.price : current.price;
       const images = req.body.images !== undefined ? req.body.images : (typeof current.images === 'string' ? JSON.parse(current.images) : current.images);
       const hoverImages = req.body.hoverImages !== undefined ? req.body.hoverImages : (typeof current.hoverImages === 'string' ? JSON.parse(current.hoverImages) : current.hoverImages);
@@ -71,6 +72,7 @@ export default async function handler(req: any, res: any) {
           name = ${name}, 
           category = ${category}, 
           description = ${description}, 
+          "subTitle" = ${subTitle},
           material = ${material}, 
           price = ${price}, 
           images = ${JSON.stringify(images || [])}, 

@@ -34,7 +34,8 @@ export default function ProductDetail() {
           <Link to="/shop" className="text-xs uppercase tracking-widest font-semibold hover:text-cobalt transition-colors hidden md:block mr-4 border-r border-black/10 pr-4">Collection</Link>
           <div>
             <span className="text-[10px] uppercase font-bold text-orange font-sans block mb-1">{product.category}</span>
-            <h1 className="text-xl font-bold font-sans tracking-tight">{product.name}</h1>
+            <h1 className="text-xl font-bold font-sans tracking-tight leading-tight">{product.name}</h1>
+            <p className="text-[10px] font-serif italic text-ink/60">{product.subTitle}</p>
           </div>
         </div>
         <div className="flex items-center gap-6">

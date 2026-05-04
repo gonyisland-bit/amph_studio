@@ -43,51 +43,43 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Right Side: Featured Products Grid with softer styling mixed */}
-        <section className="flex-[1.2] p-6 lg:p-12 bg-silver/20 overflow-x-auto hide-scrollbar flex items-stretch">
+        {/* Right Side: Featured Products Magazine Layout */}
+        <section className="flex-[1.4] p-6 lg:p-16 bg-white overflow-y-auto">
           {featured.length === 0 ? (
             <div className="w-full h-full flex items-center justify-center text-ink/40 font-serif italic">No featured products selected.</div>
           ) : (
-            <div className="grid grid-rows-2 gap-6 auto-cols-[280px] sm:auto-cols-[320px] grid-flow-col w-max min-h-[500px]">
+            <div className="columns-1 sm:columns-2 gap-12 space-y-16">
               {featured.map((product, index) => {
-                const isTall = index % 3 === 0;
-                const isPink = index % 3 === 2;
+                const isEven = index % 2 === 0;
                 
                 return (
                   <Link 
                     to={`/product/${product.id}`}
                     key={product.id}
-                    className={`group relative p-6 flex flex-col justify-between transition-transform duration-500 hover:-translate-y-2 rounded-[24px] overflow-hidden ${
-                      isTall ? 'row-span-2 bg-white border border-black/5 shadow-sm text-ink' : isPink ? 'bg-pink text-ink' : 'bg-cobalt text-white'
-                    }`}
+                    className={`group relative block break-inside-avoid transition-all duration-700 ${isEven ? 'mt-0' : 'mt-12 sm:mt-24'}`}
                   >
-                    <div className="z-10 flex justify-between items-start w-full relative">
-                      <span className={`text-[10px] uppercase font-bold mb-1 font-sans ${isPink ? 'text-ink/60' : isTall ? 'text-orange' : 'text-white/60'}`}>
-                        {product.category}
-                      </span>
-                      <div className={`w-8 h-8 rounded-full border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${isTall ? 'border-black/10 text-ink' : isPink ? 'border-ink/20 text-ink' : 'border-white/20 text-white'}`}>
-                        <ArrowRight size={14} />
-                      </div>
+                    <div className="relative overflow-hidden mb-4">
+                      <img 
+                        src={product.images?.[0] || ''} 
+                        alt={product.name} 
+                        className="w-full h-auto object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-ink/5 group-hover:bg-transparent transition-colors duration-500"></div>
                     </div>
                     
-                    <div className="mt-4 flex-grow flex flex-col z-10 relative">
-                      <div className="text-2xl font-bold font-sans tracking-tight leading-none mb-4">
-                        {product.name.split(' ').map((word, i) => (
-                          <span key={i}>{word}<br/></span>
-                        ))}
+                    <div className="flex justify-between items-end border-b border-black/10 pb-2">
+                      <div>
+                        <span className="text-[9px] uppercase font-bold tracking-tighter text-orange font-sans block mb-1">
+                          {product.category}
+                        </span>
+                        <h2 className="text-xl md:text-2xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors">
+                          {product.name}
+                        </h2>
+                        <p className="text-[10px] font-serif italic text-ink/60 mt-1">{product.subTitle}</p>
                       </div>
-                    </div>
-
-                    {/* Background Image Setup */}
-                    <div className="absolute inset-0 w-full h-full p-2 z-0">
-                      <div className={`w-full h-full rounded-[16px] overflow-hidden bg-black/5 relative`}>
-                        <img 
-                            src={product.images?.[0] || ''} 
-                            alt={product.name} 
-                            className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ${!isTall && !isPink ? 'opacity-80 mix-blend-luminosity' : 'mix-blend-multiply opacity-90'}`}
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent group-hover:from-transparent transition-colors"></div>
+                      <div className="text-[10px] font-bold text-ink/40 mb-1">
+                        {index + 1 < 10 ? `0${index + 1}` : index + 1}
                       </div>
                     </div>
                   </Link>
