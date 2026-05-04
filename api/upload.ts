@@ -2,8 +2,10 @@ import { handleUpload } from '@vercel/blob/client';
 
 export default async function handler(req: any, res: any) {
   try {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    
     const jsonResponse = await handleUpload({
-      body: req.body,
+      body,
       request: req,
       onBeforeGenerateToken: async (pathname) => {
         return {
