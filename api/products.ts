@@ -21,10 +21,10 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST') {
     try {
-      const { id: newId, name, category, description, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku } = req.body;
+      const { id: newId, name, category, description, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color } = req.body;
       await sql`
         INSERT INTO products (
-          id, name, category, description, material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku
+          id, name, category, description, material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color
         ) VALUES (
           ${newId}, ${name}, ${category}, ${description}, ${material}, ${price}, 
           ${JSON.stringify(images || [])}, 
@@ -33,7 +33,8 @@ export default async function handler(req: any, res: any) {
           ${isFeatured || false},
           ${dimensions || ''},
           ${shipping || ''},
-          ${sku || ''}
+          ${sku || ''},
+          ${color || ''}
         )
       `;
       return res.status(201).json({ success: true, id: newId });
@@ -63,6 +64,7 @@ export default async function handler(req: any, res: any) {
       const dimensions = req.body.dimensions !== undefined ? req.body.dimensions : current.dimensions;
       const shipping = req.body.shipping !== undefined ? req.body.shipping : current.shipping;
       const sku = req.body.sku !== undefined ? req.body.sku : current.sku;
+      const color = req.body.color !== undefined ? req.body.color : current.color;
 
       await sql`
         UPDATE products SET 
@@ -77,7 +79,8 @@ export default async function handler(req: any, res: any) {
           "isFeatured" = ${isFeatured},
           dimensions = ${dimensions},
           shipping = ${shipping},
-          sku = ${sku}
+          sku = ${sku},
+          color = ${color}
         WHERE id = ${id}
       `;
       return res.status(200).json({ success: true, id });

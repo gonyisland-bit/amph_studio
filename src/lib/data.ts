@@ -19,6 +19,7 @@ export interface Product {
   dimensions?: string;
   shipping?: string;
   sku?: string;
+  color?: string;
 }
 
 export interface JournalArticle {

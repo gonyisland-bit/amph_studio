@@ -71,47 +71,54 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Right Side: Details */}
+        {/* Right Side: Overview */}
         <div className="flex-1 p-6 md:p-16 flex flex-col bg-off-white">
           <h2 className="text-sm font-semibold uppercase tracking-widest mb-6 font-sans text-ink/40">Product Overview</h2>
           <p className="text-3xl leading-snug mb-12 font-serif italic text-ink/90">{product.description}</p>
           
-          <div className="flex flex-col gap-8 mb-12">
-            {product.contentBlocks?.map((block, idx) => {
-              if (block.type === 'text') {
-                return <p key={idx} className="text-sm font-sans leading-relaxed text-ink/70">{block.value}</p>;
-              }
-              if (block.type === 'image') {
-                return <img key={idx} src={block.value} alt="" className="w-full rounded-2xl mix-blend-multiply shadow-sm" referrerPolicy="no-referrer" />;
-              }
-              return null;
-            })}
-          </div>
-          
-          <div className="border-t border-black/10 pt-8 mt-auto flex-grow flex flex-col justify-end">
-            <div className="grid grid-cols-2 gap-8 mb-8">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">Material</span>
-                <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">{product.material}</span>
-              </div>
-              <div>
-                <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">Dimensions</span>
-                <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">{product.dimensions || '—'}</span>
-              </div>
+          <div className="grid grid-cols-2 gap-y-10 gap-x-8">
+            <div>
+              <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">Material</span>
+              <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">{product.material}</span>
             </div>
-            <div className="grid grid-cols-2 gap-8">
-               <div>
-                <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">Shipping</span>
-                <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">{product.shipping || '—'}</span>
-              </div>
-              <div>
-                <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">SKU</span>
-                <span className="text-sm font-mono font-semibold border-b border-black/20 pb-1">{product.sku || product.id.toUpperCase()}</span>
-              </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">Color</span>
+              <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">{product.color || '—'}</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">Dimensions</span>
+              <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">{product.dimensions || '—'}</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">Shipping</span>
+              <span className="text-sm font-semibold font-sans border-b border-black/20 pb-1">{product.shipping || '—'}</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-ink/50 font-sans block mb-2">SKU</span>
+              <span className="text-sm font-mono font-semibold border-b border-black/20 pb-1">{product.sku || product.id.toUpperCase()}</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Content Blocks Section (Scrollable Area) */}
+      {product.contentBlocks && product.contentBlocks.length > 0 && (
+        <div className="px-6 md:px-20 py-20 max-w-5xl mx-auto flex flex-col gap-16">
+          {product.contentBlocks.map((block, idx) => {
+            if (block.type === 'text') {
+              return <p key={idx} className="text-2xl font-sans leading-relaxed text-ink/80 max-w-3xl">{block.value}</p>;
+            }
+            if (block.type === 'image') {
+              return (
+                <div key={idx} className="w-full bg-silver/10 p-12 rounded-[40px]">
+                  <img src={block.value} alt="" className="w-full h-auto object-cover rounded-2xl mix-blend-multiply shadow-sm" referrerPolicy="no-referrer" />
+                </div>
+              );
+            }
+            return null;
+          })}
+        </div>
+      )}
 
       {/* Amplify With */}
       <div className="border-t border-black/10 p-6 md:p-12 lg:p-20 bg-white">

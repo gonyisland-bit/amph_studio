@@ -318,9 +318,11 @@ export default function Admin() {
                 <div className="grid grid-cols-2 gap-4">
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Dimensions</label>
                     <input value={form.dimensions || ''} onChange={e => setForm({...form, dimensions: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. H 45cm x W 40cm" /></div>
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Shipping</label>
-                    <input value={form.shipping || ''} onChange={e => setForm({...form, shipping: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. 2-3 Business Days" /></div>
+                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Color</label>
+                    <input value={form.color || ''} onChange={e => setForm({...form, color: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. Chrome / Black" /></div>
                 </div>
+                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Shipping</label>
+                  <input value={form.shipping || ''} onChange={e => setForm({...form, shipping: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" placeholder="e.g. 2-3 Business Days" /></div>
 
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">SKU</label>
                   <input value={form.sku || ''} onChange={e => setForm({...form, sku: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
