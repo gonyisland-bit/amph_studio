@@ -15,6 +15,60 @@ const emptySpace: Omit<SpaceModel, 'id'> = {
   title: '', location: '', description: '', address: '', hours: '', image: ''
 };
 
+const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label?: string }) => {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.url) {
+        onChange(data.url);
+      } else {
+        alert('Upload failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading file');
+    } finally {
+      setUploading(false);
+      e.target.value = ''; // Reset input
+    }
+  };
+
+  return (
+    <div className="w-full">
+      {label && <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">{label}</label>}
+      <div className="flex gap-2 items-center">
+        <input 
+          value={value} 
+          onChange={e => onChange(e.target.value)} 
+          className="flex-1 border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt text-xs" 
+          placeholder="Image URL"
+        />
+        <span className="text-xs text-ink/50">or</span>
+        <input 
+          type="file" 
+          accept="image/*" 
+          onChange={handleFileChange}
+          className="text-xs file:mr-2 file:py-1 file:px-2 file:border-0 file:text-[10px] file:uppercase file:font-bold file:bg-cobalt file:text-white hover:file:bg-orange file:cursor-pointer"
+          disabled={uploading}
+        />
+      </div>
+      {uploading && <div className="text-[10px] text-orange animate-pulse mt-1">Uploading to Vercel Blob...</div>}
+    </div>
+  );
+};
+
+
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<'products'|'journals'|'spaces'>('products');
   
@@ -89,9 +143,9 @@ export default function Admin() {
               <option value="image">Image</option>
           </select>
           {cb.type === 'image' ? (
-              <input value={cb.value} onChange={e => {
-                const newCb = [...form.contentBlocks]; newCb[i].value = e.target.value; setForm({...form, contentBlocks: newCb});
-              }} className="flex-1 border border-black/20 p-1 text-xs outline-none" placeholder="Image URL"/>
+              <ImageUploadInput value={cb.value} onChange={val => {
+                const newCb = [...form.contentBlocks]; newCb[i].value = val; setForm({...form, contentBlocks: newCb});
+              }} />
           ) : (
               <textarea value={cb.value} onChange={e => {
                 const newCb = [...form.contentBlocks]; newCb[i].value = e.target.value; setForm({...form, contentBlocks: newCb});
@@ -137,17 +191,16 @@ export default function Admin() {
                   <input required value={form.material || ''} onChange={e => setForm({...form, material: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
                   <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={3} /></div>
-                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Primary Image URL</label>
-                  <input required value={form.images?.[0] || ''} onChange={e => {
-                    const newImages = [...(form.images || [''])]; newImages[0] = e.target.value; setForm({...form, images: newImages});
-                  }} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
+                <div><ImageUploadInput label="Primary Image URL" value={form.images?.[0] || ''} onChange={val => {
+                    const newImages = [...(form.images || [''])]; newImages[0] = val; setForm({...form, images: newImages});
+                  }} /></div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Hover Images URLs</label>
                   {form.hoverImages?.map((img:string, i:number) => (
                     <div key={i} className="flex gap-2 mb-2">
-                       <input value={img} onChange={e => {
-                         const newH = [...form.hoverImages]; newH[i] = e.target.value; setForm({...form, hoverImages: newH});
-                       }} className="flex-1 border border-black/20 p-1 text-xs outline-none focus:border-cobalt bg-transparent" />
+                       <ImageUploadInput value={img} onChange={val => {
+                         const newH = [...form.hoverImages]; newH[i] = val; setForm({...form, hoverImages: newH});
+                       }} />
                        <button type="button" onClick={() => setForm({...form, hoverImages: form.hoverImages.filter((_:any, idx:number) => idx !== i)})} className="text-orange text-xs hover:underline font-bold px-2">X</button>
                     </div>
                   ))}
@@ -165,8 +218,7 @@ export default function Admin() {
                   <input required value={form.category || ''} onChange={e => setForm({...form, category: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Date</label>
                   <input required value={form.date || ''} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Hero Image URL</label>
-                  <input required value={form.image || ''} onChange={e => setForm({...form, image: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
+                <div><ImageUploadInput label="Hero Image URL" value={form.image || ''} onChange={val => setForm({...form, image: val})} /></div>
                 {renderContentBlocksEditor()}
               </>
             )}
@@ -183,8 +235,7 @@ export default function Admin() {
                   <textarea required value={form.address || ''} onChange={e => setForm({...form, address: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={2}/></div>
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Hours</label>
                   <textarea required value={form.hours || ''} onChange={e => setForm({...form, hours: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={2}/></div>
-                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Image URL</label>
-                  <input required value={form.image || ''} onChange={e => setForm({...form, image: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
+                <div><ImageUploadInput label="Image URL" value={form.image || ''} onChange={val => setForm({...form, image: val})} /></div>
               </>
             )}
 

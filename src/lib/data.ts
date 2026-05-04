@@ -163,15 +163,65 @@ let productsStore = [...mockProducts];
 let journalsStore = [...mockJournals];
 let spacesStore = [...mockSpaces];
 
-export const getProducts = () => Promise.resolve([...productsStore]);
-export const getProductById = (id: string) => Promise.resolve(productsStore.find(p => p.id === id) || null);
-export const addProduct = (product: Product) => { productsStore.push(product); return Promise.resolve(product); };
-export const updateProduct = (id: string, updates: Partial<Product>) => {
-  const index = productsStore.findIndex(p => p.id === id);
-  if(index !== -1) { productsStore[index] = { ...productsStore[index], ...updates }; return Promise.resolve(productsStore[index]); }
-  return Promise.reject(new Error("Product not found"));
+export const getProducts = async (): Promise<Product[]> => {
+  try {
+    const res = await fetch('/api/products');
+    if (!res.ok) throw new Error('Network response was not ok');
+    return res.json();
+  } catch (error) {
+    console.error("Failed to fetch products from DB, falling back to mock store:", error);
+    return Promise.resolve([...productsStore]);
+  }
 };
-export const deleteProduct = (id: string) => { productsStore = productsStore.filter(p => p.id !== id); return Promise.resolve(); };
+
+export const getProductById = async (id: string): Promise<Product | null> => {
+  const products = await getProducts();
+  return products.find(p => p.id === id) || null;
+};
+
+export const addProduct = async (product: Product): Promise<Product> => {
+  try {
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product)
+    });
+    if (!res.ok) throw new Error('Failed to add product via API');
+    return product;
+  } catch (error) {
+    console.error("Failed to add product to DB, adding to mock store:", error);
+    productsStore.push(product);
+    return Promise.resolve(product);
+  }
+};
+
+export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product> => {
+  try {
+    const res = await fetch(`/api/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    if (!res.ok) throw new Error('Failed to update product via API');
+    return { id, ...updates } as Product;
+  } catch (error) {
+    console.error("Failed to update product in DB, updating mock store:", error);
+    const index = productsStore.findIndex(p => p.id === id);
+    if(index !== -1) { productsStore[index] = { ...productsStore[index], ...updates }; return Promise.resolve(productsStore[index]); }
+    return Promise.reject(new Error("Product not found"));
+  }
+};
+
+export const deleteProduct = async (id: string): Promise<void> => {
+  try {
+    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete product via API');
+  } catch (error) {
+    console.error("Failed to delete product in DB, deleting from mock store:", error);
+    productsStore = productsStore.filter(p => p.id !== id);
+    return Promise.resolve();
+  }
+};
 
 export const getJournals = () => Promise.resolve([...journalsStore]);
 export const getJournalById = (id: string) => Promise.resolve(journalsStore.find(j => j.id === id) || null);
