@@ -18,10 +18,9 @@ const emptySpace: Omit<SpaceModel, 'id'> = {
 
 const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label?: string }) => {
   const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
+  const handleUpload = async (file: File) => {
     setUploading(true);
     try {
       const newBlob = await upload(file.name, file, {
@@ -34,37 +33,42 @@ const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange:
       alert('Error uploading file');
     } finally {
       setUploading(false);
-      e.target.value = ''; // Reset input
     }
   };
 
+  const onDrag = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.type === "dragenter" || e.type === "dragover") setDragActive(true); else if (e.type === "dragleave") setDragActive(false); };
+  const onDrop = async (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) await handleUpload(e.dataTransfer.files[0]); };
+
+  const idSafeLabel = label ? label.replace(/\s+/g, '-') : Math.random().toString(36).substring(7);
+
   return (
-    <div className="w-full">
-      {label && <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">{label}</label>}
-      <div className="flex gap-2 items-center">
-        <input 
-          value={value} 
-          onChange={e => onChange(e.target.value)} 
-          className="flex-1 border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt text-xs" 
-          placeholder="Image URL"
-        />
-        <span className="text-xs text-ink/50">or</span>
-        <input 
-          type="file" 
-          accept="image/*" 
-          onChange={handleFileChange}
-          className="text-xs file:mr-2 file:py-1 file:px-2 file:border-0 file:text-[10px] file:uppercase file:font-bold file:bg-cobalt file:text-white hover:file:bg-orange file:cursor-pointer"
-          disabled={uploading}
-        />
+    <div className="w-full mb-4">
+      {label && <label className="block text-[10px] font-bold uppercase text-ink/50 mb-2">{label}</label>}
+      <div 
+        className={`relative border-2 border-dashed rounded-[12px] flex flex-col items-center justify-center p-4 transition-colors cursor-pointer min-h-[120px] ${dragActive ? 'border-cobalt bg-cobalt/5' : 'border-black/20 bg-black/5 hover:bg-black/10'}`}
+        onDragEnter={onDrag} onDragLeave={onDrag} onDragOver={onDrag} onDrop={onDrop}
+        onClick={() => document.getElementById(`file-${idSafeLabel}`)?.click()}
+      >
+        <input id={`file-${idSafeLabel}`} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleUpload(e.target.files[0]); }} />
+        {uploading ? (
+           <div className="text-orange text-xs animate-pulse font-bold">Uploading...</div>
+        ) : value ? (
+           <img src={value} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" />
+        ) : (
+           <div className="text-center text-xs text-ink/50"><span className="text-cobalt font-bold">Click to upload</span> or drag and drop</div>
+        )}
       </div>
-      {uploading && <div className="text-[10px] text-orange animate-pulse mt-1">Uploading to Vercel Blob...</div>}
+      <div className="mt-2 flex gap-2 items-center">
+        <span className="text-[10px] uppercase font-bold text-ink/40 whitespace-nowrap">Or URL:</span>
+        <input value={value} onChange={e => onChange(e.target.value)} className="flex-1 border-b border-black/20 bg-transparent outline-none focus:border-cobalt text-xs py-1" placeholder="https://" />
+      </div>
     </div>
   );
 };
 
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState<'products'|'journals'|'spaces'>('products');
+  const [activeTab, setActiveTab] = useState<'collection'|'journal'|'space'|'shop'>('collection');
   
   const [products, setProducts] = useState<Product[]>([]);
   const [journals, setJournals] = useState<JournalArticle[]>([]);
@@ -78,30 +82,30 @@ export default function Admin() {
   }, [activeTab]);
 
   const loadData = () => {
-    if (activeTab === 'products') getProducts().then(setProducts);
-    if (activeTab === 'journals') getJournals().then(setJournals);
-    if (activeTab === 'spaces') getSpaces().then(setSpaces);
+    getProducts().then(setProducts); // Always load products for both collection and shop
+    if (activeTab === 'journal') getJournals().then(setJournals);
+    if (activeTab === 'space') getSpaces().then(setSpaces);
   };
 
-  const switchTab = (tab: 'products'|'journals'|'spaces') => {
+  const switchTab = (tab: 'collection'|'journal'|'space'|'shop') => {
     setActiveTab(tab);
     setEditingId(null);
-    if (tab === 'products') setForm(emptyProduct);
-    if (tab === 'journals') setForm(emptyJournal);
-    if (tab === 'spaces') setForm(emptySpace);
+    if (tab === 'shop') setForm(emptyProduct);
+    if (tab === 'journal') setForm(emptyJournal);
+    if (tab === 'space') setForm(emptySpace);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeTab === 'products') {
+    if (activeTab === 'shop') {
       if (editingId) await updateProduct(editingId, form);
       else await addProduct({ ...form, id: `prod-${Date.now()}` });
       setForm(emptyProduct);
-    } else if (activeTab === 'journals') {
+    } else if (activeTab === 'journal') {
       if (editingId) await updateJournal(editingId, form);
       else await addJournal({ ...form, id: `j-${Date.now()}` });
       setForm(emptyJournal);
-    } else if (activeTab === 'spaces') {
+    } else if (activeTab === 'space') {
       if (editingId) await updateSpace(editingId, form);
       else await addSpace({ ...form, id: `s-${Date.now()}` });
       setForm(emptySpace);
@@ -117,9 +121,9 @@ export default function Admin() {
 
   const handleDelete = async (id: string) => {
     if(!confirm('Delete item?')) return;
-    if (activeTab === 'products') await deleteProduct(id);
-    if (activeTab === 'journals') await deleteJournal(id);
-    if (activeTab === 'spaces') await deleteSpace(id);
+    if (activeTab === 'shop') await deleteProduct(id);
+    if (activeTab === 'journal') await deleteJournal(id);
+    if (activeTab === 'space') await deleteSpace(id);
     loadData();
   };
 
@@ -159,7 +163,7 @@ export default function Admin() {
       <h1 className="text-4xl font-bold font-sans tracking-tight mb-6">Admin Dashboard</h1>
       
       <div className="flex gap-4 mb-8 border-b border-black/10 pb-4">
-        {['products', 'journals', 'spaces'].map(tab => (
+        {['collection', 'journal', 'space', 'shop'].map(tab => (
           <button key={tab} onClick={() => switchTab(tab as any)} className={`capitalize text-sm font-bold tracking-widest ${activeTab === tab ? 'text-cobalt border-b-2 border-cobalt pb-1' : 'text-ink/40 hover:text-ink'}`}>
             {tab}
           </button>
@@ -171,7 +175,13 @@ export default function Admin() {
           <h2 className="text-xl font-semibold mb-6 font-sans capitalize">{editingId ? `Edit ${activeTab.slice(0,-1)}` : `Add New ${activeTab.slice(0,-1)}`}</h2>
           <form onSubmit={handleSave} className="space-y-4 font-sans text-sm">
             
-            {activeTab === 'products' && (
+            {activeTab === 'collection' && (
+              <div className="text-ink/60 leading-relaxed font-serif italic text-sm border-l-2 border-cobalt pl-4">
+                Select products from the right list to feature them on the Home page (Collection view).
+              </div>
+            )}
+            
+            {activeTab === 'shop' && (
               <>
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Name</label>
                   <input required value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
@@ -204,7 +214,7 @@ export default function Admin() {
               </>
             )}
 
-            {activeTab === 'journals' && (
+            {activeTab === 'journal' && (
               <>
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                   <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
@@ -217,7 +227,7 @@ export default function Admin() {
               </>
             )}
 
-            {activeTab === 'spaces' && (
+            {activeTab === 'space' && (
               <>
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                   <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
@@ -233,12 +243,14 @@ export default function Admin() {
               </>
             )}
 
-            <div className="pt-4 flex gap-4">
-              <button type="submit" className="bg-cobalt text-white px-6 py-2 uppercase text-xs tracking-widest font-bold hover:bg-orange transition-colors">Save</button>
-              {editingId && (
-                <button type="button" onClick={() => { setEditingId(null); switchTab(activeTab); }} className="text-xs uppercase font-bold text-ink/60 hover:text-ink">Cancel</button>
-              )}
-            </div>
+            {activeTab !== 'collection' && (
+              <div className="pt-4 flex gap-4">
+                <button type="submit" className="bg-cobalt text-white px-6 py-2 uppercase text-xs tracking-widest font-bold hover:bg-orange transition-colors">Save</button>
+                {editingId && (
+                  <button type="button" onClick={() => { setEditingId(null); switchTab(activeTab); }} className="text-xs uppercase font-bold text-ink/60 hover:text-ink">Cancel</button>
+                )}
+              </div>
+            )}
           </form>
         </div>
 
@@ -254,7 +266,7 @@ export default function Admin() {
                 </tr>
               </thead>
               <tbody>
-                  {activeTab === 'products' && products.map(p => (
+                  {(activeTab === 'shop' || activeTab === 'collection') && products.map(p => (
                     <tr key={p.id} className="border-b border-black/10 hover:bg-black/5">
                       <td className="py-3"><div className="w-12 h-12 bg-silver"><img src={p.images[0]} className="w-full h-full object-cover mix-blend-multiply" referrerPolicy="no-referrer" /></div></td>
                       <td className="py-3">
@@ -262,12 +274,23 @@ export default function Admin() {
                         <div className="text-[10px] text-orange uppercase">{p.category} - ${p.price}</div>
                       </td>
                       <td className="py-3 text-right">
-                        <button onClick={() => handleEdit(p)} className="text-cobalt text-xs font-semibold mr-4 hover:underline">Edit</button>
-                        <button onClick={() => handleDelete(p.id)} className="text-orange text-xs font-semibold hover:underline">Delete</button>
+                        {activeTab === 'shop' ? (
+                          <>
+                            <button onClick={() => handleEdit(p)} className="text-cobalt text-xs font-semibold mr-4 hover:underline">Edit</button>
+                            <button onClick={() => handleDelete(p.id)} className="text-orange text-xs font-semibold hover:underline">Delete</button>
+                          </>
+                        ) : (
+                          <button onClick={async () => {
+                            await updateProduct(p.id, { isFeatured: !p.isFeatured });
+                            loadData();
+                          }} className={`text-xs font-semibold px-3 py-1 rounded-full border ${p.isFeatured ? 'bg-cobalt text-white border-cobalt' : 'bg-transparent text-ink/40 border-black/20 hover:border-cobalt'}`}>
+                            {p.isFeatured ? 'Selected' : 'Select'}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
-                  {activeTab === 'journals' && journals.map(j => (
+                  {activeTab === 'journal' && journals.map(j => (
                     <tr key={j.id} className="border-b border-black/10 hover:bg-black/5">
                       <td className="py-3"><div className="w-16 h-12 bg-silver"><img src={j.image} className="w-full h-full object-cover mix-blend-multiply" referrerPolicy="no-referrer" /></div></td>
                       <td className="py-3">
@@ -280,7 +303,7 @@ export default function Admin() {
                       </td>
                     </tr>
                   ))}
-                  {activeTab === 'spaces' && spaces.map(s => (
+                  {activeTab === 'space' && spaces.map(s => (
                     <tr key={s.id} className="border-b border-black/10 hover:bg-black/5">
                       <td className="py-3"><div className="w-16 h-12 bg-silver"><img src={s.image} className="w-full h-full object-cover mix-blend-multiply" referrerPolicy="no-referrer" /></div></td>
                       <td className="py-3">
