@@ -9,7 +9,7 @@
   --color-off-white: #FAF9F6;
   --color-ink: #1A1A1A;
   --font-sans: "Inter", "Helvetica Neue", Helvetica, sans-serif;
-  --font-serif: "Cormorant Garamond", serif;
+  --font-serif: "Inter", "Helvetica Neue", Helvetica, sans-serif;
 
   --animate-marquee: marquee 20s linear infinite;
   @keyframes marquee {

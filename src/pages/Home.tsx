@@ -105,14 +105,10 @@ export default function Home() {
               className={`group flex flex-col md:flex-row h-auto md:h-[45vh] border-b last:border-b-0 border-black/5 relative overflow-hidden transition-colors hover:bg-black/[0.02]`}
             >
               {/* Content Side */}
-              <div className={`flex-1 p-8 md:p-16 flex flex-col justify-end pb-8 z-10 ${isEven ? 'md:order-1' : 'md:order-2'}`}>
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-cobalt mb-2 block">0{idx + 1} // {item.key}</span>
-                <h3 className="text-4xl md:text-7xl font-black uppercase tracking-tighter mb-4 leading-[0.85]">{intro.title}</h3>
-                <p className="text-lg md:text-xl font-serif italic text-ink/70 max-w-sm mb-6">{intro.description}</p>
-                <div className="flex items-center gap-4 group-hover:gap-6 transition-all duration-500">
-                  <span className="text-[11px] font-bold uppercase tracking-widest border-b-2 border-cobalt pb-1">Enter Experience</span>
-                  <ArrowRight size={16} className="text-cobalt" />
-                </div>
+              <div className={`flex-1 p-8 md:p-16 lg:p-24 flex flex-col justify-end pb-4 md:pb-12 z-10 ${isEven ? 'md:order-1' : 'md:order-2'}`}>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-cobalt mb-1 md:mb-2 block opacity-50">0{idx + 1} // {item.key}</span>
+                <h3 className="text-4xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-2 md:mb-4 leading-[0.85]">{intro.title}</h3>
+                <p className="text-base md:text-lg lg:text-xl font-serif text-ink/70 max-w-sm">{intro.description}</p>
               </div>
               
               {/* Image Side */}

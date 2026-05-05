@@ -4,11 +4,11 @@ import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultH
 
 const CATEGORIES: Category[] = ['Chairs', 'Tables', 'Lighting', 'Objects'];
 const CATEGORY_LABELS: Record<string, string> = {
-  'All': 'all',
-  'Chairs': 'chair',
-  'Tables': 'table',
-  'Lighting': 'lighting',
-  'Objects': 'object'
+  'All': 'ALL',
+  'Chairs': 'CHAIR',
+  'Tables': 'TABLE',
+  'Lighting': 'LIGHTING',
+  'Objects': 'OBJECT'
 };
 
 export default function Collection() {
@@ -45,7 +45,7 @@ export default function Collection() {
           <p className="text-lg md:text-xl font-serif italic text-ink/60 max-w-2xl">{settings.hubSettings?.collection?.description}</p>
         </div>
 
-        <div className="flex flex-nowrap overflow-x-auto hide-scrollbar gap-10 text-[10px] uppercase tracking-[0.2em] font-black font-sans border-t border-black/5 pt-8 -mb-8">
+        <div className="flex flex-nowrap overflow-x-auto hide-scrollbar gap-8 md:gap-12 text-[10px] uppercase tracking-[0.2em] font-black font-sans border-t border-black/5 pt-8 -mb-8 pr-12 md:pr-0">
           <button 
             className={`transition-all pb-4 border-b-2 whitespace-nowrap ${activeCategory === 'All' ? 'border-cobalt text-cobalt' : 'border-transparent text-ink/40 hover:text-ink'}`}
             onClick={() => setActiveCategory('All')}
