@@ -330,7 +330,7 @@ export const defaultHomeSettings: HomeSettings = {
   featuredProductIds: [],
   globalProductOrder: [],
   heroSlides: [
-    { id: '1', title: "Amplify\nYour\nOrdinary.", subtitle: "The Muse — Vol 01", image: '' }
+    { id: '1', title: "", subtitle: "", image: '' }
   ],
   heroTransitionSpeed: 5,
   intros: {

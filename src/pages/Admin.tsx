@@ -325,21 +325,94 @@ export default function Admin() {
             <form onSubmit={handleSave} className="space-y-4 text-sm">
               
               {activeTab === 'home' && (
-                <div className="space-y-6">
-                  {/* Home settings fields (omitted for brevity but same as before) */}
-                  <div className="border-b border-black/10 pb-6 mb-6">
-                    <h3 className="font-bold text-xs uppercase text-ink/40 mb-4">General Copy</h3>
-                    <div className="grid gap-4">
-                      <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Subtitle</label>
-                        <input value={homeSettings.subtitle} onChange={e => setHomeSettings({...homeSettings, subtitle: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                      <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
-                        <textarea value={homeSettings.title} onChange={e => setHomeSettings({...homeSettings, title: e.target.value})} rows={3} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                      <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
-                        <textarea value={homeSettings.description} onChange={e => setHomeSettings({...homeSettings, description: e.target.value})} rows={2} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                      <button type="button" onClick={async () => { setSavingSettings(true); await updateHomeSettings(homeSettings); setSavingSettings(false); alert('Saved!'); }} className="bg-cobalt text-white px-6 py-2 uppercase text-[10px] font-black hover:bg-ink transition-colors">{savingSettings ? 'Saving...' : 'Save All Settings'}</button>
+                <div className="space-y-8">
+                  {/* General Copy */}
+                  <div className="bg-black/5 p-6 rounded-2xl border border-black/5">
+                    <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center gap-2">
+                      <ExternalLink size={14} /> Global Settings
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Marquee Text</label>
+                        <input value={homeSettings.marquee} onChange={e => setHomeSettings({...homeSettings, marquee: e.target.value})} className="w-full border border-black/20 p-2 bg-white outline-none focus:border-cobalt rounded-lg" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Hero Transition Speed (sec)</label>
+                        <input type="number" value={homeSettings.heroTransitionSpeed} onChange={e => setHomeSettings({...homeSettings, heroTransitionSpeed: Number(e.target.value)})} className="w-full border border-black/20 p-2 bg-white outline-none focus:border-cobalt rounded-lg" />
+                      </div>
+                      <button type="button" onClick={async () => { setSavingSettings(true); await updateHomeSettings(homeSettings); setSavingSettings(false); alert('Settings Saved!'); }} className="w-full bg-cobalt text-white py-3 uppercase text-[10px] font-black hover:bg-ink transition-colors rounded-xl shadow-md">{savingSettings ? 'Saving...' : 'Save All Global Settings'}</button>
                     </div>
                   </div>
-                  {/* ... other settings fields ... */}
+
+                  {/* Hero Slides */}
+                  <div className="bg-black/5 p-6 rounded-2xl border border-black/5">
+                    <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center justify-between">
+                      <span>Hero Slides</span>
+                      <button type="button" onClick={() => {
+                        const newSlides = [...homeSettings.heroSlides, { id: Date.now().toString(), title: '', subtitle: '', image: '' }];
+                        setHomeSettings({...homeSettings, heroSlides: newSlides});
+                      }} className="bg-ink text-white px-3 py-1 rounded-full text-[9px]">+ Add Slide</button>
+                    </h3>
+                    <div className="space-y-8">
+                      {homeSettings.heroSlides.map((slide, idx) => (
+                        <div key={slide.id} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4 relative">
+                          <button type="button" onClick={() => {
+                            const newSlides = homeSettings.heroSlides.filter((_, i) => i !== idx);
+                            setHomeSettings({...homeSettings, heroSlides: newSlides});
+                          }} className="absolute top-2 right-2 text-orange hover:scale-110 transition-transform"><Trash2 size={14}/></button>
+                          
+                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title (use \n for line breaks)</label>
+                            <textarea value={slide.title} onChange={e => {
+                              const newSlides = [...homeSettings.heroSlides];
+                              newSlides[idx] = { ...newSlides[idx], title: e.target.value };
+                              setHomeSettings({...homeSettings, heroSlides: newSlides});
+                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
+                          
+                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Subtitle</label>
+                            <input value={slide.subtitle} onChange={e => {
+                              const newSlides = [...homeSettings.heroSlides];
+                              newSlides[idx] = { ...newSlides[idx], subtitle: e.target.value };
+                              setHomeSettings({...homeSettings, heroSlides: newSlides});
+                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
+                          
+                          <ImageUploadInput label="Slide Image" value={slide.image} onChange={val => {
+                            const newSlides = [...homeSettings.heroSlides];
+                            newSlides[idx] = { ...newSlides[idx], image: val };
+                            setHomeSettings({...homeSettings, heroSlides: newSlides});
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Category Intros */}
+                  <div className="bg-black/5 p-6 rounded-2xl border border-black/5">
+                    <h3 className="font-bold text-xs uppercase text-cobalt mb-6">Category Banners</h3>
+                    <div className="space-y-8">
+                      {(['collection', 'space', 'journal'] as const).map(cat => (
+                        <div key={cat} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4">
+                          <span className="text-[10px] font-black uppercase text-orange">{cat} Intro</span>
+                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
+                            <input value={homeSettings.intros[cat].title} onChange={e => {
+                              const next = { ...homeSettings.intros };
+                              next[cat] = { ...next[cat], title: e.target.value };
+                              setHomeSettings({...homeSettings, intros: next});
+                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
+                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
+                            <textarea value={homeSettings.intros[cat].description} onChange={e => {
+                              const next = { ...homeSettings.intros };
+                              next[cat] = { ...next[cat], description: e.target.value };
+                              setHomeSettings({...homeSettings, intros: next});
+                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
+                          <ImageUploadInput label="Banner Image" value={homeSettings.intros[cat].image} onChange={val => {
+                            const next = { ...homeSettings.intros };
+                            next[cat] = { ...next[cat], image: val };
+                            setHomeSettings({...homeSettings, intros: next});
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -460,10 +533,10 @@ export default function Admin() {
                   <th className="p-4 w-10">
                     <input type="checkbox" onChange={(e) => {
                       if (e.target.checked) {
-                        const allIds = activeTab === 'collection' ? products.map(p => p.id) : activeTab === 'space' ? spaces.map(s => s.id) : journals.map(j => j.id);
+                        const allIds = (activeTab === 'collection' || activeTab === 'home') ? products.map(p => p.id) : activeTab === 'space' ? spaces.map(s => s.id) : journals.map(j => j.id);
                         setSelectedIds(allIds);
                       } else setSelectedIds([]);
-                    }} checked={selectedIds.length > 0 && selectedIds.length === (activeTab === 'collection' ? products.length : activeTab === 'space' ? spaces.length : journals.length)} />
+                    }} checked={selectedIds.length > 0 && selectedIds.length === ((activeTab === 'collection' || activeTab === 'home') ? products.length : activeTab === 'space' ? spaces.length : journals.length)} />
                   </th>
                   <th className="py-4">Order</th>
                   <th className="py-4">Image</th>
