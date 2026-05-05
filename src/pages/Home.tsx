@@ -51,7 +51,7 @@ export default function Home() {
         {settings.heroSlides?.map((slide, idx) => (
           <div 
             key={slide.id} 
-            className={`absolute inset-0 flex flex-col justify-center px-6 md:px-14 transition-opacity duration-1000 ease-in-out ${idx === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+            className={`absolute inset-0 flex flex-col justify-center px-6 md:px-14 transition-opacity duration-1000 ease-in-out ${idx === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}
           >
             <div className="absolute inset-0 bg-off-white">
               {slide.image && (
@@ -59,8 +59,9 @@ export default function Home() {
                   src={slide.image} 
                   className="w-full h-full" 
                   alt={slide.title}
-                  loading={idx === 0 ? "eager" : "lazy"}
-                  fetchpriority={idx === 0 ? "high" : "auto"}
+                  loading="eager"
+                  fetchpriority={idx === activeSlide ? "high" : "auto"}
+                  key={slide.image}
                 />
               )}
               <div className="absolute inset-0 bg-black/20"></div>

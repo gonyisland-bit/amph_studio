@@ -58,6 +58,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           muted={muted}
           playsInline={playsInline}
           onLoadedData={handleLoad}
+          onCanPlay={handleLoad}
           onError={() => setError(true)}
         />
       ) : (
