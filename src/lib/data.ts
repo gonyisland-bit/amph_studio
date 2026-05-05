@@ -161,6 +161,7 @@ const mockSpaces: SpaceModel[] = [
   {
     id: "s-1",
     title: "Physical Showroom",
+    description: "Experience the interplay of industrial minimalism and vivid comfort in our flagship space. A curated environment where ordinary objects become extraordinary touchpoints.",
     images: [_a("modern minimalist showroom space in Seoul, curved walls, industrial brushed steel accents, vivid pink lighting, architectural design")],
     appliedProductIds: ["prod-1", "prod-3"]
   }
