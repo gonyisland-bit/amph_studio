@@ -20,8 +20,24 @@ export default async function handler(req: any, res: any) {
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
-    // Migration: ensure contentBlocks column exists
-    await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "contentBlocks" TEXT`;
+    // Comprehensive Migration: ensure all possible columns exist to prevent save failures
+    const columns = [
+      { name: 'contentBlocks', type: 'TEXT' },
+      { name: 'appliedProductIds', type: 'TEXT' },
+      { name: 'images', type: 'TEXT' },
+      { name: 'location', type: 'TEXT DEFAULT \'\'' },
+      { name: 'address', type: 'TEXT DEFAULT \'\'' },
+      { name: 'hours', type: 'TEXT DEFAULT \'\'' },
+      { name: 'image', type: 'TEXT DEFAULT \'\'' }
+    ];
+    for (const col of columns) {
+      try {
+        await sql.query(`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "${col.name}" ${col.type}`);
+      } catch (e) {
+        // Column might already exist or name might not need quotes, try without quotes if it fails
+        try { await sql.query(`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`); } catch(e2) {}
+      }
+    }
   } catch (e) {}
 
   if (req.method === 'GET') {
@@ -54,15 +70,20 @@ export default async function handler(req: any, res: any) {
       
       if (!targetId) return res.status(400).json({ error: 'ID is required' });
 
+      // Extremely defensive INSERT providing values for all known columns
       await sql`
-        INSERT INTO spaces (id, title, description, images, "appliedProductIds", "contentBlocks")
+        INSERT INTO spaces (
+          id, title, description, images, "appliedProductIds", "contentBlocks", 
+          location, address, hours, image
+        )
         VALUES (
           ${targetId}, 
-          ${title}, 
+          ${title || ''}, 
           ${description || ''}, 
           ${JSON.stringify(images || [])}, 
           ${JSON.stringify(appliedProductIds || [])},
-          ${JSON.stringify(contentBlocks || [])}
+          ${JSON.stringify(contentBlocks || [])},
+          '', '', '', ''
         )
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
