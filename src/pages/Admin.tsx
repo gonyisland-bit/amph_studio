@@ -488,7 +488,7 @@ export default function Admin() {
                     <input required value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Category</label>
                     <select value={form.category || 'Chairs'} onChange={e => setForm({...form, category: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt">
-                      <option>Chairs</option><option>Tables</option><option>Lighting</option><option>Objects</option>
+                      <option>Chairs</option><option>Furniture</option><option>Lighting</option><option>Objects</option>
                     </select></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Price</label>
                     <input type="number" required value={form.price || 0} onChange={e => setForm({...form, price: Number(e.target.value)})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>

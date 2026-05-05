@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 
-const CATEGORIES: Category[] = ['Chairs', 'Tables', 'Lighting', 'Objects'];
+const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
 const CATEGORY_LABELS: Record<string, string> = {
   'All': 'ALL',
   'Chairs': 'CHAIR',
-  'Tables': 'TABLE',
+  'Furniture': 'FURNITURE',
   'Lighting': 'LIGHTING',
   'Objects': 'OBJECT'
 };
@@ -22,7 +22,11 @@ export default function Collection() {
     document.title = "Collection — Amph";
   }, []);
 
-  const sortedProducts = [...products].sort((a, b) => {
+  const filteredProducts = products.filter(p => {
+    // Migration: Treat 'Tables' as 'Furniture'
+    const cat = (p.category as string) === 'Tables' ? 'Furniture' : p.category;
+    return activeCategory === 'All' || cat === activeCategory;
+  }).sort((a, b) => {
     const aIdx = settings.globalProductOrder.indexOf(a.id);
     const bIdx = settings.globalProductOrder.indexOf(b.id);
     if (aIdx === -1 && bIdx === -1) return 0;
@@ -30,10 +34,6 @@ export default function Collection() {
     if (bIdx === -1) return -1;
     return aIdx - bIdx;
   });
-
-  const filteredProducts = activeCategory === 'All' 
-    ? sortedProducts 
-    : sortedProducts.filter(p => p.category === activeCategory);
 
   return (
     <div className="flex flex-col flex-grow">

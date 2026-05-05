@@ -1,4 +1,4 @@
-export type Category = 'Chairs' | 'Tables' | 'Lighting' | 'Objects';
+export type Category = 'Chairs' | 'Furniture' | 'Lighting' | 'Objects';
 
 export interface ContentBlock {
   type: 'text' | 'image';
