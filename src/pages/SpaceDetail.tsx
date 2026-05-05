@@ -32,75 +32,88 @@ export default function SpaceDetail() {
   const displayImages = space.images || [];
 
   return (
-    <div className="flex flex-col flex-grow bg-white">
+    <div className="flex flex-col flex-grow bg-white font-sans text-ink">
       {isAuth && (
-        <Link to="/admin" className="fixed bottom-12 left-12 z-[100] bg-cobalt text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all">
+        <Link to="/admin" className="fixed bottom-8 right-8 z-[100] bg-cobalt text-white px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all">
           Edit Space
         </Link>
       )}
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md px-6 md:px-12 py-4 border-b border-black/10 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Link to="/space" className="text-xs uppercase tracking-widest font-semibold hover:text-cobalt transition-colors border-r border-black/10 pr-4">Spaces</Link>
-          <h1 className="text-xl font-bold font-sans tracking-tight">{space.title}</h1>
+
+      {/* Hero Header */}
+      <div className="relative w-full h-[70vh] md:h-[85vh] bg-silver/10">
+        <img 
+          src={displayImages[0] || space.image} 
+          alt={space.title} 
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-white/40 to-transparent" />
+        <div className="absolute bottom-12 left-6 md:left-24 max-w-4xl">
+          <Link to="/space" className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 block hover:text-cobalt transition-colors">← Back to Spaces</Link>
+          <h1 className="text-4xl md:text-8xl font-black uppercase tracking-tight leading-[0.9] text-ink">{space.title}</h1>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row flex-grow min-h-[70vh]">
-        {/* Left Side: Space Images */}
-        <div className="flex-[1.5] flex flex-col border-b md:border-b-0 md:border-r border-black/10 p-6 md:p-12 bg-silver/10 justify-center items-center relative">
-          <div className="w-full h-full max-h-[80vh] bg-black/5 rounded-[20px] overflow-hidden relative shadow-inner">
-            <img 
-              src={displayImages[activeImage]} 
-              alt={space.title} 
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-              referrerPolicy="no-referrer"
-            />
-          </div>
+      <div className="max-w-7xl mx-auto w-full px-6 md:px-24 py-12 md:py-24">
+        {/* Intro Text */}
+        <div className="max-w-3xl mb-24">
+          <p className="text-xl md:text-3xl leading-relaxed font-serif italic text-ink/80 whitespace-pre-wrap">{space.description}</p>
+        </div>
 
-          {displayImages.length > 1 && (
-            <div className="flex gap-4 mt-8 md:absolute md:bottom-12 md:left-12 flex-wrap max-w-sm">
-              {displayImages.map((img, idx) => (
-                <button 
-                  key={idx}
-                  onClick={() => setActiveImage(idx)}
-                  className={`w-16 h-16 rounded-[12px] border-2 ${activeImage === idx ? 'border-cobalt' : 'border-black/5'} bg-white overflow-hidden transition-all shadow-sm hover:border-black/20 shrink-0`}
-                >
-                  <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                </button>
+        {/* Content Blocks (Magazine Style) */}
+        <div className="space-y-24 mb-24">
+          {space.contentBlocks?.map((block, idx) => (
+            <div key={idx} className={`flex flex-col ${idx % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 items-center`}>
+              {block.type === 'image' ? (
+                <div className="w-full md:w-1/2 aspect-[4/5] rounded-[32px] overflow-hidden shadow-2xl bg-black/5">
+                  <img src={block.value} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                </div>
+              ) : (
+                <div className="w-full md:w-1/2">
+                  <p className="text-lg md:text-xl leading-relaxed text-ink/70 whitespace-pre-wrap">{block.value}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Remaining Gallery Images */}
+        {displayImages.length > 1 && (
+          <div className="mb-24">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-12 text-ink/30 border-b border-black/10 pb-4">Gallery View</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {displayImages.slice(1).map((img, idx) => (
+                <div key={idx} className="aspect-square rounded-[24px] overflow-hidden bg-black/5 group cursor-zoom-in">
+                  <img src={img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" referrerPolicy="no-referrer" />
+                </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Right Side: Info */}
-        <div className="flex-1 p-6 md:p-16 flex flex-col bg-off-white">
-          <h2 className="text-sm font-semibold uppercase tracking-widest mb-6 font-sans text-ink/40">Space Overview</h2>
-          <p className="text-3xl leading-snug mb-12 font-serif italic text-ink/90 whitespace-pre-wrap">{space.description}</p>
-          
-          {appliedProducts.length > 0 && (
-            <div className="mt-auto pt-12 border-t border-black/10">
-              <h3 className="text-xs uppercase font-bold tracking-widest mb-8 text-ink/40">Applied Items</h3>
-              <div className="grid grid-cols-2 gap-6">
-                {appliedProducts.map(p => (
-                  <Link key={p.id} to={`/product/${p.id}`} className="group block">
-                    <div className="aspect-[4/5] bg-silver/20 rounded-xl overflow-hidden mb-3">
-                      <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                    </div>
-                    <h4 className="text-sm font-bold truncate">{p.name}</h4>
-                    <p className="text-[10px] text-ink/40 uppercase">{p.category}</p>
-                  </Link>
-                ))}
-              </div>
+        {/* Applied Products */}
+        {appliedProducts.length > 0 && (
+          <div className="pt-24 border-t border-black/10">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-12 text-ink/30">Shop the Space</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {appliedProducts.map(p => (
+                <Link key={p.id} to={`/product/${p.id}`} className="group block">
+                  <div className="aspect-[4/5] bg-silver/20 rounded-[20px] overflow-hidden mb-6 shadow-sm">
+                    <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                  </div>
+                  <h4 className="text-xs font-black uppercase tracking-tight mb-1 group-hover:text-cobalt transition-colors">{p.name}</h4>
+                  <p className="text-[9px] font-bold text-ink/40 uppercase tracking-widest">{p.category}</p>
+                </Link>
+              ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Back to Spaces */}
-      <div className="p-12 md:p-24 border-t border-black/10 bg-white text-center">
-        <Link to="/space" className="inline-flex items-center gap-4 text-4xl md:text-6xl font-black uppercase tracking-tighter hover:text-cobalt transition-colors group">
-          View All Spaces <MoveRight size={48} className="group-hover:translate-x-4 transition-transform" />
+      {/* Footer Navigation */}
+      <div className="p-12 md:p-32 border-t border-black/10 bg-off-white text-center">
+        <Link to="/space" className="inline-flex items-center gap-6 text-4xl md:text-8xl font-black uppercase tracking-tighter hover:text-cobalt transition-all group">
+          Next Space <MoveRight size={64} className="group-hover:translate-x-6 transition-transform" />
         </Link>
       </div>
     </div>

@@ -1,21 +1,27 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getSpaces, SpaceModel } from "../lib/data";
+import { getSpaces, SpaceModel, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 import { MoveRight } from "lucide-react";
 
 export default function Space() {
   const [spaces, setSpaces] = useState<SpaceModel[]>([]);
+  const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
 
   useEffect(() => {
     getSpaces().then(setSpaces);
+    getHomeSettings().then(setSettings);
     document.title = "Space — Amph";
   }, []);
 
   return (
     <div className="flex flex-col flex-grow bg-white">
       <div className="p-6 md:p-14 border-b border-black/10 bg-off-white">
-        <h1 className="text-8xl md:text-[12vw] font-black tracking-tighter uppercase leading-[0.8] mb-8">Space</h1>
-        <p className="text-xl md:text-3xl font-serif italic text-ink/60 max-w-2xl">Exploring the dialogue between architectural structure and intimate objects.</p>
+        <h1 className="text-7xl md:text-[12vw] font-black tracking-tighter uppercase leading-[0.8] mb-4">
+          {settings.hubSettings?.space?.title || 'Space'}
+        </h1>
+        <p className="text-xl md:text-2xl font-serif italic text-ink/60 max-w-2xl">
+          {settings.hubSettings?.space?.description}
+        </p>
       </div>
 
       {spaces.map((space, i) => (

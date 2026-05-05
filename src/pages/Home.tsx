@@ -105,10 +105,10 @@ export default function Home() {
               className={`group flex flex-col md:flex-row h-auto md:h-[45vh] border-b last:border-b-0 border-black/5 relative overflow-hidden transition-colors hover:bg-black/[0.02]`}
             >
               {/* Content Side */}
-              <div className={`flex-1 p-8 md:p-16 flex flex-col justify-center z-10 ${isEven ? 'md:order-1' : 'md:order-2'}`}>
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-cobalt mb-4 block">0{idx + 1} // {item.key}</span>
-                <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-6 leading-[0.9]">{intro.title}</h3>
-                <p className="text-lg md:text-xl font-serif italic text-ink/70 max-w-md mb-8">{intro.description}</p>
+              <div className={`flex-1 p-8 md:p-16 flex flex-col justify-end pb-8 z-10 ${isEven ? 'md:order-1' : 'md:order-2'}`}>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-cobalt mb-2 block">0{idx + 1} // {item.key}</span>
+                <h3 className="text-4xl md:text-7xl font-black uppercase tracking-tighter mb-4 leading-[0.85]">{intro.title}</h3>
+                <p className="text-lg md:text-xl font-serif italic text-ink/70 max-w-sm mb-6">{intro.description}</p>
                 <div className="flex items-center gap-4 group-hover:gap-6 transition-all duration-500">
                   <span className="text-[11px] font-bold uppercase tracking-widest border-b-2 border-cobalt pb-1">Enter Experience</span>
                   <ArrowRight size={16} className="text-cobalt" />

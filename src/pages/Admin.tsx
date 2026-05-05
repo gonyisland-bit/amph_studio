@@ -420,6 +420,35 @@ export default function Admin() {
                     </div>
                   </div>
 
+                  {/* Hub Settings */}
+                  <div className="bg-black/5 p-8 rounded-[32px] border border-black/5 shadow-sm">
+                    <h3 className="font-bold text-xs uppercase text-cobalt mb-6">Hub Page Settings (Landings)</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {(['collection', 'space', 'journal'] as const).map(hub => (
+                        <div key={hub} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4">
+                          <span className="text-[10px] font-black uppercase text-ink/30">{hub} Hub</span>
+                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Page Title</label>
+                            <input value={homeSettings.hubSettings?.[hub]?.title} onChange={e => {
+                              const next = { ...homeSettings.hubSettings };
+                              next[hub] = { ...next[hub], title: e.target.value };
+                              setHomeSettings({...homeSettings, hubSettings: next});
+                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
+                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
+                            <textarea value={homeSettings.hubSettings?.[hub]?.description} onChange={e => {
+                              const next = { ...homeSettings.hubSettings };
+                              next[hub] = { ...next[hub], description: e.target.value };
+                              setHomeSettings({...homeSettings, hubSettings: next});
+                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
+                          <ImageUploadInput label="Header Image" value={homeSettings.hubSettings?.[hub]?.image} onChange={val => {
+                            const next = { ...homeSettings.hubSettings };
+                            next[hub] = { ...next[hub], image: val };
+                            setHomeSettings({...homeSettings, hubSettings: next});
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Featured Products (Selected Works) */}
                   <div className="bg-black/5 p-8 rounded-[32px] border border-black/5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center justify-between">

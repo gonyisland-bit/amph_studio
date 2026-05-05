@@ -1,14 +1,16 @@
 import { MoveRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getJournals, JournalArticle } from "../lib/data";
+import { getJournals, JournalArticle, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 
 export default function Journal() {
   const [hoveredArticle, setHoveredArticle] = useState<number | null>(null);
   const [articles, setArticles] = useState<JournalArticle[]>([]);
+  const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
 
   useEffect(() => {
     getJournals().then(setArticles);
+    getHomeSettings().then(setSettings);
     document.title = "Journal — Amph";
   }, []);
 
@@ -17,9 +19,11 @@ export default function Journal() {
   return (
     <div className="flex flex-col flex-grow bg-white relative">
       <div className="px-6 md:px-12 py-12 md:py-24 border-b border-black/10">
-        <h1 className="text-6xl md:text-8xl font-bold tracking-tighter uppercase font-sans mb-8">Journal</h1>
+        <h1 className="text-7xl md:text-[12vw] font-black tracking-tighter uppercase font-sans mb-4 leading-[0.8]">
+          {settings.hubSettings?.journal?.title || 'Journal'}
+        </h1>
         <p className="max-w-2xl text-xl md:text-2xl font-serif text-ink/80 leading-relaxed italic">
-          Conversations on contemporary living, exploring the intersection of raw industrial materials and vibrant, unexpected forms.
+          {settings.hubSettings?.journal?.description}
         </p>
       </div>
 

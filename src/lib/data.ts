@@ -249,37 +249,49 @@ export interface CategoryIntro {
   image: string;
 }
 
-export interface HomeSettings {
-  title: string; // legacy, keeping for compatibility
-  subtitle: string; // legacy
+export interface HubPageSettings {
+  title: string;
   description: string;
-  marquee: string;
+  image: string;
+}
+
+export interface HomeSettings {
   featuredProductIds: string[];
   globalProductOrder: string[];
   heroSlides: HeroSlide[];
-  heroTransitionSpeed: number; // in seconds
+  heroTransitionSpeed: number;
+  marquee: string;
   intros: {
     collection: CategoryIntro;
     space: CategoryIntro;
     journal: CategoryIntro;
   };
+  mainTitle: string;
+  mainSubTitle: string;
+  hubSettings: {
+    collection: HubPageSettings;
+    space: HubPageSettings;
+    journal: HubPageSettings;
+  };
 }
 
 export const defaultHomeSettings: HomeSettings = {
-  title: "",
-  subtitle: "",
-  description: "",
-  marquee: "Amplify Your Ordinary",
+  heroSlides: [],
+  heroTransitionSpeed: 5,
+  marquee: 'Amplify Your Ordinary',
+  intros: {
+    collection: { title: '', description: '', image: '' },
+    space: { title: '', description: '', image: '' },
+    journal: { title: '', description: '', image: '' }
+  },
   featuredProductIds: [],
   globalProductOrder: [],
-  heroSlides: [
-    { id: '1', title: "", subtitle: "", image: '' }
-  ],
-  heroTransitionSpeed: 5,
-  intros: {
-    collection: { title: 'Collection', description: '', image: '' },
-    space: { title: 'Space', description: '', image: '' },
-    journal: { title: 'Journal', description: '', image: '' }
+  mainTitle: 'AMPH STUDIO',
+  mainSubTitle: 'DESIGN & OBJECT',
+  hubSettings: {
+    collection: { title: 'COLLECTION', description: 'Curated design objects.', image: '' },
+    space: { title: 'SPACES', description: 'Inspirational environments.', image: '' },
+    journal: { title: 'JOURNAL', description: 'Stories and updates.', image: '' }
   }
 };
 
@@ -298,7 +310,12 @@ const revalidateHomeSettings = async (): Promise<HomeSettings> => {
       const res = await fetch('/api/settings?id=home');
       if (!res.ok) throw new Error('Network error');
       const data = await res.json();
-      cachedHomeSettings = { ...defaultHomeSettings, ...data };
+      cachedHomeSettings = { 
+        ...defaultHomeSettings, 
+        ...data,
+        intros: { ...defaultHomeSettings.intros, ...(data.intros || {}) },
+        hubSettings: { ...defaultHomeSettings.hubSettings, ...(data.hubSettings || {}) }
+      };
       return { ...cachedHomeSettings! };
     } catch (err) {
       console.error(err);
