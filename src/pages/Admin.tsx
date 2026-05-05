@@ -407,8 +407,8 @@ export default function Admin() {
                                 }} className="w-8 h-8 object-cover cursor-pointer hover:border-2 border-cobalt" />
                               ))}
                               {cat === 'space' && spaces.map(s => (
-                                <img key={s.id} src={s.image} onClick={() => {
-                                  setHomeSettings({ ...homeSettings, intros: { ...homeSettings.intros, space: { ...homeSettings.intros.space, image: s.image } } });
+                                <img key={s.id} src={s.images?.[0]} onClick={() => {
+                                  setHomeSettings({ ...homeSettings, intros: { ...homeSettings.intros, space: { ...homeSettings.intros.space, image: s.images?.[0] || '' } } });
                                 }} className="w-8 h-8 object-cover cursor-pointer hover:border-2 border-cobalt" />
                               ))}
                               {cat === 'journal' && journals.map(j => (

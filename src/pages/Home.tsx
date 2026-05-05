@@ -5,18 +5,12 @@ import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [settings, setSettings] = useState<HomeSettings | null>(null);
+  const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
 
   useEffect(() => {
     getProducts().then(setProducts);
     getHomeSettings().then(setSettings);
   }, []);
-
-  if (!settings) return (
-    <div className="flex flex-col items-center justify-center flex-grow bg-white">
-      <div className="w-12 h-12 border-4 border-cobalt border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
 
   const featured = settings.featuredProductIds
     .map(id => products.find(p => p.id === id))
