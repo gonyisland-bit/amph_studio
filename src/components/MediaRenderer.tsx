@@ -32,15 +32,18 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const imgRef = React.useRef<HTMLImageElement>(null);
 
-  const isVideo = src.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || src.includes('video');
+  const isVideo = src ? (src.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || src.includes('video')) : false;
 
   useEffect(() => {
     // Reset states when src changes
     setIsLoaded(false);
     setError(false);
 
-    // Check if image is already cached/loaded
+    // Check if media is already cached/loaded
     if (!isVideo && imgRef.current?.complete) {
+      setIsLoaded(true);
+    }
+    if (isVideo && videoRef.current && videoRef.current.readyState >= 2) {
       setIsLoaded(true);
     }
   }, [src, isVideo]);
@@ -48,7 +51,10 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   useEffect(() => {
     if (videoRef.current) {
       if (playing) {
-        videoRef.current.currentTime = 0;
+        // Only reset to 0 if it was paused or just mounted
+        if (videoRef.current.paused) {
+          videoRef.current.currentTime = 0;
+        }
         videoRef.current.play().catch(() => {});
       } else {
         videoRef.current.pause();
@@ -73,20 +79,21 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
         <video
           ref={videoRef}
           src={src}
-          className={`w-full h-full object-cover transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`w-full h-full object-cover transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           autoPlay={autoPlay}
           loop={loop}
           muted={muted}
           playsInline={playsInline}
           onLoadedData={handleLoad}
           onCanPlay={handleLoad}
+          onPlay={() => setIsLoaded(true)} // 추가적인 보장
           onError={() => setError(true)}
         />
       ) : (
         <img
           ref={imgRef}
           src={src}
-          className={`w-full h-full object-cover transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`w-full h-full object-cover transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           alt={alt}
           loading={loading}
           // @ts-ignore
