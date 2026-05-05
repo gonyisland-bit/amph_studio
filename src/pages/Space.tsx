@@ -15,7 +15,7 @@ export default function Space() {
 
   return (
     <div className="flex flex-col flex-grow bg-white">
-      <div className="p-6 md:p-14 border-b border-black/10 bg-off-white">
+      <div className="px-6 md:px-12 pt-12 md:pt-24 pb-12 border-b border-black/10 bg-off-white">
         <h1 className="text-5xl md:text-8xl font-black tracking-tighter uppercase leading-[0.85] mb-6">
           {settings.hubSettings?.space?.title || 'Space'}
         </h1>
@@ -48,6 +48,8 @@ export default function Space() {
               alt={space.title} 
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
               referrerPolicy="no-referrer"
+              loading={i === 0 ? "eager" : "lazy"}
+              {...((i === 0) ? { fetchpriority: "high" } : {})}
             />
             <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
           </div>

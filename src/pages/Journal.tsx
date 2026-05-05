@@ -18,7 +18,7 @@ export default function Journal() {
 
   return (
     <div className="flex flex-col flex-grow bg-white relative">
-      <div className="px-6 md:px-12 py-12 md:py-24 border-b border-black/10">
+      <div className="px-6 md:px-12 pt-12 md:pt-24 pb-12 border-b border-black/10 bg-off-white">
         <h1 className="text-5xl md:text-8xl font-black tracking-tighter uppercase font-sans mb-6 leading-[0.85]">
           {settings.hubSettings?.journal?.title || 'Journal'}
         </h1>
