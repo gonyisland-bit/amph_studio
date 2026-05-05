@@ -69,7 +69,7 @@ export default function Collection() {
           <Link 
             to={`/product/${product.id}`}
             key={product.id}
-            className="group border-b sm:border-b-0 sm:border-r border-black/10 flex flex-col pt-8 pb-6 px-6 relative hover:bg-white transition-colors duration-300 h-full"
+            className="group border-b sm:border-b-0 sm:border-r border-black/10 flex flex-col pt-8 pb-6 px-6 relative hover:bg-white transition-colors duration-300 h-full reveal"
           >
             <div className="flex justify-between items-start mb-6 z-10 relative">
               <span className="text-[10px] uppercase font-bold text-orange font-sans px-3 py-1 border border-orange rounded-full">

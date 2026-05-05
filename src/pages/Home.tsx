@@ -101,7 +101,7 @@ export default function Home() {
             <Link 
               key={item.key} 
               to={item.link}
-              className="group relative block w-full h-[60vh] md:h-[80vh] overflow-hidden rounded-[32px] bg-silver/10"
+              className="group relative block w-full h-[60vh] md:h-[80vh] overflow-hidden rounded-[32px] bg-silver/10 reveal"
             >
               {/* Image Layer */}
               {intro.image && (
@@ -155,7 +155,7 @@ export default function Home() {
               <Link 
                 to={`/product/${product.id}`}
                 key={product.id}
-                className={`group relative block break-inside-avoid transition-all duration-700`}
+                className={`group relative block break-inside-avoid transition-all duration-700 reveal`}
               >
                 <div className="relative overflow-hidden mb-8 aspect-[4/5] bg-silver/20 rounded-[4px]">
                   <img 
