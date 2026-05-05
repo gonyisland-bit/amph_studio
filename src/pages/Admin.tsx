@@ -104,7 +104,7 @@ export default function Admin() {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   
-  const [activeTab, setActiveTab] = useState<'collection'|'journal'|'space'|'shop'>('shop');
+  const [activeTab, setActiveTab] = useState<'home'|'journal'|'space'|'collection'>('collection');
   
   const [products, setProducts] = useState<Product[]>([]);
   const [journals, setJournals] = useState<JournalArticle[]>([]);
@@ -175,20 +175,20 @@ export default function Admin() {
     getProducts().then(setProducts);
     if (activeTab === 'journal') getJournals().then(setJournals);
     if (activeTab === 'space') getSpaces().then(setSpaces);
-    if (activeTab === 'collection') getHomeSettings().then(setHomeSettings);
+    if (activeTab === 'home') getHomeSettings().then(setHomeSettings);
   };
 
-  const switchTab = (tab: 'collection'|'journal'|'space'|'shop') => {
+  const switchTab = (tab: 'home'|'journal'|'space'|'collection') => {
     setActiveTab(tab);
     setEditingId(null);
-    if (tab === 'shop') setForm(emptyProduct);
+    if (tab === 'collection') setForm(emptyProduct);
     if (tab === 'journal') setForm(emptyJournal);
     if (tab === 'space') setForm(emptySpace);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeTab === 'shop') {
+    if (activeTab === 'collection') {
       if (editingId) await updateProduct(editingId, form);
       else await addProduct({ ...form, id: `prod-${Date.now()}` });
       setForm(emptyProduct);
@@ -213,7 +213,7 @@ export default function Admin() {
 
   const handleDelete = async (id: string) => {
     if(!confirm('Delete item?')) return;
-    if (activeTab === 'shop') await deleteProduct(id);
+    if (activeTab === 'collection') await deleteProduct(id);
     if (activeTab === 'journal') await deleteJournal(id);
     if (activeTab === 'space') await deleteSpace(id);
     loadData();
@@ -222,7 +222,7 @@ export default function Admin() {
   const handleBulkDelete = async () => {
     if (!confirm(`Delete ${selectedIds.length} items?`)) return;
     for (const id of selectedIds) {
-      if (activeTab === 'shop') await deleteProduct(id);
+      if (activeTab === 'collection') await deleteProduct(id);
       if (activeTab === 'journal') await deleteJournal(id);
       if (activeTab === 'space') await deleteSpace(id);
     }
@@ -233,7 +233,7 @@ export default function Admin() {
   const handleBulkDuplicate = async () => {
     for (const id of selectedIds) {
       let item;
-      if (activeTab === 'shop') {
+      if (activeTab === 'collection') {
         item = products.find(p => p.id === id);
         if (item) await addProduct({ ...item, id: `prod-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, name: `${item.name} (Copy)` });
       } else if (activeTab === 'journal') {
@@ -302,8 +302,8 @@ export default function Admin() {
 
       <div className="flex gap-6 mb-8 border-b border-black/10 pb-4 overflow-x-auto">
         {[
-          { id: 'collection', label: 'Home' },
-          { id: 'shop', label: 'Collection' },
+          { id: 'home', label: 'Home' },
+          { id: 'collection', label: 'Collection' },
           { id: 'space', label: 'Space' },
           { id: 'journal', label: 'Journal' }
         ].map(tab => (
@@ -324,7 +324,7 @@ export default function Admin() {
             </h2>
             <form onSubmit={handleSave} className="space-y-4 text-sm">
               
-              {activeTab === 'collection' && (
+              {activeTab === 'home' && (
                 <div className="space-y-6">
                   {/* Home settings fields (omitted for brevity but same as before) */}
                   <div className="border-b border-black/10 pb-6 mb-6">
@@ -343,7 +343,7 @@ export default function Admin() {
                 </div>
               )}
 
-              {activeTab === 'shop' && (
+              {activeTab === 'collection' && (
                 <>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Name</label>
                     <input required value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
@@ -423,7 +423,7 @@ export default function Admin() {
                 </>
               )}
 
-              {activeTab !== 'collection' && (
+              {activeTab !== 'home' && (
                 <div className="pt-4 flex gap-4">
                   <button type="submit" className="bg-cobalt text-white px-8 py-3 uppercase text-[11px] font-black tracking-widest hover:bg-orange transition-colors rounded-full shadow-lg">Save Changes</button>
                 </div>
@@ -437,7 +437,7 @@ export default function Admin() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div className="flex items-center gap-4">
                <h2 className="text-xl font-bold font-sans uppercase tracking-tight">
-                 {activeTab === 'shop' ? 'Collection' : activeTab === 'space' ? 'Space' : 'Journal'}
+                 {activeTab === 'collection' ? 'Collection' : activeTab === 'space' ? 'Space' : 'Journal'}
                </h2>
                <button onClick={() => { setEditingId(null); switchTab(activeTab); }} className="flex items-center gap-2 bg-cobalt text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all">
                  <Plus size={14} /> New Item
@@ -460,10 +460,10 @@ export default function Admin() {
                   <th className="p-4 w-10">
                     <input type="checkbox" onChange={(e) => {
                       if (e.target.checked) {
-                        const allIds = activeTab === 'shop' ? products.map(p => p.id) : activeTab === 'space' ? spaces.map(s => s.id) : journals.map(j => j.id);
+                        const allIds = activeTab === 'collection' ? products.map(p => p.id) : activeTab === 'space' ? spaces.map(s => s.id) : journals.map(j => j.id);
                         setSelectedIds(allIds);
                       } else setSelectedIds([]);
-                    }} checked={selectedIds.length > 0 && selectedIds.length === (activeTab === 'shop' ? products.length : activeTab === 'space' ? spaces.length : journals.length)} />
+                    }} checked={selectedIds.length > 0 && selectedIds.length === (activeTab === 'collection' ? products.length : activeTab === 'space' ? spaces.length : journals.length)} />
                   </th>
                   <th className="py-4">Order</th>
                   <th className="py-4">Image</th>
@@ -472,7 +472,7 @@ export default function Admin() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
-                  {(activeTab === 'shop' || activeTab === 'collection') && [...products].sort((a,b) => {
+                  {(activeTab === 'collection' || activeTab === 'home') && [...products].sort((a,b) => {
                     const aIdx = homeSettings.globalProductOrder.indexOf(a.id);
                     const bIdx = homeSettings.globalProductOrder.indexOf(b.id);
                     if (aIdx === -1 && bIdx === -1) return 0;
