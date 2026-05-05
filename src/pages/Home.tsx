@@ -88,37 +88,53 @@ export default function Home() {
         )}
       </section>
 
-      {/* 2. Intro Section: Trendy Banner Layout */}
-      <section className="flex flex-col border-b border-black/10 bg-white">
+      {/* 2. Intro Section: Poster Style Banners */}
+      <section className="flex flex-col bg-white mt-24 md:mt-40 px-6 md:px-12 gap-6 md:gap-12 pb-24 md:pb-40">
         {[
           { key: 'collection', link: '/collection' },
           { key: 'space', link: '/space' },
           { key: 'journal', link: '/journal' }
         ].map((item, idx) => {
           const intro = settings.intros?.[item.key as keyof typeof settings.intros] || { title: item.key, description: '', image: '' };
-          const isEven = idx % 2 === 0;
           
           return (
             <Link 
               key={item.key} 
               to={item.link}
-              className={`group flex flex-col md:flex-row h-auto md:h-[45vh] border-b last:border-b-0 border-black/5 relative overflow-hidden transition-colors hover:bg-black/[0.02]`}
+              className="group relative block w-full h-[60vh] md:h-[80vh] overflow-hidden rounded-[32px] bg-silver/10"
             >
-              {/* Content Side */}
-              <div className={`flex-1 p-8 md:p-16 lg:p-24 flex flex-col justify-end pb-4 md:pb-12 z-10 ${isEven ? 'md:order-1' : 'md:order-2'}`}>
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-cobalt mb-1 md:mb-2 block opacity-50">0{idx + 1} // {item.key}</span>
-                <h3 className="text-4xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-2 md:mb-4 leading-[0.85]">{intro.title}</h3>
-                <p className="text-base md:text-lg lg:text-xl font-serif text-ink/70 max-w-sm">{intro.description}</p>
-              </div>
+              {/* Image Layer */}
+              {intro.image && (
+                <div className="absolute inset-0">
+                  <img 
+                    src={intro.image} 
+                    className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
+                    alt={intro.title} 
+                  />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors duration-700"></div>
+                </div>
+              )}
               
-              {/* Image Side */}
-              <div className={`flex-[1.2] relative h-[300px] md:h-full overflow-hidden ${isEven ? 'md:order-2' : 'md:order-1'}`}>
-                <img 
-                  src={intro.image} 
-                  className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110" 
-                  alt={intro.title} 
-                />
-                <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
+              {/* Content Overlay */}
+              <div className="absolute inset-0 p-8 md:p-16 lg:p-24 flex flex-col justify-start z-10 text-white">
+                <div className="max-w-4xl">
+                  <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mb-4 block drop-shadow-md">
+                    0{idx + 1} // {item.key}
+                  </span>
+                  <h3 className="text-5xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter mb-6 leading-[0.8] drop-shadow-2xl">
+                    {intro.title}
+                  </h3>
+                  <p className="text-lg md:text-xl lg:text-2xl font-serif max-w-lg drop-shadow-xl opacity-90">
+                    {intro.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Bottom Right Indicator */}
+              <div className="absolute bottom-8 right-8 md:bottom-12 md:right-12 z-20">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-white/30 flex items-center justify-center backdrop-blur-sm group-hover:bg-white group-hover:text-ink transition-all duration-500">
+                  <ArrowRight size={24} />
+                </div>
               </div>
             </Link>
           );
