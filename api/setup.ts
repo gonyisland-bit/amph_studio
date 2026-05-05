@@ -35,6 +35,7 @@ export default async function handler(req: any, res: any) {
         address TEXT DEFAULT '',
         hours TEXT DEFAULT '',
         image TEXT DEFAULT '',
+        "contentBlocks" TEXT,
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
@@ -63,6 +64,7 @@ export default async function handler(req: any, res: any) {
     try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "address" TEXT DEFAULT ''`; } catch(e) {}
     try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "hours" TEXT DEFAULT ''`; } catch(e) {}
     try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "image" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "contentBlocks" TEXT`; } catch(e) {}
 
     return res.status(200).json({ success: true, message: 'Tables and columns verified' });
   } catch (error) {

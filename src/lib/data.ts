@@ -38,10 +38,7 @@ export interface SpaceModel {
   description: string;
   images: string[];
   appliedProductIds?: string[];
-  location?: string;
-  address?: string;
-  hours?: string;
-  image?: string;
+  contentBlocks?: ContentBlock[];
 }
 
 // Global cache and fetch promises

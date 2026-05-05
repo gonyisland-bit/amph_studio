@@ -16,9 +16,12 @@ export default async function handler(req: any, res: any) {
         address TEXT DEFAULT '',
         hours TEXT DEFAULT '',
         image TEXT DEFAULT '',
+        "contentBlocks" TEXT,
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+    // Migration: ensure contentBlocks column exists
+    await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "contentBlocks" TEXT`;
   } catch (e) {}
 
   if (req.method === 'GET') {
@@ -35,6 +38,7 @@ export default async function handler(req: any, res: any) {
         ...r,
         images: typeof r.images === 'string' ? JSON.parse(r.images) : (r.images || []),
         appliedProductIds: typeof r.appliedProductIds === 'string' ? JSON.parse(r.appliedProductIds) : (r.appliedProductIds || []),
+        contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
       }));
       return res.status(200).json(parsedRows);
     } catch (error) {
@@ -45,33 +49,27 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST' || req.method === 'PUT') {
     try {
-      const { id: bodyId, title, description, images, appliedProductIds, location, address, hours, image } = req.body;
+      const { id: bodyId, title, description, images, appliedProductIds, contentBlocks } = req.body;
       const targetId = id || bodyId;
       
       if (!targetId) return res.status(400).json({ error: 'ID is required' });
 
       await sql`
-        INSERT INTO spaces (id, title, description, images, "appliedProductIds", location, address, hours, image)
+        INSERT INTO spaces (id, title, description, images, "appliedProductIds", "contentBlocks")
         VALUES (
           ${targetId}, 
           ${title}, 
           ${description || ''}, 
           ${JSON.stringify(images || [])}, 
           ${JSON.stringify(appliedProductIds || [])},
-          ${location || ''}, 
-          ${address || ''}, 
-          ${hours || ''}, 
-          ${image || ''}
+          ${JSON.stringify(contentBlocks || [])}
         )
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
           description = EXCLUDED.description,
           images = EXCLUDED.images,
           "appliedProductIds" = EXCLUDED."appliedProductIds",
-          location = EXCLUDED.location,
-          address = EXCLUDED.address,
-          hours = EXCLUDED.hours,
-          image = EXCLUDED.image
+          "contentBlocks" = EXCLUDED."contentBlocks"
       `;
       return res.status(200).json({ success: true, id: targetId });
     } catch (error) {

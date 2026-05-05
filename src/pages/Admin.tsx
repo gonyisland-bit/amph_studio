@@ -16,7 +16,7 @@ const emptyJournal: Omit<JournalArticle, 'id'> = {
   title: '', category: '', date: '', image: '', contentBlocks: []
 };
 const emptySpace: Omit<SpaceModel, 'id'> = {
-  title: '', description: '', images: [''], appliedProductIds: [], location: '', address: '', hours: '', image: ''
+  title: '', description: '', images: [''], appliedProductIds: [], contentBlocks: []
 };
 
 const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label?: string }) => {
@@ -188,21 +188,27 @@ export default function Admin() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeTab === 'collection') {
-      if (editingId) await updateProduct(editingId, form);
-      else await addProduct({ ...form, id: `prod-${Date.now()}` });
-      setForm(emptyProduct);
-    } else if (activeTab === 'journal') {
-      if (editingId) await updateJournal(editingId, form);
-      else await addJournal({ ...form, id: `j-${Date.now()}` });
-      setForm(emptyJournal);
-    } else if (activeTab === 'space') {
-      if (editingId) await updateSpace(editingId, form);
-      else await addSpace({ ...form, id: `s-${Date.now()}` });
-      setForm(emptySpace);
+    try {
+      if (activeTab === 'collection') {
+        if (editingId) await updateProduct(editingId, form);
+        else await addProduct({ ...form, id: `prod-${Date.now()}` });
+        setForm(emptyProduct);
+      } else if (activeTab === 'journal') {
+        if (editingId) await updateJournal(editingId, form);
+        else await addJournal({ ...form, id: `j-${Date.now()}` });
+        setForm(emptyJournal);
+      } else if (activeTab === 'space') {
+        if (editingId) await updateSpace(editingId, form);
+        else await addSpace({ ...form, id: `s-${Date.now()}` });
+        setForm(emptySpace);
+      }
+      setEditingId(null);
+      loadData();
+      alert('Saved successfully!');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to save. Please try again.');
     }
-    setEditingId(null);
-    loadData();
   };
 
   const handleEdit = (item: any) => {
@@ -495,16 +501,7 @@ export default function Admin() {
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
                     <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={4}/></div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Location Name</label>
-                      <input value={form.location || ''} onChange={e => setForm({...form, location: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                    <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Hours</label>
-                      <input value={form.hours || ''} onChange={e => setForm({...form, hours: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                  </div>
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Full Address</label>
-                    <input value={form.address || ''} onChange={e => setForm({...form, address: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                  
-                  <ImageUploadInput label="Main Banner Image" value={form.image || ''} onChange={val => setForm({...form, image: val})} />
+                  {renderContentBlocksEditor()}
 
                   <div className="border-t border-black/10 pt-4 mt-4">
                     <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Gallery Images</h3>
