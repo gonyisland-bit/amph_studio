@@ -4,7 +4,7 @@ import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultH
 
 const CATEGORIES: Category[] = ['Chairs', 'Tables', 'Lighting', 'Objects'];
 
-export default function Shop() {
+export default function Collection() {
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');

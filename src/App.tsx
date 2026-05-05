@@ -7,7 +7,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
 import Home from "./pages/Home";
-import Shop from "./pages/Shop";
+import Collection from "./pages/Collection";
 import ProductDetail from "./pages/ProductDetail";
 import Admin from "./pages/Admin";
 import Journal from "./pages/Journal";
@@ -23,7 +23,7 @@ export default function App() {
         <main className="flex-grow flex flex-col bg-off-white">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/shop" element={<Shop />} />
+            <Route path="/collection" element={<Collection />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/journal" element={<Journal />} />
             <Route path="/journal/:id" element={<JournalDetail />} />

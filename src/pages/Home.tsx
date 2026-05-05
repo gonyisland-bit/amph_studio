@@ -101,7 +101,7 @@ export default function Home() {
           return (
             <Link 
               key={item.key} 
-              to={item.link} 
+              to={item.link}
               className={`group flex flex-col md:flex-row h-auto md:h-[45vh] border-b last:border-b-0 border-black/5 relative overflow-hidden transition-colors hover:bg-black/[0.02]`}
             >
               {/* Content Side */}
@@ -172,6 +172,18 @@ export default function Home() {
               </Link>
             );
           })}
+        </div>
+      </section>
+
+      {/* 4. Footer Call to Action */}
+      <section className="px-6 md:px-14 py-40 border-t border-black/10 bg-white text-center">
+        <div className="max-w-4xl mx-auto">
+          <span className="text-xs uppercase tracking-widest font-bold text-cobalt mb-8 block">Next Chapter</span>
+          <div className="flex flex-col gap-12">
+            <Link to="/collection" className="inline-flex items-center justify-center gap-4 text-4xl md:text-6xl font-black uppercase tracking-tighter hover:text-cobalt transition-colors group">
+              Explore Collection <MoveRight size={48} className="group-hover:translate-x-4 transition-transform" />
+            </Link>
+          </div>
         </div>
       </section>
 

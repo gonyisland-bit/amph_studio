@@ -33,7 +33,7 @@ export function Navigation() {
       
       <div className="hidden md:flex gap-12 text-[11px] uppercase tracking-widest font-semibold font-sans">
         <Link to="/" className="hover:text-cobalt transition-colors">Home</Link>
-        <Link to="/shop" className="hover:text-cobalt transition-colors">Collection</Link>
+        <Link to="/collection" className="hover:text-cobalt transition-colors">Collection</Link>
         <Link to="/space" className="hover:text-cobalt transition-colors">Space</Link>
         <Link to="/journal" className="hover:text-cobalt transition-colors">Journal</Link>
       </div>
