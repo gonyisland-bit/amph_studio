@@ -84,12 +84,12 @@ export default function Collection() {
               )}
             </div>
             
-            <div className="flex-grow flex items-center justify-center w-full aspect-[4/5] bg-silver/20 overflow-hidden rounded-[20px] relative mb-6">
+            <div className="flex-grow w-full aspect-[4/5] bg-silver/10 overflow-hidden rounded-[20px] relative mb-6">
               {/* Primary Image */}
               <MediaRenderer 
                 src={product.images[0]} 
                 alt={product.name}
-                className={`absolute inset-0 w-full h-full transition-all duration-700 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0' : 'group-hover:scale-110'}`}
+                className={`absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0' : 'group-hover:scale-110'}`}
                 loading="lazy"
               />
               {/* Secondary Hover Image */}
@@ -97,7 +97,7 @@ export default function Collection() {
                 <MediaRenderer 
                   src={product.hoverImages[0]} 
                   alt={`${product.name} alternative view`}
-                  className="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-700 ease-in-out group-hover:opacity-100 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full opacity-0 transition-all duration-1000 ease-in-out group-hover:opacity-100 group-hover:scale-105"
                   loading="lazy"
                 />
               )}

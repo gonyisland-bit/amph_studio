@@ -30,21 +30,26 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  const imgRef = React.useRef<HTMLImageElement>(null);
+
+  const isVideo = src.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || src.includes('video');
 
   useEffect(() => {
     // Reset states when src changes
     setIsLoaded(false);
     setError(false);
-  }, [src]);
+
+    // Check if image is already cached/loaded
+    if (!isVideo && imgRef.current?.complete) {
+      setIsLoaded(true);
+    }
+  }, [src, isVideo]);
 
   useEffect(() => {
     if (videoRef.current) {
       if (playing) {
         videoRef.current.currentTime = 0;
-        videoRef.current.play().catch(() => {
-          // Auto-play might be blocked by browser if not muted, 
-          // but we usually default to muted.
-        });
+        videoRef.current.play().catch(() => {});
       } else {
         videoRef.current.pause();
       }
@@ -53,15 +58,13 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
 
   if (!src) return <div className={`${className} bg-silver/10`} />;
 
-  const isVideo = src.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || src.includes('video');
-
   const handleLoad = () => {
     setIsLoaded(true);
     if (onLoad) onLoad();
   };
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div className={`overflow-hidden ${className.includes('absolute') ? '' : 'relative'} ${className}`}>
       {!isLoaded && !error && (
         <div className="absolute inset-0 shimmer bg-silver/10 z-0" />
       )}
@@ -81,6 +84,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
         />
       ) : (
         <img
+          ref={imgRef}
           src={src}
           className={`w-full h-full object-cover transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           alt={alt}
