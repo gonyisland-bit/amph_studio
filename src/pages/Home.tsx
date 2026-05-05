@@ -2,12 +2,15 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getProducts, Product, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 import { ArrowRight, MoveRight } from "lucide-react";
+import { MediaRenderer } from "../components/MediaRenderer";
+import { useScrollReveal } from "../lib/useScrollReveal";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
-
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
+
+  useScrollReveal();
 
   useEffect(() => {
     getProducts().then(setProducts);
@@ -52,12 +55,12 @@ export default function Home() {
           >
             <div className="absolute inset-0 bg-off-white">
               {slide.image && (
-                <img 
+                <MediaRenderer 
                   src={slide.image} 
-                  className="w-full h-full object-cover" 
+                  className="w-full h-full" 
                   alt={slide.title}
                   loading={idx === 0 ? "eager" : "lazy"}
-                  decoding="async"
+                  fetchpriority={idx === 0 ? "high" : "auto"}
                 />
               )}
               <div className="absolute inset-0 bg-black/20"></div>
@@ -107,10 +110,11 @@ export default function Home() {
               {/* Image Container */}
               <div className="flex-1 w-full aspect-[16/9] md:aspect-[4/3] overflow-hidden rounded-[4px] bg-silver/10 relative">
                 {intro.image ? (
-                  <img 
+                  <MediaRenderer 
                     src={intro.image} 
-                    className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
+                    className="w-full h-full transition-transform duration-[2000ms] group-hover:scale-105" 
                     alt={intro.title} 
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-ink/10 font-black text-4xl">AMPH</div>
@@ -156,11 +160,11 @@ export default function Home() {
                 className={`group relative block break-inside-avoid transition-all duration-700 reveal`}
               >
                 <div className="relative overflow-hidden mb-8 aspect-[4/5] bg-silver/20 rounded-[4px]">
-                  <img 
+                  <MediaRenderer 
                     src={product.images?.[0] || ''} 
                     alt={product.name} 
-                    className="w-full h-full object-cover transition-transform duration-1000 scale-100 group-hover:scale-110"
-                    referrerPolicy="no-referrer"
+                    className="w-full h-full transition-transform duration-1000 scale-100 group-hover:scale-110"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/5 transition-colors duration-500"></div>
                   

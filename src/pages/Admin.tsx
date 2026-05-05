@@ -19,14 +19,14 @@ const emptySpace: Omit<SpaceModel, 'id'> = {
   title: '', description: '', images: [''], appliedProductIds: [], contentBlocks: []
 };
 
-const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label?: string }) => {
+const MediaUploadInput = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label?: string }) => {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
   const handleUpload = async (file: File) => {
     setUploading(true);
     try {
-      const uniqueName = `${Date.now()}-${file.name}`;
+      const uniqueName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
       const newBlob = await upload(uniqueName, file, {
         access: 'public',
         handleUploadUrl: '/api/upload',
@@ -44,12 +44,13 @@ const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange:
   const onDrop = async (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) await handleUpload(e.dataTransfer.files[0]); };
 
   const idSafeLabel = label ? label.replace(/\s+/g, '-') : Math.random().toString(36).substring(7);
+  const isVideo = value.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || value.includes('video');
 
   return (
     <div className="w-full mb-4">
       {label && <label className="block text-[10px] font-bold uppercase text-ink/50 mb-2">{label}</label>}
       <div 
-        className={`relative border-2 border-dashed rounded-[12px] flex flex-col items-center justify-center p-4 transition-colors cursor-pointer min-h-[120px] ${dragActive ? 'border-cobalt bg-cobalt/5' : 'border-black/20 bg-black/5 hover:bg-black/10'}`}
+        className={`relative border-2 border-dashed rounded-[12px] flex flex-col items-center justify-center p-4 transition-colors cursor-pointer min-h-[120px] overflow-hidden ${dragActive ? 'border-cobalt bg-cobalt/5' : 'border-black/20 bg-black/5 hover:bg-black/10'}`}
         onDragEnter={onDrag} onDragLeave={onDrag} onDragOver={onDrag} onDrop={onDrop}
         onClick={(e) => {
           if ((e.target as HTMLElement).closest('.remove-btn')) return;
@@ -59,7 +60,7 @@ const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange:
         <input 
           id={`file-${idSafeLabel}`} 
           type="file" 
-          accept="image/*" 
+          accept="image/*,video/*" 
           className="hidden" 
           onChange={async (e) => { 
             if (e.target.files?.[0]) {
@@ -71,18 +72,22 @@ const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange:
         {uploading ? (
            <div className="text-orange text-xs animate-pulse font-bold">Uploading...</div>
         ) : value ? (
-           <div className="relative group/preview">
-             <img src={value} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" />
+           <div className="relative group/preview w-full flex justify-center">
+             {isVideo ? (
+               <video src={value} className="h-24 w-auto object-contain rounded" muted />
+             ) : (
+               <img src={value} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" />
+             )}
              <button 
               type="button"
               onClick={async (e) => {
                 e.stopPropagation();
-                if (confirm('Delete this image from server?')) {
+                if (confirm('Delete this media from server?')) {
                   await deleteBlob(value);
                   onChange('');
                 }
               }}
-              className="remove-btn absolute -top-2 -right-2 bg-orange text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-md hover:scale-110 transition-transform"
+              className="remove-btn absolute -top-2 -right-2 bg-orange text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-md hover:scale-110 transition-transform z-10"
              >
                ✕
              </button>
@@ -319,7 +324,7 @@ export default function Admin() {
               <option value="image">Image</option>
           </select>
           {cb.type === 'image' ? (
-              <ImageUploadInput value={cb.value} onChange={val => {
+              <MediaUploadInput value={cb.value} onChange={val => {
                 const newCb = [...form.contentBlocks]; newCb[i].value = val; setForm({...form, contentBlocks: newCb});
               }} />
           ) : (
@@ -428,7 +433,7 @@ export default function Admin() {
                               setHomeSettings({...homeSettings, heroSlides: newSlides});
                             }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
                           
-                          <ImageUploadInput label="Slide Image" value={slide.image} onChange={val => {
+                          <MediaUploadInput label="Slide Image/Video" value={slide.image} onChange={val => {
                             const newSlides = [...homeSettings.heroSlides];
                             newSlides[idx] = { ...newSlides[idx], image: val };
                             setHomeSettings({...homeSettings, heroSlides: newSlides});
@@ -457,7 +462,7 @@ export default function Admin() {
                               next[cat] = { ...next[cat], description: e.target.value };
                               setHomeSettings({...homeSettings, intros: next});
                             }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
-                          <ImageUploadInput label="Banner Image" value={homeSettings.intros[cat].image} onChange={val => {
+                          <MediaUploadInput label="Banner Media" value={homeSettings.intros[cat].image} onChange={val => {
                             const next = { ...homeSettings.intros };
                             next[cat] = { ...next[cat], image: val };
                             setHomeSettings({...homeSettings, intros: next});
@@ -486,7 +491,7 @@ export default function Admin() {
                               next[hub] = { ...next[hub], description: e.target.value };
                               setHomeSettings({...homeSettings, hubSettings: next});
                             }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
-                          <ImageUploadInput label="Header Image" value={homeSettings.hubSettings?.[hub]?.image} onChange={val => {
+                          <MediaUploadInput label="Header Media" value={homeSettings.hubSettings?.[hub]?.image} onChange={val => {
                             const next = { ...homeSettings.hubSettings };
                             next[hub] = { ...next[hub], image: val };
                             setHomeSettings({...homeSettings, hubSettings: next});
@@ -547,7 +552,7 @@ export default function Admin() {
                     <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Gallery Images</h3>
                     {form.images?.map((img:string, i:number) => (
                       <div key={i} className="flex gap-2 mb-2 items-end">
-                        <div className="flex-1"><ImageUploadInput label={i === 0 ? "Main" : `Image ${i+1}`} value={img} onChange={val => { const newI = [...form.images]; newI[i] = val; setForm({...form, images: newI}); }} /></div>
+                        <div className="flex-1"><MediaUploadInput label={i === 0 ? "Main" : `Media ${i+1}`} value={img} onChange={val => { const newI = [...form.images]; newI[i] = val; setForm({...form, images: newI}); }} /></div>
                         {i > 0 && <button type="button" onClick={() => setForm({...form, images: form.images.filter((_:any, idx:number) => idx !== i)})} className="mb-8 text-orange text-xs font-bold px-2">X</button>}
                       </div>
                     ))}
@@ -565,7 +570,7 @@ export default function Admin() {
                     <input required value={form.category || ''} onChange={e => setForm({...form, category: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Date</label>
                     <input required value={form.date || ''} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                  <div><ImageUploadInput label="Hero Image" value={form.image || ''} onChange={val => setForm({...form, image: val})} /></div>
+                  <div><MediaUploadInput label="Hero Media" value={form.image || ''} onChange={val => setForm({...form, image: val})} /></div>
                   {renderContentBlocksEditor()}
                 </>
               )}
@@ -583,7 +588,7 @@ export default function Admin() {
                     <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Gallery Images</h3>
                     {form.images?.map((img:string, i:number) => (
                       <div key={i} className="flex gap-2 mb-2 items-end">
-                        <div className="flex-1"><ImageUploadInput label={i === 0 ? "Main" : `Image ${i+1}`} value={img} onChange={val => { const newI = [...form.images]; newI[i] = val; setForm({...form, images: newI}); }} /></div>
+                        <div className="flex-1"><MediaUploadInput label={i === 0 ? "Main" : `Media ${i+1}`} value={img} onChange={val => { const newI = [...form.images]; newI[i] = val; setForm({...form, images: newI}); }} /></div>
                         {i > 0 && <button type="button" onClick={() => setForm({...form, images: form.images.filter((_:any, idx:number) => idx !== i)})} className="mb-8 text-orange text-xs font-bold px-2">X</button>}
                       </div>
                     ))}
@@ -656,7 +661,14 @@ export default function Admin() {
                       }} checked={selectedIds.length > 0 && selectedIds.length === ((activeTab === 'collection' || activeTab === 'home') ? products.length : activeTab === 'space' ? spaces.length : journals.length)} />
                     </th>
                     <th className="py-4">Order</th>
-                    <th className="py-4">Image</th>
+                    {((activeTab === 'collection' || activeTab === 'home') ? products : activeTab === 'space' ? spaces : journals).some(item => {
+                      const src = (item as any).images?.[0] || (item as any).image || '';
+                      return src.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || src.includes('video');
+                    }) ? (
+                      <th className="py-4">Media</th>
+                    ) : (
+                      <th className="py-4">Image</th>
+                    )}
                     <th className="py-4">Details</th>
                     <th className="py-4 text-right pr-6">Actions</th>
                   </tr>
@@ -681,7 +693,13 @@ export default function Admin() {
                             <button onClick={() => handleReorder('collection', p.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === products.length - 1}><ChevronDown size={14}/></button>
                           </div>
                         </td>
-                        <td className="py-4"><img src={p.images[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
+                        <td className="py-4">
+                          {p.images[0].toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || p.images[0].includes('video') ? (
+                            <video src={p.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />
+                          ) : (
+                            <img src={p.images[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" />
+                          )}
+                        </td>
                         <td className="py-4">
                           <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{p.name}</div>
                           <div className="text-[9px] font-black uppercase text-orange">{p.category}</div>
@@ -714,7 +732,13 @@ export default function Admin() {
                             <button onClick={() => handleReorder('space', s.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === spaces.length - 1}><ChevronDown size={14}/></button>
                           </div>
                         </td>
-                        <td className="py-4"><img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
+                        <td className="py-4">
+                          {s.images?.[0]?.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || s.images?.[0]?.includes('video') ? (
+                            <video src={s.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />
+                          ) : (
+                            <img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" />
+                          )}
+                        </td>
                         <td className="py-4">
                           <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{s.title}</div>
                           <div className="text-[9px] font-black uppercase text-ink/30 truncate max-w-[150px]">{s.description}</div>
@@ -748,7 +772,13 @@ export default function Admin() {
                             <button onClick={() => handleReorder('journal', j.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === journals.length - 1}><ChevronDown size={14}/></button>
                           </div>
                         </td>
-                        <td className="py-4"><img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
+                        <td className="py-4">
+                          {j.image.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || j.image.includes('video') ? (
+                            <video src={j.image} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />
+                          ) : (
+                            <img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" />
+                          )}
+                        </td>
                         <td className="py-4">
                           <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{j.title}</div>
                           <div className="text-[9px] font-black uppercase text-orange">{j.category}</div>

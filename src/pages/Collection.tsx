@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
+import { MediaRenderer } from "../components/MediaRenderer";
+import { useScrollReveal } from "../lib/useScrollReveal";
 
 const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
 const CATEGORY_LABELS: Record<string, string> = {
@@ -15,6 +17,8 @@ export default function Collection() {
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
+
+  useScrollReveal();
 
   useEffect(() => {
     getProducts().then(setProducts);
@@ -82,19 +86,19 @@ export default function Collection() {
             
             <div className="flex-grow flex items-center justify-center w-full aspect-[4/5] bg-silver/20 overflow-hidden rounded-[20px] relative mb-6">
               {/* Primary Image */}
-              <img 
+              <MediaRenderer 
                 src={product.images[0]} 
                 alt={product.name}
-                className={`absolute inset-0 w-full h-full object-cover mix-blend-multiply transition-all duration-700 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0' : 'group-hover:scale-110'}`}
-                referrerPolicy="no-referrer"
+                className={`absolute inset-0 w-full h-full transition-all duration-700 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0' : 'group-hover:scale-110'}`}
+                loading="lazy"
               />
               {/* Secondary Hover Image */}
               {product.hoverImages?.[0] && (
-                <img 
+                <MediaRenderer 
                   src={product.hoverImages[0]} 
                   alt={`${product.name} alternative view`}
-                  className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-0 transition-opacity duration-700 ease-in-out group-hover:opacity-100 group-hover:scale-105"
-                  referrerPolicy="no-referrer"
+                  className="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-700 ease-in-out group-hover:opacity-100 group-hover:scale-105"
+                  loading="lazy"
                 />
               )}
             </div>

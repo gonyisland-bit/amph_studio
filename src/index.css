@@ -47,11 +47,31 @@
 
   .reveal {
     opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: translateY(40px);
+    transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .reveal.active {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.05) 25%,
+      rgba(0, 0, 0, 0.1) 37%,
+      rgba(0, 0, 0, 0.05) 63%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
   }
 }

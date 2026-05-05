@@ -2,11 +2,15 @@ import { MoveRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getJournals, JournalArticle, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
+import { MediaRenderer } from "../components/MediaRenderer";
+import { useScrollReveal } from "../lib/useScrollReveal";
 
 export default function Journal() {
   const [hoveredArticle, setHoveredArticle] = useState<number | null>(null);
   const [articles, setArticles] = useState<JournalArticle[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
+
+  useScrollReveal();
 
   useEffect(() => {
     getJournals().then(setArticles);
@@ -40,12 +44,12 @@ export default function Journal() {
         {/* Floating image that follows hover state */}
         <div className="hidden lg:block absolute right-24 top-1/2 -translate-y-1/2 w-[300px] h-[200px] pointer-events-none z-10 transition-opacity duration-300">
           {sortedArticles.map((article, i) => (
-             <img 
+             <MediaRenderer 
                key={article.id}
                src={article.image}
                alt={article.title}
-               className={`absolute inset-0 w-full h-full object-cover rounded-2xl shadow-xl transition-opacity duration-500 ${hoveredArticle === i ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-               referrerPolicy="no-referrer"
+               className={`absolute inset-0 w-full h-full rounded-2xl shadow-xl transition-opacity duration-500 ${hoveredArticle === i ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+               loading="lazy"
              />
           ))}
         </div>
@@ -56,7 +60,7 @@ export default function Journal() {
             key={article.id} 
             onMouseEnter={() => setHoveredArticle(i)}
             onMouseLeave={() => setHoveredArticle(null)}
-            className="group border-b border-black/10 px-6 md:px-12 py-10 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-silver/10 transition-colors cursor-pointer relative z-0"
+            className="group border-b border-black/10 px-6 md:px-12 py-10 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-silver/10 transition-colors cursor-pointer relative z-0 reveal"
           >
             <div className="flex flex-col md:flex-row md:items-baseline gap-4 md:gap-8 md:w-2/3">
               <span className="text-xs uppercase font-semibold font-sans text-orange w-32 shrink-0">{article.category}</span>

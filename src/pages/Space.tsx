@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getSpaces, SpaceModel, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 import { MoveRight } from "lucide-react";
+import { MediaRenderer } from "../components/MediaRenderer";
+import { useScrollReveal } from "../lib/useScrollReveal";
 
 export default function Space() {
   const [spaces, setSpaces] = useState<SpaceModel[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
+
+  useScrollReveal();
 
   useEffect(() => {
     getSpaces().then(setSpaces);
@@ -37,7 +41,7 @@ export default function Space() {
         <Link 
           to={`/space/${space.id}`} 
           key={space.id} 
-          className="group flex flex-col md:flex-row min-h-[60vh] border-b border-black/10 transition-colors hover:bg-black/[0.01]"
+          className="group flex flex-col md:flex-row min-h-[60vh] border-b border-black/10 transition-colors hover:bg-black/[0.01] reveal"
         >
           <div className={`flex-1 p-8 md:p-16 lg:p-24 flex flex-col justify-center ${i % 2 === 0 ? "md:border-r" : "md:order-last md:border-l"} border-black/10`}>
             <span className="text-[10px] uppercase tracking-widest font-bold text-cobalt font-sans block mb-6">Space 0{i + 1}</span>
@@ -52,13 +56,12 @@ export default function Space() {
           </div>
           
           <div className="flex-[1.2] bg-silver/10 relative min-h-[40vh] md:min-h-0 overflow-hidden">
-            <img 
+            <MediaRenderer 
               src={space.images?.[0]} 
               alt={space.title} 
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
-              referrerPolicy="no-referrer"
               loading={i === 0 ? "eager" : "lazy"}
-              {...((i === 0) ? { fetchpriority: "high" } : {})}
+              fetchpriority={i === 0 ? "high" : "auto"}
             />
             <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
           </div>
