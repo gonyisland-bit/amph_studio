@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getProducts, Product, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, MoveRight } from "lucide-react";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -66,7 +66,7 @@ export default function Home() {
             <div className="z-20 relative mt-auto mb-12">
               <span className="text-[11px] uppercase tracking-[0.2em] text-white mb-4 block font-bold drop-shadow-sm">{slide.subtitle}</span>
               <h1 className="text-[14vw] leading-[0.8] font-black tracking-tighter text-white drop-shadow-2xl mix-blend-difference">
-                {slide.title.split('\n').map((line, i) => (
+                {(slide.title || "").split('\n').map((line, i) => (
                   <span key={i} className="block">{line}</span>
                 ))}
               </h1>
@@ -91,7 +91,7 @@ export default function Home() {
       {/* 2. Intro Section: Trendy Banner Layout */}
       <section className="flex flex-col border-b border-black/10 bg-white">
         {[
-          { key: 'collection', link: '/shop' },
+          { key: 'collection', link: '/collection' },
           { key: 'space', link: '/space' },
           { key: 'journal', link: '/journal' }
         ].map((item, idx) => {
