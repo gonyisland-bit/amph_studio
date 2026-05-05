@@ -12,6 +12,7 @@ export default function Shop() {
   useEffect(() => {
     getProducts().then(setProducts);
     getHomeSettings().then(setSettings);
+    document.title = "Collection — Amph";
   }, []);
 
   const sortedProducts = [...products].sort((a, b) => {

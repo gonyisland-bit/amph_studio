@@ -9,6 +9,7 @@ export default function Journal() {
 
   useEffect(() => {
     getJournals().then(setArticles);
+    document.title = "Journal — Amph";
   }, []);
 
   const _a = (prompt: string) => `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=600&height=400&nologo=true`;
@@ -58,18 +59,12 @@ export default function Journal() {
         ))}
       </div>
       
-      <div className="w-full h-[50vh] bg-silver relative overflow-hidden flex items-center justify-center text-center p-6">
-        <img 
-          src={_a("minimalist creative studio space, calm lighting, soft neutral colors, wide angle")} 
-          alt="Studio" 
-          className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-multiply" 
-          referrerPolicy="no-referrer"
-        />
+      <div className="w-full h-[30vh] bg-off-white relative flex items-center justify-center text-center p-6 border-t border-black/10">
         <div className="relative z-10">
           <span className="text-xs uppercase tracking-widest font-bold text-cobalt mb-4 block">Subscribe</span>
           <h3 className="text-3xl md:text-5xl font-bold font-sans tracking-tight mb-8">Letters on Amplified Living</h3>
           <div className="flex max-w-md mx-auto shadow-sm">
-            <input type="email" placeholder="Your email address" className="flex-grow bg-white/90 backdrop-blur px-6 py-4 outline-none border border-black/10 border-r-0 font-sans text-sm" />
+            <input type="email" placeholder="Your email address" className="flex-grow bg-white px-6 py-4 outline-none border border-black/10 border-r-0 font-sans text-sm" />
             <button className="bg-ink text-white px-8 py-4 font-semibold text-xs uppercase tracking-widest hover:bg-cobalt transition-colors">Submit</button>
           </div>
         </div>

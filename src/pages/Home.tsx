@@ -12,6 +12,7 @@ export default function Home() {
   useEffect(() => {
     getProducts().then(setProducts);
     getHomeSettings().then(setSettings);
+    document.title = "Home — Amph";
     
     const checkAuth = () => setIsAuth(localStorage.getItem('admin_auth') === 'true');
     window.addEventListener('admin_auth_change', checkAuth);

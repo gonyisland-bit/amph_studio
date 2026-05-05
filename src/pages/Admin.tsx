@@ -302,10 +302,10 @@ export default function Admin() {
 
       <div className="flex gap-6 mb-8 border-b border-black/10 pb-4 overflow-x-auto">
         {[
-          { id: 'collection', label: 'Home Settings' },
-          { id: 'shop', label: 'Collection Inventory' },
-          { id: 'space', label: 'Space Inventory' },
-          { id: 'journal', label: 'Journal Inventory' }
+          { id: 'collection', label: 'Home' },
+          { id: 'shop', label: 'Collection' },
+          { id: 'space', label: 'Space' },
+          { id: 'journal', label: 'Journal' }
         ].map(tab => (
           <button key={tab.id} onClick={() => switchTab(tab.id as any)} className={`uppercase text-[11px] font-bold tracking-widest transition-all shrink-0 ${activeTab === tab.id ? 'text-cobalt border-b-2 border-cobalt pb-1' : 'text-ink/40 hover:text-ink'}`}>
             {tab.label}
@@ -436,7 +436,9 @@ export default function Admin() {
           {/* Inventory Controls */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div className="flex items-center gap-4">
-               <h2 className="text-xl font-bold font-sans uppercase tracking-tight">Inventory</h2>
+               <h2 className="text-xl font-bold font-sans uppercase tracking-tight">
+                 {activeTab === 'shop' ? 'Collection' : activeTab === 'space' ? 'Space' : 'Journal'}
+               </h2>
                <button onClick={() => { setEditingId(null); switchTab(activeTab); }} className="flex items-center gap-2 bg-cobalt text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all">
                  <Plus size={14} /> New Item
                </button>
