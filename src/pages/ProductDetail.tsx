@@ -13,7 +13,7 @@ export default function ProductDetail() {
     if (id) {
       getProductById(id).then(setProduct);
       getProducts().then(all => {
-        setRecommendations(all.filter(p => p.id !== id).slice(0, 3));
+        setRecommendations(all.filter(p => p.id !== id).slice(0, 6));
       });
       setActiveImage(0); // reset image state on product change
     }
@@ -122,7 +122,7 @@ export default function ProductDetail() {
       )}
 
       {/* Amplify With */}
-      <div className="border-t border-black/10 p-6 md:p-12 lg:p-20 bg-white">
+      <div className="border-t border-black/10 p-6 md:p-12 lg:p-20 bg-white overflow-hidden">
         <div className="flex justify-between items-end mb-12">
           <h3 className="text-4xl lg:text-5xl font-bold tracking-tighter uppercase font-sans">Amplify With</h3>
           <Link to="/shop" className="flex items-center gap-2 text-xs uppercase font-semibold hover:text-cobalt transition-colors group">
@@ -130,14 +130,14 @@ export default function ProductDetail() {
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="flex gap-6 overflow-x-auto hide-scrollbar pb-8 -mx-6 px-6 md:-mx-20 md:px-20 scroll-smooth snap-x">
           {recommendations.map(rec => (
              <Link 
              to={`/product/${rec.id}`}
              key={rec.id}
-             className="group flex flex-col border border-black/5 p-6 rounded-[24px] hover:border-black/10 hover:shadow-xl transition-all duration-300 bg-off-white hover:-translate-y-1"
+             className="group flex flex-col border border-black/5 p-4 rounded-[20px] hover:border-black/10 hover:shadow-lg transition-all duration-300 bg-off-white shrink-0 w-[200px] md:w-[260px] snap-start"
            >
-             <div className="aspect-[4/5] bg-silver/20 overflow-hidden mb-6 rounded-[16px] relative">
+             <div className="aspect-[4/5] bg-silver/20 overflow-hidden mb-4 rounded-[12px] relative">
                <img 
                  src={rec.images[0]} 
                  alt={rec.name}
@@ -145,12 +145,10 @@ export default function ProductDetail() {
                  referrerPolicy="no-referrer"
                />
              </div>
-             <div className="flex justify-between items-start">
-               <div>
-                  <span className="text-[10px] uppercase font-bold text-orange font-sans block">{rec.category}</span>
-                  <h4 className="text-lg font-bold font-sans mt-1 tracking-tight">{rec.name}</h4>
-               </div>
-               <span className="text-sm font-semibold font-sans bg-white px-3 py-1 rounded-full border border-black/5 shadow-sm">${rec.price}</span>
+             <div className="flex flex-col">
+                <span className="text-[9px] uppercase font-bold text-orange font-sans block">{rec.category}</span>
+                <h4 className="text-sm md:text-base font-bold font-sans mt-0.5 tracking-tight truncate">{rec.name}</h4>
+                <span className="text-xs font-semibold font-sans mt-2 text-ink/40">${rec.price}</span>
              </div>
            </Link>
           ))}

@@ -5,12 +5,18 @@ import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
+  const [settings, setSettings] = useState<HomeSettings | null>(null);
 
   useEffect(() => {
     getProducts().then(setProducts);
     getHomeSettings().then(setSettings);
   }, []);
+
+  if (!settings) return (
+    <div className="flex flex-col items-center justify-center flex-grow bg-white">
+      <div className="w-12 h-12 border-4 border-cobalt border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
   const featured = settings.featuredProductIds
     .map(id => products.find(p => p.id === id))
@@ -72,34 +78,41 @@ export default function Home() {
         )}
       </section>
 
-      {/* 2. Intro Section: Enhanced Tabs Overview */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-0 border-b border-black/10 bg-white overflow-hidden">
+      {/* 2. Intro Section: Trendy Banner Layout */}
+      <section className="flex flex-col border-b border-black/10 bg-white">
         {[
           { key: 'collection', link: '/shop' },
           { key: 'space', link: '/space' },
           { key: 'journal', link: '/journal' }
-        ].map((item) => {
+        ].map((item, idx) => {
           const intro = settings.intros?.[item.key as keyof typeof settings.intros] || { title: item.key, description: '', image: '' };
+          const isEven = idx % 2 === 0;
+          
           return (
-            <Link key={item.key} to={item.link} className="group border-r border-black/10 p-10 md:p-14 flex flex-col justify-between hover:bg-black/5 transition-all duration-700 relative overflow-hidden h-[500px] md:h-[600px]">
-              <div className="z-10">
-                <h3 className="text-5xl font-black uppercase tracking-tighter mb-4 group-hover:text-cobalt transition-colors">{intro.title}</h3>
-                <p className="text-lg font-serif italic text-ink/80 max-w-[240px] group-hover:text-ink transition-colors">{intro.description}</p>
+            <Link 
+              key={item.key} 
+              to={item.link} 
+              className={`group flex flex-col md:flex-row h-auto md:h-[45vh] border-b last:border-b-0 border-black/5 relative overflow-hidden transition-colors hover:bg-black/[0.02]`}
+            >
+              {/* Content Side */}
+              <div className={`flex-1 p-8 md:p-16 flex flex-col justify-center z-10 ${isEven ? 'md:order-1' : 'md:order-2'}`}>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-cobalt mb-4 block">0{idx + 1} // {item.key}</span>
+                <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-6 leading-[0.9]">{intro.title}</h3>
+                <p className="text-lg md:text-xl font-serif italic text-ink/70 max-w-md mb-8">{intro.description}</p>
+                <div className="flex items-center gap-4 group-hover:gap-6 transition-all duration-500">
+                  <span className="text-[11px] font-bold uppercase tracking-widest border-b-2 border-cobalt pb-1">Enter Experience</span>
+                  <ArrowRight size={16} className="text-cobalt" />
+                </div>
               </div>
               
-              {/* Background Image - Always Visible, Scaling on Hover */}
-              <div className="absolute inset-0 z-0">
+              {/* Image Side */}
+              <div className={`flex-[1.2] relative h-[300px] md:h-full overflow-hidden ${isEven ? 'md:order-2' : 'md:order-1'}`}>
                 <img 
                   src={intro.image} 
-                  className="w-full h-full object-cover opacity-30 group-hover:opacity-100 group-hover:scale-105 transition-all duration-1000 mix-blend-multiply" 
-                  alt="" 
+                  className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110" 
+                  alt={intro.title} 
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/20 to-transparent group-hover:from-transparent transition-colors duration-700"></div>
-              </div>
-
-              <div className="mt-auto z-10 flex items-center gap-4">
-                <span className="text-[10px] font-bold uppercase tracking-[0.3em] border-b-2 border-ink pb-1 group-hover:border-cobalt group-hover:text-cobalt transition-all">Explore {intro.title}</span>
-                <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform group-hover:text-cobalt" />
+                <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
               </div>
             </Link>
           );

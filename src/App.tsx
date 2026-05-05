@@ -13,6 +13,7 @@ import Admin from "./pages/Admin";
 import Journal from "./pages/Journal";
 import JournalDetail from "./pages/JournalDetail";
 import Space from "./pages/Space";
+import SpaceDetail from "./pages/SpaceDetail";
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/journal" element={<Journal />} />
             <Route path="/journal/:id" element={<JournalDetail />} />
             <Route path="/space" element={<Space />} />
+            <Route path="/space/:id" element={<SpaceDetail />} />
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>

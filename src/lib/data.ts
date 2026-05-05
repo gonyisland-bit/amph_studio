@@ -35,11 +35,12 @@ export interface JournalArticle {
 export interface SpaceModel {
   id: string;
   title: string;
-  location: string;
   description: string;
-  address: string;
-  hours: string;
-  image: string;
+  images: string[];
+  appliedProductIds?: string[];
+  location?: string; // keeping for compatibility
+  address?: string; // keeping for compatibility
+  hours?: string; // keeping for compatibility
 }
 
 const aiImg = (prompt: string) => `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=1000&nologo=true`;
@@ -160,11 +161,8 @@ const mockSpaces: SpaceModel[] = [
   {
     id: "s-1",
     title: "Physical Showroom",
-    location: "Seoul Space",
-    description: "Experience the interplay of industrial minimalism and vivid comfort in our flagship space. A curated environment where ordinary objects become extraordinary touchpoints.",
-    address: "123 Design District\nSeongdong-gu, Seoul",
-    hours: "Wed - Sun\n11:00 - 20:00",
-    image: _a("modern minimalist showroom space in Seoul, curved walls, industrial brushed steel accents, vivid pink lighting, architectural design")
+    images: [_a("modern minimalist showroom space in Seoul, curved walls, industrial brushed steel accents, vivid pink lighting, architectural design")],
+    appliedProductIds: ["prod-1", "prod-3"]
   }
 ];
 

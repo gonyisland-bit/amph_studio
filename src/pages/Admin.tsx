@@ -14,7 +14,7 @@ const emptyJournal: Omit<JournalArticle, 'id'> = {
   title: '', category: '', date: '', image: '', contentBlocks: []
 };
 const emptySpace: Omit<SpaceModel, 'id'> = {
-  title: '', location: '', description: '', address: '', hours: '', image: ''
+  title: '', description: '', images: [''], appliedProductIds: []
 };
 
 const ImageUploadInput = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label?: string }) => {
@@ -552,17 +552,47 @@ export default function Admin() {
 
             {activeTab === 'space' && (
               <>
-                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
+                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Space Title</label>
                   <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Location Label</label>
-                  <input required value={form.location || ''} onChange={e => setForm({...form, location: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                 <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
-                  <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={3}/></div>
-                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Address</label>
-                  <textarea required value={form.address || ''} onChange={e => setForm({...form, address: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={2}/></div>
-                <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Hours</label>
-                  <textarea required value={form.hours || ''} onChange={e => setForm({...form, hours: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={2}/></div>
-                <div><ImageUploadInput label="Image URL" value={form.image || ''} onChange={val => setForm({...form, image: val})} /></div>
+                  <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={4}/></div>
+                
+                <div className="border-t border-black/10 pt-4 mt-4">
+                  <h3 className="font-bold text-xs uppercase mb-4 text-cobalt">Gallery Images</h3>
+                  {form.images?.map((img:string, i:number) => (
+                    <div key={i} className="flex gap-2 mb-2 items-end">
+                       <div className="flex-1">
+                        <ImageUploadInput label={i === 0 ? "Main Space Image" : `Space Image ${i+1}`} value={img} onChange={val => {
+                          const newI = [...form.images]; newI[i] = val; setForm({...form, images: newI});
+                        }} />
+                       </div>
+                       {i > 0 && (
+                         <button type="button" onClick={() => setForm({...form, images: form.images.filter((_:any, idx:number) => idx !== i)})} className="mb-8 text-orange text-xs hover:underline font-bold px-2">Remove</button>
+                       )}
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => setForm({...form, images: [...(form.images || []), '']})} className="text-xs font-bold text-cobalt hover:underline">+ Add Space Image</button>
+                </div>
+
+                <div className="border-t border-black/10 pt-4 mt-4">
+                  <h3 className="font-bold text-xs uppercase mb-4 text-cobalt">Applied Items (Select from Collection)</h3>
+                  <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-black/10 p-4 bg-black/5 rounded-xl">
+                    {products.map(p => (
+                      <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded border border-black/5 hover:bg-silver/10 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={form.appliedProductIds?.includes(p.id)} 
+                          onChange={(e) => {
+                            const current = form.appliedProductIds || [];
+                            const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
+                            setForm({...form, appliedProductIds: next});
+                          }}
+                        />
+                        <span className="text-[10px] font-bold uppercase truncate">{p.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </>
             )}
 
@@ -676,16 +706,18 @@ export default function Admin() {
                       </td>
                     </tr>
                   ))}
-                  {activeTab === 'space' && spaces.map(s => (
-                    <tr key={s.id} className="border-b border-black/10 hover:bg-black/5">
-                      <td className="py-3"><div className="w-16 h-12 bg-silver"><img src={s.image} className="w-full h-full object-cover mix-blend-multiply" referrerPolicy="no-referrer" /></div></td>
+                  {activeTab === 'space' && spaces.map((s) => (
+                    <tr key={s.id} className="border-b border-black/10 hover:bg-black/5 group cursor-pointer" onClick={() => handleEdit(s)}>
+                      <td className="py-3"><span className="text-[10px] font-bold text-ink/30">SPACE</span></td>
+                      <td className="py-3"><div className="w-12 h-12 bg-silver"><img src={s.images?.[0]} className="w-full h-full object-cover mix-blend-multiply" referrerPolicy="no-referrer" /></div></td>
                       <td className="py-3">
-                        <div className="font-semibold">{s.title}</div>
-                        <div className="text-[10px] text-ink/50 uppercase">{s.location}</div>
+                        <div className="font-semibold text-ink">{s.title}</div>
+                        <div className="text-[10px] text-ink/40 uppercase truncate max-w-[200px]">{s.description}</div>
                       </td>
                       <td className="py-3 text-right">
-                        <button onClick={() => handleEdit(s)} className="text-cobalt text-xs font-semibold mr-4 hover:underline">Edit</button>
-                        <button onClick={() => handleDelete(s.id)} className="text-orange text-xs font-semibold hover:underline">Delete</button>
+                        <Link to={`/space/${s.id}`} target="_blank" className="text-xs font-bold text-ink/30 hover:text-cobalt mr-4" onClick={e => e.stopPropagation()}>View Page ↗</Link>
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(s); }} className="text-cobalt text-xs font-semibold mr-4 hover:underline">Edit</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }} className="text-orange text-xs font-semibold hover:underline">Delete</button>
                       </td>
                     </tr>
                   ))}

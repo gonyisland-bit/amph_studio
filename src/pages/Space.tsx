@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getSpaces, SpaceModel } from "../lib/data";
+import { MoveRight } from "lucide-react";
 
 export default function Space() {
   const [spaces, setSpaces] = useState<SpaceModel[]>([]);
@@ -10,35 +12,43 @@ export default function Space() {
 
   return (
     <div className="flex flex-col flex-grow bg-white">
+      <div className="p-6 md:p-14 border-b border-black/10 bg-off-white">
+        <h1 className="text-8xl md:text-[12vw] font-black tracking-tighter uppercase leading-[0.8] mb-8">Spaces</h1>
+        <p className="text-xl md:text-3xl font-serif italic text-ink/60 max-w-2xl">Exploring the dialogue between architectural structure and intimate objects.</p>
+      </div>
+
       {spaces.map((space, i) => (
-        <div key={space.id} className="flex flex-col min-h-[50vh]">
-          <div className={`flex-1 grid grid-cols-1 md:grid-cols-2 ${i > 0 ? "border-t border-black/10" : ""}`}>
-            <div className={`p-6 md:p-12 lg:p-24 flex flex-col justify-center border-b md:border-b-0 ${i % 2 === 0 ? "bg-pink md:border-r" : "bg-off-white order-last md:border-l"} border-black/10`}>
-              <span className="text-[10px] uppercase tracking-widest font-bold text-ink/40 font-sans block mb-6">{space.title}</span>
-              <h1 className="text-6xl md:text-8xl lg:text-[120px] font-bold tracking-tighter uppercase font-sans mb-8 leading-[0.8]" dangerouslySetInnerHTML={{ __html: space.location.replace(' ', '<br/>') }} />
-              <p className="text-xl font-serif italic text-ink/80 leading-relaxed max-w-sm mb-12">
-                {space.description}
-              </p>
-              <div className="space-y-4 text-sm font-semibold font-sans uppercase tracking-widest text-ink/60 whitespace-pre-line">
-                <p>{space.address}</p>
-                <p className="text-ink/60">{space.hours}</p>
-              </div>
-            </div>
-            <div className="bg-silver relative min-h-[50vh] p-8 flex items-center justify-center">
-              <div className="w-full h-full rounded-[40px] overflow-hidden relative shadow-inner">
-                <img 
-                  src={space.image} 
-                  alt={space.title} 
-                  className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-1000 hover:scale-105" 
-                  referrerPolicy="no-referrer"
-                />
-              </div>
+        <Link 
+          to={`/space/${space.id}`} 
+          key={space.id} 
+          className="group flex flex-col md:flex-row min-h-[60vh] border-b border-black/10 transition-colors hover:bg-black/[0.01]"
+        >
+          <div className={`flex-1 p-8 md:p-16 lg:p-24 flex flex-col justify-center ${i % 2 === 0 ? "md:border-r" : "md:order-last md:border-l"} border-black/10`}>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-cobalt font-sans block mb-6">Space 0{i + 1}</span>
+            <h2 className="text-5xl md:text-7xl font-bold tracking-tighter uppercase font-sans mb-8 leading-[0.9] group-hover:text-cobalt transition-colors">{space.title}</h2>
+            <p className="text-lg font-serif italic text-ink/80 leading-relaxed max-w-sm mb-12 line-clamp-3">
+              {space.description}
+            </p>
+            <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest group-hover:gap-6 transition-all">
+              <span>Enter Experience</span>
+              <MoveRight size={16} />
             </div>
           </div>
-        </div>
+          
+          <div className="flex-[1.2] bg-silver/10 relative min-h-[40vh] md:min-h-0 overflow-hidden">
+            <img 
+              src={space.images?.[0]} 
+              alt={space.title} 
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
+          </div>
+        </Link>
       ))}
+      
       {spaces.length === 0 && (
-         <div className="p-12 text-center text-ink/40 text-sm font-semibold">No spaces available.</div>
+         <div className="p-24 text-center text-ink/40 text-sm font-semibold italic font-serif">No spaces recorded in our physical world yet.</div>
       )}
     </div>
   );
