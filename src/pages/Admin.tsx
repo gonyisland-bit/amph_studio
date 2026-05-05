@@ -314,7 +314,7 @@ export default function Admin() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        <div className="col-span-1 lg:col-span-1">
+        <div className={activeTab === 'home' ? 'col-span-3' : 'col-span-1 lg:col-span-1'}>
           <div className="sticky top-24">
             <h2 className="text-xl font-semibold mb-6 flex items-center justify-between">
               <span>{editingId ? 'Edit Content' : 'Add New Content'}</span>
@@ -413,6 +413,37 @@ export default function Admin() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Featured Products (Selected Works) */}
+                  <div className="bg-black/5 p-6 rounded-2xl border border-black/5">
+                    <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center justify-between">
+                      <span>Selected Works (Home Featured)</span>
+                      <span className="text-[10px] font-bold text-ink/30 uppercase">{homeSettings.featuredProductIds.length} Selected</span>
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-4 bg-white rounded-xl border border-black/5 shadow-inner">
+                      {products.map(p => (
+                        <label key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${homeSettings.featuredProductIds.includes(p.id) ? 'bg-cobalt/5 border-cobalt shadow-sm' : 'bg-transparent border-black/5 hover:border-black/20'}`}>
+                          <input 
+                            type="checkbox" 
+                            checked={homeSettings.featuredProductIds.includes(p.id)} 
+                            onChange={(e) => {
+                              const current = homeSettings.featuredProductIds || [];
+                              const next = e.target.checked ? [...current, p.id] : current.filter(id => id !== p.id);
+                              setHomeSettings({...homeSettings, featuredProductIds: next});
+                            }}
+                            className="w-4 h-4 rounded border-gray-300 text-cobalt focus:ring-cobalt"
+                          />
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <img src={p.images[0]} className="w-8 h-8 rounded object-cover mix-blend-multiply flex-shrink-0" />
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[10px] font-black uppercase truncate">{p.name}</span>
+                              <span className="text-[9px] text-ink/30 uppercase truncate">{p.category}</span>
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -505,123 +536,125 @@ export default function Admin() {
           </div>
         </div>
 
-        <div className="col-span-1 lg:col-span-2">
-          {/* Inventory Controls */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <div className="flex items-center gap-4">
-               <h2 className="text-xl font-bold font-sans uppercase tracking-tight">
-                 {activeTab === 'collection' ? 'Collection' : activeTab === 'space' ? 'Space' : 'Journal'}
-               </h2>
-               <button onClick={() => { setEditingId(null); switchTab(activeTab); }} className="flex items-center gap-2 bg-cobalt text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all">
-                 <Plus size={14} /> New Item
-               </button>
+        {activeTab !== 'home' && (
+          <div className="col-span-1 lg:col-span-2">
+            {/* Inventory Controls */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+               <div className="flex items-center gap-4">
+                  <h2 className="text-xl font-bold font-sans uppercase tracking-tight">
+                    {activeTab === 'collection' ? 'Collection' : activeTab === 'space' ? 'Space' : 'Journal'}
+                  </h2>
+                  <button onClick={() => { setEditingId(null); switchTab(activeTab); }} className="flex items-center gap-2 bg-cobalt text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all">
+                    <Plus size={14} /> New Item
+                  </button>
+               </div>
+               
+               {selectedIds.length > 0 && (
+                 <div className="flex items-center gap-2 bg-black/5 p-2 rounded-full border border-black/10 animate-in fade-in slide-in-from-right-4">
+                   <span className="text-[10px] font-bold px-3 border-r border-black/10">{selectedIds.length} Selected</span>
+                   <button onClick={handleBulkDuplicate} className="flex items-center gap-2 hover:text-cobalt px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Copy size={12}/> Duplicate</button>
+                   <button onClick={handleBulkDelete} className="flex items-center gap-2 hover:text-orange px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Trash2 size={12}/> Delete</button>
+                 </div>
+               )}
             </div>
-            
-            {selectedIds.length > 0 && (
-              <div className="flex items-center gap-2 bg-black/5 p-2 rounded-full border border-black/10 animate-in fade-in slide-in-from-right-4">
-                <span className="text-[10px] font-bold px-3 border-r border-black/10">{selectedIds.length} Selected</span>
-                <button onClick={handleBulkDuplicate} className="flex items-center gap-2 hover:text-cobalt px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Copy size={12}/> Duplicate</button>
-                <button onClick={handleBulkDelete} className="flex items-center gap-2 hover:text-orange px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Trash2 size={12}/> Delete</button>
-              </div>
-            )}
+  
+            <div className="overflow-x-auto bg-white rounded-3xl border border-black/5 shadow-sm">
+              <table className="w-full text-sm text-left">
+                <thead className="text-[10px] uppercase font-black tracking-widest text-ink/40 border-b border-black/5">
+                  <tr>
+                    <th className="p-4 w-10">
+                      <input type="checkbox" onChange={(e) => {
+                        if (e.target.checked) {
+                          const allIds = (activeTab === 'collection' || activeTab === 'home') ? products.map(p => p.id) : activeTab === 'space' ? spaces.map(s => s.id) : journals.map(j => j.id);
+                          setSelectedIds(allIds);
+                        } else setSelectedIds([]);
+                      }} checked={selectedIds.length > 0 && selectedIds.length === ((activeTab === 'collection' || activeTab === 'home') ? products.length : activeTab === 'space' ? spaces.length : journals.length)} />
+                    </th>
+                    <th className="py-4">Order</th>
+                    <th className="py-4">Image</th>
+                    <th className="py-4">Details</th>
+                    <th className="py-4 text-right pr-6">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-black/5">
+                    {(activeTab === 'collection' || activeTab === 'home') && [...products].sort((a,b) => {
+                      const aIdx = homeSettings.globalProductOrder.indexOf(a.id);
+                      const bIdx = homeSettings.globalProductOrder.indexOf(b.id);
+                      if (aIdx === -1 && bIdx === -1) return 0;
+                      if (aIdx === -1) return 1;
+                      if (bIdx === -1) return -1;
+                      return aIdx - bIdx;
+                    }).map((p, index) => (
+                      <tr key={p.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(p.id) ? 'bg-cobalt/5' : ''}`}>
+                        <td className="p-4">
+                          <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => toggleSelect(p.id)} />
+                        </td>
+                        <td className="py-4">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <button onClick={() => { /* reorder logic */ }} className="text-ink/10 hover:text-cobalt"><ChevronUp size={14}/></button>
+                            <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
+                            <button onClick={() => { /* reorder logic */ }} className="text-ink/10 hover:text-cobalt"><ChevronDown size={14}/></button>
+                          </div>
+                        </td>
+                        <td className="py-4"><img src={p.images[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
+                        <td className="py-4">
+                          <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{p.name}</div>
+                          <div className="text-[9px] font-black uppercase text-orange">{p.category}</div>
+                        </td>
+                        <td className="py-4 text-right pr-6">
+                          <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleEdit(p)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
+                            <button onClick={() => handleDelete(p.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+  
+                    {activeTab === 'space' && spaces.map((s) => (
+                      <tr key={s.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(s.id) ? 'bg-cobalt/5' : ''}`}>
+                        <td className="p-4">
+                          <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
+                        </td>
+                        <td className="py-4"><span className="text-[9px] font-black text-ink/20">SPACE</span></td>
+                        <td className="py-4"><img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
+                        <td className="py-4">
+                          <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{s.title}</div>
+                          <div className="text-[9px] font-black uppercase text-ink/30 truncate max-w-[150px]">{s.description}</div>
+                        </td>
+                        <td className="py-4 text-right pr-6">
+                          <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity items-center">
+                            <Link to={`/space/${s.id}`} target="_blank" className="text-ink/20 hover:text-cobalt"><ExternalLink size={14} /></Link>
+                            <button onClick={() => handleEdit(s)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
+                            <button onClick={() => handleDelete(s.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+  
+                    {activeTab === 'journal' && journals.map((j) => (
+                      <tr key={j.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(j.id) ? 'bg-cobalt/5' : ''}`}>
+                        <td className="p-4">
+                          <input type="checkbox" checked={selectedIds.includes(j.id)} onChange={() => toggleSelect(j.id)} />
+                        </td>
+                        <td className="py-4"><span className="text-[9px] font-black text-ink/20">POST</span></td>
+                        <td className="py-4"><img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
+                        <td className="py-4">
+                          <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{j.title}</div>
+                          <div className="text-[9px] font-black uppercase text-ink/30">{j.date}</div>
+                        </td>
+                        <td className="py-4 text-right pr-6">
+                          <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleEdit(j)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
+                            <button onClick={() => handleDelete(j.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-
-          <div className="overflow-x-auto bg-white rounded-3xl border border-black/5 shadow-sm">
-            <table className="w-full text-sm text-left">
-              <thead className="text-[10px] uppercase font-black tracking-widest text-ink/40 border-b border-black/5">
-                <tr>
-                  <th className="p-4 w-10">
-                    <input type="checkbox" onChange={(e) => {
-                      if (e.target.checked) {
-                        const allIds = (activeTab === 'collection' || activeTab === 'home') ? products.map(p => p.id) : activeTab === 'space' ? spaces.map(s => s.id) : journals.map(j => j.id);
-                        setSelectedIds(allIds);
-                      } else setSelectedIds([]);
-                    }} checked={selectedIds.length > 0 && selectedIds.length === ((activeTab === 'collection' || activeTab === 'home') ? products.length : activeTab === 'space' ? spaces.length : journals.length)} />
-                  </th>
-                  <th className="py-4">Order</th>
-                  <th className="py-4">Image</th>
-                  <th className="py-4">Details</th>
-                  <th className="py-4 text-right pr-6">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-black/5">
-                  {(activeTab === 'collection' || activeTab === 'home') && [...products].sort((a,b) => {
-                    const aIdx = homeSettings.globalProductOrder.indexOf(a.id);
-                    const bIdx = homeSettings.globalProductOrder.indexOf(b.id);
-                    if (aIdx === -1 && bIdx === -1) return 0;
-                    if (aIdx === -1) return 1;
-                    if (bIdx === -1) return -1;
-                    return aIdx - bIdx;
-                  }).map((p, index) => (
-                    <tr key={p.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(p.id) ? 'bg-cobalt/5' : ''}`}>
-                      <td className="p-4">
-                        <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => toggleSelect(p.id)} />
-                      </td>
-                      <td className="py-4">
-                        <div className="flex flex-col items-center gap-0.5">
-                          <button onClick={() => { /* reorder logic */ }} className="text-ink/10 hover:text-cobalt"><ChevronUp size={14}/></button>
-                          <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
-                          <button onClick={() => { /* reorder logic */ }} className="text-ink/10 hover:text-cobalt"><ChevronDown size={14}/></button>
-                        </div>
-                      </td>
-                      <td className="py-4"><img src={p.images[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
-                      <td className="py-4">
-                        <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{p.name}</div>
-                        <div className="text-[9px] font-black uppercase text-orange">{p.category}</div>
-                      </td>
-                      <td className="py-4 text-right pr-6">
-                        <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleEdit(p)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
-                          <button onClick={() => handleDelete(p.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {activeTab === 'space' && spaces.map((s) => (
-                    <tr key={s.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(s.id) ? 'bg-cobalt/5' : ''}`}>
-                      <td className="p-4">
-                        <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
-                      </td>
-                      <td className="py-4"><span className="text-[9px] font-black text-ink/20">SPACE</span></td>
-                      <td className="py-4"><img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
-                      <td className="py-4">
-                        <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{s.title}</div>
-                        <div className="text-[9px] font-black uppercase text-ink/30 truncate max-w-[150px]">{s.description}</div>
-                      </td>
-                      <td className="py-4 text-right pr-6">
-                        <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity items-center">
-                          <Link to={`/space/${s.id}`} target="_blank" className="text-ink/20 hover:text-cobalt"><ExternalLink size={14} /></Link>
-                          <button onClick={() => handleEdit(s)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
-                          <button onClick={() => handleDelete(s.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {activeTab === 'journal' && journals.map((j) => (
-                    <tr key={j.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(j.id) ? 'bg-cobalt/5' : ''}`}>
-                      <td className="p-4">
-                        <input type="checkbox" checked={selectedIds.includes(j.id)} onChange={() => toggleSelect(j.id)} />
-                      </td>
-                      <td className="py-4"><span className="text-[9px] font-black text-ink/20">POST</span></td>
-                      <td className="py-4"><img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
-                      <td className="py-4">
-                        <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{j.title}</div>
-                        <div className="text-[9px] font-black uppercase text-ink/30">{j.date}</div>
-                      </td>
-                      <td className="py-4 text-right pr-6">
-                        <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleEdit(j)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
-                          <button onClick={() => handleDelete(j.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
