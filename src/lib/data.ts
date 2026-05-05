@@ -327,6 +327,11 @@ export const updateSpace = async (id: string, updates: Partial<SpaceModel>): Pro
   }
 };
 
+export const getSpaceById = async (id: string): Promise<SpaceModel | null> => {
+  const spaces = await getSpaces();
+  return spaces.find(s => s.id === id) || null;
+};
+
 export const deleteSpace = async (id: string): Promise<void> => {
   try {
     const res = await fetch(`/api/spaces?id=${id}`, { method: 'DELETE' });
@@ -386,6 +391,11 @@ export const updateJournal = async (id: string, updates: Partial<JournalArticle>
     if (index !== -1) { journalsStore[index] = { ...journalsStore[index], ...updates }; return journalsStore[index]; }
     throw new Error("Journal not found");
   }
+};
+
+export const getJournalById = async (id: string): Promise<JournalArticle | null> => {
+  const journals = await getJournals();
+  return journals.find(j => j.id === id) || null;
 };
 
 export const deleteJournal = async (id: string) => {
