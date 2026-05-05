@@ -49,7 +49,7 @@ export default function Home() {
             key={slide.id} 
             className={`absolute inset-0 flex flex-col justify-center px-6 md:px-14 transition-opacity duration-1000 ease-in-out ${idx === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           >
-            <div className="absolute inset-0 bg-ink">
+            <div className="absolute inset-0 bg-off-white">
               {slide.image && (
                 <img 
                   src={slide.image} 

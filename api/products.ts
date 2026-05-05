@@ -3,6 +3,30 @@ import { sql } from '@vercel/postgres';
 export default async function handler(req: any, res: any) {
   const { id } = req.query;
 
+  // Auto-setup
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS products (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        category TEXT,
+        description TEXT,
+        "subTitle" TEXT,
+        material TEXT,
+        price NUMERIC,
+        images TEXT,
+        "hoverImages" TEXT,
+        "contentBlocks" TEXT,
+        "isFeatured" BOOLEAN DEFAULT FALSE,
+        dimensions TEXT,
+        shipping TEXT,
+        sku TEXT,
+        color TEXT,
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+  } catch (e) {}
+
   if (req.method === 'GET') {
     try {
       const { rows } = await sql`SELECT * FROM products ORDER BY "createdAt" DESC`;
@@ -36,6 +60,21 @@ export default async function handler(req: any, res: any) {
           ${sku || ''},
           ${color || ''}
         )
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          category = EXCLUDED.category,
+          description = EXCLUDED.description,
+          "subTitle" = EXCLUDED."subTitle",
+          material = EXCLUDED.material,
+          price = EXCLUDED.price,
+          images = EXCLUDED.images,
+          "hoverImages" = EXCLUDED."hoverImages",
+          "contentBlocks" = EXCLUDED."contentBlocks",
+          "isFeatured" = EXCLUDED."isFeatured",
+          dimensions = EXCLUDED.dimensions,
+          shipping = EXCLUDED.shipping,
+          sku = EXCLUDED.sku,
+          color = EXCLUDED.color
       `;
       return res.status(201).json({ success: true, id: newId });
     } catch (error) {
@@ -47,26 +86,7 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'PUT') {
     if (!id) return res.status(400).json({ error: 'ID is required' });
     try {
-      const existing = await sql`SELECT * FROM products WHERE id = ${id}`;
-      if (existing.rowCount === 0) return res.status(404).json({ error: 'Product not found' });
-      const current = existing.rows[0];
-
-      const name = req.body.name !== undefined ? req.body.name : current.name;
-      const category = req.body.category !== undefined ? req.body.category : current.category;
-      const description = req.body.description !== undefined ? req.body.description : current.description;
-      const material = req.body.material !== undefined ? req.body.material : current.material;
-      const subTitle = req.body.subTitle !== undefined ? req.body.subTitle : current.subTitle;
-      const price = req.body.price !== undefined ? req.body.price : current.price;
-      const images = req.body.images !== undefined ? req.body.images : (typeof current.images === 'string' ? JSON.parse(current.images) : current.images);
-      const hoverImages = req.body.hoverImages !== undefined ? req.body.hoverImages : (typeof current.hoverImages === 'string' ? JSON.parse(current.hoverImages) : current.hoverImages);
-      const contentBlocks = req.body.contentBlocks !== undefined ? req.body.contentBlocks : (typeof current.contentBlocks === 'string' ? JSON.parse(current.contentBlocks) : current.contentBlocks);
-      const isFeatured = req.body.isFeatured !== undefined ? req.body.isFeatured : current.isFeatured;
-
-      const dimensions = req.body.dimensions !== undefined ? req.body.dimensions : current.dimensions;
-      const shipping = req.body.shipping !== undefined ? req.body.shipping : current.shipping;
-      const sku = req.body.sku !== undefined ? req.body.sku : current.sku;
-      const color = req.body.color !== undefined ? req.body.color : current.color;
-
+      const { name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color } = req.body;
       await sql`
         UPDATE products SET 
           name = ${name}, 

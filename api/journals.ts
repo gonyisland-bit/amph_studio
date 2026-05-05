@@ -3,9 +3,24 @@ import { sql } from '@vercel/postgres';
 export default async function handler(req: any, res: any) {
   const { id } = req.query;
 
+  // Auto-setup
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS journals (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        category TEXT,
+        date TEXT,
+        image TEXT,
+        "contentBlocks" TEXT,
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+  } catch (e) {}
+
   if (req.method === 'GET') {
     try {
-      const { rows } = await sql`SELECT * FROM journals ORDER BY id DESC`;
+      const { rows } = await sql`SELECT * FROM journals ORDER BY "createdAt" DESC`;
       const parsedRows = rows.map(r => ({
         ...r,
         contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
@@ -23,6 +38,12 @@ export default async function handler(req: any, res: any) {
       await sql`
         INSERT INTO journals (id, title, category, date, image, "contentBlocks")
         VALUES (${newId}, ${title}, ${category}, ${date}, ${image}, ${JSON.stringify(contentBlocks || [])})
+        ON CONFLICT (id) DO UPDATE SET
+          title = EXCLUDED.title,
+          category = EXCLUDED.category,
+          date = EXCLUDED.date,
+          image = EXCLUDED.image,
+          "contentBlocks" = EXCLUDED."contentBlocks"
       `;
       return res.status(201).json({ success: true, id: newId });
     } catch (error) {

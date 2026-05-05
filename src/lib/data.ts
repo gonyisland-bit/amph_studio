@@ -438,9 +438,9 @@ export interface HomeSettings {
 }
 
 export const defaultHomeSettings: HomeSettings = {
-  title: "Amplify\nYour\nOrdinary.",
-  subtitle: "The Muse — Vol 01",
-  description: "Transforming the mundane into unique experiences through chrome, steel, and vivid textures.",
+  title: "",
+  subtitle: "",
+  description: "",
   marquee: "Amplify Your Ordinary",
   featuredProductIds: [],
   globalProductOrder: [],
