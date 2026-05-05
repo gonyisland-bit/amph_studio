@@ -40,7 +40,7 @@ export default function Home() {
           >
             <div className="absolute inset-0">
               <img 
-                src={slide.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=2158&auto=format&fit=crop'} 
+                src={slide.image || ''} 
                 className="w-full h-full object-cover" 
                 alt={slide.title}
               />
