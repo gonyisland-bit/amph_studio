@@ -325,9 +325,9 @@ export default function Admin() {
             <form onSubmit={handleSave} className="space-y-4 text-sm">
               
               {activeTab === 'home' && (
-                <div className="space-y-8">
+                <div className="max-w-5xl mx-auto space-y-12 pb-20">
                   {/* General Copy */}
-                  <div className="bg-black/5 p-6 rounded-2xl border border-black/5">
+                  <div className="bg-black/5 p-8 rounded-[32px] border border-black/5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center gap-2">
                       <ExternalLink size={14} /> Global Settings
                     </h3>
@@ -353,7 +353,7 @@ export default function Admin() {
                         setHomeSettings({...homeSettings, heroSlides: newSlides});
                       }} className="bg-ink text-white px-3 py-1 rounded-full text-[9px]">+ Add Slide</button>
                     </h3>
-                    <div className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {homeSettings.heroSlides.map((slide, idx) => (
                         <div key={slide.id} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4 relative">
                           <button type="button" onClick={() => {
@@ -386,9 +386,9 @@ export default function Admin() {
                   </div>
 
                   {/* Category Intros */}
-                  <div className="bg-black/5 p-6 rounded-2xl border border-black/5">
+                  <div className="bg-black/5 p-8 rounded-[32px] border border-black/5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6">Category Banners</h3>
-                    <div className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {(['collection', 'space', 'journal'] as const).map(cat => (
                         <div key={cat} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4">
                           <span className="text-[10px] font-black uppercase text-orange">{cat} Intro</span>
@@ -415,12 +415,12 @@ export default function Admin() {
                   </div>
 
                   {/* Featured Products (Selected Works) */}
-                  <div className="bg-black/5 p-6 rounded-2xl border border-black/5">
+                  <div className="bg-black/5 p-8 rounded-[32px] border border-black/5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center justify-between">
                       <span>Selected Works (Home Featured)</span>
                       <span className="text-[10px] font-bold text-ink/30 uppercase">{homeSettings.featuredProductIds.length} Selected</span>
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-4 bg-white rounded-xl border border-black/5 shadow-inner">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[500px] overflow-y-auto p-4 bg-white rounded-2xl border border-black/5 shadow-inner">
                       {products.map(p => (
                         <label key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${homeSettings.featuredProductIds.includes(p.id) ? 'bg-cobalt/5 border-cobalt shadow-sm' : 'bg-transparent border-black/5 hover:border-black/20'}`}>
                           <input 

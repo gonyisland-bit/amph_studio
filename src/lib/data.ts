@@ -79,9 +79,9 @@ const revalidateProducts = async (): Promise<Product[]> => {
       cachedProducts = data;
       return [...cachedProducts!];
     } catch (error) {
-      console.error("Failed to fetch products from DB, falling back to mock store:", error);
-      cachedProducts = [...productsStore];
-      return [...cachedProducts];
+      console.error("Failed to fetch products from DB:", error);
+      cachedProducts = [];
+      return [];
     } finally {
       productsFetchPromise = null;
     }
@@ -162,9 +162,9 @@ export const getSpaces = async (): Promise<SpaceModel[]> => {
       cachedSpaces = data;
       return [...data];
     } catch (err) {
-      console.error("Failed to fetch spaces, using mocks:", err);
-      cachedSpaces = [...mockSpaces];
-      return [...mockSpaces];
+      console.error("Failed to fetch spaces:", err);
+      cachedSpaces = [];
+      return [];
     } finally {
       spacesFetchPromise = null;
     }
@@ -244,9 +244,9 @@ export const getJournals = async (): Promise<JournalArticle[]> => {
       cachedJournals = data;
       return [...data];
     } catch (err) {
-      console.error("Failed to fetch journals, using mocks:", err);
-      cachedJournals = [...mockJournals];
-      return [...mockJournals];
+      console.error("Failed to fetch journals:", err);
+      cachedJournals = [];
+      return [];
     } finally {
       journalsFetchPromise = null;
     }
