@@ -38,9 +38,10 @@ export interface SpaceModel {
   description: string;
   images: string[];
   appliedProductIds?: string[];
-  location?: string; // keeping for compatibility
-  address?: string; // keeping for compatibility
-  hours?: string; // keeping for compatibility
+  location?: string;
+  address?: string;
+  hours?: string;
+  image?: string;
 }
 
 // Global cache and fetch promises
