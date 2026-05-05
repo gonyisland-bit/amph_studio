@@ -262,24 +262,141 @@ export const deleteProduct = async (id: string): Promise<void> => {
   }
 };
 
-export const getJournals = () => Promise.resolve([...journalsStore]);
-export const getJournalById = (id: string) => Promise.resolve(journalsStore.find(j => j.id === id) || null);
-export const addJournal = (journal: JournalArticle) => { journalsStore.push(journal); return Promise.resolve(journal); };
-export const updateJournal = (id: string, updates: Partial<JournalArticle>) => {
-  const index = journalsStore.findIndex(j => j.id === id);
-  if(index !== -1) { journalsStore[index] = { ...journalsStore[index], ...updates }; return Promise.resolve(journalsStore[index]); }
-  return Promise.reject(new Error("Journal not found"));
-};
-export const deleteJournal = (id: string) => { journalsStore = journalsStore.filter(j => j.id !== id); return Promise.resolve(); };
+let cachedSpaces: SpaceModel[] | null = null;
+let spacesFetchPromise: Promise<SpaceModel[]> | null = null;
 
-export const getSpaces = () => Promise.resolve([...spacesStore]);
-export const addSpace = (space: SpaceModel) => { spacesStore.push(space); return Promise.resolve(space); };
-export const updateSpace = (id: string, updates: Partial<SpaceModel>) => {
-  const index = spacesStore.findIndex(s => s.id === id);
-  if(index !== -1) { spacesStore[index] = { ...spacesStore[index], ...updates }; return Promise.resolve(spacesStore[index]); }
-  return Promise.reject(new Error("Space not found"));
+export const getSpaces = async (): Promise<SpaceModel[]> => {
+  if (cachedSpaces) return [...cachedSpaces];
+  if (spacesFetchPromise) return spacesFetchPromise;
+
+  spacesFetchPromise = (async () => {
+    try {
+      const res = await fetch('/api/spaces');
+      if (!res.ok) throw new Error('API failed');
+      const data = await res.json();
+      cachedSpaces = data;
+      return [...data];
+    } catch (err) {
+      console.error("Failed to fetch spaces, using mocks:", err);
+      cachedSpaces = [...mockSpaces];
+      return [...mockSpaces];
+    } finally {
+      spacesFetchPromise = null;
+    }
+  })();
+  return spacesFetchPromise;
 };
-export const deleteSpace = (id: string) => { spacesStore = spacesStore.filter(s => s.id !== id); return Promise.resolve(); };
+
+export const addSpace = async (space: SpaceModel): Promise<SpaceModel> => {
+  try {
+    const res = await fetch('/api/spaces', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(space)
+    });
+    if (!res.ok) throw new Error('Failed to add space');
+    if (cachedSpaces) cachedSpaces = [space, ...cachedSpaces];
+    return space;
+  } catch (err) {
+    console.error(err);
+    spacesStore.push(space);
+    if (cachedSpaces) cachedSpaces = [space, ...cachedSpaces];
+    return space;
+  }
+};
+
+export const updateSpace = async (id: string, updates: Partial<SpaceModel>): Promise<SpaceModel> => {
+  try {
+    const res = await fetch(`/api/spaces?id=${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    if (!res.ok) throw new Error('Failed to update space');
+    if (cachedSpaces) cachedSpaces = cachedSpaces.map(s => s.id === id ? { ...s, ...updates } : s);
+    return { id, ...updates } as SpaceModel;
+  } catch (err) {
+    console.error(err);
+    const index = spacesStore.findIndex(s => s.id === id);
+    if (index !== -1) {
+      spacesStore[index] = { ...spacesStore[index], ...updates };
+      if (cachedSpaces) cachedSpaces = cachedSpaces.map(s => s.id === id ? { ...s, ...updates } : s);
+      return spacesStore[index];
+    }
+    throw new Error("Space not found");
+  }
+};
+
+export const deleteSpace = async (id: string): Promise<void> => {
+  try {
+    const res = await fetch(`/api/spaces?id=${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete space');
+    if (cachedSpaces) cachedSpaces = cachedSpaces.filter(s => s.id !== id);
+  } catch (err) {
+    console.error(err);
+    spacesStore = spacesStore.filter(s => s.id !== id);
+    if (cachedSpaces) cachedSpaces = cachedSpaces.filter(s => s.id !== id);
+  }
+};
+
+let cachedJournals: JournalArticle[] | null = null;
+let journalsFetchPromise: Promise<JournalArticle[]> | null = null;
+
+export const getJournals = async (): Promise<JournalArticle[]> => {
+  if (cachedJournals) return [...cachedJournals];
+  if (journalsFetchPromise) return journalsFetchPromise;
+
+  journalsFetchPromise = (async () => {
+    try {
+      const res = await fetch('/api/journals');
+      if (!res.ok) throw new Error('API failed');
+      const data = await res.json();
+      cachedJournals = data;
+      return [...data];
+    } catch (err) {
+      console.error("Failed to fetch journals, using mocks:", err);
+      cachedJournals = [...mockJournals];
+      return [...mockJournals];
+    } finally {
+      journalsFetchPromise = null;
+    }
+  })();
+  return journalsFetchPromise;
+};
+
+export const addJournal = async (journal: JournalArticle) => {
+  try {
+    await fetch('/api/journals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(journal) });
+    if (cachedJournals) cachedJournals = [journal, ...cachedJournals];
+    return journal;
+  } catch (err) {
+    journalsStore.push(journal);
+    if (cachedJournals) cachedJournals = [journal, ...cachedJournals];
+    return journal;
+  }
+};
+
+export const updateJournal = async (id: string, updates: Partial<JournalArticle>) => {
+  try {
+    await fetch(`/api/journals?id=${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) });
+    if (cachedJournals) cachedJournals = cachedJournals.map(j => j.id === id ? { ...j, ...updates } : j);
+    return { id, ...updates } as JournalArticle;
+  } catch (err) {
+    const index = journalsStore.findIndex(j => j.id === id);
+    if (index !== -1) { journalsStore[index] = { ...journalsStore[index], ...updates }; return journalsStore[index]; }
+    throw new Error("Journal not found");
+  }
+};
+
+export const deleteJournal = async (id: string) => {
+  try {
+    await fetch(`/api/journals?id=${id}`, { method: 'DELETE' });
+    if (cachedJournals) cachedJournals = cachedJournals.filter(j => j.id !== id);
+  } catch (err) {
+    journalsStore = journalsStore.filter(j => j.id !== id);
+    if (cachedJournals) cachedJournals = cachedJournals.filter(j => j.id !== id);
+  }
+};
 
 export interface HeroSlide {
   id: string;

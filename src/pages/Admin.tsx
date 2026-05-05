@@ -400,6 +400,26 @@ export default function Admin() {
                     ))}
                     <button type="button" onClick={() => setForm({...form, images: [...(form.images || []), '']})} className="text-[10px] font-bold text-cobalt hover:underline">+ Add Image</button>
                   </div>
+
+                  <div className="border-t border-black/10 pt-4 mt-4">
+                    <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Amplify with (Linked Products)</h3>
+                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-black/10 p-4 bg-black/5 rounded-xl">
+                      {products.map(p => (
+                        <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded border border-black/5 hover:bg-silver/10 cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={form.appliedProductIds?.includes(p.id)} 
+                            onChange={(e) => {
+                              const current = form.appliedProductIds || [];
+                              const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
+                              setForm({...form, appliedProductIds: next});
+                            }}
+                          />
+                          <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </>
               )}
 

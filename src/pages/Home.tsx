@@ -7,9 +7,15 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
 
+  const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
+
   useEffect(() => {
     getProducts().then(setProducts);
     getHomeSettings().then(setSettings);
+    
+    const checkAuth = () => setIsAuth(localStorage.getItem('admin_auth') === 'true');
+    window.addEventListener('admin_auth_change', checkAuth);
+    return () => window.removeEventListener('admin_auth_change', checkAuth);
   }, []);
 
   const featured = settings.featuredProductIds
@@ -30,9 +36,14 @@ export default function Home() {
 
   return (
     <div className="flex flex-col flex-grow w-full bg-off-white overflow-hidden">
-      
+      {isAuth && (
+        <Link to="/admin" className="fixed bottom-12 left-12 z-[100] bg-cobalt text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all scale-100 hover:scale-110">
+          Edit Page Content
+        </Link>
+      )}
+
       {/* 1. Hero Section: Editorial Slideshow */}
-      <section className="relative w-full h-[90vh] overflow-hidden">
+      <section className="relative w-full h-[90vh] overflow-hidden bg-black">
         {settings.heroSlides?.map((slide, idx) => (
           <div 
             key={slide.id} 

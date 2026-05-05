@@ -8,6 +8,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [activeImage, setActiveImage] = useState(0);
+  const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
 
   useEffect(() => {
     if (id) {
@@ -28,6 +29,11 @@ export default function ProductDetail() {
 
   return (
     <div className="flex flex-col flex-grow bg-white">
+      {isAuth && (
+        <Link to="/admin" className="fixed bottom-12 left-12 z-[100] bg-cobalt text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all">
+          Edit Product
+        </Link>
+      )}
       {/* Sticky Header */}
       <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md px-6 md:px-12 py-4 border-b border-black/10 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-4">
