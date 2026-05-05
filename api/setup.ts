@@ -31,6 +31,10 @@ export default async function handler(req: any, res: any) {
         description TEXT,
         images TEXT,
         "appliedProductIds" TEXT,
+        location TEXT DEFAULT '',
+        address TEXT DEFAULT '',
+        hours TEXT DEFAULT '',
+        image TEXT DEFAULT '',
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
@@ -51,7 +55,14 @@ export default async function handler(req: any, res: any) {
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`; } catch(e) {}
     try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`; } catch(e) {}
     try { await sql`ALTER TABLE journals ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`; } catch(e) {}
+    
+    // Spaces Migrations
     try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "appliedProductIds" TEXT`; } catch(e) {}
+    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "images" TEXT`; } catch(e) {}
+    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "location" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "address" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "hours" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "image" TEXT DEFAULT ''`; } catch(e) {}
 
     return res.status(200).json({ success: true, message: 'Tables and columns verified' });
   } catch (error) {
@@ -59,3 +70,4 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: 'Failed to setup database', details: error });
   }
 }
+

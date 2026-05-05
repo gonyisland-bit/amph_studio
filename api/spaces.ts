@@ -3,6 +3,24 @@ import { sql } from '@vercel/postgres';
 export default async function handler(req: any, res: any) {
   const { id } = req.query;
 
+  // Auto-setup table
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS spaces (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        images TEXT,
+        "appliedProductIds" TEXT,
+        location TEXT DEFAULT '',
+        address TEXT DEFAULT '',
+        hours TEXT DEFAULT '',
+        image TEXT DEFAULT '',
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+  } catch (e) {}
+
   if (req.method === 'GET') {
     try {
       // Try ordering by createdAt, fallback to id if column missing
@@ -33,9 +51,17 @@ export default async function handler(req: any, res: any) {
       if (!targetId) return res.status(400).json({ error: 'ID is required' });
 
       // Use UPSERT for both POST and PUT to be safe
+      // Providing defaults for legacy columns to avoid NOT NULL constraints if they exist
       await sql`
-        INSERT INTO spaces (id, title, description, images, "appliedProductIds")
-        VALUES (${targetId}, ${title}, ${description}, ${JSON.stringify(images || [])}, ${JSON.stringify(appliedProductIds || [])})
+        INSERT INTO spaces (id, title, description, images, "appliedProductIds", location, address, hours, image)
+        VALUES (
+          ${targetId}, 
+          ${title}, 
+          ${description || ''}, 
+          ${JSON.stringify(images || [])}, 
+          ${JSON.stringify(appliedProductIds || [])},
+          '', '', '', ''
+        )
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
           description = EXCLUDED.description,
@@ -44,6 +70,7 @@ export default async function handler(req: any, res: any) {
       `;
       return res.status(200).json({ success: true, id: targetId });
     } catch (error) {
+
       console.error(error);
       return res.status(500).json({ error: 'Failed to save space' });
     }
