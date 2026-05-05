@@ -8,12 +8,20 @@
   --color-silver: #E0E0E2;
   --color-off-white: #FAF9F6;
   --color-ink: #1A1A1A;
+  
   --font-sans: "Inter", "Helvetica Neue", Helvetica, sans-serif;
-  --font-serif: "Inter", "Helvetica Neue", Helvetica, sans-serif;
+  --font-serif: "Cormorant Garamond", serif;
 
   --animate-marquee: marquee 20s linear infinite;
+  --animate-shimmer: shimmer 1.4s ease infinite;
+
   @keyframes marquee {
     to { transform: translateX(-50%); }
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 }
 
@@ -50,6 +58,7 @@
     transform: translateY(40px);
     transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
+  
   .reveal.active {
     opacity: 1;
     transform: translateY(0);
@@ -63,15 +72,6 @@
       rgba(0, 0, 0, 0.05) 63%
     );
     background-size: 400% 100%;
-    animation: shimmer 1.4s ease infinite;
-  }
-
-  @keyframes shimmer {
-    0% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+    animation: var(--animate-shimmer);
   }
 }
