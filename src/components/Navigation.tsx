@@ -29,30 +29,37 @@ export function Navigation() {
 
   return (
     <>
-      <nav className="flex justify-between items-center px-6 md:px-12 py-6 border-b border-black/5 bg-white z-50 relative">
-        <Link to="/" className="text-2xl md:text-3xl font-bold tracking-tighter uppercase font-sans">Amph</Link>
-        
-        <div className="hidden md:flex gap-12 text-[11px] uppercase tracking-widest font-semibold font-sans">
-          <Link to="/" className="hover:text-cobalt transition-colors">Home</Link>
-          <Link to="/collection" className="hover:text-cobalt transition-colors">Collection</Link>
-          <Link to="/space" className="hover:text-cobalt transition-colors">Space</Link>
-          <Link to="/journal" className="hover:text-cobalt transition-colors">Journal</Link>
-        </div>
+      <nav className="px-6 md:px-12 py-6 border-b border-black/5 bg-white z-50 relative">
+        <div className="max-w-[1800px] mx-auto grid grid-cols-2 md:grid-cols-3 items-center">
+          {/* Logo */}
+          <div className="flex justify-start">
+            <Link to="/" className="text-2xl md:text-3xl font-bold tracking-tighter uppercase font-sans">Amph</Link>
+          </div>
+          
+          {/* Center Menu (Desktop) */}
+          <div className="hidden md:flex justify-center gap-10 text-[11px] uppercase tracking-widest font-black font-sans">
+            <Link to="/" className="hover:text-cobalt transition-all">Home</Link>
+            <Link to="/collection" className="hover:text-cobalt transition-all">Collection</Link>
+            <Link to="/space" className="hover:text-cobalt transition-all">Space</Link>
+            <Link to="/journal" className="hover:text-cobalt transition-all">Journal</Link>
+          </div>
 
-        <div className="flex gap-4 md:gap-8 text-[11px] uppercase tracking-widest font-semibold font-sans items-center">
-          <span className="hidden md:inline cursor-pointer hover:text-cobalt">KR / EN</span>
-          {isAuth ? (
-            <div className="flex items-center gap-2">
-              <Link to="/admin" className="flex items-center gap-1 text-cobalt border border-cobalt/20 px-3 py-1 rounded-full hover:bg-cobalt hover:text-white transition-all text-[9px] font-bold">
-                <Settings size={10} /> DASHBOARD
-              </Link>
-              <button onClick={handleLogout} className="text-orange border border-orange/20 px-3 py-1 rounded-full hover:bg-orange hover:text-white transition-all text-[9px] font-bold">
-                LOGOUT
-              </button>
-            </div>
-          ) : (
-            <Link to="/admin" className="text-ink/30 hover:text-ink transition-colors text-[9px] font-bold border border-black/10 px-3 py-1 rounded-full">ADMIN</Link>
-          )}
+          {/* Right Actions */}
+          <div className="flex justify-end gap-4 md:gap-8 text-[11px] uppercase tracking-widest font-semibold font-sans items-center">
+            <span className="hidden lg:inline cursor-pointer hover:text-cobalt text-[10px]">KR / EN</span>
+            {isAuth ? (
+              <div className="flex items-center gap-2">
+                <Link to="/admin" className="flex items-center gap-1 text-cobalt border border-cobalt/20 px-3 py-1 rounded-full hover:bg-cobalt hover:text-white transition-all text-[9px] font-bold">
+                  <Settings size={10} /> DASHBOARD
+                </Link>
+                <button onClick={handleLogout} className="text-orange border border-orange/20 px-3 py-1 rounded-full hover:bg-orange hover:text-white transition-all text-[9px] font-bold">
+                  LOGOUT
+                </button>
+              </div>
+            ) : (
+              <Link to="/admin" className="text-ink/30 hover:text-ink transition-colors text-[9px] font-bold border border-black/10 px-3 py-1 rounded-full">ADMIN</Link>
+            )}
+          </div>
         </div>
       </nav>
 

@@ -19,10 +19,10 @@ export default function Journal() {
   return (
     <div className="flex flex-col flex-grow bg-white relative">
       <div className="px-6 md:px-12 py-12 md:py-24 border-b border-black/10">
-        <h1 className="text-7xl md:text-[12vw] font-black tracking-tighter uppercase font-sans mb-4 leading-[0.8]">
+        <h1 className="text-5xl md:text-8xl font-black tracking-tighter uppercase font-sans mb-6 leading-[0.85]">
           {settings.hubSettings?.journal?.title || 'Journal'}
         </h1>
-        <p className="max-w-2xl text-xl md:text-2xl font-serif text-ink/80 leading-relaxed italic">
+        <p className="max-w-2xl text-lg md:text-xl font-serif text-ink/80 leading-relaxed italic">
           {settings.hubSettings?.journal?.description}
         </p>
       </div>

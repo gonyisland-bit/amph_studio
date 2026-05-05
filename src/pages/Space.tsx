@@ -16,10 +16,10 @@ export default function Space() {
   return (
     <div className="flex flex-col flex-grow bg-white">
       <div className="p-6 md:p-14 border-b border-black/10 bg-off-white">
-        <h1 className="text-7xl md:text-[12vw] font-black tracking-tighter uppercase leading-[0.8] mb-4">
+        <h1 className="text-5xl md:text-8xl font-black tracking-tighter uppercase leading-[0.85] mb-6">
           {settings.hubSettings?.space?.title || 'Space'}
         </h1>
-        <p className="text-xl md:text-2xl font-serif italic text-ink/60 max-w-2xl">
+        <p className="text-lg md:text-xl font-serif italic text-ink/60 max-w-2xl">
           {settings.hubSettings?.space?.description}
         </p>
       </div>

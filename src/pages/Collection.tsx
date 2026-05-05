@@ -30,24 +30,25 @@ export default function Collection() {
 
   return (
     <div className="flex flex-col flex-grow">
-      <div className="px-6 md:px-12 py-12 md:py-24 border-b border-black/10 flex flex-col md:flex-row justify-between items-baseline gap-6 bg-off-white">
-        <div className="max-w-4xl">
-          <h1 className="text-7xl md:text-[12vw] font-black tracking-tighter uppercase font-sans leading-[0.8] mb-4">
+      <div className="px-6 md:px-12 py-12 md:py-20 border-b border-black/10 bg-off-white">
+        <div className="max-w-4xl mb-10">
+          <h1 className="text-5xl md:text-8xl font-black tracking-tighter uppercase font-sans leading-[0.85] mb-6">
             {settings.hubSettings?.collection?.title || 'Collection'}
           </h1>
-          <p className="text-xl md:text-2xl font-serif italic text-ink/60">{settings.hubSettings?.collection?.description}</p>
+          <p className="text-lg md:text-xl font-serif italic text-ink/60 max-w-2xl">{settings.hubSettings?.collection?.description}</p>
         </div>
-        <div className="flex flex-wrap gap-6 text-xs uppercase tracking-widest font-semibold font-sans">
+
+        <div className="flex flex-wrap gap-8 text-[10px] uppercase tracking-[0.2em] font-black font-sans border-t border-black/5 pt-8">
           <button 
-            className={`transition-all border-b pb-1 ${activeCategory === 'All' ? 'border-cobalt text-cobalt' : 'border-transparent hover:text-cobalt hover:border-cobalt/30'}`}
+            className={`transition-all pb-1 border-b-2 ${activeCategory === 'All' ? 'border-cobalt text-cobalt' : 'border-transparent text-ink/40 hover:text-ink'}`}
             onClick={() => setActiveCategory('All')}
           >
-            All
+            All Items
           </button>
           {CATEGORIES.map(cat => (
             <button 
               key={cat}
-              className={`transition-all border-b pb-1 ${activeCategory === cat ? 'border-cobalt text-cobalt' : 'border-transparent hover:text-cobalt hover:border-cobalt/30'}`}
+              className={`transition-all pb-1 border-b-2 ${activeCategory === cat ? 'border-cobalt text-cobalt' : 'border-transparent text-ink/40 hover:text-ink'}`}
               onClick={() => setActiveCategory(cat)}
             >
               {cat}
