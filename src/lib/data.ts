@@ -258,6 +258,8 @@ export interface HubPageSettings {
 export interface HomeSettings {
   featuredProductIds: string[];
   globalProductOrder: string[];
+  spaceOrder: string[];
+  journalOrder: string[];
   heroSlides: HeroSlide[];
   heroTransitionSpeed: number;
   marquee: string;
@@ -278,6 +280,8 @@ export interface HomeSettings {
 export const defaultHomeSettings: HomeSettings = {
   heroSlides: [],
   heroTransitionSpeed: 5,
+  spaceOrder: [],
+  journalOrder: [],
   marquee: 'Amplify Your Ordinary',
   intros: {
     collection: { title: '', description: '', image: '' },

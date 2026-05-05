@@ -13,6 +13,15 @@ export default function Space() {
     document.title = "Space — Amph";
   }, []);
 
+  const sortedSpaces = [...spaces].sort((a,b) => {
+    const aIdx = settings.spaceOrder?.indexOf(a.id);
+    const bIdx = settings.spaceOrder?.indexOf(b.id);
+    if (aIdx === -1 && bIdx === -1) return 0;
+    if (aIdx === -1) return 1;
+    if (bIdx === -1) return -1;
+    return aIdx - bIdx;
+  });
+
   return (
     <div className="flex flex-col flex-grow bg-white">
       <div className="px-6 md:px-12 pt-12 md:pt-24 pb-12 border-b border-black/10 bg-off-white">
@@ -24,7 +33,7 @@ export default function Space() {
         </p>
       </div>
 
-      {spaces.map((space, i) => (
+      {sortedSpaces.map((space, i) => (
         <Link 
           to={`/space/${space.id}`} 
           key={space.id} 

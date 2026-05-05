@@ -178,6 +178,53 @@ export default function Admin() {
     if (activeTab === 'home') getHomeSettings().then(setHomeSettings);
   };
 
+  const handleReorder = async (type: 'collection' | 'space' | 'journal', id: string, direction: 'up' | 'down') => {
+    let orderKey: 'globalProductOrder' | 'spaceOrder' | 'journalOrder';
+    let items: any[];
+    
+    if (type === 'collection') {
+      orderKey = 'globalProductOrder';
+      items = products;
+    } else if (type === 'space') {
+      orderKey = 'spaceOrder';
+      items = spaces;
+    } else {
+      orderKey = 'journalOrder';
+      items = journals;
+    }
+
+    const currentOrder = [...(homeSettings[orderKey] || [])];
+    
+    // If order is empty or missing this ID, initialize it with current items IDs
+    if (currentOrder.length === 0 || !currentOrder.includes(id)) {
+      items.forEach(item => {
+        if (!currentOrder.includes(item.id)) currentOrder.push(item.id);
+      });
+    }
+
+    const idx = currentOrder.indexOf(id);
+    if (idx === -1) return;
+
+    const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= currentOrder.length) return;
+
+    const newOrder = [...currentOrder];
+    [newOrder[idx], newOrder[newIdx]] = [newOrder[newIdx], newOrder[idx]];
+
+    const updatedSettings = { ...homeSettings, [orderKey]: newOrder };
+    setHomeSettings(updatedSettings);
+
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSettings)
+      });
+    } catch (err) {
+      console.error('Failed to save order', err);
+    }
+  };
+
   const switchTab = (tab: 'home'|'journal'|'space'|'collection') => {
     setActiveTab(tab);
     setEditingId(null);
@@ -629,9 +676,9 @@ export default function Admin() {
                         </td>
                         <td className="py-4">
                           <div className="flex flex-col items-center gap-0.5">
-                            <button onClick={() => { /* reorder logic */ }} className="text-ink/10 hover:text-cobalt"><ChevronUp size={14}/></button>
+                            <button onClick={() => handleReorder('collection', p.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
                             <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
-                            <button onClick={() => { /* reorder logic */ }} className="text-ink/10 hover:text-cobalt"><ChevronDown size={14}/></button>
+                            <button onClick={() => handleReorder('collection', p.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === products.length - 1}><ChevronDown size={14}/></button>
                           </div>
                         </td>
                         <td className="py-4"><img src={p.images[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
@@ -648,12 +695,25 @@ export default function Admin() {
                       </tr>
                     ))}
   
-                    {activeTab === 'space' && spaces.map((s) => (
+                    {activeTab === 'space' && [...spaces].sort((a,b) => {
+                      const aIdx = homeSettings.spaceOrder.indexOf(a.id);
+                      const bIdx = homeSettings.spaceOrder.indexOf(b.id);
+                      if (aIdx === -1 && bIdx === -1) return 0;
+                      if (aIdx === -1) return 1;
+                      if (bIdx === -1) return -1;
+                      return aIdx - bIdx;
+                    }).map((s, index) => (
                       <tr key={s.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(s.id) ? 'bg-cobalt/5' : ''}`}>
                         <td className="p-4">
                           <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
                         </td>
-                        <td className="py-4"><span className="text-[9px] font-black text-ink/20">SPACE</span></td>
+                        <td className="py-4">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <button onClick={() => handleReorder('space', s.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
+                            <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
+                            <button onClick={() => handleReorder('space', s.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === spaces.length - 1}><ChevronDown size={14}/></button>
+                          </div>
+                        </td>
                         <td className="py-4"><img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
                         <td className="py-4">
                           <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{s.title}</div>
@@ -669,19 +729,33 @@ export default function Admin() {
                       </tr>
                     ))}
   
-                    {activeTab === 'journal' && journals.map((j) => (
+                    {activeTab === 'journal' && [...journals].sort((a,b) => {
+                      const aIdx = homeSettings.journalOrder.indexOf(a.id);
+                      const bIdx = homeSettings.journalOrder.indexOf(b.id);
+                      if (aIdx === -1 && bIdx === -1) return 0;
+                      if (aIdx === -1) return 1;
+                      if (bIdx === -1) return -1;
+                      return aIdx - bIdx;
+                    }).map((j, index) => (
                       <tr key={j.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(j.id) ? 'bg-cobalt/5' : ''}`}>
                         <td className="p-4">
                           <input type="checkbox" checked={selectedIds.includes(j.id)} onChange={() => toggleSelect(j.id)} />
                         </td>
-                        <td className="py-4"><span className="text-[9px] font-black text-ink/20">POST</span></td>
+                        <td className="py-4">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <button onClick={() => handleReorder('journal', j.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
+                            <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
+                            <button onClick={() => handleReorder('journal', j.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === journals.length - 1}><ChevronDown size={14}/></button>
+                          </div>
+                        </td>
                         <td className="py-4"><img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" /></td>
                         <td className="py-4">
                           <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{j.title}</div>
-                          <div className="text-[9px] font-black uppercase text-ink/30">{j.date}</div>
+                          <div className="text-[9px] font-black uppercase text-orange">{j.category}</div>
                         </td>
                         <td className="py-4 text-right pr-6">
-                          <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity items-center">
+                            <Link to={`/journal/${j.id}`} target="_blank" className="text-ink/20 hover:text-cobalt"><ExternalLink size={14} /></Link>
                             <button onClick={() => handleEdit(j)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
                             <button onClick={() => handleDelete(j.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
                           </div>

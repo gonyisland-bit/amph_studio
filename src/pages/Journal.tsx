@@ -16,6 +16,15 @@ export default function Journal() {
 
   const _a = (prompt: string) => `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=600&height=400&nologo=true`;
 
+  const sortedArticles = [...articles].sort((a,b) => {
+    const aIdx = settings.journalOrder?.indexOf(a.id);
+    const bIdx = settings.journalOrder?.indexOf(b.id);
+    if (aIdx === -1 && bIdx === -1) return 0;
+    if (aIdx === -1) return 1;
+    if (bIdx === -1) return -1;
+    return aIdx - bIdx;
+  });
+
   return (
     <div className="flex flex-col flex-grow bg-white relative">
       <div className="px-6 md:px-12 pt-12 md:pt-24 pb-12 border-b border-black/10 bg-off-white">
@@ -30,7 +39,7 @@ export default function Journal() {
       <div className="flex-grow relative">
         {/* Floating image that follows hover state */}
         <div className="hidden lg:block absolute right-24 top-1/2 -translate-y-1/2 w-[300px] h-[200px] pointer-events-none z-10 transition-opacity duration-300">
-          {articles.map((article, i) => (
+          {sortedArticles.map((article, i) => (
              <img 
                key={article.id}
                src={article.image}
@@ -41,7 +50,7 @@ export default function Journal() {
           ))}
         </div>
 
-        {articles.map((article, i) => (
+        {sortedArticles.map((article, i) => (
           <Link 
             to={`/journal/${article.id}`}
             key={article.id} 
