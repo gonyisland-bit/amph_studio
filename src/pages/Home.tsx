@@ -62,6 +62,7 @@ export default function Home() {
                   loading="eager"
                   fetchpriority={idx === activeSlide ? "high" : "auto"}
                   key={slide.image}
+                  playing={idx === activeSlide}
                 />
               )}
               <div className="absolute inset-0 bg-black/20"></div>
