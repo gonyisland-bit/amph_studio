@@ -75,7 +75,9 @@ export default function Collection() {
               <span className="text-[10px] uppercase font-bold text-orange font-sans px-3 py-1 border border-orange rounded-full">
                 {product.category}
               </span>
-              <span className="text-xs font-semibold font-sans">${product.price}</span>
+              {product.price > 0 && (
+                <span className="text-xs font-semibold font-sans">${product.price}</span>
+              )}
             </div>
             
             <div className="flex-grow flex items-center justify-center w-full aspect-[4/5] bg-silver/20 overflow-hidden rounded-[20px] relative mb-6">
@@ -83,7 +85,7 @@ export default function Collection() {
               <img 
                 src={product.images[0]} 
                 alt={product.name}
-                className="absolute inset-0 w-full h-full object-cover mix-blend-multiply transition-opacity duration-500 ease-in-out group-hover:opacity-0"
+                className={`absolute inset-0 w-full h-full object-cover mix-blend-multiply transition-all duration-700 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0' : 'group-hover:scale-110'}`}
                 referrerPolicy="no-referrer"
               />
               {/* Secondary Hover Image */}
@@ -91,7 +93,7 @@ export default function Collection() {
                 <img 
                   src={product.hoverImages[0]} 
                   alt={`${product.name} alternative view`}
-                  className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-0 transition-opacity duration-700 ease-in-out group-hover:opacity-100 group-hover:scale-105"
                   referrerPolicy="no-referrer"
                 />
               )}

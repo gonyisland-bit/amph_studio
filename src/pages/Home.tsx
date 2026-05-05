@@ -88,52 +88,50 @@ export default function Home() {
         )}
       </section>
 
-      {/* 2. Intro Section: Poster Style Banners */}
-      <section className="flex flex-col bg-white mt-24 md:mt-40 px-6 md:px-12 gap-6 md:gap-12 pb-24 md:pb-40">
+      {/* 2. Intro Section: Curated Gallery Style */}
+      <section className="flex flex-col bg-white mt-24 md:mt-40 px-6 md:px-12 gap-24 md:gap-40 pb-24 md:pb-40">
         {[
           { key: 'collection', link: '/collection' },
           { key: 'space', link: '/space' },
           { key: 'journal', link: '/journal' }
         ].map((item, idx) => {
           const intro = settings.intros?.[item.key as keyof typeof settings.intros] || { title: item.key, description: '', image: '' };
+          const isEven = idx % 2 === 0;
           
           return (
             <Link 
               key={item.key} 
               to={item.link}
-              className="group relative block w-full h-[60vh] md:h-[80vh] overflow-hidden rounded-[32px] bg-silver/10 reveal"
+              className={`group flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 md:gap-24 items-center reveal`}
             >
-              {/* Image Layer */}
-              {intro.image && (
-                <div className="absolute inset-0">
+              {/* Image Container */}
+              <div className="flex-1 w-full aspect-[16/9] md:aspect-[4/3] overflow-hidden rounded-[4px] bg-silver/10 relative">
+                {intro.image ? (
                   <img 
                     src={intro.image} 
                     className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
                     alt={intro.title} 
                   />
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors duration-700"></div>
-                </div>
-              )}
-              
-              {/* Content Overlay */}
-              <div className="absolute inset-0 p-8 md:p-16 lg:p-24 flex flex-col justify-start z-10 text-white">
-                <div className="max-w-4xl">
-                  <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mb-4 block drop-shadow-md">
-                    0{idx + 1} // {item.key}
-                  </span>
-                  <h3 className="text-5xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter mb-6 leading-[0.8] drop-shadow-2xl">
-                    {intro.title}
-                  </h3>
-                  <p className="text-lg md:text-xl lg:text-2xl font-serif max-w-lg drop-shadow-xl opacity-90">
-                    {intro.description}
-                  </p>
-                </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-ink/10 font-black text-4xl">AMPH</div>
+                )}
+                <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
               </div>
-
-              {/* Bottom Right Indicator */}
-              <div className="absolute bottom-8 right-8 md:bottom-12 md:right-12 z-20">
-                <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-white/30 flex items-center justify-center backdrop-blur-sm group-hover:bg-white group-hover:text-ink transition-all duration-500">
-                  <ArrowRight size={24} />
+              
+              {/* Content Side */}
+              <div className="flex-1 w-full flex flex-col border-l border-black/10 pl-8 md:pl-12">
+                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.5em] text-cobalt mb-6 block">
+                  0{idx + 1} // {item.key}
+                </span>
+                <h3 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-8 leading-[0.85] group-hover:text-cobalt transition-colors">
+                  {intro.title}
+                </h3>
+                <p className="text-lg md:text-xl lg:text-2xl font-serif text-ink/60 max-w-lg mb-12">
+                  {intro.description}
+                </p>
+                <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest group-hover:gap-10 transition-all">
+                  <span>Enter Experience</span>
+                  <ArrowRight size={20} />
                 </div>
               </div>
             </Link>
