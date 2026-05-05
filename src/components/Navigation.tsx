@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Settings } from "lucide-react";
 
 export function Navigation() {
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
@@ -10,9 +11,7 @@ export function Navigation() {
       setIsAuth(localStorage.getItem('admin_auth') === 'true');
     };
     
-    // Listen for storage events (from other tabs)
     window.addEventListener('storage', checkAuth);
-    // Custom event for same-tab updates
     window.addEventListener('admin_auth_change', checkAuth);
     
     return () => {
@@ -39,10 +38,17 @@ export function Navigation() {
         <Link to="/journal" className="hover:text-cobalt transition-colors">Journal</Link>
       </div>
 
-      <div className="flex gap-8 text-[11px] uppercase tracking-widest font-semibold font-sans items-center">
+      <div className="flex gap-4 md:gap-8 text-[11px] uppercase tracking-widest font-semibold font-sans items-center">
         <span className="hidden md:inline cursor-pointer hover:text-cobalt">KR / EN</span>
         {isAuth ? (
-          <button onClick={handleLogout} className="text-orange border border-orange/20 px-3 py-1 rounded-full hover:bg-orange hover:text-white transition-all text-[9px] font-bold">LOGOUT</button>
+          <div className="flex items-center gap-2">
+            <Link to="/admin" className="flex items-center gap-1 text-cobalt border border-cobalt/20 px-3 py-1 rounded-full hover:bg-cobalt hover:text-white transition-all text-[9px] font-bold">
+              <Settings size={10} /> DASHBOARD
+            </Link>
+            <button onClick={handleLogout} className="text-orange border border-orange/20 px-3 py-1 rounded-full hover:bg-orange hover:text-white transition-all text-[9px] font-bold">
+              LOGOUT
+            </button>
+          </div>
         ) : (
           <Link to="/admin" className="text-ink/30 hover:text-ink transition-colors text-[9px] font-bold border border-black/10 px-3 py-1 rounded-full">ADMIN</Link>
         )}

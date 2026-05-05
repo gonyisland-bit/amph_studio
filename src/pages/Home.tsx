@@ -49,13 +49,17 @@ export default function Home() {
             key={slide.id} 
             className={`absolute inset-0 flex flex-col justify-center px-6 md:px-14 transition-opacity duration-1000 ease-in-out ${idx === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           >
-            <div className="absolute inset-0">
-              <img 
-                src={slide.image || ''} 
-                className="w-full h-full object-cover" 
-                alt={slide.title}
-              />
-              <div className="absolute inset-0 bg-black/10"></div>
+            <div className="absolute inset-0 bg-ink">
+              {slide.image && (
+                <img 
+                  src={slide.image} 
+                  className="w-full h-full object-cover" 
+                  alt={slide.title}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                />
+              )}
+              <div className="absolute inset-0 bg-black/20"></div>
             </div>
             
             <div className="z-20 relative mt-auto mb-12">
