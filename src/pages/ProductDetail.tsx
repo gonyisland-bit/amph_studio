@@ -39,6 +39,15 @@ export default function ProductDetail() {
     ...(product?.hoverImages || [])
   ].filter(Boolean);
 
+  const storyImages = [
+    ...(product?.contentBlocks || [])
+      .filter(b => b.type === 'image')
+      .map(b => b.value)
+  ].filter(Boolean);
+
+  // Unified image deck containing both gallery and story images
+  const allDetailImages = [...displayImages, ...storyImages];
+
   useEffect(() => {
     if (product) {
       if (product.color) {
@@ -49,7 +58,7 @@ export default function ProductDetail() {
       }
 
       // Pre-evaluate image aspects for landscape/portrait grid alignment
-      displayImages.forEach(img => {
+      allDetailImages.forEach(img => {
         if (!img) return;
         const i = new window.Image();
         i.src = img;
@@ -63,6 +72,25 @@ export default function ProductDetail() {
       });
     }
   }, [product]);
+
+  // Global Keyboard event handler for lightbox navigation
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        navigateLightbox(-1);
+      } else if (e.key === 'ArrowRight') {
+        navigateLightbox(1);
+      } else if (e.key === 'Escape') {
+        setLightboxIndex(null);
+        setZoomScale(1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [lightboxIndex]);
 
   if (!product) return <div className="p-12 font-sans animate-pulse text-[10px] uppercase tracking-widest text-ink/30">Loading...</div>;
 
@@ -143,8 +171,8 @@ export default function ProductDetail() {
   const navigateLightbox = (dir: number) => {
     if (lightboxIndex === null) return;
     let nextIdx = lightboxIndex + dir;
-    if (nextIdx < 0) nextIdx = displayImages.length - 1;
-    if (nextIdx >= displayImages.length) nextIdx = 0;
+    if (nextIdx < 0) nextIdx = allDetailImages.length - 1;
+    if (nextIdx >= allDetailImages.length) nextIdx = 0;
     setLightboxIndex(nextIdx);
     setZoomScale(1);
   };
@@ -176,8 +204,8 @@ export default function ProductDetail() {
       </div>
 
       <div className="flex flex-col md:flex-row flex-grow border-b border-black/10">
-        {/* Left Side: Media Gallery (Split 60%) - Auto 2-column for portrait, 1-column for landscape */}
-        <div className="w-full md:w-[60%] grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-8 bg-silver/5 border-b md:border-b-0 md:border-r border-black/10 auto-rows-min">
+        {/* Left Side: Media Gallery (Split 60%) - Auto 2-column for portrait, 1-column for landscape, seamless grids */}
+        <div className="w-full md:w-[60%] grid grid-cols-1 md:grid-cols-2 gap-px bg-black/10 border-b md:border-b-0 md:border-r border-black/10 auto-rows-min">
           {displayImages.map((img, idx) => {
             const isLandscape = imageAspects[img] === 'landscape';
             const spanClass = isLandscape ? "col-span-1 md:col-span-2 aspect-[16/10]" : "col-span-1 aspect-[3/4] md:aspect-[4/5]";
@@ -188,7 +216,7 @@ export default function ProductDetail() {
                   setLightboxIndex(idx);
                   setZoomScale(1);
                 }}
-                className={`${spanClass} bg-black/5 rounded-none overflow-hidden relative cursor-zoom-in group shadow-inner border border-black/5`}
+                className={`${spanClass} bg-silver/5 overflow-hidden relative cursor-zoom-in group border-0 shadow-none rounded-none`}
               >
                 <MediaRenderer 
                   src={img} 
@@ -320,6 +348,7 @@ export default function ProductDetail() {
       </div>
 
       {/* Content Blocks */}
+      {/* Content Blocks */}
       {product.contentBlocks && product.contentBlocks.length > 0 && (
         <div className="px-6 md:px-20 py-24 max-w-6xl mx-auto flex flex-col gap-24 w-full">
           {product.contentBlocks.map((block, idx) => {
@@ -331,9 +360,25 @@ export default function ProductDetail() {
               );
             }
             if (block.type === 'image') {
+              // Calculate index in the unified detail image deck
+              const storyImgIdx = storyImages.indexOf(block.value);
+              const targetLightboxIdx = storyImgIdx !== -1 ? displayImages.length + storyImgIdx : 0;
               return (
-                <div key={idx} className="w-full bg-silver/5 p-8 md:p-16 rounded-[40px] reveal">
-                  <MediaRenderer src={block.value} className="w-full h-auto rounded-2xl shadow-xl" loading="lazy" />
+                <div key={idx} className="max-w-2xl mx-auto w-full bg-transparent py-4 reveal">
+                  <div 
+                    onClick={() => {
+                      setLightboxIndex(targetLightboxIdx);
+                      setZoomScale(1);
+                    }}
+                    className="cursor-zoom-in overflow-hidden border border-black/5"
+                  >
+                    <MediaRenderer 
+                      src={block.value} 
+                      className="w-full h-auto rounded-none shadow-none hover:scale-[1.02] transition-transform duration-700" 
+                      loading="lazy" 
+                      nopin="nopin"
+                    />
+                  </div>
                 </div>
               );
             }
@@ -342,7 +387,7 @@ export default function ProductDetail() {
         </div>
       )}
 
-      {/* Amplify With (Recommended Grid 4 Items) */}
+      {/* Amplify With (Recommended Grid 4 Items) - Unified with Collection cards */}
       <div className="border-t border-black/10 py-24 px-6 md:px-12 lg:px-20 bg-white reveal">
         <div className="flex justify-between items-end mb-16">
           <h3 className="text-4xl lg:text-5xl font-black tracking-tighter uppercase font-sans leading-none">Amplify With</h3>
@@ -351,29 +396,36 @@ export default function ProductDetail() {
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-black/10 border-t border-b border-black/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-t border-b border-black/10 auto-rows-fr">
           {recommendations.slice(0, 4).map(rec => (
              <Link 
               to={`/product/${rec.id}`}
               key={rec.id}
-              className="group flex flex-col pt-12 pb-8 px-8 bg-white hover:bg-off-white transition-colors duration-500 reveal"
+              className="group aspect-[4/5] relative overflow-hidden flex flex-col reveal"
             >
-              <div className="flex justify-between items-start mb-8 z-10 relative">
-                <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">
+              {/* Category tag overlap on top-left */}
+              <div className="absolute top-6 left-6 z-20 pointer-events-none">
+                <span className="text-[9px] uppercase font-bold tracking-widest text-white/90 px-3 py-1 bg-black/30 backdrop-blur-md rounded-full border border-white/10">
                   {rec.category}
                 </span>
-                {rec.price > 0 && (
-                  <span className="text-xs font-bold font-sans text-ink/70">${rec.price}</span>
-                )}
+              </div>
+
+              {/* Product Name overlap on bottom-left */}
+              <div className="absolute bottom-6 left-6 z-20 pointer-events-none">
+                <h4 className="text-sm md:text-base font-bold font-sans tracking-tight leading-tight text-white drop-shadow-md group-hover:text-cobalt transition-colors">
+                  {rec.name}
+                </h4>
               </div>
               
-              <div className="flex-grow w-full aspect-[4/5] bg-silver/10 overflow-hidden rounded-[4px] relative mb-8">
+              {/* Full-bleed Image Container */}
+              <div className="absolute inset-0 w-full h-full bg-silver/5 overflow-hidden rounded-none">
                 {/* Primary Image */}
                 <MediaRenderer 
                   src={rec.images[0]} 
                   alt={rec.name}
-                  className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${rec.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-110'}`}
+                  className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${rec.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'}`}
                   loading="lazy"
+                  nopin="nopin"
                 />
                 {/* Secondary Hover Image */}
                 {rec.hoverImages?.[0] && (
@@ -382,18 +434,11 @@ export default function ProductDetail() {
                     alt={`${rec.name} alternative view`}
                     className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-1000 ease-in-out group-hover:opacity-100 group-hover:scale-100 scale-95"
                     loading="lazy"
+                    nopin="nopin"
                   />
                 )}
-              </div>
-
-              <div className="mt-auto z-10 relative">
-                <h4 className="text-2xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors">{rec.name}</h4>
-                <p className="text-[10px] text-ink/40 mt-1 font-sans tracking-wide mb-4">{rec.subTitle}</p>
-                
-                {/* Option Chips Panel */}
-                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-black/5 items-center">
-                  {renderChips(rec)}
-                </div>
+                {/* Subtle hover tint layer for text readability */}
+                <div className="absolute inset-0 bg-black/[0.08] group-hover:bg-black/30 transition-all duration-700 z-10 pointer-events-none" />
               </div>
             </Link>
           ))}
@@ -411,7 +456,7 @@ export default function ProductDetail() {
           {/* Lightbox Header Controls */}
           <div className="flex justify-between items-center w-full z-30 text-white/70">
             <span className="text-[10px] font-sans font-bold tracking-widest uppercase">
-              {product.name} — {lightboxIndex + 1} / {displayImages.length}
+              {product.name} — {lightboxIndex + 1} / {allDetailImages.length}
             </span>
             <div className="flex items-center gap-4">
               <button 
@@ -456,7 +501,7 @@ export default function ProductDetail() {
               style={{ transform: `scale(${zoomScale})` }}
             >
               <MediaRenderer 
-                src={displayImages[lightboxIndex]} 
+                src={allDetailImages[lightboxIndex]} 
                 alt={`${product.name} fullscreen view`}
                 className="max-w-full max-h-[85vh] object-contain pointer-events-none"
                 loading="eager"
@@ -475,7 +520,7 @@ export default function ProductDetail() {
 
           {/* Lightbox Footer Instruction */}
           <div className="text-center w-full z-30 text-white/30 text-[8px] font-sans tracking-widest uppercase">
-            <span>Use pinch-to-zoom & swipe on mobile / click arrows on desktop</span>
+            <span>Use pinch-to-zoom & swipe on mobile / click arrows & directional keys on desktop</span>
           </div>
         </div>
       )}
