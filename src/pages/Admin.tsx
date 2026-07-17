@@ -627,10 +627,10 @@ export default function Admin() {
                 <div className="space-y-6">
                   {/* Live Preview: Actual image grid matching the product detail layout */}
                   <div className="bg-black/5 rounded-3xl border border-black/5 overflow-hidden shadow-inner">
-                    {form.images?.filter(Boolean).length > 0 ? (
+                    {(form.images || []).filter(Boolean).length > 0 ? (
                       <div className="grid grid-cols-2 gap-px bg-black/10">
-                        {form.images.filter(Boolean).map((img: string, i: number) => (
-                          <div key={i} className={`${i === 0 && form.images.filter(Boolean).length % 2 !== 0 ? 'col-span-2 aspect-[16/7]' : 'aspect-[4/5]'} overflow-hidden bg-silver/5 relative`}>
+                        {(form.images || []).filter(Boolean).map((img: string, i: number) => (
+                          <div key={i} className={`${i === 0 && (form.images || []).filter(Boolean).length % 2 !== 0 ? 'col-span-2 aspect-[16/7]' : 'aspect-[4/5]'} overflow-hidden bg-silver/5 relative`}>
                             <img src={img} alt={`Preview ${i+1}`} className="absolute inset-0 w-full h-full object-cover" />
                           </div>
                         ))}
@@ -719,13 +719,13 @@ export default function Admin() {
                           <div>
                             <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Product Main Gallery</h4>
                             <div className="grid grid-cols-2 gap-3">
-                              {form.images?.map((img: string, i: number) => (
+                              {(form.images || []).map((img: string, i: number) => (
                                 <div key={`img-${i}`} className="relative">
                                   <MediaUploadInput 
                                     label={i === 0 ? "Primary" : `Image ${i+1}`} 
                                     value={img} 
                                     onChange={val => { 
-                                      const newImg = [...form.images]; 
+                                      const newImg = [...(form.images || [])]; 
                                       newImg[i] = val; 
                                       setForm({...form, images: newImg}); 
                                     }} 
@@ -733,7 +733,7 @@ export default function Admin() {
                                   {i > 0 && (
                                     <button 
                                       type="button" 
-                                      onClick={() => setForm({...form, images: form.images.filter((_: any, idx: number) => idx !== i)})} 
+                                      onClick={() => setForm({...form, images: (form.images || []).filter((_: any, idx: number) => idx !== i)})} 
                                       className="absolute top-0 right-0 w-5 h-5 bg-orange text-white rounded-full text-[10px] flex items-center justify-center hover:scale-110 transition-transform z-10 shadow"
                                     >
                                       ✕
@@ -754,9 +754,9 @@ export default function Admin() {
                           {/* Hover Image — checkbox picker from main gallery */}
                           <div className="border-t border-black/5 pt-6">
                             <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Hover Image (select from gallery)</h4>
-                            {form.images?.filter(Boolean).length > 0 ? (
+                            {(form.images || []).filter(Boolean).length > 0 ? (
                               <div className="grid grid-cols-3 gap-2">
-                                {form.images.filter(Boolean).map((img: string, i: number) => {
+                                {(form.images || []).filter(Boolean).map((img: string, i: number) => {
                                   const isSelected = (form.hoverImages || []).includes(img);
                                   return (
                                     <label
@@ -840,8 +840,8 @@ export default function Admin() {
                     <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Gallery Images</h3>
                     {form.images?.map((img:string, i:number) => (
                       <div key={i} className="flex gap-2 mb-2 items-end">
-                        <div className="flex-1"><MediaUploadInput label={i === 0 ? "Main" : `Media ${i+1}`} value={img} onChange={val => { const newI = [...form.images]; newI[i] = val; setForm({...form, images: newI}); }} /></div>
-                        {i > 0 && <button type="button" onClick={() => setForm({...form, images: form.images.filter((_:any, idx:number) => idx !== i)})} className="mb-8 text-orange text-xs font-bold px-2">X</button>}
+                        <div className="flex-1"><MediaUploadInput label={i === 0 ? "Main" : `Media ${i+1}`} value={img} onChange={val => { const newI = [...(form.images || [])]; newI[i] = val; setForm({...form, images: newI}); }} /></div>
+                        {i > 0 && <button type="button" onClick={() => setForm({...form, images: (form.images || []).filter((_:any, idx:number) => idx !== i)})} className="mb-8 text-orange text-xs font-bold px-2">X</button>}
                       </div>
                     ))}
                     <button type="button" onClick={() => setForm({...form, images: [...(form.images || []), '']})} className="text-[10px] font-bold text-cobalt hover:underline">+ Add Image</button>
@@ -997,11 +997,13 @@ export default function Admin() {
                             )}
                           </td>
                           <td className="py-4">
-                            {p.images[0].toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || p.images[0].includes('video') ? (
-                              <video src={p.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />
-                            ) : (
-                              <img src={p.images[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" />
-                            )}
+                            {(() => {
+                              const mainImg = p.images?.[0] || '';
+                              if (mainImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mainImg.includes('video')) {
+                                return <video src={mainImg} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />;
+                              }
+                              return <img src={mainImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" />;
+                            })()}
                           </td>
                           <td className="py-4">
                             <div className="flex items-center gap-2">
