@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
@@ -68,28 +68,28 @@ export default function Collection() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 border-b border-black/10 auto-rows-fr">
+      <div className="grid grid-cols-1 md:grid-cols-3 border-b border-black/10 auto-rows-fr">
         {filteredProducts.map((product) => (
           <Link 
             to={`/product/${product.id}`}
             key={product.id}
-            className="group border-b sm:border-b-0 sm:border-r border-black/10 flex flex-col pt-8 pb-6 px-6 relative hover:bg-white transition-colors duration-300 h-full reveal"
+            className="group border-b border-r border-black/10 flex flex-col pt-12 pb-8 px-8 relative hover:bg-white transition-colors duration-500 h-full reveal"
           >
-            <div className="flex justify-between items-start mb-6 z-10 relative">
-              <span className="text-[10px] uppercase font-bold text-orange font-sans px-3 py-1 border border-orange rounded-full">
+            <div className="flex justify-between items-start mb-8 z-10 relative">
+              <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">
                 {product.category}
               </span>
               {product.price > 0 && (
-                <span className="text-xs font-semibold font-sans">${product.price}</span>
+                <span className="text-xs font-bold font-sans text-ink/70">${product.price}</span>
               )}
             </div>
             
-            <div className="flex-grow w-full aspect-[4/5] bg-silver/10 overflow-hidden rounded-[20px] relative mb-6">
+            <div className="flex-grow w-full aspect-[4/5] bg-silver/10 overflow-hidden rounded-[4px] relative mb-8">
               {/* Primary Image */}
               <MediaRenderer 
                 src={product.images[0]} 
                 alt={product.name}
-                className={`absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0' : 'group-hover:scale-110'}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-110'}`}
                 loading="lazy"
               />
               {/* Secondary Hover Image */}
@@ -97,19 +97,85 @@ export default function Collection() {
                 <MediaRenderer 
                   src={product.hoverImages[0]} 
                   alt={`${product.name} alternative view`}
-                  className="absolute inset-0 w-full h-full opacity-0 transition-all duration-1000 ease-in-out group-hover:opacity-100 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-1000 ease-in-out group-hover:opacity-100 group-hover:scale-100 scale-95"
                   loading="lazy"
                 />
               )}
             </div>
 
             <div className="mt-auto z-10 relative">
-              <h2 className="text-xl font-bold font-sans tracking-tight">{product.name}</h2>
-              <p className="text-sm text-ink/60 mt-1 font-serif italic">{product.subTitle}</p>
+              <h2 className="text-2xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors">{product.name}</h2>
+              <p className="text-xs text-ink/40 mt-1 font-serif italic mb-4">{product.subTitle}</p>
+              
+              {/* Option Chips Panel */}
+              <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-black/5 items-center">
+                {renderChips(product)}
+              </div>
             </div>
           </Link>
         ))}
       </div>
     </div>
   );
+}
+
+// Option Color & Material Chips helper
+function renderChips(product: Product) {
+  const chips: React.ReactNode[] = [];
+  
+  // 1. Material chips (Oak, Steel, Ash, etc.)
+  if (product.material) {
+    const materials = product.material.split(',').map(m => m.trim());
+    materials.forEach(mat => {
+      chips.push(
+        <span key={`mat-${mat}`} className="text-[9px] font-sans font-bold tracking-wider uppercase bg-ink/5 text-ink/60 px-2 py-0.5 rounded-[2px] border border-black/5">
+          {mat}
+        </span>
+      );
+    });
+  }
+
+  // 2. Color chips
+  if (product.color) {
+    const colorMap: Record<string, string> = {
+      'Oak': '#d7c29d',
+      'Ash': '#e5dec9',
+      'Walnut': '#4b382a',
+      'Steel': '#8a9597',
+      'Black': '#1c1c1c',
+      'White': '#ffffff',
+      'Cobalt': '#0047AB',
+      'Orange': '#FF4500',
+      'Pink': '#F8BBD0',
+      'Silver': '#E0E0E2',
+      'Gray': '#808080',
+      'Charcoal': '#36454F',
+      'Cream': '#FFFDD0',
+      'Beige': '#F5F5DC',
+      'Natural': '#e8d8c1'
+    };
+
+    const colors = product.color.split(',').map(c => c.trim());
+    colors.forEach(col => {
+      const hex = colorMap[col] || colorMap[col.charAt(0).toUpperCase() + col.slice(1).toLowerCase()];
+      if (hex) {
+        chips.push(
+          <div 
+            key={`col-${col}`} 
+            className="w-3 h-3 rounded-full border border-black/15 shadow-sm shrink-0" 
+            style={{ backgroundColor: hex }}
+            title={col}
+          />
+        );
+      } else {
+        chips.push(
+          <span key={`col-${col}`} className="text-[9px] font-sans font-bold tracking-wider uppercase bg-cobalt/5 text-cobalt/70 px-2 py-0.5 rounded-[2px] border border-cobalt/10">
+            {col}
+          </span>
+        );
+      }
+    });
+  }
+
+  return chips.length > 0 ? chips : <span className="text-[9px] text-ink/30 italic">Standard options</span>;
 }

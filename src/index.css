@@ -74,4 +74,33 @@
     background-size: 400% 100%;
     animation: var(--animate-shimmer);
   }
+
+  /* High-end design system typography & spacing utilities */
+  .display-huge {
+    font-family: var(--font-sans);
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    line-height: 0.8;
+    text-transform: uppercase;
+  }
+
+  .caption-nano {
+    font-family: var(--font-sans);
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+
+  .section-spacing {
+    padding-top: 10rem;
+    padding-bottom: 10rem;
+  }
+  
+  @media (min-width: 768px) {
+    .section-spacing {
+      padding-top: 16rem;
+      padding-bottom: 16rem;
+    }
+  }
 }

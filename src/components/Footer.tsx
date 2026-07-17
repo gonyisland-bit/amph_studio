@@ -5,7 +5,10 @@ export function Footer() {
         <div className="w-1.5 h-1.5 bg-cobalt rounded-full"></div>
         <span>Casual Uniqueness — Seoul</span>
       </div>
-      <div>© {new Date().getFullYear()} AMPH DIGITAL FLAGSHIP</div>
+      <div className="flex items-center gap-2">
+        <span>© {new Date().getFullYear()} AMPH DIGITAL FLAGSHIP</span>
+        <span className="text-ink/40 font-black">(V0.7)</span>
+      </div>
       <div className="hidden md:block">SCROLL DISCOVERY (01 / 04)</div>
     </footer>
   );

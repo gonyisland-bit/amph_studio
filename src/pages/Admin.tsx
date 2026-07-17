@@ -10,13 +10,41 @@ import { upload } from '@vercel/blob/client';
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ExternalLink } from "lucide-react";
 
 const emptyProduct: Omit<Product, 'id'> = {
-  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [], contentBlocks: []
+  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: '', sku: ''
 };
 const emptyJournal: Omit<JournalArticle, 'id'> = {
   title: '', category: '', date: '', image: '', contentBlocks: []
 };
 const emptySpace: Omit<SpaceModel, 'id'> = {
   title: '', description: '', images: [''], appliedProductIds: [], contentBlocks: []
+};
+
+// Premium form input helper
+const EditorInput = ({ label, required, value, onChange, placeholder, type = "text", rows }: { label: string, required?: boolean, value: string | number, onChange: (val: any) => void, placeholder?: string, type?: string, rows?: number }) => {
+  return (
+    <div className="w-full">
+      <label className="block text-[10px] font-black uppercase text-ink/40 tracking-wider mb-2">{label}</label>
+      {rows ? (
+        <textarea
+          required={required}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          rows={rows}
+          className="w-full border border-black/10 rounded-xl p-3 bg-white outline-none focus:border-cobalt focus:ring-1 focus:ring-cobalt/20 text-xs transition-all duration-300 shadow-sm"
+        />
+      ) : (
+        <input
+          type={type}
+          required={required}
+          value={value}
+          onChange={e => onChange(type === "number" ? Number(e.target.value) : e.target.value)}
+          placeholder={placeholder}
+          className="w-full border border-black/10 rounded-xl p-3 bg-white outline-none focus:border-cobalt focus:ring-1 focus:ring-cobalt/20 text-xs transition-all duration-300 shadow-sm"
+        />
+      )}
+    </div>
+  );
 };
 
 const MediaUploadInput = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label?: string }) => {
@@ -110,6 +138,7 @@ export default function Admin() {
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState<'home'|'journal'|'space'|'collection'>('collection');
+  const [sortBy, setSortBy] = useState<'user' | 'name' | 'category' | 'newest'>('user');
   
   const [products, setProducts] = useState<Product[]>([]);
   const [journals, setJournals] = useState<JournalArticle[]>([]);
@@ -121,6 +150,40 @@ export default function Admin() {
 
   const [homeSettings, setHomeSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [savingSettings, setSavingSettings] = useState(false);
+
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [activeSections, setActiveSections] = useState<Record<string, boolean>>({ basic: true, specs: false, media: false, story: false });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const toggleSection = (section: string) => {
+    setActiveSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const toggleFeatured = async (productId: string) => {
+    const isCurrentlyFeatured = homeSettings.featuredProductIds.includes(productId);
+    const nextFeatured = isCurrentlyFeatured 
+      ? homeSettings.featuredProductIds.filter(id => id !== productId)
+      : [...homeSettings.featuredProductIds, productId];
+    
+    const updatedSettings = { ...homeSettings, featuredProductIds: nextFeatured };
+    setHomeSettings(updatedSettings);
+
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSettings)
+      });
+      showToast(isCurrentlyFeatured ? 'Removed from Featured Works' : 'Added to Featured Works', 'info');
+    } catch (err) {
+      console.error('Failed to toggle featured status', err);
+      showToast('Failed to update featured status', 'error');
+    }
+  };
 
   useEffect(() => {
     const savedAuth = localStorage.getItem('admin_auth');
@@ -138,8 +201,9 @@ export default function Admin() {
       setIsAuthenticated(true);
       localStorage.setItem('admin_auth', 'true');
       window.dispatchEvent(new Event('admin_auth_change'));
+      showToast('Welcome back, admin', 'success');
     } else {
-      alert('Incorrect password');
+      showToast('Incorrect password', 'error');
     }
   };
 
@@ -256,10 +320,10 @@ export default function Admin() {
       }
       setEditingId(null);
       loadData();
-      alert('Saved successfully!');
+      showToast('Saved successfully!', 'success');
     } catch (error) {
       console.error(error);
-      alert('Failed to save. Please try again.');
+      showToast('Failed to save. Please try again.', 'error');
     }
   };
 
@@ -371,8 +435,8 @@ export default function Admin() {
         ))}
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        <div className={activeTab === 'home' ? 'col-span-3' : 'col-span-1 lg:col-span-1'}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className={activeTab === 'home' ? 'col-span-12' : 'col-span-1 lg:col-span-5'}>
           <div className="sticky top-24">
             <h2 className="text-xl font-semibold mb-6 flex items-center justify-between">
               <span>{editingId ? 'Edit Content' : 'Add New Content'}</span>
@@ -398,7 +462,7 @@ export default function Admin() {
                         <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Hero Transition Speed (sec)</label>
                         <input type="number" value={homeSettings.heroTransitionSpeed} onChange={e => setHomeSettings({...homeSettings, heroTransitionSpeed: Number(e.target.value)})} className="w-full border border-black/20 p-2 bg-white outline-none focus:border-cobalt rounded-lg" />
                       </div>
-                      <button type="button" onClick={async () => { setSavingSettings(true); await updateHomeSettings(homeSettings); setSavingSettings(false); alert('Settings Saved!'); }} className="w-full bg-cobalt text-white py-3 uppercase text-[10px] font-black hover:bg-ink transition-colors rounded-xl shadow-md">{savingSettings ? 'Saving...' : 'Save All Global Settings'}</button>
+                      <button type="button" onClick={async () => { setSavingSettings(true); await updateHomeSettings(homeSettings); setSavingSettings(false); showToast('Global settings saved!', 'success'); }} className="w-full bg-cobalt text-white py-3 uppercase text-[10px] font-black hover:bg-ink transition-colors rounded-xl shadow-md">{savingSettings ? 'Saving...' : 'Save All Global Settings'}</button>
                     </div>
                   </div>
 
@@ -535,31 +599,206 @@ export default function Admin() {
               )}
 
               {activeTab === 'collection' && (
-                <>
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Name</label>
-                    <input required value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Category</label>
-                    <select value={form.category || 'Chairs'} onChange={e => setForm({...form, category: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt">
-                      <option>Chairs</option><option>Furniture</option><option>Lighting</option><option>Objects</option>
-                    </select></div>
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Price</label>
-                    <input type="number" required value={form.price || 0} onChange={e => setForm({...form, price: Number(e.target.value)})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Sub Title</label>
-                    <input required value={form.subTitle || ''} onChange={e => setForm({...form, subTitle: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
-                    <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={3} /></div>
-                  <div className="border-t border-black/10 pt-4 mt-4">
-                    <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Gallery Images</h3>
-                    {form.images?.map((img:string, i:number) => (
-                      <div key={i} className="flex gap-2 mb-2 items-end">
-                        <div className="flex-1"><MediaUploadInput label={i === 0 ? "Main" : `Media ${i+1}`} value={img} onChange={val => { const newI = [...form.images]; newI[i] = val; setForm({...form, images: newI}); }} /></div>
-                        {i > 0 && <button type="button" onClick={() => setForm({...form, images: form.images.filter((_:any, idx:number) => idx !== i)})} className="mb-8 text-orange text-xs font-bold px-2">X</button>}
+                <div className="space-y-6">
+                  {/* Live Miniature Preview Card */}
+                  <div className="bg-black/5 p-6 rounded-3xl border border-black/5 flex flex-col items-center shadow-inner">
+                    <span className="text-[9px] font-black uppercase text-ink/40 tracking-wider mb-4">Live Miniature Card Preview</span>
+                    <div className="w-[200px] border border-black/5 bg-white p-4 rounded-2xl shadow-xl flex flex-col pointer-events-none transition-all duration-300">
+                      <div className="flex justify-between items-start mb-3">
+                        <span className="text-[8px] uppercase font-bold text-orange px-2 py-0.5 border border-orange/20 rounded-full font-sans scale-90 origin-left">
+                          {form.category || 'CHAIRS'}
+                        </span>
+                        <span className="text-[10px] font-bold font-sans text-ink/60">${form.price || 0}</span>
                       </div>
-                    ))}
-                    <button type="button" onClick={() => setForm({...form, images: [...(form.images || []), '']})} className="text-[10px] font-bold text-cobalt hover:underline">+ Add Image</button>
+                      <div className="aspect-[4/5] bg-silver/10 overflow-hidden rounded-xl relative mb-3">
+                        {form.images?.[0] ? (
+                          <img src={form.images[0]} alt="Preview" className="w-full h-full object-cover mix-blend-multiply" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[10px] text-ink/20 font-bold uppercase">No Media</div>
+                        )}
+                      </div>
+                      <h4 className="text-xs font-bold font-sans tracking-tight truncate">{form.name || 'Untitled Product'}</h4>
+                      <p className="text-[9px] text-ink/50 font-serif italic truncate">{form.subTitle || 'Sub description'}</p>
+                      
+                      {/* Chips preview */}
+                      <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-black/5 items-center">
+                        {form.material && form.material.split(',').map((m:string) => (
+                          <span key={m} className="text-[7px] font-sans font-bold uppercase bg-ink/5 text-ink/40 px-1 py-0.5 rounded border border-black/5 scale-90 origin-left">
+                            {m.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  {renderContentBlocksEditor()}
-                </>
+
+                  {/* Card 1: Basic Information (Accordion) */}
+                  <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-hidden">
+                    <button 
+                      type="button"
+                      onClick={() => toggleSection('basic')}
+                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
+                    >
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Basic Info</span>
+                      <span className="text-ink/30">{activeSections.basic ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                    </button>
+                    {activeSections.basic && (
+                      <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <EditorInput label="Product Name" required value={form.name || ''} onChange={val => setForm({...form, name: val})} />
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-black uppercase text-ink/40 tracking-wider mb-2">Category</label>
+                            <select 
+                              value={form.category || 'Chairs'} 
+                              onChange={e => setForm({...form, category: e.target.value as Category})} 
+                              className="w-full border border-black/10 rounded-xl p-3 bg-white outline-none focus:border-cobalt text-xs transition-all shadow-sm"
+                            >
+                              <option value="Chairs">Chairs</option>
+                              <option value="Furniture">Furniture</option>
+                              <option value="Lighting">Lighting</option>
+                              <option value="Objects">Objects</option>
+                            </select>
+                          </div>
+                          <EditorInput label="Price ($)" type="number" required value={form.price || 0} onChange={val => setForm({...form, price: val})} />
+                        </div>
+                        
+                        <EditorInput label="Sub Title" required value={form.subTitle || ''} onChange={val => setForm({...form, subTitle: val})} />
+                        <EditorInput label="Overview Description" required rows={3} value={form.description || ''} onChange={val => setForm({...form, description: val})} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card 2: Detailed Specifications (Accordion) */}
+                  <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-hidden">
+                    <button 
+                      type="button"
+                      onClick={() => toggleSection('specs')}
+                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
+                    >
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Specifications</span>
+                      <span className="text-ink/30">{activeSections.specs ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                    </button>
+                    {activeSections.specs && (
+                      <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="grid grid-cols-2 gap-4">
+                          <EditorInput label="Material (e.g., Oak, Steel)" value={form.material || ''} onChange={val => setForm({...form, material: val})} />
+                          <EditorInput label="Color Options (e.g., Black, White)" value={form.color || ''} onChange={val => setForm({...form, color: val})} />
+                        </div>
+                        <EditorInput label="Dimensions (e.g., H 75 x W 120 x D 60 cm)" value={form.dimensions || ''} onChange={val => setForm({...form, dimensions: val})} />
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <EditorInput label="Shipping (e.g., Free shipping)" value={form.shipping || ''} onChange={val => setForm({...form, shipping: val})} />
+                          <EditorInput label="SKU Code" value={form.sku || ''} onChange={val => setForm({...form, sku: val})} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card 3: Media Gallery (Main & Hover Images) (Accordion) */}
+                  <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-hidden">
+                    <button 
+                      type="button"
+                      onClick={() => toggleSection('media')}
+                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
+                    >
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Media & Images</span>
+                      <span className="text-ink/30">{activeSections.media ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                    </button>
+                    {activeSections.media && (
+                      <div className="p-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {/* Primary/Main Images */}
+                        <div>
+                          <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Product Main Gallery</h4>
+                          {form.images?.map((img:string, i:number) => (
+                            <div key={`img-${i}`} className="flex gap-2 mb-2 items-end">
+                              <div className="flex-1">
+                                <MediaUploadInput 
+                                  label={i === 0 ? "Primary Main Image" : `Gallery Image ${i+1}`} 
+                                  value={img} 
+                                  onChange={val => { 
+                                    const newImg = [...form.images]; 
+                                    newImg[i] = val; 
+                                    setForm({...form, images: newImg}); 
+                                  }} 
+                                />
+                              </div>
+                              {i > 0 && (
+                                <button 
+                                  type="button" 
+                                  onClick={() => setForm({...form, images: form.images.filter((_:any, idx:number) => idx !== i)})} 
+                                  className="mb-8 text-orange text-xs font-bold px-2 hover:underline"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <button 
+                            type="button" 
+                            onClick={() => setForm({...form, images: [...(form.images || []), '']})} 
+                            className="text-[10px] font-black text-cobalt hover:underline mt-2"
+                          >
+                            + Add Gallery Image
+                          </button>
+                        </div>
+
+                        {/* Hover Sketch Images */}
+                        <div className="border-t border-black/5 pt-6">
+                          <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Hover Image (Sketch/Detail cut)</h4>
+                          {(form.hoverImages || ['']).map((img:string, i:number) => (
+                            <div key={`hover-${i}`} className="flex gap-2 mb-2 items-end">
+                              <div className="flex-1">
+                                <MediaUploadInput 
+                                  label={`Hover Sketch View ${i+1}`} 
+                                  value={img} 
+                                  onChange={val => { 
+                                    const newHover = [...(form.hoverImages || [])]; 
+                                    if(newHover.length === 0) newHover.push('');
+                                    newHover[i] = val; 
+                                    setForm({...form, hoverImages: newHover}); 
+                                  }} 
+                                />
+                              </div>
+                              {i > 0 && (
+                                <button 
+                                  type="button" 
+                                  onClick={() => setForm({...form, hoverImages: (form.hoverImages || []).filter((_:any, idx:number) => idx !== i)})} 
+                                  className="mb-8 text-orange text-xs font-bold px-2 hover:underline"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <button 
+                            type="button" 
+                            onClick={() => setForm({...form, hoverImages: [...(form.hoverImages || []), '']})} 
+                            className="text-[10px] font-black text-cobalt hover:underline mt-2"
+                          >
+                            + Add Hover Image
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card 4: Story Blocks (Accordion) */}
+                  <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-hidden">
+                    <button 
+                      type="button"
+                      onClick={() => toggleSection('story')}
+                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
+                    >
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Product Editorial Story</span>
+                      <span className="text-ink/30">{activeSections.story ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                    </button>
+                    {activeSections.story && (
+                      <div className="p-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {renderContentBlocksEditor()}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
 
               {activeTab === 'journal' && (
@@ -618,8 +857,10 @@ export default function Admin() {
               )}
 
               {activeTab !== 'home' && (
-                <div className="pt-4 flex gap-4">
-                  <button type="submit" className="bg-cobalt text-white px-8 py-3 uppercase text-[11px] font-black tracking-widest hover:bg-orange transition-colors rounded-full shadow-lg">Save Changes</button>
+                <div className="pt-6 border-t border-black/5 mt-6">
+                  <button type="submit" className="w-full bg-ink text-white py-4 uppercase text-[11px] font-black tracking-[0.2em] hover:bg-cobalt transition-colors rounded-none shadow-md">
+                    Save Changes
+                  </button>
                 </div>
               )}
             </form>
@@ -627,16 +868,32 @@ export default function Admin() {
         </div>
 
         {activeTab !== 'home' && (
-          <div className="col-span-1 lg:col-span-2">
+          <div className="col-span-1 lg:col-span-7">
             {/* Inventory Controls */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-               <div className="flex items-center gap-4">
+               <div className="flex items-center gap-4 flex-wrap">
                   <h2 className="text-xl font-bold font-sans uppercase tracking-tight">
                     {activeTab === 'collection' ? 'Collection' : activeTab === 'space' ? 'Space' : 'Journal'}
                   </h2>
                   <button onClick={() => { setEditingId(null); switchTab(activeTab); }} className="flex items-center gap-2 bg-cobalt text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all">
                     <Plus size={14} /> New Item
                   </button>
+                  
+                  {activeTab === 'collection' && (
+                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-black/5 shadow-sm ml-2">
+                      <span className="text-[9px] font-black uppercase text-ink/40 tracking-wider">Sort By</span>
+                      <select 
+                        value={sortBy} 
+                        onChange={e => setSortBy(e.target.value as any)}
+                        className="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer text-cobalt"
+                      >
+                        <option value="user">User Order</option>
+                        <option value="name">Name</option>
+                        <option value="category">Category</option>
+                        <option value="newest">Newest</option>
+                      </select>
+                    </div>
+                  )}
                </div>
                
                {selectedIds.length > 0 && (
@@ -647,7 +904,7 @@ export default function Admin() {
                  </div>
                )}
             </div>
-  
+   
             <div className="overflow-x-auto bg-white rounded-3xl border border-black/5 shadow-sm">
               <table className="w-full text-sm text-left">
                 <thead className="text-[10px] uppercase font-black tracking-widest text-ink/40 border-b border-black/5">
@@ -669,49 +926,101 @@ export default function Admin() {
                     ) : (
                       <th className="py-4">Image</th>
                     )}
-                    <th className="py-4">Details</th>
+                    {activeTab === 'collection' && (
+                      <>
+                        <th className="py-4">Title / Subtitle</th>
+                        <th className="py-4">Category</th>
+                      </>
+                    )}
+                    {activeTab === 'journal' && (
+                      <>
+                        <th className="py-4">Title</th>
+                        <th className="py-4">Category</th>
+                      </>
+                    )}
+                    {activeTab === 'space' && (
+                      <>
+                        <th className="py-4">Title / Description</th>
+                        <th className="py-4">Linked Products</th>
+                      </>
+                    )}
                     <th className="py-4 text-right pr-6">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/5">
-                    {(activeTab === 'collection' || activeTab === 'home') && [...products].sort((a,b) => {
-                      const aIdx = homeSettings.globalProductOrder.indexOf(a.id);
-                      const bIdx = homeSettings.globalProductOrder.indexOf(b.id);
-                      if (aIdx === -1 && bIdx === -1) return 0;
-                      if (aIdx === -1) return 1;
-                      if (bIdx === -1) return -1;
-                      return aIdx - bIdx;
-                    }).map((p, index) => (
-                      <tr key={p.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(p.id) ? 'bg-cobalt/5' : ''}`}>
-                        <td className="p-4">
-                          <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => toggleSelect(p.id)} />
-                        </td>
-                        <td className="py-4">
-                          <div className="flex flex-col items-center gap-0.5">
-                            <button onClick={() => handleReorder('collection', p.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
-                            <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
-                            <button onClick={() => handleReorder('collection', p.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === products.length - 1}><ChevronDown size={14}/></button>
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          {p.images[0].toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || p.images[0].includes('video') ? (
-                            <video src={p.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />
-                          ) : (
-                            <img src={p.images[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" />
-                          )}
-                        </td>
-                        <td className="py-4">
-                          <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{p.name}</div>
-                          <div className="text-[9px] font-black uppercase text-orange">{p.category}</div>
-                        </td>
-                        <td className="py-4 text-right pr-6">
-                          <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => handleEdit(p)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
-                            <button onClick={() => handleDelete(p.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {(activeTab === 'collection' || activeTab === 'home') && (() => {
+                      const getSorted = () => {
+                        const list = [...products];
+                        if (sortBy === 'name') return list.sort((a,b) => a.name.localeCompare(b.name));
+                        if (sortBy === 'category') return list.sort((a,b) => a.category.localeCompare(b.category));
+                        if (sortBy === 'newest') return list;
+                        return list.sort((a,b) => {
+                          const aIdx = homeSettings.globalProductOrder.indexOf(a.id);
+                          const bIdx = homeSettings.globalProductOrder.indexOf(b.id);
+                          if (aIdx === -1 && bIdx === -1) return 0;
+                          if (aIdx === -1) return 1;
+                          if (bIdx === -1) return -1;
+                          return aIdx - bIdx;
+                        });
+                      };
+                      return getSorted().map((p, index) => (
+                        <tr 
+                          key={p.id} 
+                          className={`hover:bg-black/[0.02] group transition-all duration-300 ${selectedIds.includes(p.id) ? 'bg-cobalt/5' : ''} ${editingId === p.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
+                        >
+                          <td className="p-4">
+                            <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => toggleSelect(p.id)} />
+                          </td>
+                          <td className="py-4">
+                            {sortBy === 'user' ? (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <button onClick={() => handleReorder('collection', p.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
+                                <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
+                                <button onClick={() => handleReorder('collection', p.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === products.length - 1}><ChevronDown size={14}/></button>
+                              </div>
+                            ) : (
+                              <div className="text-center text-ink/20 text-xs">—</div>
+                            )}
+                          </td>
+                          <td className="py-4">
+                            {p.images[0].toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || p.images[0].includes('video') ? (
+                              <video src={p.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />
+                            ) : (
+                              <img src={p.images[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" />
+                            )}
+                          </td>
+                          <td className="py-4">
+                            <div className="flex items-center gap-2">
+                              <button 
+                                type="button"
+                                onClick={() => toggleFeatured(p.id)}
+                                className="focus:outline-none transition-transform hover:scale-120 active:scale-90"
+                                title="Toggle Home Selected Works"
+                              >
+                                {homeSettings.featuredProductIds.includes(p.id) ? (
+                                  <span className="text-orange text-sm">★</span>
+                                ) : (
+                                  <span className="text-ink/10 hover:text-orange/60 text-sm">☆</span>
+                                )}
+                              </button>
+                              <div>
+                                <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{p.name}</div>
+                                {p.subTitle && <div className="text-[10px] text-ink/40 font-serif italic">{p.subTitle}</div>}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4">
+                            <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">{p.category}</span>
+                          </td>
+                          <td className="py-4 text-right pr-6">
+                            <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => handleEdit(p)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
+                              <button onClick={() => handleDelete(p.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ));
+                    })()}
   
                     {activeTab === 'space' && [...spaces].sort((a,b) => {
                       const aIdx = homeSettings.spaceOrder.indexOf(a.id);
@@ -721,7 +1030,10 @@ export default function Admin() {
                       if (bIdx === -1) return -1;
                       return aIdx - bIdx;
                     }).map((s, index) => (
-                      <tr key={s.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(s.id) ? 'bg-cobalt/5' : ''}`}>
+                      <tr 
+                        key={s.id} 
+                        className={`hover:bg-black/[0.02] group transition-all duration-300 ${selectedIds.includes(s.id) ? 'bg-cobalt/5' : ''} ${editingId === s.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
+                      >
                         <td className="p-4">
                           <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
                         </td>
@@ -741,7 +1053,14 @@ export default function Admin() {
                         </td>
                         <td className="py-4">
                           <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{s.title}</div>
-                          <div className="text-[9px] font-black uppercase text-ink/30 truncate max-w-[150px]">{s.description}</div>
+                          <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{s.description}</div>
+                        </td>
+                        <td className="py-4">
+                          <span className="text-[10px] font-sans font-bold text-ink/40">
+                            {s.appliedProductIds && s.appliedProductIds.length > 0 
+                              ? `${s.appliedProductIds.length} Products` 
+                              : 'None'}
+                          </span>
                         </td>
                         <td className="py-4 text-right pr-6">
                           <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity items-center">
@@ -761,7 +1080,10 @@ export default function Admin() {
                       if (bIdx === -1) return -1;
                       return aIdx - bIdx;
                     }).map((j, index) => (
-                      <tr key={j.id} className={`hover:bg-black/[0.02] group transition-colors ${selectedIds.includes(j.id) ? 'bg-cobalt/5' : ''}`}>
+                      <tr 
+                        key={j.id} 
+                        className={`hover:bg-black/[0.02] group transition-all duration-300 ${selectedIds.includes(j.id) ? 'bg-cobalt/5' : ''} ${editingId === j.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
+                      >
                         <td className="p-4">
                           <input type="checkbox" checked={selectedIds.includes(j.id)} onChange={() => toggleSelect(j.id)} />
                         </td>
@@ -781,7 +1103,10 @@ export default function Admin() {
                         </td>
                         <td className="py-4">
                           <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{j.title}</div>
-                          <div className="text-[9px] font-black uppercase text-orange">{j.category}</div>
+                          <div className="text-[10px] text-ink/40 font-sans">{j.date}</div>
+                        </td>
+                        <td className="py-4">
+                          <span className="caption-nano text-cobalt px-3 py-1 border border-cobalt/20 rounded-full font-bold">{j.category}</span>
                         </td>
                         <td className="py-4 text-right pr-6">
                           <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity items-center">
@@ -798,6 +1123,20 @@ export default function Admin() {
           </div>
         )}
       </div>
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[200] p-4 rounded-xl shadow-2xl flex items-center gap-3 border text-xs font-black uppercase tracking-wider animate-in fade-in slide-in-from-top-4 transition-all duration-500 bg-white ${
+          toast.type === 'success' ? 'border-green-200 text-green-700' :
+          toast.type === 'error' ? 'border-red-200 text-red-700' :
+          'border-cobalt/20 text-cobalt'
+        }`}>
+          <div className={`w-2 h-2 rounded-full ${
+            toast.type === 'success' ? 'bg-green-500' :
+            toast.type === 'error' ? 'bg-red-500' :
+            'bg-cobalt'
+          }`} />
+          <span>{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 }

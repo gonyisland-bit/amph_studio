@@ -46,18 +46,34 @@ export default function Home() {
         </Link>
       )}
 
-      {/* 1. Hero Section: Editorial Slideshow */}
-      <section className="relative w-full h-[90vh] overflow-hidden bg-black">
+      {/* 1. Hero Section: Editorial Slideshow (Split-screen on desktop) */}
+      <section className="relative w-full h-[95vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10">
         {settings.heroSlides?.map((slide, idx) => (
           <div 
             key={slide.id} 
-            className={`absolute inset-0 flex flex-col justify-center px-6 md:px-14 transition-opacity duration-1000 ease-in-out ${idx === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}
+            className={`absolute inset-0 flex flex-col md:flex-row transition-opacity duration-1000 ease-in-out ${idx === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}
           >
-            <div className="absolute inset-0 bg-off-white">
+            {/* Left Column: Brand Slogan & Info (Only visible on MD and above, on mobile it overlays over media) */}
+            <div className="hidden md:flex md:w-[45%] bg-off-white flex-col justify-center px-12 lg:px-20 py-24 relative z-20 border-r border-black/10">
+              <span className="caption-nano text-cobalt mb-6 block font-bold tracking-[0.3em]">
+                {slide.subtitle || "Amph Original"}
+              </span>
+              <h1 className="text-[6.5vw] xl:text-[7vw] leading-[0.8] font-black tracking-tighter text-ink display-huge">
+                {(slide.title || "AMPH").split('\n').map((line, i) => (
+                  <span key={i} className="block">{line}</span>
+                ))}
+              </h1>
+              <p className="mt-8 text-sm font-serif italic text-ink/50 max-w-xs leading-relaxed">
+                A study of architectural form, sensory texture, and raw functionality.
+              </p>
+            </div>
+
+            {/* Right Column / Background: Media Container (Takes full width on mobile, 55% on desktop) */}
+            <div className="w-full md:w-[55%] h-full relative overflow-hidden bg-black ml-auto">
               {slide.image && (
                 <MediaRenderer 
                   src={slide.image} 
-                  className="w-full h-full" 
+                  className="w-full h-full object-cover opacity-90 md:opacity-100" 
                   alt={slide.title}
                   loading="eager"
                   fetchpriority={idx === activeSlide ? "high" : "auto"}
@@ -65,12 +81,16 @@ export default function Home() {
                   playing={idx === activeSlide}
                 />
               )}
-              <div className="absolute inset-0 bg-black/20"></div>
+              {/* Overlay for mobile readability & visual tone tuning */}
+              <div className="absolute inset-0 bg-black/30 md:bg-black/5 mix-blend-multiply transition-all"></div>
             </div>
-            
-            <div className="z-20 relative mt-auto mb-12">
-              <span className="text-[11px] uppercase tracking-[0.2em] text-white mb-4 block font-bold drop-shadow-sm">{slide.subtitle}</span>
-              <h1 className="text-[14vw] leading-[0.8] font-black tracking-tighter text-white drop-shadow-2xl mix-blend-difference">
+
+            {/* Mobile Slogan Overlay (only visible on mobile) */}
+            <div className="absolute inset-0 z-20 flex flex-col justify-end p-8 md:hidden">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-white/80 mb-3 block font-bold">
+                {slide.subtitle}
+              </span>
+              <h1 className="text-[12vw] leading-[0.85] font-black tracking-tighter text-white drop-shadow-lg mb-8">
                 {(slide.title || "").split('\n').map((line, i) => (
                   <span key={i} className="block">{line}</span>
                 ))}
@@ -79,14 +99,14 @@ export default function Home() {
           </div>
         ))}
         
-        {/* Slide Indicators */}
+        {/* Slide Indicators - Positioned carefully relative to the split */}
         {settings.heroSlides?.length > 1 && (
-          <div className="absolute bottom-12 right-12 z-30 flex gap-4">
+          <div className="absolute bottom-12 left-12 md:left-[45%] md:ml-12 z-30 flex gap-4">
             {settings.heroSlides.map((_, i) => (
               <button 
                 key={i} 
                 onClick={() => setActiveSlide(i)}
-                className={`h-1 transition-all duration-500 ${i === activeSlide ? 'w-12 bg-white' : 'w-4 bg-white/30'}`}
+                className={`h-1.5 transition-all duration-500 ${i === activeSlide ? 'w-16 bg-white md:bg-cobalt' : 'w-4 bg-white/30 md:bg-ink/20'}`}
               />
             ))}
           </div>
@@ -94,7 +114,7 @@ export default function Home() {
       </section>
 
       {/* 2. Intro Section: Curated Gallery Style */}
-      <section className="flex flex-col bg-white mt-24 md:mt-40 px-6 md:px-12 gap-24 md:gap-40 pb-24 md:pb-40">
+      <section className="flex flex-col bg-white mt-40 md:mt-60 px-8 md:px-20 gap-36 md:gap-56 pb-40 md:pb-60">
         {[
           { key: 'collection', link: '/collection' },
           { key: 'space', link: '/space' },
@@ -125,11 +145,11 @@ export default function Home() {
               </div>
               
               {/* Content Side */}
-              <div className="flex-1 w-full flex flex-col border-l border-black/10 pl-8 md:pl-12">
+              <div className="flex-1 w-full flex flex-col border-l border-black/10 pl-8 md:pl-16">
                 <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.5em] text-cobalt mb-6 block">
                   0{idx + 1} // {item.key}
                 </span>
-                <h3 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-8 leading-[0.85] group-hover:text-cobalt transition-colors">
+                <h3 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-8 leading-[0.85] group-hover:text-cobalt transition-colors display-huge">
                   {intro.title}
                 </h3>
                 <p className="text-lg md:text-xl lg:text-2xl font-serif text-ink/60 max-w-lg mb-12">
@@ -146,8 +166,8 @@ export default function Home() {
       </section>
 
       {/* 3. Magazine Section: Featured Products */}
-      <section className="px-6 md:px-14 py-24 md:py-40 bg-off-white">
-        <div className="flex flex-col md:flex-row justify-between items-baseline mb-24 gap-8">
+      <section className="px-8 md:px-20 py-40 md:py-60 bg-off-white">
+        <div className="flex flex-col md:flex-row justify-between items-baseline mb-36 gap-8">
           <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8]">Selected<br/>Works</h2>
           <p className="text-xl md:text-2xl font-serif italic text-ink/60 max-w-sm">A rhythmic display of industrial aesthetics and vivid comfort.</p>
         </div>
