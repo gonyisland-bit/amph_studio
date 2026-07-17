@@ -117,7 +117,7 @@ export default function Home() {
       <section className="px-8 md:px-20 py-32 md:py-48 bg-off-white">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-24 gap-8">
           <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8]">Selected<br/>Works</h2>
-          <p className="text-xl md:text-2xl font-serif italic text-ink/60 max-w-sm">A rhythmic display of industrial aesthetics and vivid comfort.</p>
+          <p className="text-sm md:text-sm font-light tracking-wide text-ink/50 font-sans max-w-sm">A rhythmic display of industrial aesthetics and vivid comfort.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t border-l border-black/10 auto-rows-fr">
@@ -154,22 +154,33 @@ export default function Home() {
                     )}
                   </div>
                   
-                  <div className="w-full aspect-[4/5] bg-silver/5 overflow-hidden rounded-none relative mb-8 border-b border-black/[0.05]">
+                  <div className="w-full aspect-[4/5] bg-silver/5 overflow-hidden rounded-none relative mb-4 border-b border-black/[0.05]">
+                    {/* Primary Image with hover swap */}
                     <MediaRenderer 
                       src={product.images?.[0] || ''} 
                       alt={product.name} 
-                      className="w-full h-full object-cover transition-transform duration-1000 scale-100 group-hover:scale-105"
+                      className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'}`}
                       loading="lazy"
+                      nopin="nopin"
                     />
-                    <div className="absolute inset-0 bg-ink/5 group-hover:bg-transparent transition-colors duration-700"></div>
+                    {/* Secondary Hover Image */}
+                    {product.hoverImages?.[0] && (
+                      <MediaRenderer 
+                        src={product.hoverImages[0]} 
+                        alt={`${product.name} alternative view`}
+                        className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-1000 ease-in-out group-hover:opacity-100 group-hover:scale-100 scale-95"
+                        loading="lazy"
+                        nopin="nopin"
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-ink/5 group-hover:bg-transparent transition-colors duration-700 pointer-events-none"></div>
                   </div>
                   
-                  <div className="mt-auto px-8">
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-ink/30 block mb-2">{product.category}</span>
-                    <h2 className="text-lg md:text-xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors mb-2">
+                  <div className="mt-auto px-8 pt-2 pb-4 flex flex-col gap-1">
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-ink/30">{product.category}</span>
+                    <h2 className="text-lg font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors">
                       {product.name}
                     </h2>
-                    <p className="text-xs font-serif italic text-ink/50 leading-relaxed truncate">{product.subTitle}</p>
                   </div>
                 </Link>
               );
@@ -217,6 +228,7 @@ export default function Home() {
                       className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
                       alt={intro.title} 
                       loading="lazy"
+                      nopin="nopin"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-ink/10 font-black text-4xl">AMPH</div>

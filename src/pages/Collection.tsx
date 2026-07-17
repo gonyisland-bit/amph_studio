@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
@@ -17,6 +17,9 @@ export default function Collection() {
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search');
+  const categoryQuery = searchParams.get('category');
 
   useScrollReveal();
 
@@ -26,10 +29,28 @@ export default function Collection() {
     document.title = "Collection — Amph";
   }, []);
 
+  // Sync category query from search submit
+  useEffect(() => {
+    if (categoryQuery && CATEGORIES.includes(categoryQuery as Category)) {
+      setActiveCategory(categoryQuery as Category);
+    }
+  }, [categoryQuery]);
+
   const filteredProducts = products.filter(p => {
     // Migration: Treat 'Tables' as 'Furniture'
     const cat = (p.category as string) === 'Tables' ? 'Furniture' : p.category;
-    return activeCategory === 'All' || cat === activeCategory;
+    const categoryMatches = activeCategory === 'All' || cat === activeCategory;
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase().trim();
+      const nameMatches = p.name.toLowerCase().includes(q);
+      const subMatches = p.subTitle?.toLowerCase().includes(q) || false;
+      const matMatches = p.material?.toLowerCase().includes(q) || false;
+      const catMatches = cat.toLowerCase().includes(q);
+      return categoryMatches && (nameMatches || subMatches || matMatches || catMatches);
+    }
+
+    return categoryMatches;
   }).sort((a, b) => {
     const aIdx = settings.globalProductOrder.indexOf(a.id);
     const bIdx = settings.globalProductOrder.indexOf(b.id);
@@ -84,13 +105,14 @@ export default function Collection() {
               )}
             </div>
             
-            <div className="w-full aspect-[4/5] bg-silver/5 overflow-hidden rounded-none relative mb-8 border-b border-black/[0.05]">
+            <div className="w-full aspect-[4/5] bg-silver/5 overflow-hidden rounded-none relative mb-4 border-b border-black/[0.05]">
               {/* Primary Image */}
               <MediaRenderer 
                 src={product.images[0]} 
                 alt={product.name}
                 className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-110'}`}
                 loading="lazy"
+                nopin="nopin"
               />
               {/* Secondary Hover Image */}
               {product.hoverImages?.[0] && (
@@ -99,18 +121,14 @@ export default function Collection() {
                   alt={`${product.name} alternative view`}
                   className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-1000 ease-in-out group-hover:opacity-100 group-hover:scale-100 scale-95"
                   loading="lazy"
+                  nopin="nopin"
                 />
               )}
             </div>
 
-            <div className="mt-auto px-8 z-10 relative">
-              <h2 className="text-2xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors">{product.name}</h2>
-              <p className="text-xs text-ink/40 mt-1 font-serif italic mb-4">{product.subTitle}</p>
-              
-              {/* Option Chips Panel */}
-              <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-black/5 items-center">
-                {renderChips(product)}
-              </div>
+            <div className="mt-auto px-8 pt-2 pb-4 z-10 relative flex flex-col gap-1">
+              <span className="text-[9px] uppercase font-bold tracking-widest text-ink/30">{product.category}</span>
+              <h2 className="text-lg font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors">{product.name}</h2>
             </div>
           </Link>
         ))}

@@ -408,17 +408,17 @@ export default function Admin() {
   return (
     <div className="flex flex-col flex-grow p-6 md:p-12 max-w-[1400px] mx-auto w-full font-sans">
       
-      {/* Admin Status Banner */}
-      <div className="bg-ink text-white p-4 rounded-2xl mb-8 flex justify-between items-center shadow-lg">
-        <div className="flex items-center gap-3">
-          <CheckCircle2 size={20} className="text-green-400" />
+      {/* Admin Status Banner - Redesigned to be clean and minimal with line border */}
+      <div className="border border-black/10 bg-white p-6 mb-8 flex justify-between items-center rounded-[4px]">
+        <div className="flex items-center gap-4">
+          <CheckCircle2 size={18} className="text-cobalt" />
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-50">System Status</p>
-            <h2 className="text-sm font-bold uppercase tracking-tight">Logged in as Administrator</h2>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-ink/30">System Status</p>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-ink">Logged in as Administrator</h2>
           </div>
         </div>
-        <button onClick={handleLogout} className="flex items-center gap-2 bg-white/10 hover:bg-orange px-4 py-2 rounded-full transition-all text-[10px] font-bold uppercase tracking-widest">
-          <LogOut size={14} /> Logout
+        <button onClick={handleLogout} className="flex items-center gap-2 border border-orange/20 text-orange hover:bg-orange hover:text-white px-4 py-2 rounded-full transition-all text-[9px] font-bold uppercase tracking-widest cursor-pointer">
+          <LogOut size={12} /> Logout
         </button>
       </div>
 

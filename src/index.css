@@ -10,7 +10,7 @@
   --color-ink: #1A1A1A;
   
   --font-sans: "Inter", "Helvetica Neue", Helvetica, sans-serif;
-  --font-serif: "Cormorant Garamond", serif;
+  --font-serif: "Helvetica Neue", Helvetica, "Inter", sans-serif;
 
   --animate-marquee: marquee 20s linear infinite;
   --animate-shimmer: shimmer 1.4s ease infinite;
