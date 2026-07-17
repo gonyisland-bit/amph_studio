@@ -522,17 +522,25 @@ export default function ProductDetail() {
               <ChevronLeft size={24} />
             </button>
 
-            {/* Image with zoom transform — starts at scale(1) = fit */}
+            {/* Image with zoom transform — scale(1) always = viewport-fit baseline */}
             <div 
-              className="transition-transform duration-300 ease-out w-full h-full flex items-center justify-center overflow-hidden"
+              className="transition-transform duration-300 ease-out flex items-center justify-center"
               style={{ transform: `scale(${zoomScale})`, transformOrigin: 'center center' }}
             >
-              <MediaRenderer 
-                src={allDetailImages[lightboxIndex]} 
+              <img
+                src={allDetailImages[lightboxIndex]}
                 alt={`${product.name} fullscreen view`}
-                className="max-w-full max-h-full object-contain pointer-events-none"
+                style={{
+                  maxWidth: 'calc(100vw - 80px)',
+                  maxHeight: 'calc(100vh - 200px)',
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  display: 'block',
+                  pointerEvents: 'none',
+                }}
                 loading="eager"
-                nopin="nopin"
+                data-pin-nopin="true"
               />
             </div>
 

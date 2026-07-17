@@ -12,6 +12,8 @@ interface MediaRendererProps {
   playsInline?: boolean;
   onLoad?: () => void;
   playing?: boolean;
+  style?: React.CSSProperties;
+  nopin?: string;
 }
 
 export const MediaRenderer: React.FC<MediaRendererProps> = ({
@@ -25,7 +27,9 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   muted = true,
   playsInline = true,
   onLoad,
-  playing = true
+  playing = true,
+  style,
+  nopin
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(false);
@@ -94,6 +98,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           ref={imgRef}
           src={src}
           className={`w-full h-full object-cover transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          style={style}
           alt={alt}
           loading={loading}
           // @ts-ignore
@@ -101,6 +106,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           onLoad={handleLoad}
           onError={() => setError(true)}
           referrerPolicy="no-referrer"
+          {...(nopin ? { 'data-pin-nopin': 'true' } : {})}
         />
       )}
 
