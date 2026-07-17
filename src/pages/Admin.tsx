@@ -967,7 +967,9 @@ export default function Admin() {
                           if (bIdx === -1) return -1;
                           return aIdx - bIdx;
                         });
-                               <tr 
+                      };
+                      return getSorted().map((p, index) => (
+                        <tr 
                           key={p.id} 
                           onClick={() => handleEdit(p)}
                           className={`hover:bg-cobalt/5 group transition-all duration-200 cursor-pointer ${selectedIds.includes(p.id) ? 'bg-cobalt/5' : ''} ${editingId === p.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
@@ -998,7 +1000,7 @@ export default function Admin() {
                               <button 
                                 type="button"
                                 onClick={e => { e.stopPropagation(); toggleFeatured(p.id); }}
-                                className="focus:outline-none transition-transform hover:scale-120 active:scale-90"
+                                className="focus:outline-none transition-transform hover:scale-125 active:scale-90"
                                 title="Toggle Home Selected Works"
                               >
                                 {homeSettings.featuredProductIds.includes(p.id) ? (
