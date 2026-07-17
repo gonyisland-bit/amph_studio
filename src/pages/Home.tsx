@@ -58,7 +58,7 @@ export default function Home() {
               <span className="caption-nano text-cobalt mb-6 block font-bold tracking-[0.3em]">
                 {slide.subtitle || "Amph Original"}
               </span>
-              <h1 className="text-[4.5vw] xl:text-[5vw] leading-[0.9] font-medium tracking-tighter text-ink display-huge">
+              <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] text-ink display-huge">
                 {(slide.title || "AMPH").split('\n').map((line, i) => (
                   <span key={i} className="block">{line}</span>
                 ))}
@@ -90,7 +90,7 @@ export default function Home() {
               <span className="text-[10px] uppercase tracking-[0.25em] text-white/80 mb-3 block font-bold">
                 {slide.subtitle}
               </span>
-              <h1 className="text-[8.5vw] leading-[0.9] font-medium tracking-tighter text-white drop-shadow-lg mb-8">
+              <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] text-white drop-shadow-lg mb-8">
                 {(slide.title || "").split('\n').map((line, i) => (
                   <span key={i} className="block">{line}</span>
                 ))}
@@ -240,7 +240,7 @@ export default function Home() {
                     <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.5em] text-cobalt mb-6 block">
                       0{idx + 1} // {item.key}
                     </span>
-                    <h3 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter mb-6 leading-none group-hover:text-cobalt transition-colors display-huge">
+                    <h3 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase mb-6 leading-[0.9] group-hover:text-cobalt transition-colors display-huge">
                       {intro.title}
                     </h3>
                     <p className="text-sm md:text-base font-serif text-ink/60 max-w-sm mb-8 leading-relaxed">
@@ -263,7 +263,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <span className="text-xs uppercase tracking-widest font-bold text-cobalt mb-8 block">Next Chapter</span>
           <div className="flex flex-col gap-12">
-            <Link to="/collection" className="inline-flex items-center justify-center gap-4 text-4xl md:text-6xl font-black uppercase tracking-tighter hover:text-cobalt transition-colors group">
+            <Link to="/collection" className="inline-flex items-center justify-center gap-4 text-4xl md:text-6xl font-medium uppercase tracking-tighter hover:text-cobalt transition-colors group">
               Explore Collection <MoveRight size={48} className="group-hover:translate-x-4 transition-transform" />
             </Link>
           </div>
