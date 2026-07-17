@@ -78,7 +78,7 @@
   /* High-end design system typography & spacing utilities */
   .display-huge {
     font-family: var(--font-sans);
-    font-weight: 900;
+    font-weight: 500;
     letter-spacing: -0.05em;
     line-height: 0.8;
     text-transform: uppercase;

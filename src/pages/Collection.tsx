@@ -64,7 +64,7 @@ export default function Collection() {
     <div className="flex flex-col flex-grow">
       <div className="px-6 md:px-12 pt-12 md:pt-24 pb-8 border-b border-black/10 bg-off-white">
         <div className="max-w-4xl mb-12">
-          <h1 className="text-3.5xl md:text-5.5xl font-medium tracking-tighter uppercase font-sans leading-[0.9] mb-6">
+          <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase font-sans leading-[0.9] mb-6">
             {settings.hubSettings?.collection?.title || 'Collection'}
           </h1>
           <p className="text-lg md:text-xl font-serif italic text-ink/60 max-w-2xl">{settings.hubSettings?.collection?.description}</p>
