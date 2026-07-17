@@ -47,7 +47,7 @@ const EditorInput = ({ label, required, value, onChange, placeholder, type = "te
   );
 };
 
-const MediaUploadInput = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label?: string }) => {
+const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onChange: (val: string) => void, label?: string }) => {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
@@ -72,7 +72,7 @@ const MediaUploadInput = ({ value, onChange, label }: { value: string, onChange:
   const onDrop = async (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) await handleUpload(e.dataTransfer.files[0]); };
 
   const idSafeLabel = label ? label.replace(/\s+/g, '-') : Math.random().toString(36).substring(7);
-  const isVideo = value.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || value.includes('video');
+  const isVideo = (value || '').toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || (value || '').includes('video');
 
   return (
     <div className="w-full mb-4">
@@ -126,7 +126,7 @@ const MediaUploadInput = ({ value, onChange, label }: { value: string, onChange:
       </div>
       <div className="mt-2 flex gap-2 items-center">
         <span className="text-[10px] uppercase font-bold text-ink/40 whitespace-nowrap">Or URL:</span>
-        <input value={value} onChange={e => onChange(e.target.value)} className="flex-1 border-b border-black/20 bg-transparent outline-none focus:border-cobalt text-xs py-1" placeholder="https://" />
+        <input value={value || ''} onChange={e => onChange(e.target.value)} className="flex-1 border-b border-black/20 bg-transparent outline-none focus:border-cobalt text-xs py-1" placeholder="https://" />
       </div>
     </div>
   );
