@@ -193,7 +193,7 @@ export default function ProductDetail() {
   return (
     <div className="flex flex-col flex-grow bg-white">
       {isAuth && (
-        <Link to="/admin" className="fixed bottom-12 left-12 z-[100] bg-cobalt text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all scale-100 hover:scale-110">
+        <Link to={`/admin?edit=${product.id}`} className="fixed bottom-12 left-12 z-[100] bg-cobalt text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all scale-100 hover:scale-110">
           Edit Product
         </Link>
       )}

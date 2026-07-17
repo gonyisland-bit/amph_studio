@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
@@ -246,6 +246,23 @@ export default function Admin() {
     if (activeTab === 'space') getSpaces().then(setSpaces);
     if (activeTab === 'home') getHomeSettings().then(setHomeSettings);
   };
+
+  const location = useLocation();
+  // Auto-enter edit mode when ?edit=<id> is present in the URL
+  useEffect(() => {
+    if (!isAuthenticated || products.length === 0) return;
+    const params = new URLSearchParams(location.search);
+    const editId = params.get('edit');
+    if (editId) {
+      const found = products.find(p => p.id === editId);
+      if (found) {
+        setActiveTab('collection');
+        setEditingId(found.id);
+        setForm(found);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }, [isAuthenticated, products, location.search]);
 
   const handleReorder = async (type: 'collection' | 'space' | 'journal', id: string, direction: 'up' | 'down') => {
     let orderKey: 'globalProductOrder' | 'spaceOrder' | 'journalOrder';
@@ -600,35 +617,19 @@ export default function Admin() {
 
               {activeTab === 'collection' && (
                 <div className="space-y-6">
-                  {/* Live Miniature Preview Card */}
-                  <div className="bg-black/5 p-6 rounded-3xl border border-black/5 flex flex-col items-center shadow-inner">
-                    <span className="text-[9px] font-black uppercase text-ink/40 tracking-wider mb-4">Live Miniature Card Preview</span>
-                    <div className="w-[200px] border border-black/5 bg-white p-4 rounded-2xl shadow-xl flex flex-col pointer-events-none transition-all duration-300">
-                      <div className="flex justify-between items-start mb-3">
-                        <span className="text-[8px] uppercase font-bold text-orange px-2 py-0.5 border border-orange/20 rounded-full font-sans scale-90 origin-left">
-                          {form.category || 'CHAIRS'}
-                        </span>
-                        <span className="text-[10px] font-bold font-sans text-ink/60">${form.price || 0}</span>
-                      </div>
-                      <div className="aspect-[4/5] bg-silver/10 overflow-hidden rounded-xl relative mb-3">
-                        {form.images?.[0] ? (
-                          <img src={form.images[0]} alt="Preview" className="w-full h-full object-cover mix-blend-multiply" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[10px] text-ink/20 font-bold uppercase">No Media</div>
-                        )}
-                      </div>
-                      <h4 className="text-xs font-bold font-sans tracking-tight truncate">{form.name || 'Untitled Product'}</h4>
-                      <p className="text-[9px] text-ink/50 font-serif italic truncate">{form.subTitle || 'Sub description'}</p>
-                      
-                      {/* Chips preview */}
-                      <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-black/5 items-center">
-                        {form.material && form.material.split(',').map((m:string) => (
-                          <span key={m} className="text-[7px] font-sans font-bold uppercase bg-ink/5 text-ink/40 px-1 py-0.5 rounded border border-black/5 scale-90 origin-left">
-                            {m.trim()}
-                          </span>
+                  {/* Live Preview: Actual image grid matching the product detail layout */}
+                  <div className="bg-black/5 rounded-3xl border border-black/5 overflow-hidden shadow-inner">
+                    {form.images?.filter(Boolean).length > 0 ? (
+                      <div className="grid grid-cols-2 gap-px bg-black/10">
+                        {form.images.filter(Boolean).map((img: string, i: number) => (
+                          <div key={i} className={`${i === 0 && form.images.filter(Boolean).length % 2 !== 0 ? 'col-span-2 aspect-[16/7]' : 'aspect-[4/5]'} overflow-hidden bg-silver/5 relative`}>
+                            <img src={img} alt={`Preview ${i+1}`} className="absolute inset-0 w-full h-full object-cover" />
+                          </div>
                         ))}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="h-40 flex items-center justify-center text-[10px] text-ink/20 font-bold uppercase">No Media Uploaded</div>
+                    )}
                   </div>
 
                   {/* Card 1: Basic Information (Accordion) */}
@@ -705,82 +706,86 @@ export default function Admin() {
                       <span className="text-ink/30">{activeSections.media ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
                     </button>
                     {activeSections.media && (
-                      <div className="p-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                        {/* Primary/Main Images */}
-                        <div>
-                          <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Product Main Gallery</h4>
-                          {form.images?.map((img:string, i:number) => (
-                            <div key={`img-${i}`} className="flex gap-2 mb-2 items-end">
-                              <div className="flex-1">
-                                <MediaUploadInput 
-                                  label={i === 0 ? "Primary Main Image" : `Gallery Image ${i+1}`} 
-                                  value={img} 
-                                  onChange={val => { 
-                                    const newImg = [...form.images]; 
-                                    newImg[i] = val; 
-                                    setForm({...form, images: newImg}); 
-                                  }} 
-                                />
-                              </div>
-                              {i > 0 && (
-                                <button 
-                                  type="button" 
-                                  onClick={() => setForm({...form, images: form.images.filter((_:any, idx:number) => idx !== i)})} 
-                                  className="mb-8 text-orange text-xs font-bold px-2 hover:underline"
-                                >
-                                  Remove
-                                </button>
-                              )}
+                        <div className="p-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                          {/* Primary/Main Images — 2-col grid, larger drag zones, no Remove text */}
+                          <div>
+                            <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Product Main Gallery</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                              {form.images?.map((img: string, i: number) => (
+                                <div key={`img-${i}`} className="relative">
+                                  <MediaUploadInput 
+                                    label={i === 0 ? "Primary" : `Image ${i+1}`} 
+                                    value={img} 
+                                    onChange={val => { 
+                                      const newImg = [...form.images]; 
+                                      newImg[i] = val; 
+                                      setForm({...form, images: newImg}); 
+                                    }} 
+                                  />
+                                  {i > 0 && (
+                                    <button 
+                                      type="button" 
+                                      onClick={() => setForm({...form, images: form.images.filter((_: any, idx: number) => idx !== i)})} 
+                                      className="absolute top-0 right-0 w-5 h-5 bg-orange text-white rounded-full text-[10px] flex items-center justify-center hover:scale-110 transition-transform z-10 shadow"
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                          <button 
-                            type="button" 
-                            onClick={() => setForm({...form, images: [...(form.images || []), '']})} 
-                            className="text-[10px] font-black text-cobalt hover:underline mt-2"
-                          >
-                            + Add Gallery Image
-                          </button>
-                        </div>
+                            <button 
+                              type="button" 
+                              onClick={() => setForm({...form, images: [...(form.images || []), '']})} 
+                              className="text-[10px] font-black text-cobalt hover:underline mt-3 block"
+                            >
+                              + Add Gallery Image
+                            </button>
+                          </div>
 
-                        {/* Hover Sketch Images */}
-                        <div className="border-t border-black/5 pt-6">
-                          <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Hover Image (Sketch/Detail cut)</h4>
-                          {(form.hoverImages || ['']).map((img:string, i:number) => (
-                            <div key={`hover-${i}`} className="flex gap-2 mb-2 items-end">
-                              <div className="flex-1">
-                                <MediaUploadInput 
-                                  label={`Hover Sketch View ${i+1}`} 
-                                  value={img} 
-                                  onChange={val => { 
-                                    const newHover = [...(form.hoverImages || [])]; 
-                                    if(newHover.length === 0) newHover.push('');
-                                    newHover[i] = val; 
-                                    setForm({...form, hoverImages: newHover}); 
-                                  }} 
-                                />
+                          {/* Hover Image — checkbox picker from main gallery */}
+                          <div className="border-t border-black/5 pt-6">
+                            <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Hover Image (select from gallery)</h4>
+                            {form.images?.filter(Boolean).length > 0 ? (
+                              <div className="grid grid-cols-3 gap-2">
+                                {form.images.filter(Boolean).map((img: string, i: number) => {
+                                  const isSelected = (form.hoverImages || []).includes(img);
+                                  return (
+                                    <label
+                                      key={i}
+                                      className={`relative cursor-pointer rounded overflow-hidden border-2 transition-all ${
+                                        isSelected ? 'border-cobalt ring-1 ring-cobalt/30' : 'border-transparent hover:border-black/20'
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        className="sr-only"
+                                        checked={isSelected}
+                                        onChange={e => {
+                                          const current: string[] = form.hoverImages || [];
+                                          const next = e.target.checked
+                                            ? [...current, img]
+                                            : current.filter((h: string) => h !== img);
+                                          setForm({...form, hoverImages: next});
+                                        }}
+                                      />
+                                      <img src={img} className="w-full aspect-square object-cover" />
+                                      {isSelected && (
+                                        <div className="absolute inset-0 bg-cobalt/20 flex items-center justify-center">
+                                          <span className="text-white text-lg font-black">✓</span>
+                                        </div>
+                                      )}
+                                    </label>
+                                  );
+                                })}
                               </div>
-                              {i > 0 && (
-                                <button 
-                                  type="button" 
-                                  onClick={() => setForm({...form, hoverImages: (form.hoverImages || []).filter((_:any, idx:number) => idx !== i)})} 
-                                  className="mb-8 text-orange text-xs font-bold px-2 hover:underline"
-                                >
-                                  Remove
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                          <button 
-                            type="button" 
-                            onClick={() => setForm({...form, hoverImages: [...(form.hoverImages || []), '']})} 
-                            className="text-[10px] font-black text-cobalt hover:underline mt-2"
-                          >
-                            + Add Hover Image
-                          </button>
+                            ) : (
+                              <p className="text-[10px] text-ink/30 italic">Upload gallery images first to select hover images.</p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
 
                   {/* Card 4: Story Blocks (Accordion) */}
                   <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-hidden">
@@ -962,16 +967,15 @@ export default function Admin() {
                           if (bIdx === -1) return -1;
                           return aIdx - bIdx;
                         });
-                      };
-                      return getSorted().map((p, index) => (
-                        <tr 
+                               <tr 
                           key={p.id} 
-                          className={`hover:bg-black/[0.02] group transition-all duration-300 ${selectedIds.includes(p.id) ? 'bg-cobalt/5' : ''} ${editingId === p.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
+                          onClick={() => handleEdit(p)}
+                          className={`hover:bg-cobalt/5 group transition-all duration-200 cursor-pointer ${selectedIds.includes(p.id) ? 'bg-cobalt/5' : ''} ${editingId === p.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
                         >
-                          <td className="p-4">
+                          <td className="p-4" onClick={e => e.stopPropagation()}>
                             <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => toggleSelect(p.id)} />
                           </td>
-                          <td className="py-4">
+                          <td className="py-4" onClick={e => e.stopPropagation()}>
                             {sortBy === 'user' ? (
                               <div className="flex flex-col items-center gap-0.5">
                                 <button onClick={() => handleReorder('collection', p.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
@@ -993,7 +997,7 @@ export default function Admin() {
                             <div className="flex items-center gap-2">
                               <button 
                                 type="button"
-                                onClick={() => toggleFeatured(p.id)}
+                                onClick={e => { e.stopPropagation(); toggleFeatured(p.id); }}
                                 className="focus:outline-none transition-transform hover:scale-120 active:scale-90"
                                 title="Toggle Home Selected Works"
                               >
@@ -1005,21 +1009,29 @@ export default function Admin() {
                               </button>
                               <div>
                                 <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{p.name}</div>
-                                {p.subTitle && <div className="text-[10px] text-ink/40 font-serif italic">{p.subTitle}</div>}
+                                {p.subTitle && <div className="text-[10px] text-ink/40">{p.subTitle}</div>}
                               </div>
                             </div>
                           </td>
                           <td className="py-4">
                             <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">{p.category}</span>
                           </td>
-                          <td className="py-4 text-right pr-6">
-                            <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={() => handleEdit(p)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
-                              <button onClick={() => handleDelete(p.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
+                          <td className="py-4 text-right pr-6" onClick={e => e.stopPropagation()}>
+                            <div className="flex justify-end gap-3">
+                              <Link 
+                                to={`/product/${p.id}`} 
+                                target="_blank"
+                                className="text-ink/30 text-[10px] font-bold uppercase tracking-widest hover:text-ink transition-colors"
+                                title="View product page"
+                              >
+                                <ExternalLink size={13} />
+                              </Link>
+                              <button onClick={e => { e.stopPropagation(); handleDelete(p.id); }} className="text-orange/40 text-[10px] font-bold uppercase tracking-widest hover:text-orange transition-colors">
+                                <Trash2 size={13} />
+                              </button>
                             </div>
                           </td>
-                        </tr>
-                      ));
+                        </tr>                     ));
                     })()}
   
                     {activeTab === 'space' && [...spaces].sort((a,b) => {
