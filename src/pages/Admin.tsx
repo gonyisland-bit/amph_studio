@@ -496,34 +496,34 @@ export default function Admin() {
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center justify-between">
                       <span>Hero Slides</span>
                       <button type="button" onClick={() => {
-                        const newSlides = [...homeSettings.heroSlides, { id: Date.now().toString(), title: '', subtitle: '', image: '' }];
+                        const newSlides = [...(homeSettings.heroSlides || []), { id: Date.now().toString(), title: '', subtitle: '', image: '' }];
                         setHomeSettings({...homeSettings, heroSlides: newSlides});
                       }} className="bg-ink text-white px-3 py-1 rounded-full text-[9px]">+ Add Slide</button>
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {homeSettings.heroSlides.map((slide, idx) => (
+                      {(homeSettings.heroSlides || []).map((slide, idx) => (
                         <div key={slide.id} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4 relative">
                           <button type="button" onClick={() => {
-                            const newSlides = homeSettings.heroSlides.filter((_, i) => i !== idx);
+                            const newSlides = (homeSettings.heroSlides || []).filter((_, i) => i !== idx);
                             setHomeSettings({...homeSettings, heroSlides: newSlides});
                           }} className="absolute top-2 right-2 text-orange hover:scale-110 transition-transform"><Trash2 size={14}/></button>
                           
                           <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title (use \n for line breaks)</label>
                             <textarea value={slide.title} onChange={e => {
-                              const newSlides = [...homeSettings.heroSlides];
+                              const newSlides = [...(homeSettings.heroSlides || [])];
                               newSlides[idx] = { ...newSlides[idx], title: e.target.value };
                               setHomeSettings({...homeSettings, heroSlides: newSlides});
                             }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
                           
                           <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Subtitle</label>
                             <input value={slide.subtitle} onChange={e => {
-                              const newSlides = [...homeSettings.heroSlides];
+                              const newSlides = [...(homeSettings.heroSlides || [])];
                               newSlides[idx] = { ...newSlides[idx], subtitle: e.target.value };
                               setHomeSettings({...homeSettings, heroSlides: newSlides});
                             }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
                           
                           <MediaUploadInput label="Slide Image/Video" value={slide.image} onChange={val => {
-                            const newSlides = [...homeSettings.heroSlides];
+                            const newSlides = [...(homeSettings.heroSlides || [])];
                             newSlides[idx] = { ...newSlides[idx], image: val };
                             setHomeSettings({...homeSettings, heroSlides: newSlides});
                           }} />
@@ -540,21 +540,21 @@ export default function Admin() {
                         <div key={cat} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4">
                           <span className="text-[10px] font-black uppercase text-orange">{cat} Intro</span>
                           <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
-                            <input value={homeSettings.intros[cat].title} onChange={e => {
-                              const next = { ...homeSettings.intros };
+                            <input value={homeSettings.intros?.[cat]?.title || ''} onChange={e => {
+                              const next = { ...(homeSettings.intros || {}) };
                               next[cat] = { ...next[cat], title: e.target.value };
-                              setHomeSettings({...homeSettings, intros: next});
+                              setHomeSettings({...homeSettings, intros: next as any});
                             }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
                           <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
-                            <textarea value={homeSettings.intros[cat].description} onChange={e => {
-                              const next = { ...homeSettings.intros };
+                            <textarea value={homeSettings.intros?.[cat]?.description || ''} onChange={e => {
+                              const next = { ...(homeSettings.intros || {}) };
                               next[cat] = { ...next[cat], description: e.target.value };
-                              setHomeSettings({...homeSettings, intros: next});
+                              setHomeSettings({...homeSettings, intros: next as any});
                             }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
-                          <MediaUploadInput label="Banner Media" value={homeSettings.intros[cat].image} onChange={val => {
-                            const next = { ...homeSettings.intros };
+                          <MediaUploadInput label="Banner Media" value={homeSettings.intros?.[cat]?.image || ''} onChange={val => {
+                            const next = { ...(homeSettings.intros || {}) };
                             next[cat] = { ...next[cat], image: val };
-                            setHomeSettings({...homeSettings, intros: next});
+                            setHomeSettings({...homeSettings, intros: next as any});
                           }} />
                         </div>
                       ))}
@@ -569,21 +569,21 @@ export default function Admin() {
                         <div key={hub} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4">
                           <span className="text-[10px] font-black uppercase text-ink/30">{hub} Hub</span>
                           <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Page Title</label>
-                            <input value={homeSettings.hubSettings?.[hub]?.title} onChange={e => {
-                              const next = { ...homeSettings.hubSettings };
+                            <input value={homeSettings.hubSettings?.[hub]?.title || ''} onChange={e => {
+                              const next = { ...(homeSettings.hubSettings || {}) };
                               next[hub] = { ...next[hub], title: e.target.value };
-                              setHomeSettings({...homeSettings, hubSettings: next});
+                              setHomeSettings({...homeSettings, hubSettings: next as any});
                             }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
                           <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
-                            <textarea value={homeSettings.hubSettings?.[hub]?.description} onChange={e => {
-                              const next = { ...homeSettings.hubSettings };
+                            <textarea value={homeSettings.hubSettings?.[hub]?.description || ''} onChange={e => {
+                              const next = { ...(homeSettings.hubSettings || {}) };
                               next[hub] = { ...next[hub], description: e.target.value };
-                              setHomeSettings({...homeSettings, hubSettings: next});
+                              setHomeSettings({...homeSettings, hubSettings: next as any});
                             }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
-                          <MediaUploadInput label="Header Media" value={homeSettings.hubSettings?.[hub]?.image} onChange={val => {
-                            const next = { ...homeSettings.hubSettings };
+                          <MediaUploadInput label="Header Media" value={homeSettings.hubSettings?.[hub]?.image || ''} onChange={val => {
+                            const next = { ...(homeSettings.hubSettings || {}) };
                             next[hub] = { ...next[hub], image: val };
-                            setHomeSettings({...homeSettings, hubSettings: next});
+                            setHomeSettings({...homeSettings, hubSettings: next as any});
                           }} />
                         </div>
                       ))}
