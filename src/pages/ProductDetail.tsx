@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getProductById, getProducts, Product } from "../lib/data";
-import { MoveRight } from "lucide-react";
+import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
@@ -13,6 +13,14 @@ export default function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedMaterial, setSelectedMaterial] = useState("");
 
+  // Grid orientation detection
+  const [imageAspects, setImageAspects] = useState<Record<string, 'portrait' | 'landscape'>>({});
+
+  // Fullscreen Lightbox state
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [zoomScale, setZoomScale] = useState(1);
+  const touchStartRef = useRef<{ x: number; y: number; dist: number } | null>(null);
+
   useScrollReveal();
 
   useEffect(() => {
@@ -22,7 +30,14 @@ export default function ProductDetail() {
         setRecommendations(all.filter(p => p.id !== id).slice(0, 6));
       });
     }
+    setLightboxIndex(null);
+    setZoomScale(1);
   }, [id]);
+
+  const displayImages = [
+    ...(product?.images || []),
+    ...(product?.hoverImages || [])
+  ].filter(Boolean);
 
   useEffect(() => {
     if (product) {
@@ -32,15 +47,24 @@ export default function ProductDetail() {
       if (product.material) {
         setSelectedMaterial(product.material.split(',')[0].trim());
       }
+
+      // Pre-evaluate image aspects for landscape/portrait grid alignment
+      displayImages.forEach(img => {
+        if (!img) return;
+        const i = new window.Image();
+        i.src = img;
+        i.onload = () => {
+          const aspect = i.naturalWidth / i.naturalHeight;
+          setImageAspects(prev => ({
+            ...prev,
+            [img]: aspect < 1.0 ? 'portrait' : 'landscape'
+          }));
+        };
+      });
     }
   }, [product]);
 
-  if (!product) return <div className="p-12 font-sans animate-pulse">Loading...</div>;
-
-  const displayImages = [
-    ...(product.images || []),
-    ...(product.hoverImages || [])
-  ].filter(Boolean);
+  if (!product) return <div className="p-12 font-sans animate-pulse text-[10px] uppercase tracking-widest text-ink/30">Loading...</div>;
 
   // ETA & Frame Spec Mock mapper
   const getMockedSpecs = () => {
@@ -65,6 +89,66 @@ export default function ProductDetail() {
 
   const { frame, eta } = getMockedSpecs();
 
+  // Gesture handling for Lightbox (Swipe & Pinch to zoom)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        dist: 0
+      };
+    } else if (e.touches.length === 2) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      touchStartRef.current = {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2,
+        dist
+      };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const startDist = touchStartRef.current.dist;
+      if (startDist > 0) {
+        const factor = dist / startDist;
+        setZoomScale(prev => Math.min(Math.max(prev * factor, 1), 3.5));
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    if (e.changedTouches.length === 1 && zoomScale === 1) {
+      const diffX = e.changedTouches[0].clientX - touchStartRef.current.x;
+      const diffY = e.changedTouches[0].clientY - touchStartRef.current.y;
+      if (Math.abs(diffX) > 60 && Math.abs(diffY) < 100) {
+        if (diffX > 0) {
+          navigateLightbox(-1);
+        } else {
+          navigateLightbox(1);
+        }
+      }
+    }
+    touchStartRef.current = null;
+  };
+
+  const navigateLightbox = (dir: number) => {
+    if (lightboxIndex === null) return;
+    let nextIdx = lightboxIndex + dir;
+    if (nextIdx < 0) nextIdx = displayImages.length - 1;
+    if (nextIdx >= displayImages.length) nextIdx = 0;
+    setLightboxIndex(nextIdx);
+    setZoomScale(1);
+  };
+
   return (
     <div className="flex flex-col flex-grow bg-white">
       {isAuth && (
@@ -78,9 +162,9 @@ export default function ProductDetail() {
         <div className="flex items-center gap-4">
           <Link to="/collection" className="text-xs uppercase tracking-widest font-black hover:text-cobalt transition-colors hidden md:block mr-4 border-r border-black/10 pr-4">Collection</Link>
           <div>
-            <span className="caption-nano text-orange font-bold block mb-1">{product.category}</span>
+            <span className="caption-nano text-orange font-bold block mb-0.5">{product.category}</span>
             <h1 className="text-xl font-bold font-sans tracking-tight leading-tight">{product.name}</h1>
-            <p className="text-[10px] font-serif italic text-ink/60">{product.subTitle}</p>
+            <p className="text-[10px] font-sans font-normal tracking-wide text-ink/50 mt-0.5">{product.subTitle}</p>
           </div>
         </div>
         <div className="flex items-center gap-6">
@@ -92,26 +176,43 @@ export default function ProductDetail() {
       </div>
 
       <div className="flex flex-col md:flex-row flex-grow border-b border-black/10">
-        {/* Left Side: Media Gallery (Split 60%) */}
-        <div className="w-full md:w-[60%] flex flex-col p-6 md:p-12 gap-8 bg-silver/5 border-b md:border-b-0 md:border-r border-black/10">
-          {displayImages.map((img, idx) => (
-            <div key={idx} className="w-full aspect-[4/5] bg-black/5 rounded-[4px] overflow-hidden relative shadow-inner">
-              <MediaRenderer 
-                src={img} 
-                alt={`${product.name} view ${idx + 1}`} 
-                className="absolute inset-0 w-full h-full object-cover"
-                loading={idx === 0 ? "eager" : "lazy"}
-                fetchpriority={idx === 0 ? "high" : "auto"}
-              />
-            </div>
-          ))}
+        {/* Left Side: Media Gallery (Split 60%) - Auto 2-column for portrait, 1-column for landscape */}
+        <div className="w-full md:w-[60%] grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-8 bg-silver/5 border-b md:border-b-0 md:border-r border-black/10 auto-rows-min">
+          {displayImages.map((img, idx) => {
+            const isLandscape = imageAspects[img] === 'landscape';
+            const spanClass = isLandscape ? "col-span-1 md:col-span-2 aspect-[16/10]" : "col-span-1 aspect-[3/4] md:aspect-[4/5]";
+            return (
+              <div 
+                key={idx} 
+                onClick={() => {
+                  setLightboxIndex(idx);
+                  setZoomScale(1);
+                }}
+                className={`${spanClass} bg-black/5 rounded-none overflow-hidden relative cursor-zoom-in group shadow-inner border border-black/5`}
+              >
+                <MediaRenderer 
+                  src={img} 
+                  alt={`${product.name} view ${idx + 1}`} 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" 
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  fetchpriority={idx === 0 ? "high" : "auto"}
+                  nopin="nopin"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500 z-10" />
+              </div>
+            );
+          })}
         </div>
 
         {/* Right Side: Overview & Purchase Controls (Split 40% - Sticky) */}
         <div className="w-full md:w-[40%] p-6 md:p-12 lg:p-16 flex flex-col bg-off-white relative">
           <div className="md:sticky md:top-28 h-fit">
-            <span className="caption-nano text-cobalt mb-4 block font-black">Product Overview</span>
-            <p className="text-xl md:text-2xl leading-relaxed mb-12 font-serif italic text-ink/90 reveal">{product.description}</p>
+            <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-orange mb-2 block">{product.category}</span>
+            <h2 className="text-3xl md:text-4xl font-medium uppercase tracking-tighter mb-2 text-ink font-sans leading-tight">{product.name}</h2>
+            <p className="text-xs text-ink/40 tracking-wider mb-8 font-sans uppercase font-normal">{product.subTitle}</p>
+            
+            <span className="caption-nano text-cobalt mb-3 block font-black">Product Overview</span>
+            <p className="text-sm md:text-base leading-relaxed mb-10 text-ink/80 font-sans font-normal reveal">{product.description}</p>
             
             {/* Color Option Selector */}
             {product.color && (
@@ -287,7 +388,7 @@ export default function ProductDetail() {
 
               <div className="mt-auto z-10 relative">
                 <h4 className="text-2xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors">{rec.name}</h4>
-                <p className="text-xs text-ink/40 mt-1 font-serif italic mb-4">{rec.subTitle}</p>
+                <p className="text-[10px] text-ink/40 mt-1 font-sans tracking-wide mb-4">{rec.subTitle}</p>
                 
                 {/* Option Chips Panel */}
                 <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-black/5 items-center">
@@ -298,6 +399,86 @@ export default function ProductDetail() {
           ))}
         </div>
       </div>
+
+      {/* Fullscreen Lightbox Modal with Gestures */}
+      {lightboxIndex !== null && (
+        <div 
+          className="fixed inset-0 bg-black z-[200] flex flex-col justify-between p-6 select-none touch-none animate-fade-in"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Lightbox Header Controls */}
+          <div className="flex justify-between items-center w-full z-30 text-white/70">
+            <span className="text-[10px] font-sans font-bold tracking-widest uppercase">
+              {product.name} — {lightboxIndex + 1} / {displayImages.length}
+            </span>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setZoomScale(prev => Math.min(prev + 0.5, 3))}
+                className="hover:text-white transition-colors cursor-pointer focus:outline-none"
+                title="Zoom In"
+              >
+                <ZoomIn size={18} />
+              </button>
+              <button 
+                onClick={() => setZoomScale(prev => Math.max(prev - 0.5, 1))}
+                className="hover:text-white transition-colors cursor-pointer focus:outline-none"
+                title="Zoom Out"
+              >
+                <ZoomOut size={18} />
+              </button>
+              <button 
+                onClick={() => {
+                  setLightboxIndex(null);
+                  setZoomScale(1);
+                }} 
+                className="hover:text-orange transition-colors cursor-pointer focus:outline-none"
+                title="Close Lightbox"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Image Viewport */}
+          <div className="flex-grow flex items-center justify-center relative overflow-hidden w-full h-full">
+            {/* Previous Image Button (Desktop) */}
+            <button 
+              onClick={() => navigateLightbox(-1)}
+              className="absolute left-6 z-20 text-white/50 hover:text-white transition-colors hidden md:block cursor-pointer bg-white/5 p-3 rounded-full hover:bg-white/10 focus:outline-none"
+            >
+              <ChevronLeft size={24} />
+            </button>
+
+            <div 
+              className="transition-transform duration-300 ease-out max-w-full max-h-[80vh] flex items-center justify-center"
+              style={{ transform: `scale(${zoomScale})` }}
+            >
+              <MediaRenderer 
+                src={displayImages[lightboxIndex]} 
+                alt={`${product.name} fullscreen view`}
+                className="max-w-full max-h-[85vh] object-contain pointer-events-none"
+                loading="eager"
+                nopin="nopin"
+              />
+            </div>
+
+            {/* Next Image Button (Desktop) */}
+            <button 
+              onClick={() => navigateLightbox(1)}
+              className="absolute right-6 z-20 text-white/50 hover:text-white transition-colors hidden md:block cursor-pointer bg-white/5 p-3 rounded-full hover:bg-white/10 focus:outline-none"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
+
+          {/* Lightbox Footer Instruction */}
+          <div className="text-center w-full z-30 text-white/30 text-[8px] font-sans tracking-widest uppercase">
+            <span>Use pinch-to-zoom & swipe on mobile / click arrows on desktop</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -358,5 +539,5 @@ function renderChips(product: Product) {
     });
   }
 
-  return chips.length > 0 ? chips : <span className="text-[9px] text-ink/30 italic">Standard options</span>;
+  return chips.length > 0 ? chips : <span className="text-[9px] text-ink/30 font-sans">Standard options</span>;
 }
