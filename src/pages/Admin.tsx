@@ -1031,7 +1031,8 @@ export default function Admin() {
                               </button>
                             </div>
                           </td>
-                        </tr>                     ));
+                        </tr>
+                      ));
                     })()}
   
                     {activeTab === 'space' && [...spaces].sort((a,b) => {
