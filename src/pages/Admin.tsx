@@ -242,9 +242,9 @@ export default function Admin() {
 
   const loadData = () => {
     getProducts().then(setProducts);
+    getHomeSettings().then(setHomeSettings);
     if (activeTab === 'journal') getJournals().then(setJournals);
     if (activeTab === 'space') getSpaces().then(setSpaces);
-    if (activeTab === 'home') getHomeSettings().then(setHomeSettings);
   };
 
   const location = useLocation();
@@ -968,8 +968,8 @@ export default function Admin() {
                         if (sortBy === 'category') return list.sort((a,b) => a.category.localeCompare(b.category));
                         if (sortBy === 'newest') return list;
                         return list.sort((a,b) => {
-                          const aIdx = homeSettings.globalProductOrder.indexOf(a.id);
-                          const bIdx = homeSettings.globalProductOrder.indexOf(b.id);
+                          const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
+                          const bIdx = (homeSettings.globalProductOrder || []).indexOf(b.id);
                           if (aIdx === -1 && bIdx === -1) return 0;
                           if (aIdx === -1) return 1;
                           if (bIdx === -1) return -1;
@@ -1013,7 +1013,7 @@ export default function Admin() {
                                 className="focus:outline-none transition-transform hover:scale-125 active:scale-90"
                                 title="Toggle Home Selected Works"
                               >
-                                {homeSettings.featuredProductIds.includes(p.id) ? (
+                                {(homeSettings.featuredProductIds || []).includes(p.id) ? (
                                   <span className="text-orange text-sm">★</span>
                                 ) : (
                                   <span className="text-ink/10 hover:text-orange/60 text-sm">☆</span>
@@ -1048,8 +1048,8 @@ export default function Admin() {
                     })()}
   
                     {activeTab === 'space' && [...spaces].sort((a,b) => {
-                      const aIdx = homeSettings.spaceOrder.indexOf(a.id);
-                      const bIdx = homeSettings.spaceOrder.indexOf(b.id);
+                      const aIdx = (homeSettings.spaceOrder || []).indexOf(a.id);
+                      const bIdx = (homeSettings.spaceOrder || []).indexOf(b.id);
                       if (aIdx === -1 && bIdx === -1) return 0;
                       if (aIdx === -1) return 1;
                       if (bIdx === -1) return -1;
@@ -1098,8 +1098,8 @@ export default function Admin() {
                     ))}
   
                     {activeTab === 'journal' && [...journals].sort((a,b) => {
-                      const aIdx = homeSettings.journalOrder.indexOf(a.id);
-                      const bIdx = homeSettings.journalOrder.indexOf(b.id);
+                      const aIdx = (homeSettings.journalOrder || []).indexOf(a.id);
+                      const bIdx = (homeSettings.journalOrder || []).indexOf(b.id);
                       if (aIdx === -1 && bIdx === -1) return 0;
                       if (aIdx === -1) return 1;
                       if (bIdx === -1) return -1;
