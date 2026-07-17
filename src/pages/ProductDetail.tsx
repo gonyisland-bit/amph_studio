@@ -20,6 +20,7 @@ export default function ProductDetail() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [zoomScale, setZoomScale] = useState(1);
   const touchStartRef = useRef<{ x: number; y: number; dist: number } | null>(null);
+  const thumbnailStripRef = useRef<HTMLDivElement>(null);
 
   useScrollReveal();
 
@@ -90,6 +91,18 @@ export default function ProductDetail() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
+  }, [lightboxIndex]);
+
+  // Auto-scroll thumbnail strip to keep selected thumb centered
+  useEffect(() => {
+    if (lightboxIndex === null || !thumbnailStripRef.current) return;
+    const strip = thumbnailStripRef.current;
+    const thumb = strip.children[lightboxIndex] as HTMLElement | undefined;
+    if (thumb) {
+      const stripCenter = strip.offsetWidth / 2;
+      const thumbCenter = thumb.offsetLeft + thumb.offsetWidth / 2;
+      strip.scrollTo({ left: thumbCenter - stripCenter, behavior: 'smooth' });
+    }
   }, [lightboxIndex]);
 
   if (!product) return <div className="p-12 font-sans animate-pulse text-[10px] uppercase tracking-widest text-ink/30">Loading...</div>;
@@ -448,24 +461,36 @@ export default function ProductDetail() {
       {/* Fullscreen Lightbox Modal with Gestures */}
       {lightboxIndex !== null && (
         <div 
-          className="fixed inset-0 bg-black z-[200] flex flex-col justify-between p-6 select-none touch-none animate-fade-in"
+          className="fixed inset-0 bg-black z-[200] flex flex-col select-none touch-none animate-fade-in"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
           {/* Lightbox Header Controls */}
-          <div className="flex justify-between items-center w-full z-30 text-white/70">
+          <div className="flex justify-between items-center w-full z-30 text-white/60 px-6 pt-5 pb-3 flex-shrink-0">
             <span className="text-[10px] font-sans font-bold tracking-widest uppercase">
               {product.name} — {lightboxIndex + 1} / {allDetailImages.length}
             </span>
             <div className="flex items-center gap-4">
+              {/* Zoom In */}
               <button 
-                onClick={() => setZoomScale(prev => Math.min(prev + 0.5, 3))}
+                onClick={() => setZoomScale(prev => Math.min(prev + 0.5, 3.5))}
                 className="hover:text-white transition-colors cursor-pointer focus:outline-none"
                 title="Zoom In"
               >
                 <ZoomIn size={18} />
               </button>
+              {/* Reset to fit (only visible when zoomed) */}
+              {zoomScale !== 1 && (
+                <button
+                  onClick={() => setZoomScale(1)}
+                  className="text-white/40 hover:text-white transition-colors cursor-pointer focus:outline-none text-[9px] font-bold tracking-widest uppercase border border-white/20 px-2 py-0.5 rounded-sm"
+                  title="Reset to Fit"
+                >
+                  FIT
+                </button>
+              )}
+              {/* Zoom Out */}
               <button 
                 onClick={() => setZoomScale(prev => Math.max(prev - 0.5, 1))}
                 className="hover:text-white transition-colors cursor-pointer focus:outline-none"
@@ -473,6 +498,7 @@ export default function ProductDetail() {
               >
                 <ZoomOut size={18} />
               </button>
+              {/* Close */}
               <button 
                 onClick={() => {
                   setLightboxIndex(null);
@@ -487,23 +513,24 @@ export default function ProductDetail() {
           </div>
 
           {/* Main Image Viewport */}
-          <div className="flex-grow flex items-center justify-center relative overflow-hidden w-full h-full">
+          <div className="flex-grow flex items-center justify-center relative overflow-hidden w-full">
             {/* Previous Image Button (Desktop) */}
             <button 
               onClick={() => navigateLightbox(-1)}
-              className="absolute left-6 z-20 text-white/50 hover:text-white transition-colors hidden md:block cursor-pointer bg-white/5 p-3 rounded-full hover:bg-white/10 focus:outline-none"
+              className="absolute left-5 z-20 text-white/50 hover:text-white transition-colors hidden md:flex cursor-pointer bg-white/5 p-3 rounded-full hover:bg-white/10 focus:outline-none items-center justify-center"
             >
               <ChevronLeft size={24} />
             </button>
 
+            {/* Image with zoom transform — starts at scale(1) = fit */}
             <div 
-              className="transition-transform duration-300 ease-out max-w-full max-h-[80vh] flex items-center justify-center"
-              style={{ transform: `scale(${zoomScale})` }}
+              className="transition-transform duration-300 ease-out w-full h-full flex items-center justify-center overflow-hidden"
+              style={{ transform: `scale(${zoomScale})`, transformOrigin: 'center center' }}
             >
               <MediaRenderer 
                 src={allDetailImages[lightboxIndex]} 
                 alt={`${product.name} fullscreen view`}
-                className="max-w-full max-h-[85vh] object-contain pointer-events-none"
+                className="max-w-full max-h-full object-contain pointer-events-none"
                 loading="eager"
                 nopin="nopin"
               />
@@ -512,15 +539,39 @@ export default function ProductDetail() {
             {/* Next Image Button (Desktop) */}
             <button 
               onClick={() => navigateLightbox(1)}
-              className="absolute right-6 z-20 text-white/50 hover:text-white transition-colors hidden md:block cursor-pointer bg-white/5 p-3 rounded-full hover:bg-white/10 focus:outline-none"
+              className="absolute right-5 z-20 text-white/50 hover:text-white transition-colors hidden md:flex cursor-pointer bg-white/5 p-3 rounded-full hover:bg-white/10 focus:outline-none items-center justify-center"
             >
               <ChevronRight size={24} />
             </button>
           </div>
 
-          {/* Lightbox Footer Instruction */}
-          <div className="text-center w-full z-30 text-white/30 text-[8px] font-sans tracking-widest uppercase">
-            <span>Use pinch-to-zoom & swipe on mobile / click arrows & directional keys on desktop</span>
+          {/* Thumbnail Strip (Bottom) */}
+          <div className="flex-shrink-0 pb-5 pt-3 px-4">
+            <div 
+              ref={thumbnailStripRef}
+              className="flex gap-2 overflow-x-auto scrollbar-none scroll-smooth justify-start"
+              style={{ scrollbarWidth: 'none' }}
+            >
+              {allDetailImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => { setLightboxIndex(idx); setZoomScale(1); }}
+                  className={`flex-shrink-0 w-14 h-14 md:w-16 md:h-16 overflow-hidden focus:outline-none transition-all duration-300 ${
+                    idx === lightboxIndex
+                      ? 'opacity-100 ring-2 ring-white scale-105'
+                      : 'opacity-40 hover:opacity-70 ring-1 ring-white/10'
+                  }`}
+                >
+                  <MediaRenderer
+                    src={img}
+                    alt={`thumb ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    nopin="nopin"
+                  />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
