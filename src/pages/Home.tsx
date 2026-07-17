@@ -1,5 +1,5 @@
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { getProducts, Product, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 import { ArrowRight, MoveRight } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
@@ -172,42 +172,115 @@ export default function Home() {
           <p className="text-xl md:text-2xl font-serif italic text-ink/60 max-w-sm">A rhythmic display of industrial aesthetics and vivid comfort.</p>
         </div>
 
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-12 space-y-20">
-          {featured.map((product, index) => {
-            const isWide = index % 4 === 0;
-            return (
-              <Link 
-                to={`/product/${product.id}`}
-                key={product.id}
-                className={`group relative block break-inside-avoid transition-all duration-700 reveal`}
-              >
-                <div className="relative overflow-hidden mb-8 aspect-[4/5] bg-silver/20 rounded-[4px]">
-                  <MediaRenderer 
-                    src={product.images?.[0] || ''} 
-                    alt={product.name} 
-                    className="w-full h-full transition-transform duration-1000 scale-100 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/5 transition-colors duration-500"></div>
-                  
-                  {/* Subtle index number */}
-                  <div className="absolute top-6 left-6 text-[10px] font-bold text-white/40 group-hover:text-white transition-colors">
-                    0{index + 1}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t border-l border-black/10 auto-rows-fr">
+          {(() => {
+            const items: React.ReactNode[] = [];
+            
+            featured.forEach((product, index) => {
+              // 1. First featured product is rendered as a giant hero card
+              if (index === 0) {
+                items.push(
+                  <Link 
+                    to={`/product/${product.id}`}
+                    key={product.id}
+                    className="group border-b border-r border-black/10 lg:col-span-2 lg:row-span-2 p-8 md:p-16 flex flex-col justify-between hover:bg-white transition-all duration-700 reveal"
+                  >
+                    <div className="flex justify-between items-start mb-12">
+                      <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">
+                        Featured Work // 01
+                      </span>
+                      {product.price > 0 && (
+                        <span className="text-sm font-black tracking-wider text-ink/80 font-sans">${product.price}</span>
+                      )}
+                    </div>
+                    
+                    <div className="w-full aspect-video lg:aspect-auto lg:flex-grow bg-silver/20 overflow-hidden rounded-[4px] relative mb-12">
+                      <MediaRenderer 
+                        src={product.images?.[0] || ''} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover transition-transform duration-[2000ms] scale-100 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-ink/5 mix-blend-multiply group-hover:bg-transparent transition-colors duration-700"></div>
+                    </div>
+                    
+                    <div>
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-ink/30 block mb-2">{product.category}</span>
+                      <h2 className="text-4xl md:text-6xl font-black font-sans tracking-tighter leading-none group-hover:text-cobalt transition-all mb-4">
+                        {product.name}
+                      </h2>
+                      <p className="text-base md:text-lg font-serif italic text-ink/50 max-w-lg leading-relaxed">{product.subTitle}</p>
+                    </div>
+                  </Link>
+                );
+                return;
+              }
+
+              // 2. Insert philosophy card before index 2
+              if (index === 2) {
+                items.push(
+                  <div key="philosophy-1" className="border-b border-r border-black/10 p-12 bg-ink text-white flex flex-col justify-between reveal">
+                    <span className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-bold block mb-8">Design Philosophy</span>
+                    <blockquote className="text-2xl md:text-3xl font-serif italic font-light leading-relaxed my-auto text-white/90 pr-4">
+                      "Form follows function, but also emotion. Sensory simplicity for modern architectural spaces."
+                    </blockquote>
+                    <span className="text-[9px] uppercase tracking-widest text-white/30 block mt-8">// AMPH ORIGINALS</span>
                   </div>
-                </div>
-                
-                <div className="flex flex-col border-l border-black/10 pl-6">
-                  <span className="text-[10px] uppercase font-bold tracking-tighter text-orange font-sans mb-1">
-                    {product.category}
-                  </span>
-                  <h2 className="text-2xl md:text-3xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors mb-2">
-                    {product.name}
-                  </h2>
-                  <p className="text-xs font-serif italic text-ink/60">{product.subTitle}</p>
-                </div>
-              </Link>
-            );
-          })}
+                );
+              }
+
+              // 3. Render standard grid card
+              items.push(
+                <Link 
+                  to={`/product/${product.id}`}
+                  key={product.id}
+                  className="group border-b border-r border-black/10 p-8 flex flex-col justify-between hover:bg-white transition-all duration-700 reveal h-full"
+                >
+                  <div className="flex justify-between items-start mb-8">
+                    <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">
+                      0{index + 1}
+                    </span>
+                    {product.price > 0 && (
+                      <span className="text-xs font-bold text-ink/60 font-sans">${product.price}</span>
+                    )}
+                  </div>
+                  
+                  <div className="w-full aspect-[4/5] bg-silver/10 overflow-hidden rounded-[4px] relative mb-8">
+                    <MediaRenderer 
+                      src={product.images?.[0] || ''} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover transition-transform duration-1000 scale-100 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-ink/5 group-hover:bg-transparent transition-colors duration-700"></div>
+                  </div>
+                  
+                  <div>
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-ink/30 block mb-2">{product.category}</span>
+                    <h2 className="text-2xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors mb-2">
+                      {product.name}
+                    </h2>
+                    <p className="text-xs font-serif italic text-ink/50 leading-relaxed truncate">{product.subTitle}</p>
+                  </div>
+                </Link>
+              );
+
+              // 4. Insert philosophy card before index 4
+              if (index === 4) {
+                items.push(
+                  <div key="philosophy-2" className="border-b border-r border-black/10 p-12 bg-silver/10 text-ink flex flex-col justify-between reveal">
+                    <span className="text-[9px] uppercase tracking-[0.3em] text-ink/40 font-bold block mb-8">Materiality</span>
+                    <blockquote className="text-2xl md:text-3xl font-serif italic font-light leading-relaxed my-auto text-ink/80 pr-4">
+                      "Materials tell stories. Raw timber, hand-finished steel, sensory wool, and architectural tension."
+                    </blockquote>
+                    <span className="text-[9px] uppercase tracking-widest text-ink/30 block mt-8">// HONEST CRAFT</span>
+                  </div>
+                );
+              }
+            });
+
+            return items;
+          })()}
         </div>
       </section>
 

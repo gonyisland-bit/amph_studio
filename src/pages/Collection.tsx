@@ -68,7 +68,7 @@ export default function Collection() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 border-b border-black/10 auto-rows-fr">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-t border-l border-black/10 auto-rows-fr">
         {filteredProducts.map((product) => (
           <Link 
             to={`/product/${product.id}`}
