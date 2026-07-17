@@ -248,19 +248,25 @@ export default function Admin() {
   };
 
   const location = useLocation();
-  // Auto-enter edit mode when ?edit=<id> is present in the URL
+  const autoEditHandled = React.useRef(false);
+  // Auto-enter edit mode when ?edit=<id> is present in the URL — runs once per navigation
   useEffect(() => {
+    if (autoEditHandled.current) return;
     if (!isAuthenticated || products.length === 0) return;
     const params = new URLSearchParams(location.search);
     const editId = params.get('edit');
     if (editId) {
       const found = products.find(p => p.id === editId);
       if (found) {
+        autoEditHandled.current = true;
         setActiveTab('collection');
         setEditingId(found.id);
         setForm(found);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setActiveSections({ basic: true, specs: false, media: false, story: false });
+        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
       }
+    } else {
+      autoEditHandled.current = true; // no edit param, mark as done
     }
   }, [isAuthenticated, products, location.search]);
 
@@ -347,7 +353,9 @@ export default function Admin() {
   const handleEdit = (item: any) => {
     setEditingId(item.id);
     setForm(item);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Always open basic section so form content is immediately visible
+    setActiveSections({ basic: true, specs: false, media: false, story: false });
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
   };
 
   const handleDelete = async (id: string) => {
