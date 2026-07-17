@@ -467,11 +467,24 @@ export default function ProductDetail() {
           onTouchEnd={handleTouchEnd}
         >
           {/* Lightbox Header Controls */}
-          <div className="flex justify-between items-center w-full z-30 text-white/60 px-6 pt-5 pb-3 flex-shrink-0">
+          <div className="flex justify-between items-center w-full z-30 text-white/60 px-6 pt-3 pb-2 flex-shrink-0">
             <span className="text-[10px] font-sans font-bold tracking-widest uppercase">
               {product.name} — {lightboxIndex + 1} / {allDetailImages.length}
             </span>
             <div className="flex items-center gap-4">
+              {/* FIT button — always visible, left of ZoomIn */}
+              <button
+                onClick={() => setZoomScale(1)}
+                className={`transition-colors cursor-pointer focus:outline-none text-[9px] font-bold tracking-widest uppercase border px-2 py-0.5 rounded-sm ${
+                  zoomScale === 1
+                    ? 'text-white/20 border-white/10 cursor-default'
+                    : 'text-white/70 border-white/30 hover:text-white hover:border-white'
+                }`}
+                title="Reset to Fit"
+                disabled={zoomScale === 1}
+              >
+                FIT
+              </button>
               {/* Zoom In */}
               <button 
                 onClick={() => setZoomScale(prev => Math.min(prev + 0.5, 3.5))}
@@ -480,16 +493,6 @@ export default function ProductDetail() {
               >
                 <ZoomIn size={18} />
               </button>
-              {/* Reset to fit (only visible when zoomed) */}
-              {zoomScale !== 1 && (
-                <button
-                  onClick={() => setZoomScale(1)}
-                  className="text-white/40 hover:text-white transition-colors cursor-pointer focus:outline-none text-[9px] font-bold tracking-widest uppercase border border-white/20 px-2 py-0.5 rounded-sm"
-                  title="Reset to Fit"
-                >
-                  FIT
-                </button>
-              )}
               {/* Zoom Out */}
               <button 
                 onClick={() => setZoomScale(prev => Math.max(prev - 0.5, 1))}
@@ -524,23 +527,26 @@ export default function ProductDetail() {
 
             {/* Image with zoom transform — scale(1) always = viewport-fit baseline */}
             <div 
-              className="transition-transform duration-300 ease-out flex items-center justify-center"
+              className="transition-transform duration-300 ease-out flex items-center justify-center cursor-zoom-in"
               style={{ transform: `scale(${zoomScale})`, transformOrigin: 'center center' }}
+              onDoubleClick={() => setZoomScale(prev => prev < 3.5 ? Math.min(prev + 1, 3.5) : 1)}
             >
               <img
                 src={allDetailImages[lightboxIndex]}
                 alt={`${product.name} fullscreen view`}
                 style={{
                   maxWidth: 'calc(100vw - 80px)',
-                  maxHeight: 'calc(100vh - 200px)',
+                  maxHeight: 'calc(100vh - 150px)',
                   width: 'auto',
                   height: 'auto',
                   objectFit: 'contain',
                   display: 'block',
                   pointerEvents: 'none',
+                  userSelect: 'none',
                 }}
                 loading="eager"
                 data-pin-nopin="true"
+                draggable={false}
               />
             </div>
 
@@ -554,20 +560,20 @@ export default function ProductDetail() {
           </div>
 
           {/* Thumbnail Strip (Bottom) */}
-          <div className="flex-shrink-0 pb-5 pt-3 px-4">
+          <div className="flex-shrink-0 pb-3 pt-2 px-4">
             <div 
               ref={thumbnailStripRef}
-              className="flex gap-2 overflow-x-auto scrollbar-none scroll-smooth justify-start"
+              className="flex gap-1.5 overflow-x-auto scrollbar-none scroll-smooth"
               style={{ scrollbarWidth: 'none' }}
             >
               {allDetailImages.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => { setLightboxIndex(idx); setZoomScale(1); }}
-                  className={`flex-shrink-0 w-14 h-14 md:w-16 md:h-16 overflow-hidden focus:outline-none transition-all duration-300 ${
+                  className={`flex-shrink-0 w-10 h-10 md:w-11 md:h-11 overflow-hidden focus:outline-none transition-all duration-300 ${
                     idx === lightboxIndex
                       ? 'opacity-100 ring-2 ring-white scale-105'
-                      : 'opacity-40 hover:opacity-70 ring-1 ring-white/10'
+                      : 'opacity-35 hover:opacity-65 ring-1 ring-white/10'
                   }`}
                 >
                   <MediaRenderer
