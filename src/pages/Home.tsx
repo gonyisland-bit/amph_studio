@@ -113,61 +113,9 @@ export default function Home() {
         )}
       </section>
 
-      {/* 2. Intro Section: Curated Gallery Style */}
-      <section className="flex flex-col bg-white mt-40 md:mt-60 px-8 md:px-20 gap-36 md:gap-56 pb-40 md:pb-60">
-        {[
-          { key: 'collection', link: '/collection' },
-          { key: 'space', link: '/space' },
-          { key: 'journal', link: '/journal' }
-        ].map((item, idx) => {
-          const intro = settings.intros?.[item.key as keyof typeof settings.intros] || { title: item.key, description: '', image: '' };
-          const isEven = idx % 2 === 0;
-          
-          return (
-            <Link 
-              key={item.key} 
-              to={item.link}
-              className={`group flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 md:gap-24 items-center reveal`}
-            >
-              {/* Image Container */}
-              <div className="flex-1 w-full aspect-[16/9] md:aspect-[4/3] overflow-hidden rounded-[4px] bg-silver/10 relative">
-                {intro.image ? (
-                  <MediaRenderer 
-                    src={intro.image} 
-                    className="w-full h-full transition-transform duration-[2000ms] group-hover:scale-105" 
-                    alt={intro.title} 
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-ink/10 font-black text-4xl">AMPH</div>
-                )}
-                <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
-              </div>
-              
-              {/* Content Side */}
-              <div className="flex-1 w-full flex flex-col border-l border-black/10 pl-8 md:pl-16">
-                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.5em] text-cobalt mb-6 block">
-                  0{idx + 1} // {item.key}
-                </span>
-                <h3 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-8 leading-[0.85] group-hover:text-cobalt transition-colors display-huge">
-                  {intro.title}
-                </h3>
-                <p className="text-lg md:text-xl lg:text-2xl font-serif text-ink/60 max-w-lg mb-12">
-                  {intro.description}
-                </p>
-                <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest group-hover:gap-10 transition-all">
-                  <span>Enter Experience</span>
-                  <ArrowRight size={20} />
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-      </section>
-
-      {/* 3. Magazine Section: Featured Products */}
-      <section className="px-8 md:px-20 py-40 md:py-60 bg-off-white">
-        <div className="flex flex-col md:flex-row justify-between items-baseline mb-36 gap-8">
+      {/* 2. Selected Works (Featured Products) - Now directly after Hero slider */}
+      <section className="px-8 md:px-20 py-32 md:py-48 bg-off-white">
+        <div className="flex flex-col md:flex-row justify-between items-baseline mb-24 gap-8">
           <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8]">Selected<br/>Works</h2>
           <p className="text-xl md:text-2xl font-serif italic text-ink/60 max-w-sm">A rhythmic display of industrial aesthetics and vivid comfort.</p>
         </div>
@@ -177,46 +125,7 @@ export default function Home() {
             const items: React.ReactNode[] = [];
             
             featured.forEach((product, index) => {
-              // 1. First featured product is rendered as a giant hero card
-              if (index === 0) {
-                items.push(
-                  <Link 
-                    to={`/product/${product.id}`}
-                    key={product.id}
-                    className="group border-b border-r border-black/10 lg:col-span-2 lg:row-span-2 p-8 md:p-16 flex flex-col justify-between hover:bg-white transition-all duration-700 reveal"
-                  >
-                    <div className="flex justify-between items-start mb-12">
-                      <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">
-                        Featured Work // 01
-                      </span>
-                      {product.price > 0 && (
-                        <span className="text-sm font-black tracking-wider text-ink/80 font-sans">${product.price}</span>
-                      )}
-                    </div>
-                    
-                    <div className="w-full aspect-video lg:aspect-auto lg:flex-grow bg-silver/20 overflow-hidden rounded-[4px] relative mb-12">
-                      <MediaRenderer 
-                        src={product.images?.[0] || ''} 
-                        alt={product.name} 
-                        className="w-full h-full object-cover transition-transform duration-[2000ms] scale-100 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-ink/5 mix-blend-multiply group-hover:bg-transparent transition-colors duration-700"></div>
-                    </div>
-                    
-                    <div>
-                      <span className="text-[10px] uppercase font-bold tracking-widest text-ink/30 block mb-2">{product.category}</span>
-                      <h2 className="text-4xl md:text-6xl font-black font-sans tracking-tighter leading-none group-hover:text-cobalt transition-all mb-4">
-                        {product.name}
-                      </h2>
-                      <p className="text-base md:text-lg font-serif italic text-ink/50 max-w-lg leading-relaxed">{product.subTitle}</p>
-                    </div>
-                  </Link>
-                );
-                return;
-              }
-
-              // 2. Insert philosophy card before index 2
+              // 1. Philosophy card before index 2
               if (index === 2) {
                 items.push(
                   <div key="philosophy-1" className="border-b border-r border-black/10 p-12 bg-ink text-white flex flex-col justify-between reveal">
@@ -229,14 +138,14 @@ export default function Home() {
                 );
               }
 
-              // 3. Render standard grid card
+              // 2. Standard grid card (uniform 1-column size, images fully filling grid borders)
               items.push(
                 <Link 
                   to={`/product/${product.id}`}
                   key={product.id}
-                  className="group border-b border-r border-black/10 p-8 flex flex-col justify-between hover:bg-white transition-all duration-700 reveal h-full"
+                  className="group border-b border-r border-black/10 flex flex-col pt-0 pb-8 px-0 relative hover:bg-white transition-all duration-700 reveal h-full"
                 >
-                  <div className="flex justify-between items-start mb-8">
+                  <div className="flex justify-between items-start pt-8 px-8 mb-6 z-10 relative">
                     <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">
                       0{index + 1}
                     </span>
@@ -245,7 +154,7 @@ export default function Home() {
                     )}
                   </div>
                   
-                  <div className="w-full aspect-[4/5] bg-silver/10 overflow-hidden rounded-[4px] relative mb-8">
+                  <div className="w-full aspect-[4/5] bg-silver/5 overflow-hidden rounded-none relative mb-8 border-b border-black/[0.05]">
                     <MediaRenderer 
                       src={product.images?.[0] || ''} 
                       alt={product.name} 
@@ -255,9 +164,9 @@ export default function Home() {
                     <div className="absolute inset-0 bg-ink/5 group-hover:bg-transparent transition-colors duration-700"></div>
                   </div>
                   
-                  <div>
+                  <div className="mt-auto px-8">
                     <span className="text-[10px] uppercase font-bold tracking-widest text-ink/30 block mb-2">{product.category}</span>
-                    <h2 className="text-2xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors mb-2">
+                    <h2 className="text-lg md:text-xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors mb-2">
                       {product.name}
                     </h2>
                     <p className="text-xs font-serif italic text-ink/50 leading-relaxed truncate">{product.subTitle}</p>
@@ -265,7 +174,7 @@ export default function Home() {
                 </Link>
               );
 
-              // 4. Insert philosophy card before index 4
+              // 3. Philosophy card before index 4
               if (index === 4) {
                 items.push(
                   <div key="philosophy-2" className="border-b border-r border-black/10 p-12 bg-silver/10 text-ink flex flex-col justify-between reveal">
@@ -281,6 +190,61 @@ export default function Home() {
 
             return items;
           })()}
+        </div>
+      </section>
+
+      {/* 3. Curated Gallery / Magazine Intros - Placed after Selected Works, border-aligned & padding-optimized */}
+      <section className="flex flex-col bg-white border-t border-black/10 px-0 py-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 auto-rows-fr border-b border-black/10">
+          {[
+            { key: 'collection', link: '/collection' },
+            { key: 'space', link: '/space' },
+            { key: 'journal', link: '/journal' }
+          ].map((item, idx) => {
+            const intro = settings.intros?.[item.key as keyof typeof settings.intros] || { title: item.key, description: '', image: '' };
+            
+            return (
+              <Link 
+                key={item.key} 
+                to={item.link}
+                className="group border-r last:border-r-0 border-black/10 flex flex-col pt-0 pb-16 px-0 relative hover:bg-off-white transition-all duration-700 reveal h-full"
+              >
+                {/* 100% Grid-filling image with no borders and rounded corners */}
+                <div className="w-full aspect-[16/10] md:aspect-[4/3] overflow-hidden rounded-none bg-silver/10 relative mb-12 border-b border-black/10">
+                  {intro.image ? (
+                    <MediaRenderer 
+                      src={intro.image} 
+                      className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
+                      alt={intro.title} 
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-ink/10 font-black text-4xl">AMPH</div>
+                  )}
+                  <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
+                </div>
+                
+                {/* Content Area with refined margin and size */}
+                <div className="flex-grow w-full flex flex-col px-8 md:px-12 justify-between">
+                  <div>
+                    <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.5em] text-cobalt mb-6 block">
+                      0{idx + 1} // {item.key}
+                    </span>
+                    <h3 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter mb-6 leading-none group-hover:text-cobalt transition-colors display-huge">
+                      {intro.title}
+                    </h3>
+                    <p className="text-sm md:text-base font-serif text-ink/60 max-w-sm mb-8 leading-relaxed">
+                      {intro.description}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest group-hover:gap-10 transition-all mt-6">
+                    <span>Enter Experience</span>
+                    <ArrowRight size={20} />
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 

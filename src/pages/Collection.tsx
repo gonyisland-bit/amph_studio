@@ -73,9 +73,9 @@ export default function Collection() {
           <Link 
             to={`/product/${product.id}`}
             key={product.id}
-            className="group border-b border-r border-black/10 flex flex-col pt-12 pb-8 px-8 relative hover:bg-white transition-colors duration-500 h-full reveal"
+            className="group border-b border-r border-black/10 flex flex-col pt-0 pb-8 px-0 relative hover:bg-white transition-colors duration-500 h-full reveal"
           >
-            <div className="flex justify-between items-start mb-8 z-10 relative">
+            <div className="flex justify-between items-start pt-8 px-8 mb-6 z-10 relative">
               <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">
                 {product.category}
               </span>
@@ -84,7 +84,7 @@ export default function Collection() {
               )}
             </div>
             
-            <div className="flex-grow w-full aspect-[4/5] bg-silver/10 overflow-hidden rounded-[4px] relative mb-8">
+            <div className="w-full aspect-[4/5] bg-silver/5 overflow-hidden rounded-none relative mb-8 border-b border-black/[0.05]">
               {/* Primary Image */}
               <MediaRenderer 
                 src={product.images[0]} 
@@ -103,7 +103,7 @@ export default function Collection() {
               )}
             </div>
 
-            <div className="mt-auto z-10 relative">
+            <div className="mt-auto px-8 z-10 relative">
               <h2 className="text-2xl font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors">{product.name}</h2>
               <p className="text-xs text-ink/40 mt-1 font-serif italic mb-4">{product.subTitle}</p>
               
