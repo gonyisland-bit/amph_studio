@@ -57,7 +57,7 @@ export default function SpaceDetail() {
             <Link to="/space" className="text-[10px] font-black uppercase tracking-[0.3em] mb-6 block text-white/60 hover:text-white transition-colors">
               <span className="inline-block mr-2">←</span> Back to Spaces
             </Link>
-            <h1 className="text-[12vw] md:text-[10vw] font-black uppercase tracking-tighter leading-[0.8] text-white mix-blend-lighten">
+            <h1 className="text-[8.5vw] md:text-[7vw] font-medium uppercase tracking-tighter leading-[0.85] text-white mix-blend-lighten">
               {space.title}
             </h1>
           </div>

@@ -6,6 +6,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import Collection from "./pages/Collection";
 import ProductDetail from "./pages/ProductDetail";
@@ -18,6 +19,7 @@ import SpaceDetail from "./pages/SpaceDetail";
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="flex flex-col min-h-screen bg-off-white text-ink font-sans selection:bg-cobalt selection:text-white antialiased">
         <Navigation />
         <main className="flex-grow flex flex-col bg-off-white">

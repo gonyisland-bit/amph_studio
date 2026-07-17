@@ -64,7 +64,7 @@ export default function Collection() {
     <div className="flex flex-col flex-grow">
       <div className="px-6 md:px-12 pt-12 md:pt-24 pb-8 border-b border-black/10 bg-off-white">
         <div className="max-w-4xl mb-12">
-          <h1 className="text-5xl md:text-8xl font-black tracking-tighter uppercase font-sans leading-[0.85] mb-6">
+          <h1 className="text-3.5xl md:text-5.5xl font-medium tracking-tighter uppercase font-sans leading-[0.9] mb-6">
             {settings.hubSettings?.collection?.title || 'Collection'}
           </h1>
           <p className="text-lg md:text-xl font-serif italic text-ink/60 max-w-2xl">{settings.hubSettings?.collection?.description}</p>
@@ -94,23 +94,29 @@ export default function Collection() {
           <Link 
             to={`/product/${product.id}`}
             key={product.id}
-            className="group border-b border-r border-black/10 flex flex-col pt-0 pb-8 px-0 relative hover:bg-white transition-colors duration-500 h-full reveal"
+            className="group border-b border-r border-black/10 aspect-[4/5] relative overflow-hidden flex flex-col reveal"
           >
-            <div className="flex justify-between items-start pt-8 px-8 mb-6 z-10 relative">
-              <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">
+            {/* Category tag overlap on top-left */}
+            <div className="absolute top-6 left-6 z-20 pointer-events-none">
+              <span className="text-[9px] uppercase font-bold tracking-widest text-white/90 px-3 py-1 bg-black/30 backdrop-blur-md rounded-full border border-white/10">
                 {product.category}
               </span>
-              {product.price > 0 && (
-                <span className="text-xs font-bold font-sans text-ink/70">${product.price}</span>
-              )}
+            </div>
+
+            {/* Product Name overlap on bottom-left */}
+            <div className="absolute bottom-6 left-6 z-20 pointer-events-none">
+              <h2 className="text-sm md:text-base font-bold font-sans tracking-tight leading-tight text-white drop-shadow-md group-hover:text-cobalt transition-colors">
+                {product.name}
+              </h2>
             </div>
             
-            <div className="w-full aspect-[4/5] bg-silver/5 overflow-hidden rounded-none relative mb-4 border-b border-black/[0.05]">
+            {/* Full-bleed Image Container */}
+            <div className="absolute inset-0 w-full h-full bg-silver/5 overflow-hidden rounded-none">
               {/* Primary Image */}
               <MediaRenderer 
                 src={product.images[0]} 
                 alt={product.name}
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-110'}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'}`}
                 loading="lazy"
                 nopin="nopin"
               />
@@ -124,11 +130,8 @@ export default function Collection() {
                   nopin="nopin"
                 />
               )}
-            </div>
-
-            <div className="mt-auto px-8 pt-2 pb-4 z-10 relative flex flex-col gap-1">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-ink/30">{product.category}</span>
-              <h2 className="text-lg font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors">{product.name}</h2>
+              {/* Subtle hover tint layer for text readability */}
+              <div className="absolute inset-0 bg-black/[0.08] group-hover:bg-black/30 transition-all duration-700 z-10 pointer-events-none" />
             </div>
           </Link>
         ))}

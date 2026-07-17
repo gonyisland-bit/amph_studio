@@ -58,7 +58,7 @@ export default function Home() {
               <span className="caption-nano text-cobalt mb-6 block font-bold tracking-[0.3em]">
                 {slide.subtitle || "Amph Original"}
               </span>
-              <h1 className="text-[6.5vw] xl:text-[7vw] leading-[0.8] font-black tracking-tighter text-ink display-huge">
+              <h1 className="text-[4.5vw] xl:text-[5vw] leading-[0.9] font-medium tracking-tighter text-ink display-huge">
                 {(slide.title || "AMPH").split('\n').map((line, i) => (
                   <span key={i} className="block">{line}</span>
                 ))}
@@ -90,7 +90,7 @@ export default function Home() {
               <span className="text-[10px] uppercase tracking-[0.25em] text-white/80 mb-3 block font-bold">
                 {slide.subtitle}
               </span>
-              <h1 className="text-[12vw] leading-[0.85] font-black tracking-tighter text-white drop-shadow-lg mb-8">
+              <h1 className="text-[8.5vw] leading-[0.9] font-medium tracking-tighter text-white drop-shadow-lg mb-8">
                 {(slide.title || "").split('\n').map((line, i) => (
                   <span key={i} className="block">{line}</span>
                 ))}
@@ -116,7 +116,7 @@ export default function Home() {
       {/* 2. Selected Works (Featured Products) - Now directly after Hero slider */}
       <section className="px-8 md:px-20 py-32 md:py-48 bg-off-white">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-24 gap-8">
-          <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8]">Selected<br/>Works</h2>
+          <h2 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9]">Selected<br/>Works</h2>
           <p className="text-sm md:text-sm font-light tracking-wide text-ink/50 font-sans max-w-sm">A rhythmic display of industrial aesthetics and vivid comfort.</p>
         </div>
 
@@ -138,23 +138,28 @@ export default function Home() {
                 );
               }
 
-              // 2. Standard grid card (uniform 1-column size, images fully filling grid borders)
+              // 2. Standard grid card (uniform 1-column size, images fully filling grid borders with overlap text)
               items.push(
                 <Link 
                   to={`/product/${product.id}`}
                   key={product.id}
-                  className="group border-b border-r border-black/10 flex flex-col pt-0 pb-8 px-0 relative hover:bg-white transition-all duration-700 reveal h-full"
+                  className="group border-b border-r border-black/10 aspect-[4/5] relative overflow-hidden flex flex-col reveal"
                 >
-                  <div className="flex justify-between items-start pt-8 px-8 mb-6 z-10 relative">
-                    <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">
-                      0{index + 1}
+                  {/* Category tag overlap on top-left */}
+                  <div className="absolute top-6 left-6 z-20 pointer-events-none">
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-white/90 px-3 py-1 bg-black/30 backdrop-blur-md rounded-full border border-white/10">
+                      {product.category}
                     </span>
-                    {product.price > 0 && (
-                      <span className="text-xs font-bold text-ink/60 font-sans">${product.price}</span>
-                    )}
+                  </div>
+
+                  {/* Product Name overlap on bottom-left */}
+                  <div className="absolute bottom-6 left-6 z-20 pointer-events-none">
+                    <h2 className="text-sm md:text-base font-bold font-sans tracking-tight leading-tight text-white drop-shadow-md group-hover:text-cobalt transition-colors">
+                      {product.name}
+                    </h2>
                   </div>
                   
-                  <div className="w-full aspect-[4/5] bg-silver/5 overflow-hidden rounded-none relative mb-4 border-b border-black/[0.05]">
+                  <div className="absolute inset-0 w-full h-full bg-silver/5 overflow-hidden rounded-none">
                     {/* Primary Image with hover swap */}
                     <MediaRenderer 
                       src={product.images?.[0] || ''} 
@@ -173,14 +178,7 @@ export default function Home() {
                         nopin="nopin"
                       />
                     )}
-                    <div className="absolute inset-0 bg-ink/5 group-hover:bg-transparent transition-colors duration-700 pointer-events-none"></div>
-                  </div>
-                  
-                  <div className="mt-auto px-8 pt-2 pb-4 flex flex-col gap-1">
-                    <span className="text-[9px] uppercase font-bold tracking-widest text-ink/30">{product.category}</span>
-                    <h2 className="text-lg font-bold font-sans tracking-tight leading-tight group-hover:text-cobalt transition-colors">
-                      {product.name}
-                    </h2>
+                    <div className="absolute inset-0 bg-black/[0.08] group-hover:bg-black/30 transition-all duration-700 z-10 pointer-events-none" />
                   </div>
                 </Link>
               );
@@ -236,7 +234,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
                 </div>
                 
-                {/* Content Area with refined margin and size */}
+                {/* Content Area with refined font and size */}
                 <div className="flex-grow w-full flex flex-col px-8 md:px-12 justify-between">
                   <div>
                     <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.5em] text-cobalt mb-6 block">

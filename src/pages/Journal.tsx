@@ -32,7 +32,7 @@ export default function Journal() {
   return (
     <div className="flex flex-col flex-grow bg-white relative">
       <div className="px-6 md:px-12 pt-12 md:pt-24 pb-12 border-b border-black/10 bg-off-white">
-        <h1 className="text-5xl md:text-8xl font-black tracking-tighter uppercase font-sans mb-6 leading-[0.85]">
+        <h1 className="text-3.5xl md:text-5.5xl font-medium tracking-tighter uppercase font-sans mb-6 leading-[0.9]">
           {settings.hubSettings?.journal?.title || 'Journal'}
         </h1>
         <p className="max-w-2xl text-lg md:text-xl font-serif text-ink/80 leading-relaxed italic">
@@ -50,6 +50,7 @@ export default function Journal() {
                alt={article.title}
                className={`absolute inset-0 w-full h-full rounded-2xl shadow-xl transition-opacity duration-500 ${hoveredArticle === i ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                loading="lazy"
+               nopin="nopin"
              />
           ))}
         </div>
@@ -58,13 +59,19 @@ export default function Journal() {
           <Link 
             to={`/journal/${article.id}`}
             key={article.id} 
-            onMouseEnter={() => setHoveredArticle(i)}
+            onMouseEnter={() => {
+              setHoveredArticle(i);
+              // Preload detailed journal data on hover for instant navigation
+              import("../lib/data").then(module => {
+                module.getJournalById(article.id);
+              });
+            }}
             onMouseLeave={() => setHoveredArticle(null)}
             className="group border-b border-black/10 px-6 md:px-12 py-10 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-silver/10 transition-colors cursor-pointer relative z-0 reveal"
           >
             <div className="flex flex-col md:flex-row md:items-baseline gap-4 md:gap-8 md:w-2/3">
               <span className="text-xs uppercase font-semibold font-sans text-orange w-32 shrink-0">{article.category}</span>
-              <h2 className="text-3xl md:text-5xl font-bold font-sans tracking-tight group-hover:text-cobalt transition-colors">{article.title}</h2>
+              <h2 className="text-xl md:text-2.5xl font-medium font-sans tracking-tight group-hover:text-cobalt transition-colors">{article.title}</h2>
             </div>
             <div className="flex items-center gap-6 justify-between md:justify-end md:w-1/3 text-sm font-semibold font-sans text-ink/50 mt-4 md:mt-0">
               <span>{article.date}</span>

@@ -1,14 +1,23 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { LogOut, User, Search, X } from "lucide-react";
+import { getProducts, getSpaces, getJournals, Product, Category } from "../lib/data";
+
+const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
 
 export function Navigation() {
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // 1. Warm up all cache promises in parallel for ultimate speed
+    getProducts().then(setProducts).catch(console.error);
+    getSpaces().catch(console.error);
+    getJournals().catch(console.error);
+
     const checkAuth = () => {
       setIsAuth(localStorage.getItem('admin_auth') === 'true');
     };
@@ -48,6 +57,15 @@ export function Navigation() {
     setSearchQuery('');
   };
 
+  // Get matching suggestions dynamically
+  const suggestionsCategories = searchQuery.trim() 
+    ? CATEGORIES.filter(cat => cat.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+    : [];
+
+  const suggestionsProducts = searchQuery.trim()
+    ? products.filter(prod => prod.name.toLowerCase().includes(searchQuery.toLowerCase().trim())).slice(0, 5)
+    : [];
+
   return (
     <>
       <nav className="px-6 md:px-12 py-6 border-b border-black/5 bg-white z-50 relative">
@@ -70,17 +88,62 @@ export function Navigation() {
             {/* Slide-out/Fade-in search input bar */}
             <div className="flex items-center gap-2 relative">
               {showSearch && (
-                <input 
-                  type="text" 
-                  placeholder="Search..." 
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') handleSearchSubmit();
-                  }}
-                  className="border-b border-black/20 outline-none text-[10px] uppercase tracking-wider py-1 bg-transparent w-28 md:w-40 animate-in slide-in-from-right-2 duration-300 font-sans"
-                  autoFocus
-                />
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="Search..." 
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleSearchSubmit();
+                    }}
+                    className="border-b border-black/20 outline-none text-[10px] uppercase tracking-wider py-1 bg-transparent w-28 md:w-40 animate-in slide-in-from-right-2 duration-300 font-sans"
+                    autoFocus
+                  />
+
+                  {/* Real-time suggestions dropdown list */}
+                  {searchQuery.trim().length > 0 && (suggestionsCategories.length > 0 || suggestionsProducts.length > 0) && (
+                    <div className="absolute right-0 top-full mt-2 bg-white border border-black/10 shadow-2xl w-48 md:w-56 z-50 text-[9px] uppercase font-sans tracking-widest text-ink rounded-[2px] overflow-hidden">
+                      {suggestionsCategories.length > 0 && (
+                        <div className="border-b border-black/5 p-2">
+                          <p className="text-[7px] text-ink/30 mb-1 font-bold">Categories</p>
+                          {suggestionsCategories.map(cat => (
+                            <button
+                              key={cat}
+                              onClick={() => {
+                                navigate(`/collection?category=${cat}`);
+                                setShowSearch(false);
+                                setSearchQuery('');
+                              }}
+                              className="w-full text-left py-1 hover:text-cobalt transition-colors block cursor-pointer font-bold"
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {suggestionsProducts.length > 0 && (
+                        <div className="p-2">
+                          <p className="text-[7px] text-ink/30 mb-1 font-bold">Products</p>
+                          {suggestionsProducts.map(prod => (
+                            <button
+                              key={prod.id}
+                              onClick={() => {
+                                navigate(`/product/${prod.id}`);
+                                setShowSearch(false);
+                                setSearchQuery('');
+                              }}
+                              className="w-full text-left py-1 hover:text-cobalt transition-colors block truncate cursor-pointer font-bold"
+                            >
+                              {prod.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
               <button 
                 onClick={() => {

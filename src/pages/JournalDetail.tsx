@@ -38,7 +38,7 @@ export default function JournalDetail() {
               <MoveLeft size={14} /> Back to Journal
             </Link>
             <span className="text-orange text-xs uppercase font-black tracking-[0.2em] mb-6 inline-block">{article.category}</span>
-            <h1 className="text-5xl md:text-8xl lg:text-9xl font-black tracking-tighter text-white font-sans max-w-5xl leading-[0.8] mix-blend-lighten uppercase">
+            <h1 className="text-3.5xl md:text-5.5xl lg:text-6.5xl font-medium tracking-tighter text-white font-sans max-w-5xl leading-[0.85] mix-blend-lighten uppercase">
               {article.title}
             </h1>
             <div className="flex items-center gap-4 mt-10">
