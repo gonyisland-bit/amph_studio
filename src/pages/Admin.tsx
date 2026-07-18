@@ -31,7 +31,7 @@ const EditorInput = ({ label, required, value, onChange, placeholder, type = "te
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
-          className="w-full border border-black/10 rounded-xl p-3 bg-white outline-none focus:border-cobalt focus:ring-1 focus:ring-cobalt/20 text-xs transition-all duration-300 shadow-sm"
+          className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt focus:ring-1 focus:ring-cobalt/20 text-xs transition-all duration-300 shadow-sm"
         />
       ) : (
         <input
@@ -40,7 +40,7 @@ const EditorInput = ({ label, required, value, onChange, placeholder, type = "te
           value={value}
           onChange={e => onChange(type === "number" ? Number(e.target.value) : e.target.value)}
           placeholder={placeholder}
-          className="w-full border border-black/10 rounded-xl p-3 bg-white outline-none focus:border-cobalt focus:ring-1 focus:ring-cobalt/20 text-xs transition-all duration-300 shadow-sm"
+          className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt focus:ring-1 focus:ring-cobalt/20 text-xs transition-all duration-300 shadow-sm"
         />
       )}
     </div>
@@ -78,7 +78,7 @@ const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onC
     <div className="w-full mb-4">
       {label && <label className="block text-[10px] font-bold uppercase text-ink/50 mb-2">{label}</label>}
       <div 
-        className={`relative border-2 border-dashed rounded-[12px] flex flex-col items-center justify-center p-4 transition-colors cursor-pointer min-h-[120px] overflow-hidden ${dragActive ? 'border-cobalt bg-cobalt/5' : 'border-black/20 bg-black/5 hover:bg-black/10'}`}
+        className={`relative border-2 border-dashed rounded-none flex flex-col items-center justify-center p-4 transition-colors cursor-pointer min-h-[120px] overflow-hidden ${dragActive ? 'border-cobalt bg-cobalt/5' : 'border-black/20 bg-black/5 hover:bg-black/10'}`}
         onDragEnter={onDrag} onDragLeave={onDrag} onDragOver={onDrag} onDrop={onDrop}
         onClick={(e) => {
           if ((e.target as HTMLElement).closest('.remove-btn')) return;
@@ -102,7 +102,7 @@ const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onC
         ) : value ? (
            <div className="relative group/preview w-full flex justify-center">
              {isVideo ? (
-               <video src={value} className="h-24 w-auto object-contain rounded" muted />
+               <video src={value} className="h-24 w-auto object-contain rounded-none" muted />
              ) : (
                <img src={value} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" />
              )}
@@ -115,7 +115,7 @@ const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onC
                   onChange('');
                 }
               }}
-              className="remove-btn absolute -top-2 -right-2 bg-orange text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-md hover:scale-110 transition-transform z-10"
+              className="remove-btn absolute -top-2 -right-2 bg-orange text-white w-5 h-5 rounded-none flex items-center justify-center text-[10px] font-bold shadow-md hover:scale-110 transition-transform z-10"
              >
                ✕
              </button>
@@ -248,7 +248,7 @@ export default function Admin() {
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center flex-grow bg-off-white font-sans p-6">
-        <div className="w-full max-w-md bg-white p-12 rounded-[32px] shadow-xl border border-black/5">
+        <div className="w-full max-w-md bg-white p-12 rounded-none shadow-xl border border-black/5">
           <h1 className="text-3xl font-bold mb-8 tracking-tighter uppercase">Admin Access</h1>
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
@@ -262,7 +262,7 @@ export default function Admin() {
                 autoFocus
               />
             </div>
-            <button type="submit" className="w-full bg-ink text-white py-4 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-cobalt transition-colors">
+            <button type="submit" className="w-full bg-ink text-white py-4 rounded-none font-bold uppercase tracking-widest text-xs hover:bg-cobalt transition-colors">
               Enter Dashboard
             </button>
           </form>
@@ -333,16 +333,20 @@ export default function Admin() {
     e.preventDefault();
     try {
       if (activeTab === 'collection') {
-        if (editingId) await updateProduct(editingId, form);
-        else await addProduct({ ...form, id: `prod-${Date.now()}` });
+        const cleanedImages = (form.images || []).filter(Boolean);
+        const cleanedForm = { ...form, images: cleanedImages };
+        if (editingId) await updateProduct(editingId, cleanedForm);
+        else await addProduct({ ...cleanedForm, id: `prod-${Date.now()}` });
         setForm(emptyProduct);
       } else if (activeTab === 'journal') {
         if (editingId) await updateJournal(editingId, form);
         else await addJournal({ ...form, id: `j-${Date.now()}` });
         setForm(emptyJournal);
       } else if (activeTab === 'space') {
-        if (editingId) await updateSpace(editingId, form);
-        else await addSpace({ ...form, id: `s-${Date.now()}` });
+        const cleanedImages = (form.images || []).filter(Boolean);
+        const cleanedForm = { ...form, images: cleanedImages };
+        if (editingId) await updateSpace(editingId, cleanedForm);
+        else await addSpace({ ...cleanedForm, id: `s-${Date.now()}` });
         setForm(emptySpace);
       }
       setEditingId(null);
@@ -438,7 +442,7 @@ export default function Admin() {
     <div className="flex flex-col flex-grow p-6 md:p-12 max-w-[1400px] mx-auto w-full font-sans">
       
       {/* Admin Status Banner - Redesigned to be clean and minimal with line border */}
-      <div className="border border-black/10 bg-white p-6 mb-8 flex justify-between items-center rounded-[4px]">
+      <div className="border border-black/10 bg-white p-6 mb-8 flex justify-between items-center rounded-none">
         <div className="flex items-center gap-4">
           <CheckCircle2 size={18} className="text-cobalt" />
           <div>
@@ -446,7 +450,7 @@ export default function Admin() {
             <h2 className="text-xs font-bold uppercase tracking-widest text-ink">Logged in as Administrator</h2>
           </div>
         </div>
-        <button onClick={handleLogout} className="flex items-center gap-2 border border-orange/20 text-orange hover:bg-orange hover:text-white px-4 py-2 rounded-full transition-all text-[9px] font-bold uppercase tracking-widest cursor-pointer">
+        <button onClick={handleLogout} className="flex items-center gap-2 border border-orange/20 text-orange hover:bg-orange hover:text-white px-4 py-2 rounded-none transition-all text-[9px] font-bold uppercase tracking-widest cursor-pointer">
           <LogOut size={12} /> Logout
         </button>
       </div>
@@ -478,35 +482,35 @@ export default function Admin() {
               {activeTab === 'home' && (
                 <div className="max-w-5xl mx-auto space-y-12 pb-20">
                   {/* General Copy */}
-                  <div className="bg-black/5 p-8 rounded-[32px] border border-black/5 shadow-sm">
+                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center gap-2">
                       <ExternalLink size={14} /> Global Settings
                     </h3>
                     <div className="space-y-4">
                       <div>
                         <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Marquee Text</label>
-                        <input value={homeSettings.marquee} onChange={e => setHomeSettings({...homeSettings, marquee: e.target.value})} className="w-full border border-black/20 p-2 bg-white outline-none focus:border-cobalt rounded-lg" />
+                        <input value={homeSettings.marquee} onChange={e => setHomeSettings({...homeSettings, marquee: e.target.value})} className="w-full border border-black/20 p-2 bg-white outline-none focus:border-cobalt rounded-none" />
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Hero Transition Speed (sec)</label>
-                        <input type="number" value={homeSettings.heroTransitionSpeed} onChange={e => setHomeSettings({...homeSettings, heroTransitionSpeed: Number(e.target.value)})} className="w-full border border-black/20 p-2 bg-white outline-none focus:border-cobalt rounded-lg" />
+                        <input type="number" value={homeSettings.heroTransitionSpeed} onChange={e => setHomeSettings({...homeSettings, heroTransitionSpeed: Number(e.target.value)})} className="w-full border border-black/20 p-2 bg-white outline-none focus:border-cobalt rounded-none" />
                       </div>
-                      <button type="button" onClick={async () => { setSavingSettings(true); await updateHomeSettings(homeSettings); setSavingSettings(false); showToast('Global settings saved!', 'success'); }} className="w-full bg-cobalt text-white py-3 uppercase text-[10px] font-black hover:bg-ink transition-colors rounded-xl shadow-md">{savingSettings ? 'Saving...' : 'Save All Global Settings'}</button>
+                      <button type="button" onClick={async () => { setSavingSettings(true); await updateHomeSettings(homeSettings); setSavingSettings(false); showToast('Global settings saved!', 'success'); }} className="w-full bg-cobalt text-white py-3 uppercase text-[10px] font-black hover:bg-ink transition-colors rounded-none shadow-md">{savingSettings ? 'Saving...' : 'Save All Global Settings'}</button>
                     </div>
                   </div>
 
                   {/* Hero Slides */}
-                  <div className="bg-black/5 p-6 rounded-2xl border border-black/5">
+                  <div className="bg-black/5 p-6 rounded-none border border-black/5">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center justify-between">
                       <span>Hero Slides</span>
                       <button type="button" onClick={() => {
                         const newSlides = [...(homeSettings.heroSlides || []), { id: Date.now().toString(), title: '', subtitle: '', image: '' }];
                         setHomeSettings({...homeSettings, heroSlides: newSlides});
-                      }} className="bg-ink text-white px-3 py-1 rounded-full text-[9px]">+ Add Slide</button>
+                      }} className="bg-ink text-white px-3 py-1 rounded-none text-[9px]">+ Add Slide</button>
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {(homeSettings.heroSlides || []).map((slide, idx) => (
-                        <div key={slide.id} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4 relative">
+                        <div key={slide.id} className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4 relative">
                           <button type="button" onClick={() => {
                             const newSlides = (homeSettings.heroSlides || []).filter((_, i) => i !== idx);
                             setHomeSettings({...homeSettings, heroSlides: newSlides});
@@ -537,11 +541,11 @@ export default function Admin() {
                   </div>
 
                   {/* Category Intros */}
-                  <div className="bg-black/5 p-8 rounded-[32px] border border-black/5 shadow-sm">
+                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6">Category Banners</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {(['collection', 'space', 'journal'] as const).map(cat => (
-                        <div key={cat} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4">
+                        <div key={cat} className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4">
                           <span className="text-[10px] font-black uppercase text-orange">{cat} Intro</span>
                           <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                             <input value={homeSettings.intros?.[cat]?.title || ''} onChange={e => {
@@ -566,11 +570,11 @@ export default function Admin() {
                   </div>
 
                   {/* Hub Settings */}
-                  <div className="bg-black/5 p-8 rounded-[32px] border border-black/5 shadow-sm">
+                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6">Hub Page Settings (Landings)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {(['collection', 'space', 'journal'] as const).map(hub => (
-                        <div key={hub} className="p-4 bg-white rounded-xl border border-black/5 shadow-sm space-y-4">
+                        <div key={hub} className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4">
                           <span className="text-[10px] font-black uppercase text-ink/30">{hub} Hub</span>
                           <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Page Title</label>
                             <input value={homeSettings.hubSettings?.[hub]?.title || ''} onChange={e => {
@@ -595,14 +599,14 @@ export default function Admin() {
                   </div>
 
                   {/* Featured Products (Selected Works) */}
-                  <div className="bg-black/5 p-8 rounded-[32px] border border-black/5 shadow-sm">
+                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center justify-between">
                       <span>Selected Works (Home Featured)</span>
                       <span className="text-[10px] font-bold text-ink/30 uppercase">{homeSettings.featuredProductIds.length} Selected</span>
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[500px] overflow-y-auto p-4 bg-white rounded-2xl border border-black/5 shadow-inner">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[500px] overflow-y-auto p-4 bg-white rounded-none border border-black/5 shadow-inner">
                       {products.map(p => (
-                        <label key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${homeSettings.featuredProductIds.includes(p.id) ? 'bg-cobalt/5 border-cobalt shadow-sm' : 'bg-transparent border-black/5 hover:border-black/20'}`}>
+                        <label key={p.id} className={`flex items-center gap-3 p-3 rounded-none border transition-all cursor-pointer ${homeSettings.featuredProductIds.includes(p.id) ? 'bg-cobalt/5 border-cobalt shadow-sm' : 'bg-transparent border-black/5 hover:border-black/20'}`}>
                           <input 
                             type="checkbox" 
                             checked={homeSettings.featuredProductIds.includes(p.id)} 
@@ -611,10 +615,10 @@ export default function Admin() {
                               const next = e.target.checked ? [...current, p.id] : current.filter(id => id !== p.id);
                               setHomeSettings({...homeSettings, featuredProductIds: next});
                             }}
-                            className="w-4 h-4 rounded border-gray-300 text-cobalt focus:ring-cobalt"
+                            className="w-4 h-4 rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
                           />
                           <div className="flex items-center gap-3 overflow-hidden">
-                            <img src={p.images[0]} className="w-8 h-8 rounded object-cover mix-blend-multiply flex-shrink-0" />
+                            <img src={p.images[0]} className="w-8 h-8 rounded-none object-cover mix-blend-multiply flex-shrink-0" />
                             <div className="flex flex-col min-w-0">
                               <span className="text-[10px] font-black uppercase truncate">{p.name}</span>
                               <span className="text-[9px] text-ink/30 uppercase truncate">{p.category}</span>
@@ -624,18 +628,110 @@ export default function Admin() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Magazine Grid Cards */}
+                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm space-y-6">
+                    <h3 className="font-bold text-xs uppercase text-cobalt flex items-center justify-between">
+                      <span>Magazine Cards (Home Grid)</span>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Philosophy 1 Card */}
+                      <div className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4">
+                        <span className="text-[10px] font-black uppercase text-orange">Magazine Card 1 (Design Philosophy)</span>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
+                          <input 
+                            value={homeSettings.philosophy1?.title || ''} 
+                            onChange={e => {
+                              const phil1 = { ...(homeSettings.philosophy1 || defaultHomeSettings.philosophy1 || { title: '', quote: '', author: '' }) };
+                              phil1.title = e.target.value;
+                              setHomeSettings({ ...homeSettings, philosophy1: phil1 });
+                            }} 
+                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Quote</label>
+                          <textarea 
+                            value={homeSettings.philosophy1?.quote || ''} 
+                            onChange={e => {
+                              const phil1 = { ...(homeSettings.philosophy1 || defaultHomeSettings.philosophy1 || { title: '', quote: '', author: '' }) };
+                              phil1.quote = e.target.value;
+                              setHomeSettings({ ...homeSettings, philosophy1: phil1 });
+                            }} 
+                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
+                            rows={3}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Author / Subtitle</label>
+                          <input 
+                            value={homeSettings.philosophy1?.author || ''} 
+                            onChange={e => {
+                              const phil1 = { ...(homeSettings.philosophy1 || defaultHomeSettings.philosophy1 || { title: '', quote: '', author: '' }) };
+                              phil1.author = e.target.value;
+                              setHomeSettings({ ...homeSettings, philosophy1: phil1 });
+                            }} 
+                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
+                          />
+                        </div>
+                      </div>
+
+                      {/* Philosophy 2 Card */}
+                      <div className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4">
+                        <span className="text-[10px] font-black uppercase text-orange">Magazine Card 2 (Materiality)</span>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
+                          <input 
+                            value={homeSettings.philosophy2?.title || ''} 
+                            onChange={e => {
+                              const phil2 = { ...(homeSettings.philosophy2 || defaultHomeSettings.philosophy2 || { title: '', quote: '', author: '' }) };
+                              phil2.title = e.target.value;
+                              setHomeSettings({ ...homeSettings, philosophy2: phil2 });
+                            }} 
+                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Quote</label>
+                          <textarea 
+                            value={homeSettings.philosophy2?.quote || ''} 
+                            onChange={e => {
+                              const phil2 = { ...(homeSettings.philosophy2 || defaultHomeSettings.philosophy2 || { title: '', quote: '', author: '' }) };
+                              phil2.quote = e.target.value;
+                              setHomeSettings({ ...homeSettings, philosophy2: phil2 });
+                            }} 
+                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
+                            rows={3}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Author / Subtitle</label>
+                          <input 
+                            value={homeSettings.philosophy2?.author || ''} 
+                            onChange={e => {
+                              const phil2 = { ...(homeSettings.philosophy2 || defaultHomeSettings.philosophy2 || { title: '', quote: '', author: '' }) };
+                              phil2.author = e.target.value;
+                              setHomeSettings({ ...homeSettings, philosophy2: phil2 });
+                            }} 
+                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {activeTab === 'collection' && (
                 <div className="space-y-6">
                   {/* Live Preview: Actual image grid matching the product detail layout */}
-                  <div className="bg-black/5 rounded-3xl border border-black/5 overflow-hidden shadow-inner">
+                  <div className="bg-black/5 rounded-none border border-black/10 overflow-hidden shadow-none">
                     {(form.images || []).filter(Boolean).length > 0 ? (
                       <div className="grid grid-cols-2 gap-px bg-black/10">
                         {(form.images || []).filter(Boolean).map((img: string, i: number) => (
-                          <div key={i} className={`${i === 0 && (form.images || []).filter(Boolean).length % 2 !== 0 ? 'col-span-2 aspect-[16/7]' : 'aspect-[4/5]'} overflow-hidden bg-silver/5 relative`}>
-                            <img src={img} alt={`Preview ${i+1}`} className="absolute inset-0 w-full h-full object-cover" />
+                          <div key={i} className={`${i === 0 && (form.images || []).filter(Boolean).length % 2 !== 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'} overflow-hidden bg-silver/5 relative`}>
+                            <img src={img} alt={`Preview ${i+1}`} className="absolute inset-0 w-full h-full object-contain bg-white" />
                           </div>
                         ))}
                       </div>
@@ -645,7 +741,7 @@ export default function Admin() {
                   </div>
 
                   {/* Card 1: Basic Information (Accordion) */}
-                  <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
                     <button 
                       type="button"
                       onClick={() => toggleSection('basic')}
@@ -664,7 +760,7 @@ export default function Admin() {
                             <select 
                               value={form.category || 'Chairs'} 
                               onChange={e => setForm({...form, category: e.target.value as Category})} 
-                              className="w-full border border-black/10 rounded-xl p-3 bg-white outline-none focus:border-cobalt text-xs transition-all shadow-sm"
+                              className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt text-xs transition-all shadow-sm"
                             >
                               <option value="Chairs">Chairs</option>
                               <option value="Furniture">Furniture</option>
@@ -682,7 +778,7 @@ export default function Admin() {
                   </div>
 
                   {/* Card 2: Detailed Specifications (Accordion) */}
-                  <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
                     <button 
                       type="button"
                       onClick={() => toggleSection('specs')}
@@ -708,7 +804,7 @@ export default function Admin() {
                   </div>
 
                   {/* Card 3: Media Gallery (Main & Hover Images) (Accordion) */}
-                  <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
                     <button 
                       type="button"
                       onClick={() => toggleSection('media')}
@@ -719,88 +815,67 @@ export default function Admin() {
                     </button>
                     {activeSections.media && (
                         <div className="p-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                          {/* Primary/Main Images — 2-col grid, larger drag zones, no Remove text */}
+                          {/* Primary/Main Images — 2-col grid, larger drag zones */}
                           <div>
                             <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Product Main Gallery</h4>
                             <div className="grid grid-cols-2 gap-3">
-                              {(form.images || []).map((img: string, i: number) => (
-                                <div key={`img-${i}`} className="relative">
-                                  <MediaUploadInput 
-                                    label={i === 0 ? "Primary" : `Image ${i+1}`} 
-                                    value={img} 
-                                    onChange={val => { 
-                                      const newImg = [...(form.images || [])]; 
-                                      newImg[i] = val; 
-                                      setForm({...form, images: newImg}); 
-                                    }} 
-                                  />
-                                  {i > 0 && (
-                                    <button 
-                                      type="button" 
-                                      onClick={() => setForm({...form, images: (form.images || []).filter((_: any, idx: number) => idx !== i)})} 
-                                      className="absolute top-0 right-0 w-5 h-5 bg-orange text-white rounded-full text-[10px] flex items-center justify-center hover:scale-110 transition-transform z-10 shadow"
-                                    >
-                                      ✕
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
+                              {(() => {
+                                const currentImages = form.images || [];
+                                const displayImages = [...currentImages];
+                                if (displayImages.length === 0 || displayImages[displayImages.length - 1] !== '') {
+                                  displayImages.push('');
+                                }
+                                return displayImages.map((img: string, i: number) => (
+                                  <div key={`img-${i}`} className="relative border border-black/5 p-3 bg-black/[0.01] rounded-none">
+                                    <MediaUploadInput 
+                                      label={i === 0 ? "Primary" : `Image ${i+1}`} 
+                                      value={img} 
+                                      onChange={val => { 
+                                        const newImg = [...displayImages]; 
+                                        newImg[i] = val; 
+                                        setForm({...form, images: newImg}); 
+                                      }} 
+                                    />
+                                    {img && (
+                                      <div className="mt-2 flex items-center justify-between border-t border-black/5 pt-2">
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                          <input 
+                                            type="checkbox" 
+                                            checked={(form.hoverImages || []).includes(img)}
+                                            onChange={e => {
+                                              if (e.target.checked) {
+                                                setForm({...form, hoverImages: [img]}); // Set as hover (only one)
+                                              } else {
+                                                setForm({...form, hoverImages: []}); // Clear if unchecked
+                                              }
+                                            }}
+                                            className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                                          />
+                                          <span className="text-[9px] uppercase font-bold text-ink/60">Hover Effect</span>
+                                        </label>
+                                        
+                                        {i > 0 && (
+                                          <button 
+                                            type="button" 
+                                            onClick={() => setForm({...form, images: displayImages.filter((_, idx: number) => idx !== i)})} 
+                                            className="text-[9px] uppercase font-bold text-orange hover:underline"
+                                          >
+                                            Remove
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ));
+                              })()}
                             </div>
-                            <button 
-                              type="button" 
-                              onClick={() => setForm({...form, images: [...(form.images || []), '']})} 
-                              className="text-[10px] font-black text-cobalt hover:underline mt-3 block"
-                            >
-                              + Add Gallery Image
-                            </button>
-                          </div>
-
-                          {/* Hover Image — checkbox picker from main gallery */}
-                          <div className="border-t border-black/5 pt-6">
-                            <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Hover Image (select from gallery)</h4>
-                            {(form.images || []).filter(Boolean).length > 0 ? (
-                              <div className="grid grid-cols-3 gap-2">
-                                {(form.images || []).filter(Boolean).map((img: string, i: number) => {
-                                  const isSelected = (form.hoverImages || []).includes(img);
-                                  return (
-                                    <label
-                                      key={i}
-                                      className={`relative cursor-pointer rounded overflow-hidden border-2 transition-all ${
-                                        isSelected ? 'border-cobalt ring-1 ring-cobalt/30' : 'border-transparent hover:border-black/20'
-                                      }`}
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        className="sr-only"
-                                        checked={isSelected}
-                                        onChange={e => {
-                                          const current: string[] = form.hoverImages || [];
-                                          const next = e.target.checked
-                                            ? [...current, img]
-                                            : current.filter((h: string) => h !== img);
-                                          setForm({...form, hoverImages: next});
-                                        }}
-                                      />
-                                      <img src={img} className="w-full aspect-square object-cover" />
-                                      {isSelected && (
-                                        <div className="absolute inset-0 bg-cobalt/20 flex items-center justify-center">
-                                          <span className="text-white text-lg font-black">✓</span>
-                                        </div>
-                                      )}
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <p className="text-[10px] text-ink/30 italic">Upload gallery images first to select hover images.</p>
-                            )}
                           </div>
                         </div>
                       )}
                     </div>
 
                   {/* Card 4: Story Blocks (Accordion) */}
-                  <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
                     <button 
                       type="button"
                       onClick={() => toggleSection('story')}
@@ -837,25 +912,30 @@ export default function Admin() {
                     <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
                     <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={4}/></div>
-                  
                   {renderContentBlocksEditor()}
 
                   <div className="border-t border-black/10 pt-4 mt-4">
                     <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Gallery Images</h3>
-                    {form.images?.map((img:string, i:number) => (
-                      <div key={i} className="flex gap-2 mb-2 items-end">
-                        <div className="flex-1"><MediaUploadInput label={i === 0 ? "Main" : `Media ${i+1}`} value={img} onChange={val => { const newI = [...(form.images || [])]; newI[i] = val; setForm({...form, images: newI}); }} /></div>
-                        {i > 0 && <button type="button" onClick={() => setForm({...form, images: (form.images || []).filter((_:any, idx:number) => idx !== i)})} className="mb-8 text-orange text-xs font-bold px-2">X</button>}
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => setForm({...form, images: [...(form.images || []), '']})} className="text-[10px] font-bold text-cobalt hover:underline">+ Add Image</button>
+                    {(() => {
+                      const currentImages = form.images || [];
+                      const displayImages = [...currentImages];
+                      if (displayImages.length === 0 || displayImages[displayImages.length - 1] !== '') {
+                        displayImages.push('');
+                      }
+                      return displayImages.map((img: string, i: number) => (
+                        <div key={i} className="flex gap-2 mb-2 items-end">
+                          <div className="flex-1"><MediaUploadInput label={i === 0 ? "Main" : `Media ${i+1}`} value={img} onChange={val => { const newI = [...displayImages]; newI[i] = val; setForm({...form, images: newI}); }} /></div>
+                          {i > 0 && <button type="button" onClick={() => setForm({...form, images: displayImages.filter((_:any, idx:number) => idx !== i)})} className="mb-8 text-orange text-xs font-bold px-2 hover:underline">Remove</button>}
+                        </div>
+                      ));
+                    })()}
                   </div>
 
                   <div className="border-t border-black/10 pt-4 mt-4">
                     <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Amplify with (Linked Products)</h3>
-                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-black/10 p-4 bg-black/5 rounded-xl">
+                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-black/10 p-4 bg-black/5 rounded-none">
                       {products.map(p => (
-                        <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded border border-black/5 hover:bg-silver/10 cursor-pointer">
+                        <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
                           <input 
                             type="checkbox" 
                             checked={form.appliedProductIds?.includes(p.id)} 
@@ -864,6 +944,7 @@ export default function Admin() {
                               const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
                               setForm({...form, appliedProductIds: next});
                             }}
+                            className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
                           />
                           <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
                         </label>
@@ -892,12 +973,12 @@ export default function Admin() {
                   <h2 className="text-xl font-bold font-sans uppercase tracking-tight">
                     {activeTab === 'collection' ? 'Collection' : activeTab === 'space' ? 'Space' : 'Journal'}
                   </h2>
-                  <button onClick={() => { setEditingId(null); switchTab(activeTab); }} className="flex items-center gap-2 bg-cobalt text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all">
+                  <button onClick={() => { setEditingId(null); switchTab(activeTab); }} className="flex items-center gap-2 bg-cobalt text-white px-4 py-2 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all">
                     <Plus size={14} /> New Item
                   </button>
                   
                   {activeTab === 'collection' && (
-                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-black/5 shadow-sm ml-2">
+                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-none border border-black/5 shadow-sm ml-2">
                       <span className="text-[9px] font-black uppercase text-ink/40 tracking-wider">Sort By</span>
                       <select 
                         value={sortBy} 
@@ -914,7 +995,7 @@ export default function Admin() {
                </div>
                
                {selectedIds.length > 0 && (
-                 <div className="flex items-center gap-2 bg-black/5 p-2 rounded-full border border-black/10 animate-in fade-in slide-in-from-right-4">
+                 <div className="flex items-center gap-2 bg-black/5 p-2 rounded-none border border-black/10 animate-in fade-in slide-in-from-right-4">
                    <span className="text-[10px] font-bold px-3 border-r border-black/10">{selectedIds.length} Selected</span>
                    <button onClick={handleBulkDuplicate} className="flex items-center gap-2 hover:text-cobalt px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Copy size={12}/> Duplicate</button>
                    <button onClick={handleBulkDelete} className="flex items-center gap-2 hover:text-orange px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Trash2 size={12}/> Delete</button>
@@ -922,7 +1003,7 @@ export default function Admin() {
                )}
             </div>
    
-            <div className="overflow-x-auto bg-white rounded-3xl border border-black/5 shadow-sm">
+            <div className="overflow-x-auto bg-white rounded-none border border-black/5 shadow-sm">
               <table className="w-full text-sm text-left">
                 <thead className="text-[10px] uppercase font-black tracking-widest text-ink/40 border-b border-black/5">
                   <tr>

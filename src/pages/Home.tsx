@@ -127,13 +127,14 @@ export default function Home() {
             featured.forEach((product, index) => {
               // 1. Philosophy card before index 2
               if (index === 2) {
+                const card1 = settings.philosophy1 || defaultHomeSettings.philosophy1 || { title: 'Design Philosophy', quote: 'Form follows function, but also emotion. Sensory simplicity for modern architectural spaces.', author: '// AMPH ORIGINALS' };
                 items.push(
-                  <div key="philosophy-1" className="border-b border-r border-black/10 p-12 bg-ink text-white flex flex-col justify-between reveal">
-                    <span className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-bold block mb-8">Design Philosophy</span>
-                    <blockquote className="text-2xl md:text-3xl font-serif italic font-light leading-relaxed my-auto text-white/90 pr-4">
-                      "Form follows function, but also emotion. Sensory simplicity for modern architectural spaces."
+                  <div key="philosophy-1" className="border-b border-r border-black/10 aspect-[4/5] p-8 lg:p-12 bg-ink text-white flex flex-col justify-between reveal w-full h-full">
+                    <span className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-bold block mb-8">{card1.title}</span>
+                    <blockquote className="text-lg md:text-xl lg:text-2xl font-serif italic font-light leading-relaxed my-auto text-white/90 pr-4">
+                      "{card1.quote}"
                     </blockquote>
-                    <span className="text-[9px] uppercase tracking-widest text-white/30 block mt-8">// AMPH ORIGINALS</span>
+                    <span className="text-[9px] uppercase tracking-widest text-white/30 block mt-8">{card1.author}</span>
                   </div>
                 );
               }
@@ -185,13 +186,14 @@ export default function Home() {
 
               // 3. Philosophy card before index 4
               if (index === 4) {
+                const card2 = settings.philosophy2 || defaultHomeSettings.philosophy2 || { title: 'Materiality', quote: 'Materials tell stories. Raw timber, hand-finished steel, sensory wool, and architectural tension.', author: '// HONEST CRAFT' };
                 items.push(
-                  <div key="philosophy-2" className="border-b border-r border-black/10 p-12 bg-silver/10 text-ink flex flex-col justify-between reveal">
-                    <span className="text-[9px] uppercase tracking-[0.3em] text-ink/40 font-bold block mb-8">Materiality</span>
-                    <blockquote className="text-2xl md:text-3xl font-serif italic font-light leading-relaxed my-auto text-ink/80 pr-4">
-                      "Materials tell stories. Raw timber, hand-finished steel, sensory wool, and architectural tension."
+                  <div key="philosophy-2" className="border-b border-r border-black/10 aspect-[4/5] p-8 lg:p-12 bg-silver/10 text-ink flex flex-col justify-between reveal w-full h-full">
+                    <span className="text-[9px] uppercase tracking-[0.3em] text-ink/40 font-bold block mb-8">{card2.title}</span>
+                    <blockquote className="text-lg md:text-xl lg:text-2xl font-serif italic font-light leading-relaxed my-auto text-ink/80 pr-4">
+                      "{card2.quote}"
                     </blockquote>
-                    <span className="text-[9px] uppercase tracking-widest text-ink/30 block mt-8">// HONEST CRAFT</span>
+                    <span className="text-[9px] uppercase tracking-widest text-ink/30 block mt-8">{card2.author}</span>
                   </div>
                 );
               }
@@ -240,10 +242,10 @@ export default function Home() {
                     <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.5em] text-cobalt mb-6 block">
                       0{idx + 1} // {item.key}
                     </span>
-                    <h3 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase mb-6 leading-[0.9] group-hover:text-cobalt transition-colors display-huge">
+                    <h3 className="text-3xl md:text-2xl lg:text-3xl xl:text-5xl 2xl:text-6xl font-medium tracking-tighter uppercase mb-6 leading-[0.9] group-hover:text-cobalt transition-colors display-huge break-words">
                       {intro.title}
                     </h3>
-                    <p className="text-sm md:text-base font-serif text-ink/60 max-w-sm mb-8 leading-relaxed">
+                    <p className="text-xs lg:text-sm font-serif text-ink/60 max-w-sm mb-8 leading-relaxed">
                       {intro.description}
                     </p>
                   </div>

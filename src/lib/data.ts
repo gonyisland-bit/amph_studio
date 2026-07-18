@@ -255,6 +255,12 @@ export interface HubPageSettings {
   image: string;
 }
 
+export interface PhilosophyCard {
+  title: string;
+  quote: string;
+  author: string;
+}
+
 export interface HomeSettings {
   featuredProductIds: string[];
   globalProductOrder: string[];
@@ -275,6 +281,8 @@ export interface HomeSettings {
     space: HubPageSettings;
     journal: HubPageSettings;
   };
+  philosophy1?: PhilosophyCard;
+  philosophy2?: PhilosophyCard;
 }
 
 export const defaultHomeSettings: HomeSettings = {
@@ -296,6 +304,16 @@ export const defaultHomeSettings: HomeSettings = {
     collection: { title: 'COLLECTION', description: 'Curated design objects.', image: '' },
     space: { title: 'SPACES', description: 'Inspirational environments.', image: '' },
     journal: { title: 'JOURNAL', description: 'Stories and updates.', image: '' }
+  },
+  philosophy1: {
+    title: 'Design Philosophy',
+    quote: 'Form follows function, but also emotion. Sensory simplicity for modern architectural spaces.',
+    author: '// AMPH ORIGINALS'
+  },
+  philosophy2: {
+    title: 'Materiality',
+    quote: 'Materials tell stories. Raw timber, hand-finished steel, sensory wool, and architectural tension.',
+    author: '// HONEST CRAFT'
   }
 };
 
@@ -318,7 +336,9 @@ const revalidateHomeSettings = async (): Promise<HomeSettings> => {
         ...defaultHomeSettings, 
         ...data,
         intros: { ...defaultHomeSettings.intros, ...(data.intros || {}) },
-        hubSettings: { ...defaultHomeSettings.hubSettings, ...(data.hubSettings || {}) }
+        hubSettings: { ...defaultHomeSettings.hubSettings, ...(data.hubSettings || {}) },
+        philosophy1: { ...defaultHomeSettings.philosophy1, ...(data.philosophy1 || {}) },
+        philosophy2: { ...defaultHomeSettings.philosophy2, ...(data.philosophy2 || {}) }
       };
       return { ...cachedHomeSettings! };
     } catch (err) {
