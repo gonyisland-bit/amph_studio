@@ -591,9 +591,10 @@ export default function Admin() {
                     }
                   })()}
 
-                  {/* Save 버튼 */}
+                  {/* Save 버튼 — form 바깥이므로 form="editor-form" 속성으로 연결 */}
                   <button 
-                    type="submit" 
+                    type="submit"
+                    form="editor-form"
                     disabled={saveStatus === 'saving'}
                     className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-none ${
                       saveStatus === 'saving' ? 'bg-black/10 text-ink/30 cursor-not-allowed' :
@@ -616,7 +617,7 @@ export default function Admin() {
                 </div>
               )}
             </h2>
-            <form onSubmit={handleSave} className="space-y-4 text-sm">
+            <form id="editor-form" onSubmit={handleSave} className="space-y-4 text-sm">
               <fieldset disabled={saveStatus === 'saving'} className="space-y-4 w-full border-none p-0 m-0">
               
               {activeTab === 'home' && (
