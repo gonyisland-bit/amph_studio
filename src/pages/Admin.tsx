@@ -21,17 +21,27 @@ const emptySpace: Omit<SpaceModel, 'id'> = {
 
 // Premium form input helper
 const EditorInput = ({ label, required, value, onChange, placeholder, type = "text", rows }: { label: string, required?: boolean, value: string | number, onChange: (val: any) => void, placeholder?: string, type?: string, rows?: number }) => {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  React.useEffect(() => {
+    if (rows && textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [value, rows]);
+
   return (
     <div className="w-full">
       <label className="block text-[10px] font-black uppercase text-ink/40 tracking-wider mb-2">{label}</label>
       {rows ? (
         <textarea
+          ref={textareaRef}
           required={required}
           value={value}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
-          className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt focus:ring-1 focus:ring-cobalt/20 text-xs transition-all duration-300 shadow-sm"
+          className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt focus:ring-1 focus:ring-cobalt/20 text-xs transition-all duration-300 shadow-sm resize-none overflow-hidden"
         />
       ) : (
         <input
@@ -73,6 +83,15 @@ const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onC
 
   const idSafeLabel = label ? label.replace(/\s+/g, '-') : Math.random().toString(36).substring(7);
   const isVideo = (value || '').toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || (value || '').includes('video');
+
+  const isExternalUrl = value && !value.includes('blob.vercel-storage.com');
+  const [showUrl, setShowUrl] = useState(!!isExternalUrl);
+
+  useEffect(() => {
+    if (isExternalUrl) {
+      setShowUrl(true);
+    }
+  }, [value]);
 
   return (
     <div className="w-full mb-4">
@@ -124,9 +143,22 @@ const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onC
            <div className="text-center text-xs text-ink/50"><span className="text-cobalt font-bold">Click to upload</span> or drag and drop</div>
         )}
       </div>
-      <div className="mt-2 flex gap-2 items-center">
-        <span className="text-[10px] uppercase font-bold text-ink/40 whitespace-nowrap">Or URL:</span>
-        <input value={value || ''} onChange={e => onChange(e.target.value)} className="flex-1 border-b border-black/20 bg-transparent outline-none focus:border-cobalt text-xs py-1" placeholder="https://" />
+      <div className="mt-2 flex flex-col gap-1.5">
+        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+          <input 
+            type="checkbox" 
+            checked={showUrl} 
+            onChange={e => setShowUrl(e.target.checked)} 
+            className="w-3 h-3 text-cobalt border-black/20 focus:ring-cobalt rounded-none" 
+          />
+          <span className="text-[9px] uppercase font-bold text-ink/40">Input Custom URL</span>
+        </label>
+        {showUrl && (
+          <div className="flex gap-2 items-center animate-in fade-in duration-200">
+            <span className="text-[9px] uppercase font-bold text-ink/40 whitespace-nowrap">Or URL:</span>
+            <input value={value || ''} onChange={e => onChange(e.target.value)} className="flex-1 border-b border-black/20 bg-transparent outline-none focus:border-cobalt text-xs py-1 rounded-none" placeholder="https://" />
+          </div>
+        )}
       </div>
     </div>
   );

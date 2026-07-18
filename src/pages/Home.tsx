@@ -10,6 +10,11 @@ export default function Home() {
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
 
+  const [showSplash, setShowSplash] = useState(() => {
+    return !sessionStorage.getItem('splash_shown');
+  });
+  const [fadeSplash, setFadeSplash] = useState(false);
+
   useScrollReveal();
 
   useEffect(() => {
@@ -21,6 +26,20 @@ export default function Home() {
     window.addEventListener('admin_auth_change', checkAuth);
     return () => window.removeEventListener('admin_auth_change', checkAuth);
   }, []);
+
+  useEffect(() => {
+    if (showSplash) {
+      const timer = setTimeout(() => {
+        setFadeSplash(true);
+        const removeTimer = setTimeout(() => {
+          setShowSplash(false);
+          sessionStorage.setItem('splash_shown', 'true');
+        }, 800);
+        return () => clearTimeout(removeTimer);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [showSplash]);
 
   const featured = settings.featuredProductIds
     .map(id => products.find(p => p.id === id))
@@ -40,6 +59,28 @@ export default function Home() {
 
   return (
     <div className="flex flex-col flex-grow w-full bg-off-white overflow-hidden">
+      {showSplash && (
+        <div 
+          className={`fixed inset-0 z-[9999] bg-cobalt flex flex-col justify-between p-12 transition-opacity duration-700 ease-in-out ${
+            fadeSplash ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <div></div>
+          <div className="text-center text-white space-y-4">
+            <h1 className="text-7xl md:text-9xl font-black uppercase tracking-tighter animate-in fade-in zoom-in-95 duration-1000">
+              AMPH
+            </h1>
+            <p className="text-xs md:text-sm uppercase tracking-[0.4em] font-light text-white/80 font-sans">
+              amplify your ordinary
+            </p>
+          </div>
+          <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-white/50 font-bold font-sans">
+            <div>Casual Uniqueness</div>
+            <div>V0.80b</div>
+          </div>
+        </div>
+      )}
+
       {isAuth && (
         <Link to="/admin" className="fixed bottom-12 left-12 z-[100] bg-cobalt text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all scale-100 hover:scale-110">
           Edit Page Content

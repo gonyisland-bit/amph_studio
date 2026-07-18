@@ -42,7 +42,7 @@ export function Footer() {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <span>© {new Date().getFullYear()} AMPH FLAGSHIP</span>
-          <span className="text-ink/40 font-black">(V0.80a)</span>
+          <span className="text-ink/40 font-black">(V0.80b)</span>
         </div>
         <div className="hidden md:block text-ink/30">// SCROLL DISCOVERY</div>
       </div>

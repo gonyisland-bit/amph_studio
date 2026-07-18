@@ -35,10 +35,7 @@ export default function ProductDetail() {
     setZoomScale(1);
   }, [id]);
 
-  const displayImages = [
-    ...(product?.images || []),
-    ...(product?.hoverImages || [])
-  ].filter(Boolean);
+  const displayImages = (product?.images || []).filter(Boolean);
 
   const storyImages = [
     ...(product?.contentBlocks || [])
