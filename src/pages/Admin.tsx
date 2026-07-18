@@ -367,21 +367,40 @@ export default function Admin() {
       if (activeTab === 'collection') {
         const cleanedImages = (form.images || []).filter(Boolean);
         const cleanedForm = { ...form, images: cleanedImages };
-        if (editingId) await updateProduct(editingId, cleanedForm);
-        else await addProduct({ ...cleanedForm, id: `prod-${Date.now()}` });
-        setForm(emptyProduct);
+        if (editingId) {
+          await updateProduct(editingId, cleanedForm);
+          setForm(cleanedForm);
+        } else {
+          const newId = `prod-${Date.now()}`;
+          const newProduct = { ...cleanedForm, id: newId };
+          await addProduct(newProduct);
+          setEditingId(newId);
+          setForm(newProduct);
+        }
       } else if (activeTab === 'journal') {
-        if (editingId) await updateJournal(editingId, form);
-        else await addJournal({ ...form, id: `j-${Date.now()}` });
-        setForm(emptyJournal);
+        if (editingId) {
+          await updateJournal(editingId, form);
+        } else {
+          const newId = `j-${Date.now()}`;
+          const newJournal = { ...form, id: newId };
+          await addJournal(newJournal);
+          setEditingId(newId);
+          setForm(newJournal);
+        }
       } else if (activeTab === 'space') {
         const cleanedImages = (form.images || []).filter(Boolean);
         const cleanedForm = { ...form, images: cleanedImages };
-        if (editingId) await updateSpace(editingId, cleanedForm);
-        else await addSpace({ ...cleanedForm, id: `s-${Date.now()}` });
-        setForm(emptySpace);
+        if (editingId) {
+          await updateSpace(editingId, cleanedForm);
+          setForm(cleanedForm);
+        } else {
+          const newId = `s-${Date.now()}`;
+          const newSpace = { ...cleanedForm, id: newId };
+          await addSpace(newSpace);
+          setEditingId(newId);
+          setForm(newSpace);
+        }
       }
-      setEditingId(null);
       loadData();
       showToast('Saved successfully!', 'success');
     } catch (error) {
@@ -503,10 +522,57 @@ export default function Admin() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         <div className={activeTab === 'home' ? 'col-span-12' : 'col-span-1 lg:col-span-5'}>
           <div className="sticky top-24">
-            <h2 className="text-xl font-semibold mb-6 flex items-center justify-between">
-              <span>{editingId ? 'Edit Content' : 'Add New Content'}</span>
-              {editingId && (
-                <button onClick={() => { setEditingId(null); switchTab(activeTab); }} className="text-[9px] uppercase font-bold text-ink/40 hover:text-ink">Reset to New</button>
+            <h2 className="text-xl font-semibold mb-6 flex items-center justify-between border-b border-black/10 pb-4">
+              <span>{editingId ? 'Edit Content' : 'Add Content'}</span>
+              {activeTab !== 'home' && (
+                <div className="flex items-center gap-2">
+                  {/* 바로가기 (Go to Page) 버튼 */}
+                  {(() => {
+                    const pageUrl = editingId 
+                      ? (activeTab === 'collection' ? `/product/${editingId}` : activeTab === 'space' ? `/space/${editingId}` : activeTab === 'journal' ? `/journal/${editingId}` : null)
+                      : null;
+                    
+                    if (pageUrl) {
+                      return (
+                        <Link 
+                          to={pageUrl} 
+                          target="_blank"
+                          className="bg-cobalt text-white px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-ink transition-all flex items-center gap-1.5 rounded-none"
+                        >
+                          <ExternalLink size={10} /> View Page
+                        </Link>
+                      );
+                    } else {
+                      return (
+                        <button 
+                          type="button"
+                          disabled 
+                          className="bg-black/5 text-ink/20 border border-black/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest cursor-not-allowed rounded-none"
+                        >
+                          View Page
+                        </button>
+                      );
+                    }
+                  })()}
+
+                  {/* Save 버튼 */}
+                  <button 
+                    type="submit" 
+                    className="bg-ink text-white px-4 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-cobalt transition-all rounded-none"
+                  >
+                    Save
+                  </button>
+
+                  {editingId && (
+                    <button 
+                      type="button"
+                      onClick={() => { setEditingId(null); switchTab(activeTab); }} 
+                      className="text-[9px] uppercase font-bold text-orange hover:underline ml-1"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               )}
             </h2>
             <form onSubmit={handleSave} className="space-y-4 text-sm">
@@ -863,9 +929,13 @@ export default function Admin() {
                                       label={i === 0 ? "Primary" : `Image ${i+1}`} 
                                       value={img} 
                                       onChange={val => { 
-                                        const newImg = [...displayImages]; 
+                                        let newImg = [...displayImages]; 
                                         newImg[i] = val; 
-                                        setForm({...form, images: newImg}); 
+                                        if (val === '') {
+                                          newImg = newImg.filter((_, idx) => idx !== i);
+                                        }
+                                        const compacted = newImg.filter(Boolean);
+                                        setForm({...form, images: compacted}); 
                                       }} 
                                     />
                                     {img && (
@@ -885,16 +955,6 @@ export default function Admin() {
                                           />
                                           <span className="text-[9px] uppercase font-bold text-ink/60">Hover Effect</span>
                                         </label>
-                                        
-                                        {i > 0 && (
-                                          <button 
-                                            type="button" 
-                                            onClick={() => setForm({...form, images: displayImages.filter((_, idx: number) => idx !== i)})} 
-                                            className="text-[9px] uppercase font-bold text-orange hover:underline"
-                                          >
-                                            Remove
-                                          </button>
-                                        )}
                                       </div>
                                     )}
                                   </div>
@@ -955,9 +1015,20 @@ export default function Admin() {
                         displayImages.push('');
                       }
                       return displayImages.map((img: string, i: number) => (
-                        <div key={i} className="flex gap-2 mb-2 items-end">
-                          <div className="flex-1"><MediaUploadInput label={i === 0 ? "Main" : `Media ${i+1}`} value={img} onChange={val => { const newI = [...displayImages]; newI[i] = val; setForm({...form, images: newI}); }} /></div>
-                          {i > 0 && <button type="button" onClick={() => setForm({...form, images: displayImages.filter((_:any, idx:number) => idx !== i)})} className="mb-8 text-orange text-xs font-bold px-2 hover:underline">Remove</button>}
+                        <div key={i} className="mb-2 bg-black/[0.01] border border-black/5 p-3 rounded-none">
+                          <MediaUploadInput 
+                            label={i === 0 ? "Main" : `Media ${i+1}`} 
+                            value={img} 
+                            onChange={val => { 
+                              let newI = [...displayImages]; 
+                              newI[i] = val; 
+                              if (val === '') {
+                                newI = newI.filter((_, idx) => idx !== i);
+                              }
+                              const compacted = newI.filter(Boolean);
+                              setForm({...form, images: compacted}); 
+                            }} 
+                          />
                         </div>
                       ));
                     })()}
@@ -986,13 +1057,6 @@ export default function Admin() {
                 </>
               )}
 
-              {activeTab !== 'home' && (
-                <div className="pt-6 border-t border-black/5 mt-6">
-                  <button type="submit" className="w-full bg-ink text-white py-4 uppercase text-[11px] font-black tracking-[0.2em] hover:bg-cobalt transition-colors rounded-none shadow-md">
-                    Save Changes
-                  </button>
-                </div>
-              )}
             </form>
           </div>
         </div>
@@ -1266,17 +1330,28 @@ export default function Admin() {
         )}
       </div>
       {toast && (
-        <div className={`fixed top-6 right-6 z-[200] p-4 rounded-xl shadow-2xl flex items-center gap-3 border text-xs font-black uppercase tracking-wider animate-in fade-in slide-in-from-top-4 transition-all duration-500 bg-white ${
-          toast.type === 'success' ? 'border-green-200 text-green-700' :
-          toast.type === 'error' ? 'border-red-200 text-red-700' :
-          'border-cobalt/20 text-cobalt'
-        }`}>
-          <div className={`w-2 h-2 rounded-full ${
-            toast.type === 'success' ? 'bg-green-500' :
-            toast.type === 'error' ? 'bg-red-500' :
-            'bg-cobalt'
-          }`} />
-          <span>{toast.message}</span>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-300">
+          <div className={`p-8 bg-white border-2 rounded-none shadow-2xl flex flex-col items-center text-center max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200 ${
+            toast.type === 'success' ? 'border-cobalt' :
+            toast.type === 'error' ? 'border-orange' :
+            'border-ink'
+          }`}>
+            <div className={`w-3 h-3 mb-4 rounded-none ${
+              toast.type === 'success' ? 'bg-cobalt' :
+              toast.type === 'error' ? 'bg-orange' :
+              'bg-ink'
+            }`} />
+            <h4 className="text-sm font-black uppercase tracking-widest text-ink mb-2">
+              {toast.type === 'success' ? 'Success' : toast.type === 'error' ? 'Error' : 'Notification'}
+            </h4>
+            <p className="text-xs text-ink/60 mb-6 uppercase tracking-wider">{toast.message}</p>
+            <button 
+              onClick={() => setToast(null)}
+              className="bg-ink text-white px-6 py-2.5 text-[10px] font-black uppercase tracking-widest hover:bg-cobalt transition-colors rounded-none w-full"
+            >
+              Confirm
+            </button>
+          </div>
         </div>
       )}
     </div>
