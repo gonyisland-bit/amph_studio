@@ -185,6 +185,16 @@ export default function Admin() {
     }
   };
 
+  const loadData = () => {
+    getProducts().then(setProducts);
+    getHomeSettings().then(setHomeSettings);
+    if (activeTab === 'journal') getJournals().then(setJournals);
+    if (activeTab === 'space') getSpaces().then(setSpaces);
+  };
+
+  const location = useLocation();
+  const autoEditHandled = React.useRef(false);
+
   useEffect(() => {
     const savedAuth = localStorage.getItem('admin_auth');
     if (savedAuth === 'true') setIsAuthenticated(true);
@@ -194,6 +204,27 @@ export default function Admin() {
     if (isAuthenticated) loadData();
     setSelectedIds([]);
   }, [activeTab, isAuthenticated]);
+
+  // Auto-enter edit mode when ?edit=<id> is present in the URL — runs once per navigation
+  useEffect(() => {
+    if (autoEditHandled.current) return;
+    if (!isAuthenticated || products.length === 0) return;
+    const params = new URLSearchParams(location.search);
+    const editId = params.get('edit');
+    if (editId) {
+      const found = products.find(p => p.id === editId);
+      if (found) {
+        autoEditHandled.current = true;
+        setActiveTab('collection');
+        setEditingId(found.id);
+        setForm(found);
+        setActiveSections({ basic: true, specs: false, media: false, story: false });
+        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+      }
+    } else {
+      autoEditHandled.current = true;
+    }
+  }, [isAuthenticated, products, location.search]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,35 +271,8 @@ export default function Admin() {
     );
   }
 
-  const loadData = () => {
-    getProducts().then(setProducts);
-    getHomeSettings().then(setHomeSettings);
-    if (activeTab === 'journal') getJournals().then(setJournals);
-    if (activeTab === 'space') getSpaces().then(setSpaces);
-  };
 
-  const location = useLocation();
-  const autoEditHandled = React.useRef(false);
-  // Auto-enter edit mode when ?edit=<id> is present in the URL — runs once per navigation
-  useEffect(() => {
-    if (autoEditHandled.current) return;
-    if (!isAuthenticated || products.length === 0) return;
-    const params = new URLSearchParams(location.search);
-    const editId = params.get('edit');
-    if (editId) {
-      const found = products.find(p => p.id === editId);
-      if (found) {
-        autoEditHandled.current = true;
-        setActiveTab('collection');
-        setEditingId(found.id);
-        setForm(found);
-        setActiveSections({ basic: true, specs: false, media: false, story: false });
-        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
-      }
-    } else {
-      autoEditHandled.current = true; // no edit param, mark as done
-    }
-  }, [isAuthenticated, products, location.search]);
+
 
   const handleReorder = async (type: 'collection' | 'space' | 'journal', id: string, direction: 'up' | 'down') => {
     let orderKey: 'globalProductOrder' | 'spaceOrder' | 'journalOrder';
