@@ -5,14 +5,14 @@ import { ArrowRight, MoveRight } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
+let hasShownSplash = false;
+
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
 
-  const [showSplash, setShowSplash] = useState(() => {
-    return !sessionStorage.getItem('splash_shown');
-  });
+  const [showSplash, setShowSplash] = useState(!hasShownSplash);
   const [fadeSplash, setFadeSplash] = useState(false);
 
   useScrollReveal();
@@ -29,11 +29,11 @@ export default function Home() {
 
   useEffect(() => {
     if (showSplash) {
+      hasShownSplash = true;
       const timer = setTimeout(() => {
         setFadeSplash(true);
         const removeTimer = setTimeout(() => {
           setShowSplash(false);
-          sessionStorage.setItem('splash_shown', 'true');
         }, 800);
         return () => clearTimeout(removeTimer);
       }, 1500);
@@ -76,16 +76,12 @@ export default function Home() {
           </div>
           <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-white/50 font-bold font-sans">
             <div>Casual Uniqueness</div>
-            <div>V0.80c</div>
+            <div>V0.80d</div>
           </div>
         </div>
       )}
 
-      {isAuth && (
-        <Link to="/admin" className="fixed bottom-12 left-12 z-[100] bg-cobalt text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all scale-100 hover:scale-110">
-          Edit Page Content
-        </Link>
-      )}
+      {isAuth && null}
 
       {/* 1. Hero Section: Editorial Slideshow (Split-screen on desktop) */}
       <section className="relative w-full h-[95vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10">

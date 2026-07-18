@@ -7,7 +7,7 @@ import {
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob
 } from "../lib/data";
 import { upload } from '@vercel/blob/client';
-import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 
 const emptyProduct: Omit<Product, 'id'> = {
   name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: '', sku: ''
@@ -183,8 +183,15 @@ export default function Admin() {
   const [homeSettings, setHomeSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [savingSettings, setSavingSettings] = useState(false);
 
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [activeSections, setActiveSections] = useState<Record<string, boolean>>({ basic: true, specs: false, media: false, story: false });
+
+  useEffect(() => {
+    if (saveStatus === 'saved') {
+      setSaveStatus('idle');
+    }
+  }, [form]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -220,12 +227,11 @@ export default function Admin() {
   const loadData = () => {
     getProducts().then(setProducts);
     getHomeSettings().then(setHomeSettings);
-    if (activeTab === 'journal') getJournals().then(setJournals);
-    if (activeTab === 'space') getSpaces().then(setSpaces);
+    getJournals().then(setJournals);
+    getSpaces().then(setSpaces);
   };
 
   const location = useLocation();
-  const autoEditHandled = React.useRef(false);
 
   useEffect(() => {
     const savedAuth = localStorage.getItem('admin_auth');
@@ -237,26 +243,49 @@ export default function Admin() {
     setSelectedIds([]);
   }, [activeTab, isAuthenticated]);
 
-  // Auto-enter edit mode when ?edit=<id> is present in the URL — runs once per navigation
+  // Sync activeTab with ?tab= query parameter
   useEffect(() => {
-    if (autoEditHandled.current) return;
-    if (!isAuthenticated || products.length === 0) return;
+    if (!isAuthenticated) return;
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && ['home', 'collection', 'space', 'journal'].includes(tabParam)) {
+      setActiveTab(tabParam as any);
+    }
+  }, [location.search, isAuthenticated]);
+
+  // Sync editing item with ?edit= query parameter
+  useEffect(() => {
+    if (!isAuthenticated) return;
     const params = new URLSearchParams(location.search);
     const editId = params.get('edit');
+    const tabParam = params.get('tab');
+
     if (editId) {
-      const found = products.find(p => p.id === editId);
-      if (found) {
-        autoEditHandled.current = true;
-        setActiveTab('collection');
-        setEditingId(found.id);
-        setForm(found);
-        setActiveSections({ basic: true, specs: false, media: false, story: false });
-        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+      if ((!tabParam || tabParam === 'collection') && products.length > 0) {
+        const found = products.find(p => p.id === editId);
+        if (found && editingId !== found.id) {
+          setEditingId(found.id);
+          setForm(found);
+          setActiveSections({ basic: true, specs: false, media: false, story: false });
+          requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        }
+      } else if (tabParam === 'space' && spaces.length > 0) {
+        const found = spaces.find(s => s.id === editId);
+        if (found && editingId !== found.id) {
+          setEditingId(found.id);
+          setForm(found);
+          requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        }
+      } else if (tabParam === 'journal' && journals.length > 0) {
+        const found = journals.find(j => j.id === editId);
+        if (found && editingId !== found.id) {
+          setEditingId(found.id);
+          setForm(found);
+          requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        }
       }
-    } else {
-      autoEditHandled.current = true;
     }
-  }, [isAuthenticated, products, location.search]);
+  }, [isAuthenticated, products, spaces, journals, location.search, editingId]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -363,6 +392,8 @@ export default function Admin() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saveStatus === 'saving') return;
+    setSaveStatus('saving');
     try {
       if (activeTab === 'collection') {
         const cleanedImages = (form.images || []).filter(Boolean);
@@ -402,9 +433,14 @@ export default function Admin() {
         }
       }
       loadData();
+      setSaveStatus('saved');
       showToast('Saved successfully!', 'success');
+      setTimeout(() => {
+        setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
+      }, 3000);
     } catch (error) {
       console.error(error);
+      setSaveStatus('idle');
       showToast('Failed to save. Please try again.', 'error');
     }
   };
@@ -558,9 +594,14 @@ export default function Admin() {
                   {/* Save 버튼 */}
                   <button 
                     type="submit" 
-                    className="bg-ink text-white px-4 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-cobalt transition-all rounded-none"
+                    disabled={saveStatus === 'saving'}
+                    className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-none ${
+                      saveStatus === 'saving' ? 'bg-black/10 text-ink/30 cursor-not-allowed' :
+                      saveStatus === 'saved' ? 'bg-[#ff0000] text-white hover:bg-[#d60000]' :
+                      'bg-ink text-white hover:bg-cobalt'
+                    }`}
                   >
-                    Save
+                    {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save'}
                   </button>
 
                   {editingId && (
@@ -576,6 +617,7 @@ export default function Admin() {
               )}
             </h2>
             <form onSubmit={handleSave} className="space-y-4 text-sm">
+              <fieldset disabled={saveStatus === 'saving'} className="space-y-4 w-full border-none p-0 m-0">
               
               {activeTab === 'home' && (
                 <div className="max-w-5xl mx-auto space-y-12 pb-20">
@@ -955,6 +997,36 @@ export default function Admin() {
                                           />
                                           <span className="text-[9px] uppercase font-bold text-ink/60">Hover Effect</span>
                                         </label>
+                                        <div className="flex items-center gap-1">
+                                          <button 
+                                            type="button" 
+                                            disabled={i === 0} 
+                                            onClick={() => {
+                                              const currentImages = form.images || [];
+                                              const newImg = [...currentImages];
+                                              [newImg[i], newImg[i - 1]] = [newImg[i - 1], newImg[i]];
+                                              setForm({ ...form, images: newImg.filter(Boolean) });
+                                            }}
+                                            className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
+                                            title="Move Prev"
+                                          >
+                                            <ChevronLeft size={14} />
+                                          </button>
+                                          <button 
+                                            type="button" 
+                                            disabled={i >= displayImages.length - 2} 
+                                            onClick={() => {
+                                              const currentImages = form.images || [];
+                                              const newImg = [...currentImages];
+                                              [newImg[i], newImg[i + 1]] = [newImg[i + 1], newImg[i]];
+                                              setForm({ ...form, images: newImg.filter(Boolean) });
+                                            }}
+                                            className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
+                                            title="Move Next"
+                                          >
+                                            <ChevronRight size={14} />
+                                          </button>
+                                        </div>
                                       </div>
                                     )}
                                   </div>
@@ -1029,6 +1101,40 @@ export default function Admin() {
                               setForm({...form, images: compacted}); 
                             }} 
                           />
+                          {img && (
+                            <div className="mt-2 flex items-center justify-end border-t border-black/5 pt-2">
+                              <div className="flex items-center gap-1">
+                                <button 
+                                  type="button" 
+                                  disabled={i === 0} 
+                                  onClick={() => {
+                                    const currentImages = form.images || [];
+                                    const newImg = [...currentImages];
+                                    [newImg[i], newImg[i - 1]] = [newImg[i - 1], newImg[i]];
+                                    setForm({ ...form, images: newImg.filter(Boolean) });
+                                  }}
+                                  className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
+                                  title="Move Prev"
+                                >
+                                  <ChevronLeft size={14} />
+                                </button>
+                                <button 
+                                  type="button" 
+                                  disabled={i >= displayImages.length - 2} 
+                                  onClick={() => {
+                                    const currentImages = form.images || [];
+                                    const newImg = [...currentImages];
+                                    [newImg[i], newImg[i + 1]] = [newImg[i + 1], newImg[i]];
+                                    setForm({ ...form, images: newImg.filter(Boolean) });
+                                  }}
+                                  className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
+                                  title="Move Next"
+                                >
+                                  <ChevronRight size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ));
                     })()}
@@ -1057,6 +1163,7 @@ export default function Admin() {
                 </>
               )}
 
+              </fieldset>
             </form>
           </div>
         </div>

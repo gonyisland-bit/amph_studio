@@ -16,6 +16,8 @@ import JournalDetail from "./pages/JournalDetail";
 import Space from "./pages/Space";
 import SpaceDetail from "./pages/SpaceDetail";
 
+import { FloatingEditButton } from "./components/FloatingEditButton";
+
 export default function App() {
   return (
     <Router>
@@ -35,6 +37,7 @@ export default function App() {
           </Routes>
         </main>
         <Footer />
+        <FloatingEditButton />
       </div>
     </Router>
   );
