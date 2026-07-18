@@ -123,7 +123,7 @@ const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onC
              {isVideo ? (
                <video src={value} className="h-24 w-auto object-contain rounded-none" muted />
              ) : (
-               <img src={value} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" />
+               <img src={value} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />
              )}
              <button 
               type="button"
@@ -237,6 +237,18 @@ export default function Admin() {
     const savedAuth = localStorage.getItem('admin_auth');
     if (savedAuth === 'true') setIsAuthenticated(true);
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setToast(null);
+      }
+    };
+    if (toast) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toast]);
 
   useEffect(() => {
     if (isAuthenticated) loadData();
@@ -759,7 +771,7 @@ export default function Admin() {
                             className="w-4 h-4 rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
                           />
                           <div className="flex items-center gap-3 overflow-hidden">
-                            <img src={p.images[0]} className="w-8 h-8 rounded-none object-cover mix-blend-multiply flex-shrink-0" />
+                            <img src={p.images[0]} className="w-8 h-8 rounded-none object-cover mix-blend-multiply flex-shrink-0" nopin="nopin" data-pin-no-hover="true" />
                             <div className="flex flex-col min-w-0">
                               <span className="text-[10px] font-black uppercase truncate">{p.name}</span>
                               <span className="text-[9px] text-ink/30 uppercase truncate">{p.category}</span>
@@ -872,7 +884,7 @@ export default function Admin() {
                       <div className="grid grid-cols-2 gap-px bg-black/10">
                         {(form.images || []).filter(Boolean).map((img: string, i: number) => (
                           <div key={i} className={`${i === 0 && (form.images || []).filter(Boolean).length % 2 !== 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'} overflow-hidden bg-silver/5 relative`}>
-                            <img src={img} alt={`Preview ${i+1}`} className="absolute inset-0 w-full h-full object-contain bg-white" />
+                            <img src={img} alt={`Preview ${i+1}`} className="absolute inset-0 w-full h-full object-contain bg-white" nopin="nopin" data-pin-no-hover="true" />
                           </div>
                         ))}
                       </div>
@@ -1291,7 +1303,7 @@ export default function Admin() {
                               if (mainImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mainImg.includes('video')) {
                                 return <video src={mainImg} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />;
                               }
-                              return <img src={mainImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" />;
+                              return <img src={mainImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />;
                             })()}
                           </td>
                           <td className="py-4">
@@ -1362,7 +1374,7 @@ export default function Admin() {
                           {s.images?.[0]?.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || s.images?.[0]?.includes('video') ? (
                             <video src={s.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />
                           ) : (
-                            <img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" />
+                            <img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />
                           )}
                         </td>
                         <td className="py-4">
@@ -1412,7 +1424,7 @@ export default function Admin() {
                           {j.image.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || j.image.includes('video') ? (
                             <video src={j.image} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />
                           ) : (
-                            <img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" />
+                            <img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />
                           )}
                         </td>
                         <td className="py-4">
@@ -1438,12 +1450,18 @@ export default function Admin() {
         )}
       </div>
       {toast && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-300">
-          <div className={`p-8 bg-white border-2 rounded-none shadow-2xl flex flex-col items-center text-center max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200 ${
-            toast.type === 'success' ? 'border-cobalt' :
-            toast.type === 'error' ? 'border-orange' :
-            'border-ink'
-          }`}>
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-300"
+          onClick={() => setToast(null)}
+        >
+          <div 
+            onClick={e => e.stopPropagation()}
+            className={`p-8 bg-white border-2 rounded-none shadow-2xl flex flex-col items-center text-center max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200 ${
+              toast.type === 'success' ? 'border-cobalt' :
+              toast.type === 'error' ? 'border-orange' :
+              'border-ink'
+            }`}
+          >
             <div className={`w-3 h-3 mb-4 rounded-none ${
               toast.type === 'success' ? 'bg-cobalt' :
               toast.type === 'error' ? 'bg-orange' :

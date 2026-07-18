@@ -76,7 +76,7 @@ export default function Home() {
           </div>
           <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-white/50 font-bold font-sans">
             <div>Casual Uniqueness</div>
-            <div>V0.80d</div>
+            <div>V0.80e</div>
           </div>
         </div>
       )}
