@@ -196,18 +196,19 @@ export default function ProductDetail() {
       )}
       
       {/* Sticky Header */}
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md px-6 md:px-12 py-4 border-b border-black/10 flex justify-between items-center shadow-sm">
-        <div className="flex items-center gap-4">
-          <Link to="/collection" className="text-xs uppercase tracking-widest font-black hover:text-cobalt transition-colors hidden md:block mr-4 border-r border-black/10 pr-4">Collection</Link>
-          <div>
-            <span className="caption-nano text-orange font-bold block mb-0.5">{product.category}</span>
-            <h1 className="text-xl font-bold font-sans tracking-tight leading-tight">{product.name}</h1>
-            <p className="text-[10px] font-sans font-normal tracking-wide text-ink/50 mt-0.5">{product.subTitle}</p>
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md px-6 md:px-12 py-2.5 border-b border-black/10 flex justify-between items-center shadow-sm">
+        <div className="flex items-center">
+          <div className="flex items-center gap-2 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.15em] text-ink font-sans">
+            <Link to="/collection" className="hover:text-cobalt transition-colors text-ink">Collection</Link>
+            <span className="text-ink/30 font-light font-sans">/</span>
+            <Link to={`/collection?category=${product.category}`} className="hover:text-cobalt transition-colors text-ink">{product.category}</Link>
+            <span className="text-ink/30 font-light font-sans">/</span>
+            <span className="text-ink/40 font-normal">{product.name}</span>
           </div>
         </div>
         <div className="flex items-center gap-6">
-          <span className="font-bold font-sans">${product.price}</span>
-          <button className="bg-ink text-white text-[10px] uppercase tracking-widest font-black px-6 py-3.5 rounded-none hover:bg-cobalt transition-colors">
+          <span className="font-bold font-sans text-xs md:text-sm">${product.price}</span>
+          <button className="bg-ink text-white text-[9px] md:text-[10px] uppercase tracking-widest font-black px-4 py-2.5 rounded-none hover:bg-cobalt transition-colors">
             Add to Cart
           </button>
         </div>

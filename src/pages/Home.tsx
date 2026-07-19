@@ -12,7 +12,13 @@ export default function Home() {
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
 
-  const [showSplash, setShowSplash] = useState(!hasShownSplash);
+  const [showSplash, setShowSplash] = useState(() => {
+    if ((window as any).__triggerSplash) {
+      (window as any).__triggerSplash = false;
+      return true;
+    }
+    return !hasShownSplash;
+  });
   const [fadeSplash, setFadeSplash] = useState(false);
 
   useScrollReveal();
@@ -30,6 +36,7 @@ export default function Home() {
   useEffect(() => {
     if (showSplash) {
       hasShownSplash = true;
+      window.scrollTo(0, 0);
       const timer = setTimeout(() => {
         setFadeSplash(true);
         const removeTimer = setTimeout(() => {
@@ -67,7 +74,7 @@ export default function Home() {
         >
           <div></div>
           <div className="text-center text-white space-y-4">
-            <h1 className="text-7xl md:text-9xl font-black uppercase tracking-tighter animate-in fade-in zoom-in-95 duration-1000">
+            <h1 className="text-7xl md:text-9xl font-bold uppercase tracking-tighter animate-in fade-in zoom-in-95 duration-1000">
               AMPH
             </h1>
             <p className="text-xs md:text-sm uppercase tracking-[0.4em] font-light text-white/80 font-sans">
@@ -76,7 +83,7 @@ export default function Home() {
           </div>
           <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-white/50 font-bold font-sans">
             <div>Casual Uniqueness</div>
-            <div>V0.80e</div>
+            <div>V0.80f</div>
           </div>
         </div>
       )}

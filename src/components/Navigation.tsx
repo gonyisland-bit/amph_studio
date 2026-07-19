@@ -72,12 +72,12 @@ export function Navigation() {
         <div className="max-w-[1800px] mx-auto grid grid-cols-2 md:grid-cols-3 items-center">
           {/* Logo */}
           <div className="flex justify-start">
-            <Link to="/" className="text-2xl md:text-3xl font-bold tracking-tighter uppercase font-sans">Amph</Link>
+            <Link to="/" onClick={() => { (window as any).__triggerSplash = true; }} className="text-2xl md:text-3xl font-bold tracking-tighter uppercase font-sans">Amph</Link>
           </div>
           
           {/* Center Menu (Desktop) - Font enlarged by 30% and set to light font weight */}
           <div className="hidden md:flex justify-center gap-10 text-[14px] uppercase tracking-[0.2em] font-light font-sans">
-            <Link to="/" className="hover:text-cobalt transition-all">Home</Link>
+            <Link to="/" onClick={() => { (window as any).__triggerSplash = true; }} className="hover:text-cobalt transition-all">Home</Link>
             <Link to="/collection" className="hover:text-cobalt transition-all">Collection</Link>
             <Link to="/space" className="hover:text-cobalt transition-all">Space</Link>
             <Link to="/journal" className="hover:text-cobalt transition-all">Journal</Link>
