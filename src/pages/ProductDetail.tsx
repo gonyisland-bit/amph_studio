@@ -163,6 +163,14 @@ export default function ProductDetail() {
 
   if (!product) return <div className="p-12 font-sans animate-pulse text-[10px] uppercase tracking-widest text-ink/30">Loading...</div>;
 
+  const getFormattedShipping = (shipping?: string) => {
+    if (!shipping) return 'Delivery (Free)';
+    if (shipping.includes('Pickup') || shipping.includes('현장') || shipping.includes('수령')) return 'Pickup';
+    if (shipping.includes('Freight') || shipping.includes('화물') || shipping.includes('별도')) return 'Freight (Excl.)';
+    if (shipping.includes('Delivery') || shipping.includes('택배') || shipping.includes('포함') || shipping.includes('Free')) return 'Delivery (Free)';
+    return shipping;
+  };
+
   // ETA & Frame Spec Mock mapper
   const getMockedSpecs = () => {
     let frame = "Industrial seamless joint construction";
@@ -391,7 +399,7 @@ export default function ProductDetail() {
                   </tr>
                   <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
                     <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Shipping</td>
-                    <td className="text-ink/70 font-semibold">{product.shipping || '-'}</td>
+                    <td className="text-ink/70 font-semibold">{getFormattedShipping(product.shipping)}</td>
                   </tr>
                   <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
                     <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">제품 코드</td>

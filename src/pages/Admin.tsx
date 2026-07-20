@@ -10,7 +10,7 @@ import { upload } from '@vercel/blob/client';
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 
 const emptyProduct: Omit<Product, 'id'> = {
-  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: '', sku: '', cartEnabled: true
+  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true
 };
 const emptyJournal: Omit<JournalArticle, 'id'> = {
   title: '', category: '', date: '', image: '', contentBlocks: []
@@ -187,6 +187,23 @@ export default function Admin() {
 
   const [form, setForm] = useState<any>(emptyProduct);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [previewAspects, setPreviewAspects] = useState<Record<string, 'portrait' | 'landscape'>>({});
+
+  useEffect(() => {
+    const images = (form.images || []).filter(Boolean);
+    images.forEach((img: string) => {
+      if (!img || previewAspects[img]) return;
+      const i = new window.Image();
+      i.src = img;
+      i.onload = () => {
+        const aspect = i.naturalWidth / i.naturalHeight;
+        setPreviewAspects(prev => ({
+          ...prev,
+          [img]: aspect < 1.0 ? 'portrait' : 'landscape'
+        }));
+      };
+    });
+  }, [form.images]);
 
   const [homeSettings, setHomeSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -426,7 +443,7 @@ export default function Admin() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' || e.key === 'Enter') {
         setToast(null);
       }
     };
@@ -1452,11 +1469,15 @@ export default function Admin() {
                   <div className="bg-black/5 rounded-none border border-black/10 overflow-hidden shadow-none">
                     {(form.images || []).filter(Boolean).length > 0 ? (
                       <div className="grid grid-cols-2 gap-px bg-black/10">
-                        {(form.images || []).filter(Boolean).map((img: string, i: number) => (
-                          <div key={i} className={`${i === 0 && (form.images || []).filter(Boolean).length % 2 !== 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'} overflow-hidden bg-silver/5 relative`}>
-                            <img src={img} alt={`Preview ${i+1}`} className="absolute inset-0 w-full h-full object-contain bg-white" nopin="nopin" data-pin-no-hover="true" />
-                          </div>
-                        ))}
+                        {(form.images || []).filter(Boolean).map((img: string, i: number) => {
+                          const isLandscape = previewAspects[img] === 'landscape';
+                          const spanClass = isLandscape ? "col-span-2 aspect-[16/10]" : "col-span-1 aspect-[4/5]";
+                          return (
+                            <div key={i} className={`${spanClass} overflow-hidden bg-silver/5 relative`}>
+                              <img src={img} alt={`Preview ${i+1}`} className="absolute inset-0 w-full h-full object-cover" nopin="nopin" data-pin-no-hover="true" />
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="h-40 flex items-center justify-center text-[10px] text-ink/20 font-bold uppercase">No Media Uploaded</div>
@@ -1519,15 +1540,15 @@ export default function Admin() {
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">배송 수단 (Shipping)</label>
+                            <label className="block text-[10px] font-black uppercase text-ink/40 tracking-wider mb-2">SHIPPING</label>
                             <select
-                              value={form.shipping || '일반택배(배송료포함)'}
+                              value={form.shipping || 'Delivery (Free)'}
                               onChange={e => setForm({...form, shipping: e.target.value})}
-                              className="w-full border-b border-black/10 focus:border-cobalt outline-none py-1.5 text-xs bg-transparent rounded-none text-ink font-semibold"
+                              className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt text-xs font-semibold transition-all shadow-sm text-ink"
                             >
-                              <option value="일반택배(배송료포함)">일반택배(배송료포함)</option>
-                              <option value="화물배송(배송료별도)">화물배송(배송료별도)</option>
-                              <option value="현장수령">현장수령</option>
+                              <option value="Delivery (Free)">Delivery (Free)</option>
+                              <option value="Freight (Excl.)">Freight (Excl.)</option>
+                              <option value="Pickup">Pickup</option>
                             </select>
                           </div>
                           <EditorInput label="제품 코드" value={form.sku || ''} onChange={val => setForm({...form, sku: val})} />
