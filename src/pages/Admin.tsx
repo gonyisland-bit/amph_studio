@@ -878,8 +878,8 @@ export default function Admin() {
             ))
           ) : (
             [
-              { id: 'orders', label: 'Orders (주문 관리)' },
-              { id: 'users', label: 'Users (회원 관리)' }
+              { id: 'orders', label: 'ORDERS' },
+              { id: 'users', label: 'USERS' }
             ].map(tab => (
               <button 
                 key={tab.id} 
@@ -965,40 +965,40 @@ export default function Admin() {
             {activeTab === 'orders' && (
               <div className="space-y-6 pb-20 animate-in fade-in duration-500 w-full max-w-full overflow-x-hidden">
                 <h2 className="text-xl font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <span>Customer Orders (주문 관리)</span>
-                  <button onClick={loadOrders} className="text-[10px] bg-cobalt text-white px-3 py-1.5 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer self-start sm:self-auto">Refresh Orders</button>
+                  <span>Customer Orders</span>
+                  <button onClick={loadOrders} className="text-xs bg-cobalt text-white px-4 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer self-start sm:self-auto">Refresh Orders</button>
                 </h2>
                 {orders.length === 0 ? (
-                  <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No orders placed yet.</p>
+                  <p className="text-sm uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No orders placed yet.</p>
                 ) : (
                   <div className="space-y-6">
                     {orders.map((o: any) => (
-                      <div key={o.id} className="bg-white border border-black/5 p-4 md:p-6 flex flex-col gap-4 shadow-sm w-full overflow-hidden">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-black/5 pb-4 gap-4 text-[10px] uppercase font-sans tracking-wider text-ink/50">
+                      <div key={o.id} className="bg-white border border-black/5 p-4 md:p-6 flex flex-col gap-5 shadow-sm w-full overflow-hidden">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-black/10 pb-4 gap-4 text-xs uppercase font-sans tracking-wider text-ink/70">
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full sm:w-auto">
                             <div className="min-w-0">
-                              <span className="block text-[8px] text-ink/30 font-bold">Order ID</span>
-                              <span className="font-mono text-ink font-bold break-all block">{o.id}</span>
+                              <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Order ID</span>
+                              <span className="font-mono text-ink font-bold text-xs md:text-sm break-all block">{o.id}</span>
                             </div>
                             <div className="min-w-0">
-                              <span className="block text-[8px] text-ink/30 font-bold">Customer Email</span>
-                              <span className="text-cobalt font-bold break-all block">{o.customerEmail}</span>
+                              <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Customer Email</span>
+                              <span className="text-cobalt font-bold text-xs md:text-sm break-all block">{o.customerEmail}</span>
                             </div>
                             <div>
-                              <span className="block text-[8px] text-ink/30 font-bold">Date Placed</span>
-                              <span className="text-ink font-semibold block">{new Date(o.createdAt).toLocaleString()}</span>
+                              <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Date Placed</span>
+                              <span className="text-ink font-semibold text-xs md:text-sm block">{new Date(o.createdAt).toLocaleString()}</span>
                             </div>
                             <div>
-                              <span className="block text-[8px] text-ink/30 font-bold">Total Price</span>
-                              <span className="text-ink font-bold block">${Number(o.totalPrice).toLocaleString()}</span>
+                              <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Total Price</span>
+                              <span className="text-ink font-black text-sm md:text-base block">${Number(o.totalPrice).toLocaleString()}</span>
                             </div>
                           </div>
                           <div className="w-full sm:w-auto flex-shrink-0">
-                            <span className="block text-[8px] text-ink/30 font-bold text-left sm:text-right mb-1">Status</span>
+                            <span className="block text-[10px] text-ink/40 font-bold text-left sm:text-right mb-1 uppercase">Order Status</span>
                             <select
                               value={o.status}
                               onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                              className="w-full sm:w-auto px-2 py-1.5 text-[8px] font-black tracking-widest border border-black/10 bg-white hover:border-black/30 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer"
+                              className="w-full sm:w-auto px-3 py-2 text-xs font-bold tracking-wider border border-black/20 bg-white hover:border-black/40 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer shadow-xs"
                             >
                               <option value="Pending">대기 (Pending)</option>
                               <option value="Confirmed">주문확인 (Confirmed)</option>
@@ -1011,38 +1011,51 @@ export default function Admin() {
 
                         {/* Recipient details */}
                         {o.name && (
-                          <div className="border-b border-black/[0.03] pb-4 text-[9px] uppercase tracking-wider font-bold text-ink/60 flex flex-col sm:flex-row flex-wrap gap-x-6 gap-y-2 bg-off-white/50 p-3">
+                          <div className="border-b border-black/10 pb-4 text-xs uppercase tracking-wider font-bold text-ink/80 flex flex-col sm:flex-row flex-wrap gap-x-6 gap-y-2 bg-off-white/80 p-3.5 border border-black/5">
                             <span className="break-words">Recipient: {o.name}</span>
                             <span className="break-words">Phone: {o.phone}</span>
                             <span className="break-words">Address: {o.address}</span>
                           </div>
                         )}
 
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                           {o.items && Array.isArray(o.items) && o.items.map((item: any, idx: number) => (
-                            <div key={idx} className="flex gap-4 items-center border-b border-black/[0.03] pb-3 last:border-0 last:pb-0">
-                              <div className="w-12 h-12 bg-silver/10 border border-black/5 flex-shrink-0">
+                            <Link 
+                              key={idx} 
+                              to={`/product/${item.productId}`} 
+                              target="_blank" 
+                              className="flex gap-4 items-center border-b border-black/[0.05] pb-3 last:border-0 last:pb-0 hover:bg-black/[0.02] p-2 transition-colors group cursor-pointer rounded-none"
+                            >
+                              <div className="w-14 h-14 bg-silver/10 border border-black/10 flex-shrink-0 overflow-hidden">
                                 {item.image ? (
-                                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                  <img 
+                                    src={item.image} 
+                                    alt={item.name} 
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                                    nopin="nopin" 
+                                    data-pin-no-hover="true" 
+                                  />
                                 ) : (
-                                  <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[8px] text-ink/30 uppercase">No Img</div>
+                                  <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[9px] text-ink/30 uppercase">No Img</div>
                                 )}
                               </div>
                               <div className="flex-grow flex justify-between items-center min-w-0">
-                                <div className="min-w-0 pr-2">
-                                  <h4 className="text-xs font-bold text-ink uppercase tracking-tight truncate">{item.name}</h4>
-                                  <p className="text-[9px] uppercase tracking-wider text-ink/40 truncate">{item.category}</p>
-                                  <div className="flex flex-wrap gap-2 text-[9px] text-ink/50 uppercase font-semibold">
+                                <div className="min-w-0 pr-3">
+                                  <h4 className="text-xs md:text-sm font-bold text-ink uppercase tracking-tight truncate group-hover:text-cobalt transition-colors flex items-center gap-1.5">
+                                    {item.name} <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity text-cobalt flex-shrink-0" />
+                                  </h4>
+                                  <p className="text-xs uppercase tracking-wider text-ink/50 font-medium truncate">{item.category}</p>
+                                  <div className="flex flex-wrap gap-3 text-xs text-ink/60 font-semibold mt-0.5">
                                     {item.color && <span>Color: {item.color}</span>}
                                     {item.material && <span>Mat: {item.material}</span>}
                                   </div>
                                 </div>
                                 <div className="text-right flex-shrink-0">
-                                  <span className="text-xs font-bold text-ink block">${Number(item.price).toLocaleString()}</span>
-                                  <span className="block text-[8px] text-ink/40 font-bold uppercase mt-0.5">QTY {item.quantity}</span>
+                                  <span className="text-xs md:text-sm font-bold text-ink block">${Number(item.price).toLocaleString()}</span>
+                                  <span className="block text-xs text-ink/50 font-bold uppercase mt-0.5">QTY {item.quantity}</span>
                                 </div>
                               </div>
-                            </div>
+                            </Link>
                           ))}
                         </div>
                       </div>
@@ -1055,23 +1068,56 @@ export default function Admin() {
             {activeTab === 'users' && (
               <div className="space-y-6 pb-20 animate-in fade-in duration-500 w-full max-w-full overflow-x-hidden">
                 <h2 className="text-xl font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <span>Registered Customers (회원 관리)</span>
-                  <button onClick={loadUsers} className="text-[10px] bg-cobalt text-white px-3 py-1.5 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer self-start sm:self-auto">Refresh Users</button>
+                  <span>Registered Customers</span>
+                  <button onClick={loadUsers} className="text-xs bg-cobalt text-white px-4 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer self-start sm:self-auto">Refresh Users</button>
                 </h2>
                 {usersList.length === 0 ? (
                   <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No registered customers yet.</p>
                 ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
                     {/* Left panel: List */}
                     <div className={selectedUser ? "lg:col-span-7 space-y-4 w-full" : "lg:col-span-12 space-y-4 w-full"}>
-                      <span className="text-[8px] text-ink/40 uppercase tracking-widest font-black block">* Click any row to view customer profile and internal notes.</span>
-                      <div className="bg-white border border-black/5 shadow-sm overflow-x-auto w-full">
+                      <span className="text-xs text-ink/50 uppercase tracking-wider font-bold block">* Click any row to view customer profile and internal notes.</span>
+                      
+                      {/* Mobile Card View (visible on small screens) */}
+                      <div className="block md:hidden space-y-3 w-full">
+                        {usersList.map((user: any) => (
+                          <div
+                            key={user.id}
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setUserMemo(user.memo || "");
+                            }}
+                            className={`p-4 bg-white border border-black/10 shadow-sm cursor-pointer space-y-2 transition-colors rounded-none ${
+                              selectedUser?.email === user.email ? 'border-cobalt bg-cobalt/5' : 'hover:border-black/30'
+                            }`}
+                          >
+                            <div>
+                              <span className="block text-[10px] uppercase font-bold text-ink/40">Email Address</span>
+                              <span className="text-sm font-bold text-ink break-all block">{user.email}</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-1 border-t border-black/5 text-xs">
+                              <div>
+                                <span className="block text-[9px] uppercase font-bold text-ink/40">Name</span>
+                                <span className="font-semibold text-ink">{user.name || '-'}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="block text-[9px] uppercase font-bold text-ink/40">Phone</span>
+                                <span className="font-semibold text-ink">{user.phone || '-'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Desktop Table View (visible on md and above) */}
+                      <div className="hidden md:block bg-white border border-black/5 shadow-sm overflow-x-auto w-full">
                         <table className="w-full text-left border-collapse text-xs font-sans min-w-[500px]">
                           <thead>
-                            <tr className="bg-off-white uppercase text-[9px] font-black tracking-widest text-ink/50 border-b border-black/10">
-                              <th className="p-3 md:p-4 px-4 md:px-6">Email Address</th>
-                              <th className="p-3 md:p-4 px-4 md:px-6">Name</th>
-                              <th className="p-3 md:p-4 px-4 md:px-6">Phone</th>
+                            <tr className="bg-off-white uppercase text-[10px] font-black tracking-widest text-ink/60 border-b border-black/10">
+                              <th className="p-4 px-6">Email Address</th>
+                              <th className="p-4 px-6">Name</th>
+                              <th className="p-4 px-6">Phone</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-black/5 text-ink/80">
@@ -1084,9 +1130,9 @@ export default function Admin() {
                                 }}
                                 className={`cursor-pointer hover:bg-off-white/80 transition-colors ${selectedUser?.email === user.email ? 'bg-off-white/85 font-semibold' : ''}`}
                               >
-                                <td className="p-3 md:p-4 px-4 md:px-6 font-bold text-ink break-all">{user.email}</td>
-                                <td className="p-3 md:p-4 px-4 md:px-6 font-medium whitespace-nowrap">{user.name || '-'}</td>
-                                <td className="p-3 md:p-4 px-4 md:px-6 whitespace-nowrap">{user.phone || '-'}</td>
+                                <td className="p-4 px-6 font-bold text-ink break-all text-xs md:text-sm">{user.email}</td>
+                                <td className="p-4 px-6 font-medium whitespace-nowrap text-xs md:text-sm">{user.name || '-'}</td>
+                                <td className="p-4 px-6 whitespace-nowrap text-xs md:text-sm">{user.phone || '-'}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1098,48 +1144,48 @@ export default function Admin() {
                     {selectedUser && (
                       <div className="lg:col-span-5 bg-white border border-black/5 p-6 space-y-6 shadow-sm animate-in fade-in slide-in-from-right-4 duration-300 w-full">
                         <div className="flex justify-between items-center border-b border-black/5 pb-3">
-                          <h3 className="text-xs font-black uppercase tracking-widest text-ink">
+                          <h3 className="text-xs md:text-sm font-black uppercase tracking-widest text-ink">
                             Customer Details
                           </h3>
-                          <button onClick={() => setSelectedUser(null)} className="text-[9px] text-ink/40 hover:text-ink font-bold uppercase tracking-widest cursor-pointer">Close</button>
+                          <button onClick={() => setSelectedUser(null)} className="text-xs text-ink/50 hover:text-ink font-bold uppercase tracking-widest cursor-pointer">Close</button>
                         </div>
                         
-                        <div className="space-y-4 text-xs font-sans text-ink/80">
+                        <div className="space-y-4 text-xs md:text-sm font-sans text-ink/80">
                           <div>
-                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Email</span>
+                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Email</span>
                             <span className="font-bold text-ink break-all block">{selectedUser.email}</span>
                           </div>
                           <div>
-                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Registered Name</span>
+                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Registered Name</span>
                             <span className="font-semibold text-ink">{selectedUser.name || 'Not registered'}</span>
                           </div>
                           <div>
-                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Phone Number</span>
+                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Phone Number</span>
                             <span className="font-semibold text-ink">{selectedUser.phone || 'Not registered'}</span>
                           </div>
                           <div>
-                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Shipping Address</span>
+                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Shipping Address</span>
                             <p className="font-semibold text-ink whitespace-pre-wrap break-words">{selectedUser.address || 'Not registered'}</p>
                           </div>
                           <div>
-                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Registration Date</span>
+                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Registration Date</span>
                             <span className="text-ink/60">{new Date(selectedUser.createdAt).toLocaleString()}</span>
                           </div>
                           
                           {/* Memo section */}
                           <div className="border-t border-black/5 pt-4 space-y-2">
-                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest">Customer Memo (Internal Notes)</span>
+                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest">Customer Memo (Internal Notes)</span>
                             <textarea
                               value={userMemo}
                               onChange={(e) => setUserMemo(e.target.value)}
-                              className="w-full border border-black/10 focus:border-cobalt outline-none p-3 text-xs transition-colors bg-off-white font-sans resize-none rounded-none text-ink"
+                              className="w-full border border-black/10 focus:border-cobalt outline-none p-3 text-xs md:text-sm transition-colors bg-off-white font-sans resize-none rounded-none text-ink"
                               placeholder="Add internal notes about this customer..."
                               rows={4}
                             />
                             <button
                               onClick={handleSaveMemo}
                               disabled={isSavingMemo}
-                              className="w-full bg-ink hover:bg-cobalt text-white py-3 font-bold uppercase tracking-widest text-[9px] transition-colors rounded-none cursor-pointer"
+                              className="w-full bg-ink hover:bg-cobalt text-white py-3 font-bold uppercase tracking-widest text-xs transition-colors rounded-none cursor-pointer"
                             >
                               {isSavingMemo ? "Saving..." : "Save Memo"}
                             </button>

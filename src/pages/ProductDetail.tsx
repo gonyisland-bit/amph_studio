@@ -421,10 +421,25 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Content Blocks (Editorial Section - PC 2-Column Grid) */}
+      {/* Editorial Section Subtitle */}
       {product.contentBlocks && product.contentBlocks.length > 0 && (
-        <div className="px-6 md:px-12 lg:px-20 py-24 max-w-7xl mx-auto w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
+        <div className="pt-20 pb-8 px-6 md:px-12 lg:px-16 w-full flex items-center justify-between border-b border-black/10 reveal">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 bg-cobalt rounded-full"></div>
+            <h3 className="text-lg md:text-xl font-black tracking-[0.2em] uppercase text-ink font-sans">
+              EDITORIAL STORY
+            </h3>
+          </div>
+          <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-ink/40 font-mono">
+            {product.name}
+          </span>
+        </div>
+      )}
+
+      {/* Content Blocks (Editorial Section - Full-Width 2-Column Grid) */}
+      {product.contentBlocks && product.contentBlocks.length > 0 && (
+        <div className="px-4 md:px-8 lg:px-12 py-16 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
             {product.contentBlocks.map((block, idx) => {
               const textContent = block.caption || (block.type === 'text' ? block.value : '');
               const imageUrl = block.type === 'image' ? block.value : '';
@@ -433,7 +448,7 @@ export default function ProductDetail() {
                 const storyImgIdx = storyImages.indexOf(imageUrl);
                 const targetLightboxIdx = storyImgIdx !== -1 ? displayImages.length + storyImgIdx : 0;
                 return (
-                  <div key={idx} className="flex flex-col reveal group">
+                  <div key={idx} className="flex flex-col reveal group w-full">
                     <div 
                       onClick={() => {
                         setLightboxIndex(targetLightboxIdx);
@@ -460,7 +475,7 @@ export default function ProductDetail() {
 
               if (block.type === 'text') {
                 return (
-                  <div key={idx} className="flex flex-col reveal py-4">
+                  <div key={idx} className="flex flex-col reveal py-4 w-full">
                     <p className="text-xl md:text-2xl font-sans leading-relaxed text-ink/80">{block.value}</p>
                   </div>
                 );

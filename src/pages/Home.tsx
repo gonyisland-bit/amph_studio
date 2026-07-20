@@ -92,7 +92,7 @@ export default function Home() {
       {isAuth && null}
 
       {/* 1. Hero Section: Editorial Slideshow (Split-screen on desktop) */}
-      <section className="relative w-full h-[95vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10">
+      <section className="relative w-full h-[55vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10">
         {settings.heroSlides?.map((slide, idx) => (
           <div 
             key={slide.id} 
