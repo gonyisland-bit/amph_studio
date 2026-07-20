@@ -35,11 +35,7 @@ export default function SpaceDetail() {
 
   return (
     <div className="flex flex-col flex-grow bg-white font-sans text-ink">
-      {isAuth && (
-        <Link to="/admin" className="fixed bottom-8 right-8 z-[100] bg-cobalt text-white px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all">
-          Edit Space
-        </Link>
-      )}
+
 
       {/* Immersive Hero Header */}
       <div className="relative w-full h-[85vh] md:h-[95vh] bg-black overflow-hidden">

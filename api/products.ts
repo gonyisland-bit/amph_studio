@@ -36,13 +36,24 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'GET') {
     try {
       const { rows } = await sql`SELECT * FROM products ORDER BY "createdAt" DESC`;
-      const parsedRows = rows.map(r => ({
-        ...r,
-        images: typeof r.images === 'string' ? JSON.parse(r.images) : (r.images || []),
-        hoverImages: typeof r.hoverImages === 'string' ? JSON.parse(r.hoverImages) : (r.hoverImages || []),
-        contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
-        cartEnabled: r.cartEnabled !== false
-      }));
+      const parsedRows = rows.map(r => {
+        let colorParsed = r.color || '';
+        if (typeof r.color === 'string' && r.color.trim().startsWith('[')) {
+          try {
+            colorParsed = JSON.parse(r.color);
+          } catch (e) {
+            colorParsed = r.color;
+          }
+        }
+        return {
+          ...r,
+          images: typeof r.images === 'string' ? JSON.parse(r.images) : (r.images || []),
+          hoverImages: typeof r.hoverImages === 'string' ? JSON.parse(r.hoverImages) : (r.hoverImages || []),
+          contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
+          color: colorParsed,
+          cartEnabled: r.cartEnabled !== false
+        };
+      });
       return res.status(200).json(parsedRows);
     } catch (error) {
       console.error(error);
@@ -65,7 +76,7 @@ export default async function handler(req: any, res: any) {
           ${dimensions || ''},
           ${shipping || ''},
           ${sku || ''},
-          ${color || ''},
+          ${typeof color === 'string' ? color : JSON.stringify(color || [])},
           ${cartEnabled !== false}
         )
         ON CONFLICT (id) DO UPDATE SET
@@ -111,7 +122,7 @@ export default async function handler(req: any, res: any) {
           dimensions = ${dimensions},
           shipping = ${shipping},
           sku = ${sku},
-          color = ${color},
+          color = ${typeof color === 'string' ? color : JSON.stringify(color || [])},
           "cartEnabled" = ${cartEnabled !== false}
         WHERE id = ${id}
       `;

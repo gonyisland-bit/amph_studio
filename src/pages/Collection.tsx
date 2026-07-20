@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
+import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings, ColorOption } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
@@ -158,28 +158,29 @@ function renderChips(product: Product) {
 
   // 2. Color chips
   if (product.color) {
-    const colorMap: Record<string, string> = {
-      'Oak': '#d7c29d',
-      'Ash': '#e5dec9',
-      'Walnut': '#4b382a',
-      'Steel': '#8a9597',
-      'Black': '#1c1c1c',
-      'White': '#ffffff',
-      'Cobalt': '#0047AB',
-      'Orange': '#FF4500',
-      'Pink': '#F8BBD0',
-      'Silver': '#E0E0E2',
-      'Gray': '#808080',
-      'Charcoal': '#36454F',
-      'Cream': '#FFFDD0',
-      'Beige': '#F5F5DC',
-      'Natural': '#e8d8c1'
-    };
+    let colorsList: { name: string; hex: string }[] = [];
+    if (Array.isArray(product.color)) {
+      colorsList = product.color;
+    } else {
+      const colorMap: Record<string, string> = {
+        'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
+        'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
+        'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
+        'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
+      };
+      colorsList = product.color.split(',').map(c => {
+        const name = c.trim();
+        return {
+          name,
+          hex: colorMap[name] || '#888888'
+        };
+      });
+    }
 
-    const colors = product.color.split(',').map(c => c.trim());
-    colors.forEach(col => {
-      const hex = colorMap[col] || colorMap[col.charAt(0).toUpperCase() + col.slice(1).toLowerCase()];
-      if (hex) {
+    colorsList.forEach(c => {
+      const hex = c.hex;
+      const col = c.name;
+      if (hex && hex !== '#888888') {
         chips.push(
           <div 
             key={`col-${col}`} 

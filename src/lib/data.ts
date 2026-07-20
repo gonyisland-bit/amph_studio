@@ -5,6 +5,11 @@ export interface ContentBlock {
   value: string;
 }
 
+export interface ColorOption {
+  name: string;
+  hex: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -20,7 +25,7 @@ export interface Product {
   dimensions?: string;
   shipping?: string;
   sku?: string;
-  color?: string;
+  color?: string | ColorOption[];
   cartEnabled?: boolean;
 }
 

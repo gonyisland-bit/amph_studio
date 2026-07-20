@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Lock, LayoutDashboard, LogOut } from "lucide-react";
+import { APP_VERSION } from "../lib/version";
 
 export function Footer() {
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
@@ -32,7 +33,7 @@ export function Footer() {
       {/* Center: Copyright & Version (V0.80h) */}
       <div className="flex items-center justify-center gap-2 md:w-1/3 text-center">
         <span>© {new Date().getFullYear()} AMPH design</span>
-        <span className="text-ink/40 font-black">(V0.80h)</span>
+        <span className="text-ink/40 font-black">({APP_VERSION})</span>
       </div>
 
       {/* Right: Admin Icons & Scroll Discovery */}

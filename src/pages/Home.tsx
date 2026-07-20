@@ -4,6 +4,7 @@ import { getProducts, Product, getHomeSettings, HomeSettings, defaultHomeSetting
 import { ArrowRight, MoveRight } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
+import { APP_VERSION } from "../lib/version";
 
 let hasShownSplash = false;
 
@@ -83,7 +84,7 @@ export default function Home() {
           </div>
           <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-white/50 font-bold font-sans">
             <div>Casual Uniqueness</div>
-            <div>V0.80f</div>
+            <div>{APP_VERSION}</div>
           </div>
         </div>
       )}

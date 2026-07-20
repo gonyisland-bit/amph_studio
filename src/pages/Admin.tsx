@@ -176,6 +176,9 @@ export default function Admin() {
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [userMemo, setUserMemo] = useState("");
   const [isSavingMemo, setIsSavingMemo] = useState(false);
+  const [colorOptions, setColorOptions] = useState<any[]>([]);
+  const [newColorHex, setNewColorHex] = useState("#000000");
+  const [newColorName, setNewColorName] = useState("");
   
   const [products, setProducts] = useState<Product[]>([]);
   const [journals, setJournals] = useState<JournalArticle[]>([]);
@@ -190,7 +193,7 @@ export default function Admin() {
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const [activeSections, setActiveSections] = useState<Record<string, boolean>>({ basic: true, specs: false, media: false, story: false });
+  const [activeSections, setActiveSections] = useState<Record<string, boolean>>({ basic: true, specs: false, options: false, media: false, story: false });
 
   useEffect(() => {
     if (saveStatus === 'saved') {
@@ -368,6 +371,52 @@ export default function Admin() {
     }
   };
 
+  useEffect(() => {
+    if (activeTab === 'collection' && form) {
+      let parsedColors: any[] = [];
+      if (form.color) {
+        if (Array.isArray(form.color)) {
+          parsedColors = form.color;
+        } else if (typeof form.color === 'string') {
+          if (form.color.trim().startsWith('[')) {
+            try {
+              parsedColors = JSON.parse(form.color);
+            } catch (e) {
+              parsedColors = form.color.split(',').map(c => ({ name: c.trim(), hex: '#888888' }));
+            }
+          } else {
+            parsedColors = form.color.split(',').map(c => ({ name: c.trim(), hex: '#888888' }));
+          }
+        }
+      }
+      setColorOptions(parsedColors);
+    } else {
+      setColorOptions([]);
+    }
+  }, [form.id, form.color, activeTab]);
+
+  const handleAddColorOption = () => {
+    if (!newColorName.trim()) {
+      showToast("Please enter a color name.", "error");
+      return;
+    }
+    const exists = colorOptions.some(c => c.name.toLowerCase() === newColorName.trim().toLowerCase());
+    if (exists) {
+      showToast("Color name already exists.", "error");
+      return;
+    }
+    const updated = [...colorOptions, { name: newColorName.trim(), hex: newColorHex }];
+    setColorOptions(updated);
+    setForm((prev: any) => ({ ...prev, color: updated }));
+    setNewColorName("");
+  };
+
+  const handleRemoveColorOption = (name: string) => {
+    const updated = colorOptions.filter(c => c.name !== name);
+    setColorOptions(updated);
+    setForm((prev: any) => ({ ...prev, color: updated }));
+  };
+
   const location = useLocation();
 
   useEffect(() => {
@@ -419,7 +468,7 @@ export default function Admin() {
         if (found && editingId !== found.id) {
           setEditingId(found.id);
           setForm(found);
-          setActiveSections({ basic: true, specs: false, media: false, story: false });
+          setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
           requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
         }
       } else if (tabParam === 'space' && spaces.length > 0) {
@@ -568,7 +617,7 @@ export default function Admin() {
     try {
       if (activeTab === 'collection') {
         const cleanedImages = (form.images || []).filter(Boolean);
-        const cleanedForm = { ...form, images: cleanedImages };
+        const cleanedForm = { ...form, images: cleanedImages, color: colorOptions };
         if (editingId) {
           await updateProduct(editingId, cleanedForm);
           setForm(cleanedForm);
@@ -620,7 +669,7 @@ export default function Admin() {
     setEditingId(item.id);
     setForm(item);
     // Always open basic section so form content is immediately visible
-    setActiveSections({ basic: true, specs: false, media: false, story: false });
+    setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
   };
 
@@ -1297,9 +1346,8 @@ export default function Admin() {
                     </button>
                     {activeSections.specs && (
                       <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div>
                           <EditorInput label="Material (e.g., Oak, Steel)" value={form.material || ''} onChange={val => setForm({...form, material: val})} />
-                          <EditorInput label="Color Options (e.g., Black, White)" value={form.color || ''} onChange={val => setForm({...form, color: val})} />
                         </div>
                         <EditorInput label="Dimensions (e.g., H 75 x W 120 x D 60 cm)" value={form.dimensions || ''} onChange={val => setForm({...form, dimensions: val})} />
                         
@@ -1318,6 +1366,95 @@ export default function Admin() {
                             <span className="text-[10px] uppercase font-black text-ink/60 tracking-wider">Enable Add to Cart Button</span>
                           </label>
                           <p className="text-[8px] text-ink/40 uppercase tracking-widest mt-1">If unchecked, the product detail page will show a disabled button with "Coming soon".</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card: Options (Color Swatches) (Accordion) */}
+                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
+                    <button 
+                      type="button"
+                      onClick={() => toggleSection('options')}
+                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
+                    >
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Product Options (Colors)</span>
+                      <span className="text-ink/30">{activeSections.options ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                    </button>
+                    {activeSections.options && (
+                      <div className="p-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300 text-ink">
+                        {/* Add Color Form */}
+                        <div className="bg-off-white/50 p-4 border border-black/5 space-y-4">
+                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">Add Color Option</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            <div>
+                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1.5">Color Name</label>
+                              <input 
+                                type="text"
+                                value={newColorName}
+                                onChange={e => setNewColorName(e.target.value)}
+                                className="w-full border-b border-black/10 focus:border-cobalt outline-none py-1.5 text-xs bg-transparent rounded-none"
+                                placeholder="e.g. Cobalt Blue"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1.5">Hex Color Value</label>
+                              <div className="flex gap-2 items-center">
+                                <input 
+                                  type="color"
+                                  value={newColorHex}
+                                  onChange={e => setNewColorHex(e.target.value)}
+                                  className="w-7 h-7 border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
+                                />
+                                <input 
+                                  type="text"
+                                  value={newColorHex}
+                                  onChange={e => setNewColorHex(e.target.value)}
+                                  className="w-full border-b border-black/10 focus:border-cobalt outline-none py-1.5 text-xs bg-transparent rounded-none font-mono"
+                                  placeholder="#0047AB"
+                                />
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleAddColorOption}
+                              className="w-full bg-ink hover:bg-cobalt text-white py-2 font-bold uppercase tracking-widest text-[9px] transition-colors rounded-none cursor-pointer"
+                            >
+                              + Add Color
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Colors List */}
+                        <div className="space-y-3">
+                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">Registered Color Options</h4>
+                          {colorOptions.length === 0 ? (
+                            <p className="text-[10px] uppercase tracking-wider text-ink/40">No colors added yet.</p>
+                          ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                              {colorOptions.map((c) => (
+                                <div key={c.name} className="border border-black/5 p-3 flex items-center justify-between bg-off-white/30">
+                                  <div className="flex items-center gap-2 truncate">
+                                    <div 
+                                      className="w-3.5 h-3.5 rounded-full border border-black/15 flex-shrink-0" 
+                                      style={{ backgroundColor: c.hex }} 
+                                    />
+                                    <div className="truncate">
+                                      <span className="block text-[9px] font-bold uppercase text-ink truncate">{c.name}</span>
+                                      <span className="block text-[8px] font-mono text-ink/40 uppercase">{c.hex}</span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveColorOption(c.name)}
+                                    className="text-[9px] font-black text-orange hover:underline uppercase ml-2 flex-shrink-0"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}

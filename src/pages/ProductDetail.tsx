@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getProductById, getProducts, Product } from "../lib/data";
+import { getProductById, getProducts, Product, ColorOption } from "../lib/data";
 import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
@@ -25,7 +25,11 @@ export default function ProductDetail() {
       cart = [];
     }
 
-    const defaultColor = product.color ? product.color.split(',')[0].trim() : '';
+    const defaultColor = product.color
+      ? (Array.isArray(product.color)
+          ? (product.color[0]?.name || '')
+          : product.color.split(',')[0].trim())
+      : '';
     const defaultMaterial = product.material ? product.material.split(',')[0].trim() : '';
 
     const color = selectedColor || defaultColor;
@@ -94,9 +98,18 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (product) {
+      let defaultColorName = "";
       if (product.color) {
-        setSelectedColor(product.color.split(',')[0].trim());
+        if (Array.isArray(product.color)) {
+          if (product.color.length > 0) defaultColorName = product.color[0].name;
+        } else {
+          defaultColorName = product.color.split(',')[0].trim();
+        }
       }
+      if (defaultColorName) {
+        setSelectedColor(defaultColorName);
+      }
+
       if (product.material) {
         setSelectedMaterial(product.material.split(',')[0].trim());
       }
@@ -241,11 +254,7 @@ export default function ProductDetail() {
         </div>
       )}
 
-      {isAuth && (
-        <Link to={`/admin?edit=${product.id}`} className="fixed bottom-12 left-12 z-[100] bg-cobalt text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all scale-100 hover:scale-110">
-          Edit Product
-        </Link>
-      )}
+
       
       {/* Sticky Header */}
       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md px-6 md:px-12 py-2.5 border-b border-black/10 flex justify-between items-center shadow-sm">
@@ -306,65 +315,57 @@ export default function ProductDetail() {
             <p className="text-sm md:text-base leading-relaxed mb-10 text-ink/80 font-sans font-normal reveal">{product.description}</p>
             
             {/* Color Option Selector */}
-            {product.color && (
-              <div className="mb-8 border-t border-black/5 pt-6">
-                <span className="caption-nano text-ink/50 block mb-3 font-bold">Select Color</span>
-                <div className="flex gap-3">
-                  {product.color.split(',').map(c => c.trim()).map(color => {
-                    const colorMap: Record<string, string> = {
-                      'Oak': '#d7c29d',
-                      'Ash': '#e5dec9',
-                      'Walnut': '#4b382a',
-                      'Steel': '#8a9597',
-                      'Black': '#1c1c1c',
-                      'White': '#ffffff',
-                      'Cobalt': '#0047AB',
-                      'Orange': '#FF4500',
-                      'Pink': '#F8BBD0',
-                      'Silver': '#E0E0E2',
-                      'Gray': '#808080',
-                      'Charcoal': '#36454F',
-                      'Cream': '#FFFDD0',
-                      'Beige': '#F5F5DC',
-                      'Natural': '#e8d8c1'
-                    };
-                    const hex = colorMap[color] || '#888';
-                    const isSelected = selectedColor === color;
-                    return (
-                      <button
-                        key={color}
-                        onClick={() => setSelectedColor(color)}
-                        className={`w-7 h-7 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'border-cobalt scale-110 shadow-md' : 'border-black/10'}`}
-                        title={color}
-                      >
-                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: hex }} />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            {(() => {
+              const colors: ColorOption[] = [];
+              if (product.color) {
+                if (Array.isArray(product.color)) {
+                  colors.push(...product.color);
+                } else {
+                  const colorMap: Record<string, string> = {
+                    'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
+                    'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
+                    'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
+                    'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
+                  };
+                  product.color.split(',').forEach(c => {
+                    const name = c.trim();
+                    if (name) {
+                      colors.push({ name, hex: colorMap[name] || '#888888' });
+                    }
+                  });
+                }
+              }
 
-            {/* Material Option Selector */}
-            {product.material && product.material.split(',').length > 1 && (
-              <div className="mb-8 border-t border-black/5 pt-6">
-                <span className="caption-nano text-ink/50 block mb-3 font-bold">Select Material</span>
-                <div className="flex gap-2">
-                  {product.material.split(',').map(m => m.trim()).map(mat => {
-                    const isSelected = selectedMaterial === mat;
-                    return (
-                      <button
-                        key={mat}
-                        onClick={() => setSelectedMaterial(mat)}
-                        className={`px-4 py-2 border text-[10px] font-sans font-bold uppercase transition-all tracking-wider ${isSelected ? 'bg-ink text-white border-ink' : 'bg-transparent text-ink/60 border-black/10 hover:border-black/30'}`}
-                      >
-                        {mat}
-                      </button>
-                    );
-                  })}
+              if (colors.length === 0) return null;
+
+              return (
+                <div className="mb-8 border-t border-black/5 pt-6 animate-in fade-in duration-300">
+                  <span className="caption-nano text-ink/50 block mb-3 font-bold">Select Color</span>
+                  <div className="flex flex-wrap gap-2">
+                    {colors.map((c) => {
+                      const isSelected = selectedColor === c.name;
+                      return (
+                        <button
+                          key={c.name}
+                          onClick={() => setSelectedColor(c.name)}
+                          className={`px-4 py-2 border text-[10px] font-sans font-bold uppercase transition-all tracking-wider flex items-center gap-2 ${
+                            isSelected 
+                              ? 'bg-ink text-white border-ink scale-102 shadow-sm' 
+                              : 'bg-transparent text-ink/60 border-black/10 hover:border-black/30'
+                          }`}
+                        >
+                          <div 
+                            className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0" 
+                            style={{ backgroundColor: c.hex }} 
+                          />
+                          {c.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Table Specifications */}
             <div className="border-t border-black/10 mt-8 mb-12">
@@ -663,28 +664,29 @@ function renderChips(product: Product) {
   }
 
   if (product.color) {
-    const colorMap: Record<string, string> = {
-      'Oak': '#d7c29d',
-      'Ash': '#e5dec9',
-      'Walnut': '#4b382a',
-      'Steel': '#8a9597',
-      'Black': '#1c1c1c',
-      'White': '#ffffff',
-      'Cobalt': '#0047AB',
-      'Orange': '#FF4500',
-      'Pink': '#F8BBD0',
-      'Silver': '#E0E0E2',
-      'Gray': '#808080',
-      'Charcoal': '#36454F',
-      'Cream': '#FFFDD0',
-      'Beige': '#F5F5DC',
-      'Natural': '#e8d8c1'
-    };
+    let colorsList: { name: string; hex: string }[] = [];
+    if (Array.isArray(product.color)) {
+      colorsList = product.color;
+    } else {
+      const colorMap: Record<string, string> = {
+        'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
+        'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
+        'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
+        'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
+      };
+      colorsList = product.color.split(',').map(c => {
+        const name = c.trim();
+        return {
+          name,
+          hex: colorMap[name] || '#888888'
+        };
+      });
+    }
 
-    const colors = product.color.split(',').map(c => c.trim());
-    colors.forEach(col => {
-      const hex = colorMap[col] || colorMap[col.charAt(0).toUpperCase() + col.slice(1).toLowerCase()];
-      if (hex) {
+    colorsList.forEach(c => {
+      const hex = c.hex;
+      const col = c.name;
+      if (hex && hex !== '#888888') {
         chips.push(
           <div 
             key={`col-${col}`} 
