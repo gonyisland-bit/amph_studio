@@ -189,6 +189,47 @@ const getFormattedShipping = (shipping?: string) => {
   return shipping;
 };
 
+const renderColorBadge = (colorVal: any, foundProd?: any) => {
+  if (!colorVal || colorVal === '-') return <span>Color: -</span>;
+
+  let colorName = typeof colorVal === 'string' ? colorVal : (colorVal?.name || JSON.stringify(colorVal));
+  let colorHex: string | null = typeof colorVal === 'object' && colorVal?.hex ? colorVal.hex : null;
+
+  if (!colorHex && foundProd?.color) {
+    let prodColors = foundProd.color;
+    if (typeof prodColors === 'string' && prodColors.startsWith('[')) {
+      try { prodColors = JSON.parse(prodColors); } catch(e) {}
+    }
+    if (Array.isArray(prodColors)) {
+      const match = prodColors.find((c: any) => c.name?.toLowerCase() === colorName.toLowerCase() || c.hex === colorName);
+      if (match) {
+        colorHex = match.hex;
+        if (match.name) colorName = match.name;
+      }
+    } else if (typeof prodColors === 'object' && prodColors?.hex) {
+      colorHex = prodColors.hex;
+    }
+  }
+
+  if (!colorHex && colorName.startsWith('#')) {
+    colorHex = colorName;
+  }
+
+  return (
+    <span className="flex items-center gap-1.5">
+      <span>Color:</span>
+      {colorHex && (
+        <span 
+          className="inline-block w-3 h-3 rounded-full border border-black/20 flex-shrink-0 shadow-xs" 
+          style={{ backgroundColor: colorHex }} 
+          title={colorName}
+        />
+      )}
+      <span>{colorName}</span>
+    </span>
+  );
+};
+
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -498,9 +539,9 @@ export default function Admin() {
     }
   }, [location.search, isAuthenticated]);
 
-  // Sync editing item with ?edit= query parameter
+  // Sync editing item with ?edit= query parameter (Initial load only)
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || editingId) return;
     const params = new URLSearchParams(location.search);
     const editId = params.get('edit');
     const tabParam = params.get('tab');
@@ -508,29 +549,26 @@ export default function Admin() {
     if (editId) {
       if ((!tabParam || tabParam === 'collection') && products.length > 0) {
         const found = products.find(p => p.id === editId);
-        if (found && editingId !== found.id) {
+        if (found) {
           setEditingId(found.id);
-          setForm(found);
+          setForm(JSON.parse(JSON.stringify(found)));
           setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
-          requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
         }
       } else if (tabParam === 'space' && spaces.length > 0) {
         const found = spaces.find(s => s.id === editId);
-        if (found && editingId !== found.id) {
+        if (found) {
           setEditingId(found.id);
-          setForm(found);
-          requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+          setForm(JSON.parse(JSON.stringify(found)));
         }
       } else if (tabParam === 'journal' && journals.length > 0) {
         const found = journals.find(j => j.id === editId);
-        if (found && editingId !== found.id) {
+        if (found) {
           setEditingId(found.id);
-          setForm(found);
-          requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+          setForm(JSON.parse(JSON.stringify(found)));
         }
       }
     }
-  }, [isAuthenticated, products, spaces, journals, location.search, editingId]);
+  }, [isAuthenticated, products, spaces, journals, location.search]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1017,7 +1055,7 @@ export default function Admin() {
                 </h2>
 
                 {/* Sub-tabs for filtering orders */}
-                <div className="flex items-center gap-2 border-b border-black/10 pb-3">
+                <div className="flex items-center gap-2 border-b border-black/10 pb-3 flex-wrap">
                   <button
                     type="button"
                     onClick={() => setOrderFilter('active')}
@@ -1150,7 +1188,9 @@ export default function Admin() {
                                       <p className="text-xs uppercase tracking-wider text-ink/50 font-medium truncate mb-1">{item.category}</p>
                                       <div className="flex flex-wrap gap-2 text-[10px] uppercase font-bold">
                                         <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5">Shipping: {shippingVal}</span>
-                                        <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5">Color: {colorVal}</span>
+                                        <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5">
+                                          {renderColorBadge(item.color || foundProd?.color, foundProd)}
+                                        </span>
                                         {item.material && <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/60 border border-black/5">Mat: {item.material}</span>}
                                       </div>
                                     </div>
