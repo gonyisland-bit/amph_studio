@@ -181,12 +181,21 @@ const getStatusBadgeStyle = (status: string) => {
   }
 };
 
+const getFormattedShipping = (shipping?: string) => {
+  if (!shipping) return 'Delivery (Free)';
+  if (shipping.includes('Pickup') || shipping.includes('현장') || shipping.includes('수령')) return 'Pickup';
+  if (shipping.includes('Freight') || shipping.includes('화물') || shipping.includes('별도')) return 'Freight (Excl.)';
+  if (shipping.includes('Delivery') || shipping.includes('택배') || shipping.includes('포함') || shipping.includes('Free')) return 'Delivery (Free)';
+  return shipping;
+};
+
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState<'home'|'journal'|'space'|'collection'|'orders'|'users'>('collection');
+  const [orderFilter, setOrderFilter] = useState<'active' | 'completed' | 'all'>('active');
   const [sortBy, setSortBy] = useState<'user' | 'name' | 'category' | 'newest'>('user');
   const [orders, setOrders] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
@@ -704,6 +713,10 @@ export default function Admin() {
     setForm(JSON.parse(JSON.stringify(item)));
     // Always open basic section so form content is immediately visible
     setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', activeTab);
+    params.set('edit', item.id);
+    navigate(`/admin?${params.toString()}`, { replace: true });
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
   };
 
@@ -1002,105 +1015,159 @@ export default function Admin() {
                   <span>Customer Orders</span>
                   <button onClick={loadOrders} className="text-xs bg-cobalt text-white px-4 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer self-start sm:self-auto">Refresh Orders</button>
                 </h2>
+
+                {/* Sub-tabs for filtering orders */}
+                <div className="flex items-center gap-2 border-b border-black/10 pb-3">
+                  <button
+                    type="button"
+                    onClick={() => setOrderFilter('active')}
+                    className={`px-4 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-none cursor-pointer ${
+                      orderFilter === 'active' ? 'bg-cobalt text-white shadow-sm' : 'bg-black/5 text-ink/60 hover:bg-black/10'
+                    }`}
+                  >
+                    In Progress ({orders.filter(o => o.status !== 'Completed').length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrderFilter('completed')}
+                    className={`px-4 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-none cursor-pointer ${
+                      orderFilter === 'completed' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-black/5 text-ink/60 hover:bg-black/10'
+                    }`}
+                  >
+                    Completed ({orders.filter(o => o.status === 'Completed').length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrderFilter('all')}
+                    className={`px-4 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-none cursor-pointer ${
+                      orderFilter === 'all' ? 'bg-ink text-white shadow-sm' : 'bg-black/5 text-ink/60 hover:bg-black/10'
+                    }`}
+                  >
+                    All Orders ({orders.length})
+                  </button>
+                </div>
+
                 {orders.length === 0 ? (
                   <p className="text-sm uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No orders placed yet.</p>
-                ) : (
-                  <div className="space-y-6">
-                    {orders.map((o: any) => (
-                      <div key={o.id} className="bg-white border border-black/5 p-4 md:p-6 flex flex-col gap-5 shadow-sm w-full overflow-hidden">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-black/10 pb-4 gap-4 text-xs uppercase font-sans tracking-wider text-ink/70">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full sm:w-auto">
-                            <div className="min-w-0">
-                              <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Order ID</span>
-                              <span className="font-mono text-ink font-bold text-xs md:text-sm break-all block">{o.id}</span>
+                ) : (() => {
+                  const filteredOrders = orders.filter((o: any) => {
+                    if (orderFilter === 'active') return o.status !== 'Completed';
+                    if (orderFilter === 'completed') return o.status === 'Completed';
+                    return true;
+                  });
+
+                  if (filteredOrders.length === 0) {
+                    return (
+                      <p className="text-sm uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">
+                        No {orderFilter === 'completed' ? 'completed' : 'in-progress'} orders found.
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-6">
+                      {filteredOrders.map((o: any) => (
+                        <div key={o.id} className="bg-white border border-black/5 p-4 md:p-6 flex flex-col gap-5 shadow-sm w-full overflow-hidden">
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-black/10 pb-4 gap-4 text-xs uppercase font-sans tracking-wider text-ink/70">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full sm:w-auto">
+                              <div className="min-w-0">
+                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Order ID</span>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-mono text-ink font-bold text-xs md:text-sm break-all block">{o.id}</span>
+                                  <span className={`px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border rounded-full ${getStatusBadgeStyle(o.status)}`}>
+                                    ● {o.status === 'Pending' ? '대기' : o.status === 'Confirmed' ? '주문확인' : o.status === 'Processing' ? '발주' : o.status === 'Shipping' ? '배송' : o.status === 'Completed' ? '완료' : o.status}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="min-w-0">
+                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Customer Email</span>
+                                <span className="text-cobalt font-bold text-xs md:text-sm break-all block">{o.customerEmail}</span>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Date Placed</span>
+                                <span className="text-ink font-semibold text-xs md:text-sm block">{new Date(o.createdAt).toLocaleString()}</span>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Total Price</span>
+                                <span className="text-ink font-black text-sm md:text-base block">${Number(o.totalPrice).toLocaleString()}</span>
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Customer Email</span>
-                              <span className="text-cobalt font-bold text-xs md:text-sm break-all block">{o.customerEmail}</span>
-                            </div>
-                            <div>
-                              <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Date Placed</span>
-                              <span className="text-ink font-semibold text-xs md:text-sm block">{new Date(o.createdAt).toLocaleString()}</span>
-                            </div>
-                            <div>
-                              <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Total Price</span>
-                              <span className="text-ink font-black text-sm md:text-base block">${Number(o.totalPrice).toLocaleString()}</span>
-                            </div>
-                          </div>
-                          <div className="w-full sm:w-auto flex-shrink-0">
-                            <span className="block text-[10px] text-ink/40 font-bold text-left sm:text-right mb-1 uppercase">Order Status</span>
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider border rounded-full ${getStatusBadgeStyle(o.status)}`}>
-                                ● {o.status === 'Pending' ? '대기' : o.status === 'Confirmed' ? '주문확인' : o.status === 'Processing' ? '발주' : o.status === 'Shipping' ? '배송' : o.status === 'Completed' ? '완료' : o.status}
-                              </span>
+                            <div className="w-full sm:w-auto flex-shrink-0">
+                              <span className="block text-[10px] text-ink/40 font-bold text-left sm:text-right mb-1 uppercase">Update Status</span>
                               <select
                                 value={o.status}
                                 onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                                className={`px-3 py-1.5 text-xs font-bold tracking-wider border rounded-none outline-none cursor-pointer transition-colors shadow-xs ${getStatusBadgeStyle(o.status)}`}
+                                className="w-full sm:w-auto px-3 py-2 text-xs font-bold tracking-wider border border-black/20 bg-white hover:border-black/40 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer shadow-xs"
                               >
-                                <option value="Pending" className="bg-white text-ink">대기 (Pending)</option>
-                                <option value="Confirmed" className="bg-white text-ink">주문확인 (Confirmed)</option>
-                                <option value="Processing" className="bg-white text-ink">발주 (Processing)</option>
-                                <option value="Shipping" className="bg-white text-ink">배송 (Shipping)</option>
-                                <option value="Completed" className="bg-white text-ink">완료 (Completed)</option>
+                                <option value="Pending">대기 (Pending)</option>
+                                <option value="Confirmed">주문확인 (Confirmed)</option>
+                                <option value="Processing">발주 (Processing)</option>
+                                <option value="Shipping">배송 (Shipping)</option>
+                                <option value="Completed">완료 (Completed)</option>
                               </select>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Recipient details */}
-                        {o.name && (
-                          <div className="border-b border-black/10 pb-4 text-xs uppercase tracking-wider font-bold text-ink/80 flex flex-col sm:flex-row flex-wrap gap-x-6 gap-y-2 bg-off-white/80 p-3.5 border border-black/5">
-                            <span className="break-words">Recipient: {o.name}</span>
-                            <span className="break-words">Phone: {o.phone}</span>
-                            <span className="break-words">Address: {o.address}</span>
-                          </div>
-                        )}
+                          {/* Recipient details */}
+                          {o.name && (
+                            <div className="border-b border-black/10 pb-4 text-xs uppercase tracking-wider font-bold text-ink/80 flex flex-col sm:flex-row flex-wrap gap-x-6 gap-y-2 bg-off-white/80 p-3.5 border border-black/5">
+                              <span className="break-words">Recipient: {o.name}</span>
+                              <span className="break-words">Phone: {o.phone}</span>
+                              <span className="break-words">Address: {o.address}</span>
+                            </div>
+                          )}
 
-                        <div className="space-y-3">
-                          {o.items && Array.isArray(o.items) && o.items.map((item: any, idx: number) => (
-                            <Link 
-                              key={idx} 
-                              to={`/product/${item.productId}`} 
-                              target="_blank" 
-                              className="flex gap-4 items-center border-b border-black/[0.05] pb-3 last:border-0 last:pb-0 hover:bg-black/[0.02] p-2 transition-colors group cursor-pointer rounded-none"
-                            >
-                              <div className="w-14 h-14 bg-silver/10 border border-black/10 flex-shrink-0 overflow-hidden">
-                                {item.image ? (
-                                  <img 
-                                    src={item.image} 
-                                    alt={item.name} 
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                                    nopin="nopin" 
-                                    data-pin-no-hover="true" 
-                                  />
-                                ) : (
-                                  <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[9px] text-ink/30 uppercase">No Img</div>
-                                )}
-                              </div>
-                              <div className="flex-grow flex justify-between items-center min-w-0">
-                                <div className="min-w-0 pr-3">
-                                  <h4 className="text-xs md:text-sm font-bold text-ink uppercase tracking-tight truncate group-hover:text-cobalt transition-colors flex items-center gap-1.5">
-                                    {item.name} <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity text-cobalt flex-shrink-0" />
-                                  </h4>
-                                  <p className="text-xs uppercase tracking-wider text-ink/50 font-medium truncate">{item.category}</p>
-                                  <div className="flex flex-wrap gap-3 text-xs text-ink/60 font-semibold mt-0.5">
-                                    {item.color && <span>Color: {item.color}</span>}
-                                    {item.material && <span>Mat: {item.material}</span>}
+                          <div className="space-y-3">
+                            {o.items && Array.isArray(o.items) && o.items.map((item: any, idx: number) => {
+                              const foundProd = products.find((p: any) => p.id === item.productId);
+                              const colorVal = item.color || (foundProd?.color ? (Array.isArray(foundProd.color) ? foundProd.color.map((c:any) => c.name).join(', ') : foundProd.color) : '-');
+                              const shippingVal = getFormattedShipping(item.shipping || foundProd?.shipping);
+                              return (
+                                <Link 
+                                  key={idx} 
+                                  to={`/product/${item.productId}`} 
+                                  target="_blank" 
+                                  className="flex gap-4 items-center border-b border-black/[0.05] pb-3 last:border-0 last:pb-0 hover:bg-black/[0.02] p-2 transition-colors group cursor-pointer rounded-none"
+                                >
+                                  <div className="w-14 h-14 bg-silver/10 border border-black/10 flex-shrink-0 overflow-hidden">
+                                    {item.image ? (
+                                      <img 
+                                        src={item.image} 
+                                        alt={item.name} 
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                                        nopin="nopin" 
+                                        data-pin-no-hover="true" 
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[9px] text-ink/30 uppercase">No Img</div>
+                                    )}
                                   </div>
-                                </div>
-                                <div className="text-right flex-shrink-0">
-                                  <span className="text-xs md:text-sm font-bold text-ink block">${Number(item.price).toLocaleString()}</span>
-                                  <span className="block text-xs text-ink/50 font-bold uppercase mt-0.5">QTY {item.quantity}</span>
-                                </div>
-                              </div>
-                            </Link>
-                          ))}
+                                  <div className="flex-grow flex justify-between items-center min-w-0">
+                                    <div className="min-w-0 pr-3">
+                                      <h4 className="text-xs md:text-sm font-bold text-ink uppercase tracking-tight truncate group-hover:text-cobalt transition-colors flex items-center gap-1.5">
+                                        {item.name} <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity text-cobalt flex-shrink-0" />
+                                      </h4>
+                                      <p className="text-xs uppercase tracking-wider text-ink/50 font-medium truncate mb-1">{item.category}</p>
+                                      <div className="flex flex-wrap gap-2 text-[10px] uppercase font-bold">
+                                        <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5">Shipping: {shippingVal}</span>
+                                        <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5">Color: {colorVal}</span>
+                                        {item.material && <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/60 border border-black/5">Mat: {item.material}</span>}
+                                      </div>
+                                    </div>
+                                    <div className="text-right flex-shrink-0">
+                                      <span className="text-xs md:text-sm font-bold text-ink block">${Number(item.price).toLocaleString()}</span>
+                                      <span className="block text-xs text-ink/50 font-bold uppercase mt-0.5">QTY {item.quantity}</span>
+                                    </div>
+                                  </div>
+                                </Link>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
