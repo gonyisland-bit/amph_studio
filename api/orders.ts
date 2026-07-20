@@ -31,6 +31,9 @@ export default async function handler(req: any, res: any) {
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "name" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "phone" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "address" TEXT DEFAULT ''`; } catch(e) {}
   } catch (e) {
     console.warn("DB not connected, using memory fallback for orders table creation");
   }

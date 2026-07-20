@@ -25,6 +25,12 @@ export default async function handler(req: any, res: any) {
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "subTitle" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "dimensions" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "shipping" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "sku" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "color" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "cartEnabled" BOOLEAN DEFAULT TRUE`; } catch(e) {}
   } catch (e) {}
 
   if (req.method === 'GET') {

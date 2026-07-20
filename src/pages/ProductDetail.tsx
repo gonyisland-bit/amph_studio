@@ -370,36 +370,26 @@ export default function ProductDetail() {
             <div className="border-t border-black/10 mt-8 mb-12">
               <table className="w-full text-left text-xs font-sans">
                 <tbody>
-                  {product.material && (
-                    <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                      <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Material</td>
-                      <td className="text-ink/70 font-semibold">{product.material}</td>
-                    </tr>
-                  )}
-                  {product.color && (
-                    <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                      <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Color Options</td>
-                      <td className="text-ink/70 font-semibold">{product.color}</td>
-                    </tr>
-                  )}
-                  {product.dimensions && (
-                    <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                      <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Dimensions</td>
-                      <td className="text-ink/70 font-semibold">{product.dimensions}</td>
-                    </tr>
-                  )}
-                  {product.shipping && (
-                    <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                      <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Shipping</td>
-                      <td className="text-ink/70 font-semibold">{product.shipping}</td>
-                    </tr>
-                  )}
-                  {product.sku && (
-                    <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                      <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">SKU Code</td>
-                      <td className="text-ink/70 font-mono text-[10px]">{product.sku}</td>
-                    </tr>
-                  )}
+                  <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
+                    <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Material</td>
+                    <td className="text-ink/70 font-semibold">{product.material || '-'}</td>
+                  </tr>
+                  <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
+                    <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Color Options</td>
+                    <td className="text-ink/70 font-semibold">{product.color || '-'}</td>
+                  </tr>
+                  <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
+                    <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Dimensions</td>
+                    <td className="text-ink/70 font-semibold">{product.dimensions || '-'}</td>
+                  </tr>
+                  <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
+                    <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Shipping</td>
+                    <td className="text-ink/70 font-semibold">{product.shipping || '-'}</td>
+                  </tr>
+                  <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
+                    <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">SKU Code</td>
+                    <td className="text-ink/70 font-mono text-[10px]">{product.sku || '-'}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
