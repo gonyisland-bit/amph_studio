@@ -715,33 +715,91 @@ export default function Admin() {
   };
 
   const renderContentBlocksEditor = () => (
-    <div className="mb-4">
-      <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Content Blocks</label>
+    <div className="mb-4 space-y-4">
+      <div className="flex justify-between items-center border-b border-black/5 pb-2">
+        <label className="block text-[10px] font-bold uppercase text-ink/60 tracking-wider">Product Editorial Story Blocks</label>
+        <span className="text-[9px] text-ink/40 font-medium">Image + Optional Caption</span>
+      </div>
       {form.contentBlocks?.map((cb: ContentBlock, i: number) => (
-        <div key={i} className="flex gap-2 mb-2 items-start bg-black/5 p-2 rounded">
-          <select value={cb.type} onChange={e => {
-              const newCb = [...form.contentBlocks];
-              newCb[i] = { ...newCb[i], type: e.target.value as 'text'|'image' };
-              setForm({...form, contentBlocks: newCb});
-          }} className="border border-black/20 p-1 text-xs outline-none">
-              <option value="text">Text</option>
-              <option value="image">Image</option>
-          </select>
-          {cb.type === 'image' ? (
-              <MediaUploadInput value={cb.value} onChange={val => {
-                const newCb = [...form.contentBlocks]; newCb[i].value = val; setForm({...form, contentBlocks: newCb});
-              }} />
+        <div key={i} className="flex flex-col gap-3 mb-3 bg-black/[0.02] border border-black/5 p-3 rounded-none">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-mono font-bold text-ink/40">#{i + 1}</span>
+              <select 
+                value={cb.type || 'image'} 
+                onChange={e => {
+                  const newCb = [...(form.contentBlocks || [])];
+                  newCb[i] = { ...newCb[i], type: e.target.value as 'text'|'image' };
+                  setForm({...form, contentBlocks: newCb});
+                }} 
+                className="border border-black/15 bg-white p-1 text-[10px] uppercase font-bold text-ink outline-none rounded-none"
+              >
+                <option value="image">Image (이미지)</option>
+                <option value="text">Text Only (텍스트)</option>
+              </select>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => {
+                setForm({...form, contentBlocks: form.contentBlocks.filter((_:any, idx:number) => idx !== i)});
+              }} 
+              className="text-orange text-[10px] font-bold uppercase tracking-wider hover:underline"
+            >
+              Remove Block
+            </button>
+          </div>
+
+          {(cb.type === 'image' || !cb.type) ? (
+            <div className="space-y-2">
+              <MediaUploadInput 
+                label="Editorial Image" 
+                value={cb.value} 
+                onChange={val => {
+                  const newCb = [...(form.contentBlocks || [])]; 
+                  newCb[i] = { ...newCb[i], value: val }; 
+                  setForm({...form, contentBlocks: newCb});
+                }} 
+              />
+              <div>
+                <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Image Below Text / Caption (선택사항)</label>
+                <textarea 
+                  value={cb.caption || ''} 
+                  onChange={e => {
+                    const newCb = [...(form.contentBlocks || [])]; 
+                    newCb[i] = { ...newCb[i], caption: e.target.value }; 
+                    setForm({...form, contentBlocks: newCb});
+                  }} 
+                  className="w-full border border-black/15 bg-white p-2 text-xs outline-none rounded-none font-sans" 
+                  placeholder="Enter text to display below this image (optional)..." 
+                  rows={2}
+                />
+              </div>
+            </div>
           ) : (
-              <textarea value={cb.value} onChange={e => {
-                const newCb = [...form.contentBlocks]; newCb[i].value = e.target.value; setForm({...form, contentBlocks: newCb});
-              }} className="flex-1 border border-black/20 p-1 text-xs outline-none" placeholder="Text Content" rows={2}/>
+            <div>
+              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Text Content</label>
+              <textarea 
+                value={cb.value} 
+                onChange={e => {
+                  const newCb = [...(form.contentBlocks || [])]; 
+                  newCb[i] = { ...newCb[i], value: e.target.value }; 
+                  setForm({...form, contentBlocks: newCb});
+                }} 
+                className="w-full border border-black/15 bg-white p-2 text-xs outline-none rounded-none font-sans" 
+                placeholder="Text Content" 
+                rows={3}
+              />
+            </div>
           )}
-          <button type="button" onClick={() => {
-            setForm({...form, contentBlocks: form.contentBlocks.filter((_:any, idx:number) => idx !== i)});
-          }} className="text-orange text-xs font-bold px-2 hover:underline">X</button>
         </div>
       ))}
-      <button type="button" onClick={() => setForm({...form, contentBlocks: [...(form.contentBlocks || []), { type: 'text', value: '' }]})} className="text-xs font-bold text-cobalt hover:underline">+ Add Block</button>
+      <button 
+        type="button" 
+        onClick={() => setForm({...form, contentBlocks: [...(form.contentBlocks || []), { type: 'image', value: '', caption: '' }]})} 
+        className="w-full py-2.5 bg-cobalt/5 hover:bg-cobalt text-cobalt hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors border border-cobalt/20 rounded-none cursor-pointer"
+      >
+        + Add Editorial Image Block
+      </button>
     </div>
   );
 
@@ -762,19 +820,81 @@ export default function Admin() {
         </button>
       </div>
 
-      <div className="flex gap-6 mb-8 border-b border-black/10 pb-4 overflow-x-auto">
-        {[
-          { id: 'home', label: 'Home' },
-          { id: 'collection', label: 'Collection' },
-          { id: 'space', label: 'Space' },
-          { id: 'journal', label: 'Journal' },
-          { id: 'orders', label: 'Orders' },
-          { id: 'users', label: 'Users' }
-        ].map(tab => (
-          <button key={tab.id} onClick={() => switchTab(tab.id as any)} className={`uppercase text-[11px] font-bold tracking-widest transition-all shrink-0 ${activeTab === tab.id ? 'text-cobalt border-b-2 border-cobalt pb-1' : 'text-ink/40 hover:text-ink'}`}>
-            {tab.label}
+      {/* Top-Level Dashboard Category Navigation & Sub-Tabs */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-black/10 pb-4 mb-8 gap-4">
+        <div className="flex items-center gap-2 bg-black/5 p-1 rounded-none w-full md:w-auto">
+          <button
+            type="button"
+            onClick={() => {
+              if (activeTab === 'orders' || activeTab === 'users') {
+                switchTab('collection');
+              }
+            }}
+            className={`flex-1 md:flex-none px-4 py-2 text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all rounded-none flex items-center justify-center gap-2 cursor-pointer ${
+              activeTab !== 'orders' && activeTab !== 'users'
+                ? 'bg-ink text-white shadow-sm'
+                : 'text-ink/60 hover:text-ink hover:bg-black/5'
+            }`}
+          >
+            🎨 홈페이지 디자인 (Site Design)
           </button>
-        ))}
+          <button
+            type="button"
+            onClick={() => {
+              if (activeTab !== 'orders' && activeTab !== 'users') {
+                switchTab('orders');
+              }
+            }}
+            className={`flex-1 md:flex-none px-4 py-2 text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all rounded-none flex items-center justify-center gap-2 cursor-pointer ${
+              activeTab === 'orders' || activeTab === 'users'
+                ? 'bg-cobalt text-white shadow-sm'
+                : 'text-ink/60 hover:text-ink hover:bg-black/5'
+            }`}
+          >
+            🛒 고객판매 (Customer & Sales)
+          </button>
+        </div>
+
+        {/* Sub Navigation Tabs */}
+        <div className="flex gap-4 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+          {(activeTab !== 'orders' && activeTab !== 'users') ? (
+            [
+              { id: 'home', label: 'Home' },
+              { id: 'collection', label: 'Collection' },
+              { id: 'space', label: 'Space' },
+              { id: 'journal', label: 'Journal' }
+            ].map(tab => (
+              <button 
+                key={tab.id} 
+                onClick={() => switchTab(tab.id as any)} 
+                className={`uppercase text-[11px] font-bold tracking-widest transition-all shrink-0 cursor-pointer ${
+                  activeTab === tab.id 
+                    ? 'text-cobalt border-b-2 border-cobalt pb-1' 
+                    : 'text-ink/40 hover:text-ink'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))
+          ) : (
+            [
+              { id: 'orders', label: 'Orders (주문 관리)' },
+              { id: 'users', label: 'Users (회원 관리)' }
+            ].map(tab => (
+              <button 
+                key={tab.id} 
+                onClick={() => switchTab(tab.id as any)} 
+                className={`uppercase text-[11px] font-bold tracking-widest transition-all shrink-0 cursor-pointer ${
+                  activeTab === tab.id 
+                    ? 'text-cobalt border-b-2 border-cobalt pb-1' 
+                    : 'text-ink/40 hover:text-ink'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))
+          )}
+        </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -843,42 +963,42 @@ export default function Admin() {
             )}
 
             {activeTab === 'orders' && (
-              <div className="space-y-6 pb-20 animate-in fade-in duration-500">
-                <h2 className="text-xl font-black uppercase tracking-tight border-b border-black/10 pb-4 flex justify-between items-center">
-                  <span>Customer Orders</span>
-                  <button onClick={loadOrders} className="text-[10px] bg-cobalt text-white px-3 py-1.5 font-bold uppercase tracking-widest hover:bg-ink transition-colors">Refresh Orders</button>
+              <div className="space-y-6 pb-20 animate-in fade-in duration-500 w-full max-w-full overflow-x-hidden">
+                <h2 className="text-xl font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <span>Customer Orders (주문 관리)</span>
+                  <button onClick={loadOrders} className="text-[10px] bg-cobalt text-white px-3 py-1.5 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer self-start sm:self-auto">Refresh Orders</button>
                 </h2>
                 {orders.length === 0 ? (
                   <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No orders placed yet.</p>
                 ) : (
                   <div className="space-y-6">
                     {orders.map((o: any) => (
-                      <div key={o.id} className="bg-white border border-black/5 p-6 flex flex-col gap-4 shadow-sm">
+                      <div key={o.id} className="bg-white border border-black/5 p-4 md:p-6 flex flex-col gap-4 shadow-sm w-full overflow-hidden">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-black/5 pb-4 gap-4 text-[10px] uppercase font-sans tracking-wider text-ink/50">
-                          <div className="flex flex-wrap gap-x-6 gap-y-2">
-                            <div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full sm:w-auto">
+                            <div className="min-w-0">
                               <span className="block text-[8px] text-ink/30 font-bold">Order ID</span>
-                              <span className="font-mono text-ink font-bold">{o.id}</span>
+                              <span className="font-mono text-ink font-bold break-all block">{o.id}</span>
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <span className="block text-[8px] text-ink/30 font-bold">Customer Email</span>
-                              <span className="text-cobalt font-bold">{o.customerEmail}</span>
+                              <span className="text-cobalt font-bold break-all block">{o.customerEmail}</span>
                             </div>
                             <div>
                               <span className="block text-[8px] text-ink/30 font-bold">Date Placed</span>
-                              <span className="text-ink font-semibold">{new Date(o.createdAt).toLocaleString()}</span>
+                              <span className="text-ink font-semibold block">{new Date(o.createdAt).toLocaleString()}</span>
                             </div>
                             <div>
                               <span className="block text-[8px] text-ink/30 font-bold">Total Price</span>
-                              <span className="text-ink font-bold">${Number(o.totalPrice).toLocaleString()}</span>
+                              <span className="text-ink font-bold block">${Number(o.totalPrice).toLocaleString()}</span>
                             </div>
                           </div>
-                          <div>
+                          <div className="w-full sm:w-auto flex-shrink-0">
                             <span className="block text-[8px] text-ink/30 font-bold text-left sm:text-right mb-1">Status</span>
                             <select
                               value={o.status}
                               onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                              className="px-2 py-1 text-[8px] font-black tracking-widest border border-black/10 bg-white hover:border-black/30 transition-colors uppercase outline-none rounded-none text-ink"
+                              className="w-full sm:w-auto px-2 py-1.5 text-[8px] font-black tracking-widest border border-black/10 bg-white hover:border-black/30 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer"
                             >
                               <option value="Pending">대기 (Pending)</option>
                               <option value="Confirmed">주문확인 (Confirmed)</option>
@@ -891,10 +1011,10 @@ export default function Admin() {
 
                         {/* Recipient details */}
                         {o.name && (
-                          <div className="border-b border-black/[0.03] pb-4 text-[9px] uppercase tracking-wider font-bold text-ink/60 flex flex-wrap gap-x-6 gap-y-1 bg-off-white/50 p-3">
-                            <span>Recipient: {o.name}</span>
-                            <span>Phone: {o.phone}</span>
-                            <span>Address: {o.address}</span>
+                          <div className="border-b border-black/[0.03] pb-4 text-[9px] uppercase tracking-wider font-bold text-ink/60 flex flex-col sm:flex-row flex-wrap gap-x-6 gap-y-2 bg-off-white/50 p-3">
+                            <span className="break-words">Recipient: {o.name}</span>
+                            <span className="break-words">Phone: {o.phone}</span>
+                            <span className="break-words">Address: {o.address}</span>
                           </div>
                         )}
 
@@ -908,17 +1028,17 @@ export default function Admin() {
                                   <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[8px] text-ink/30 uppercase">No Img</div>
                                 )}
                               </div>
-                              <div className="flex-grow flex justify-between items-center">
-                                <div>
-                                  <h4 className="text-xs font-bold text-ink uppercase tracking-tight">{item.name}</h4>
-                                  <p className="text-[9px] uppercase tracking-wider text-ink/40">{item.category}</p>
-                                  <div className="flex gap-2 text-[9px] text-ink/50 uppercase font-semibold">
+                              <div className="flex-grow flex justify-between items-center min-w-0">
+                                <div className="min-w-0 pr-2">
+                                  <h4 className="text-xs font-bold text-ink uppercase tracking-tight truncate">{item.name}</h4>
+                                  <p className="text-[9px] uppercase tracking-wider text-ink/40 truncate">{item.category}</p>
+                                  <div className="flex flex-wrap gap-2 text-[9px] text-ink/50 uppercase font-semibold">
                                     {item.color && <span>Color: {item.color}</span>}
                                     {item.material && <span>Mat: {item.material}</span>}
                                   </div>
                                 </div>
-                                <div className="text-right">
-                                  <span className="text-xs font-bold text-ink">${Number(item.price).toLocaleString()}</span>
+                                <div className="text-right flex-shrink-0">
+                                  <span className="text-xs font-bold text-ink block">${Number(item.price).toLocaleString()}</span>
                                   <span className="block text-[8px] text-ink/40 font-bold uppercase mt-0.5">QTY {item.quantity}</span>
                                 </div>
                               </div>
@@ -933,25 +1053,25 @@ export default function Admin() {
             )}
 
             {activeTab === 'users' && (
-              <div className="space-y-6 pb-20 animate-in fade-in duration-500">
-                <h2 className="text-xl font-black uppercase tracking-tight border-b border-black/10 pb-4 flex justify-between items-center">
-                  <span>Registered Customers</span>
-                  <button onClick={loadUsers} className="text-[10px] bg-cobalt text-white px-3 py-1.5 font-bold uppercase tracking-widest hover:bg-ink transition-colors">Refresh Users</button>
+              <div className="space-y-6 pb-20 animate-in fade-in duration-500 w-full max-w-full overflow-x-hidden">
+                <h2 className="text-xl font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <span>Registered Customers (회원 관리)</span>
+                  <button onClick={loadUsers} className="text-[10px] bg-cobalt text-white px-3 py-1.5 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer self-start sm:self-auto">Refresh Users</button>
                 </h2>
                 {usersList.length === 0 ? (
                   <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No registered customers yet.</p>
                 ) : (
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     {/* Left panel: List */}
-                    <div className={selectedUser ? "lg:col-span-7 space-y-4" : "lg:col-span-12 space-y-4"}>
+                    <div className={selectedUser ? "lg:col-span-7 space-y-4 w-full" : "lg:col-span-12 space-y-4 w-full"}>
                       <span className="text-[8px] text-ink/40 uppercase tracking-widest font-black block">* Click any row to view customer profile and internal notes.</span>
-                      <div className="bg-white border border-black/5 shadow-sm overflow-hidden">
-                        <table className="w-full text-left border-collapse text-xs font-sans">
+                      <div className="bg-white border border-black/5 shadow-sm overflow-x-auto w-full">
+                        <table className="w-full text-left border-collapse text-xs font-sans min-w-[500px]">
                           <thead>
                             <tr className="bg-off-white uppercase text-[9px] font-black tracking-widest text-ink/50 border-b border-black/10">
-                              <th className="p-4 px-6">Email Address</th>
-                              <th className="p-4 px-6">Name</th>
-                              <th className="p-4 px-6">Phone</th>
+                              <th className="p-3 md:p-4 px-4 md:px-6">Email Address</th>
+                              <th className="p-3 md:p-4 px-4 md:px-6">Name</th>
+                              <th className="p-3 md:p-4 px-4 md:px-6">Phone</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-black/5 text-ink/80">
@@ -964,9 +1084,9 @@ export default function Admin() {
                                 }}
                                 className={`cursor-pointer hover:bg-off-white/80 transition-colors ${selectedUser?.email === user.email ? 'bg-off-white/85 font-semibold' : ''}`}
                               >
-                                <td className="p-4 px-6 font-bold text-ink">{user.email}</td>
-                                <td className="p-4 px-6 font-medium">{user.name || '-'}</td>
-                                <td className="p-4 px-6">{user.phone || '-'}</td>
+                                <td className="p-3 md:p-4 px-4 md:px-6 font-bold text-ink break-all">{user.email}</td>
+                                <td className="p-3 md:p-4 px-4 md:px-6 font-medium whitespace-nowrap">{user.name || '-'}</td>
+                                <td className="p-3 md:p-4 px-4 md:px-6 whitespace-nowrap">{user.phone || '-'}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -976,18 +1096,18 @@ export default function Admin() {
 
                     {/* Right panel: Details & Memo */}
                     {selectedUser && (
-                      <div className="lg:col-span-5 bg-white border border-black/5 p-6 space-y-6 shadow-sm animate-in fade-in slide-in-from-right-4 duration-300">
+                      <div className="lg:col-span-5 bg-white border border-black/5 p-6 space-y-6 shadow-sm animate-in fade-in slide-in-from-right-4 duration-300 w-full">
                         <div className="flex justify-between items-center border-b border-black/5 pb-3">
                           <h3 className="text-xs font-black uppercase tracking-widest text-ink">
                             Customer Details
                           </h3>
-                          <button onClick={() => setSelectedUser(null)} className="text-[9px] text-ink/40 hover:text-ink font-bold uppercase tracking-widest">Close</button>
+                          <button onClick={() => setSelectedUser(null)} className="text-[9px] text-ink/40 hover:text-ink font-bold uppercase tracking-widest cursor-pointer">Close</button>
                         </div>
                         
                         <div className="space-y-4 text-xs font-sans text-ink/80">
                           <div>
                             <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Email</span>
-                            <span className="font-bold text-ink">{selectedUser.email}</span>
+                            <span className="font-bold text-ink break-all block">{selectedUser.email}</span>
                           </div>
                           <div>
                             <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Registered Name</span>
@@ -999,7 +1119,7 @@ export default function Admin() {
                           </div>
                           <div>
                             <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Shipping Address</span>
-                            <p className="font-semibold text-ink whitespace-pre-wrap">{selectedUser.address || 'Not registered'}</p>
+                            <p className="font-semibold text-ink whitespace-pre-wrap break-words">{selectedUser.address || 'Not registered'}</p>
                           </div>
                           <div>
                             <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Registration Date</span>
@@ -1351,9 +1471,20 @@ export default function Admin() {
                         </div>
                         <EditorInput label="Dimensions (e.g., H 75 x W 120 x D 60 cm)" value={form.dimensions || ''} onChange={val => setForm({...form, dimensions: val})} />
                         
-                        <div className="grid grid-cols-2 gap-4">
-                          <EditorInput label="Shipping (e.g., Free shipping)" value={form.shipping || ''} onChange={val => setForm({...form, shipping: val})} />
-                          <EditorInput label="SKU Code" value={form.sku || ''} onChange={val => setForm({...form, sku: val})} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">배송 수단 (Shipping)</label>
+                            <select
+                              value={form.shipping || '일반택배(배송료포함)'}
+                              onChange={e => setForm({...form, shipping: e.target.value})}
+                              className="w-full border-b border-black/10 focus:border-cobalt outline-none py-1.5 text-xs bg-transparent rounded-none text-ink font-semibold"
+                            >
+                              <option value="일반택배(배송료포함)">일반택배(배송료포함)</option>
+                              <option value="화물배송(배송료별도)">화물배송(배송료별도)</option>
+                              <option value="현장수령">현장수령</option>
+                            </select>
+                          </div>
+                          <EditorInput label="제품 코드" value={form.sku || ''} onChange={val => setForm({...form, sku: val})} />
                         </div>
                         <div className="mt-4 border-t border-black/5 pt-4">
                           <label className="flex items-center gap-2 cursor-pointer">

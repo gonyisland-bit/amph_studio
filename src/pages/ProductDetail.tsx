@@ -394,7 +394,7 @@ export default function ProductDetail() {
                     <td className="text-ink/70 font-semibold">{product.shipping || '-'}</td>
                   </tr>
                   <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                    <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">SKU Code</td>
+                    <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">제품 코드</td>
                     <td className="text-ink/70 font-mono text-[10px]">{product.sku || '-'}</td>
                   </tr>
                 </tbody>
@@ -421,43 +421,54 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Content Blocks */}
-      {/* Content Blocks */}
+      {/* Content Blocks (Editorial Section - PC 2-Column Grid) */}
       {product.contentBlocks && product.contentBlocks.length > 0 && (
-        <div className="px-6 md:px-20 py-24 max-w-6xl mx-auto flex flex-col gap-24 w-full">
-          {product.contentBlocks.map((block, idx) => {
-            if (block.type === 'text') {
-              return (
-                <div key={idx} className="reveal max-w-3xl">
-                  <p className="text-3xl font-sans leading-relaxed text-ink/80">{block.value}</p>
-                </div>
-              );
-            }
-            if (block.type === 'image') {
-              // Calculate index in the unified detail image deck
-              const storyImgIdx = storyImages.indexOf(block.value);
-              const targetLightboxIdx = storyImgIdx !== -1 ? displayImages.length + storyImgIdx : 0;
-              return (
-                <div key={idx} className="max-w-2xl mx-auto w-full bg-transparent py-4 reveal">
-                  <div 
-                    onClick={() => {
-                      setLightboxIndex(targetLightboxIdx);
-                      setZoomScale(1);
-                    }}
-                    className="cursor-zoom-in overflow-hidden border border-black/5"
-                  >
-                    <MediaRenderer 
-                      src={block.value} 
-                      className="w-full h-auto rounded-none shadow-none hover:scale-[1.02] transition-transform duration-700" 
-                      loading="lazy" 
-                      nopin="nopin"
-                    />
+        <div className="px-6 md:px-12 lg:px-20 py-24 max-w-7xl mx-auto w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
+            {product.contentBlocks.map((block, idx) => {
+              const textContent = block.caption || (block.type === 'text' ? block.value : '');
+              const imageUrl = block.type === 'image' ? block.value : '';
+
+              if (block.type === 'image' && imageUrl) {
+                const storyImgIdx = storyImages.indexOf(imageUrl);
+                const targetLightboxIdx = storyImgIdx !== -1 ? displayImages.length + storyImgIdx : 0;
+                return (
+                  <div key={idx} className="flex flex-col reveal group">
+                    <div 
+                      onClick={() => {
+                        setLightboxIndex(targetLightboxIdx);
+                        setZoomScale(1);
+                      }}
+                      className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 cursor-zoom-in relative"
+                    >
+                      <MediaRenderer 
+                        src={imageUrl} 
+                        alt={`Editorial view ${idx + 1}`} 
+                        className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
+                        loading="lazy" 
+                        nopin="nopin"
+                      />
+                    </div>
+                    {textContent && (
+                      <div className="mt-4">
+                        <p className="text-sm md:text-base font-sans leading-relaxed text-ink/80">{textContent}</p>
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            }
-            return null;
-          })}
+                );
+              }
+
+              if (block.type === 'text') {
+                return (
+                  <div key={idx} className="flex flex-col reveal py-4">
+                    <p className="text-xl md:text-2xl font-sans leading-relaxed text-ink/80">{block.value}</p>
+                  </div>
+                );
+              }
+
+              return null;
+            })}
+          </div>
         </div>
       )}
 
