@@ -190,60 +190,87 @@ const getFormattedShipping = (shipping?: string) => {
 };
 
 const renderColorBadge = (colorVal: any, foundProd?: any, colorOptionsList?: any[]) => {
-  if (!colorVal || colorVal === '-') return <span>Color: -</span>;
+  if (!colorVal) return <span>Color: -</span>;
 
-  let raw = typeof colorVal === 'string' ? colorVal : (colorVal?.name || colorVal?.hex || JSON.stringify(colorVal));
-  let colorName = raw;
-  let colorHex: string | null = typeof colorVal === 'object' && colorVal?.hex ? colorVal.hex : null;
+  // Normalize the input - extract name and hex
+  let colorName: string = '';
+  let colorHex: string | null = null;
 
-  // Gather all available color definitions
+  // Build list of all known color definitions to match against
   let allColors: any[] = [];
-
   if (colorOptionsList && Array.isArray(colorOptionsList)) {
-    allColors.push(...colorOptionsList);
+    allColors.push(...colorOptionsList.filter(Boolean));
   }
-
   if (foundProd?.color) {
     let prodColors = foundProd.color;
     if (typeof prodColors === 'string' && prodColors.trim().startsWith('[')) {
       try { prodColors = JSON.parse(prodColors); } catch(e) {}
+    } else if (typeof prodColors === 'string' && prodColors.trim().startsWith('{')) {
+      try { prodColors = JSON.parse(prodColors); } catch(e) {}
     }
-    if (Array.isArray(prodColors)) {
-      allColors.push(...prodColors);
-    } else if (typeof prodColors === 'object') {
-      allColors.push(prodColors);
-    }
+    if (Array.isArray(prodColors)) allColors.push(...prodColors.filter(Boolean));
+    else if (typeof prodColors === 'object' && prodColors !== null) allColors.push(prodColors);
   }
 
-  // Find match by name or hex
-  const cleanRaw = raw.trim().toLowerCase();
-  const match = allColors.find((c: any) => {
-    if (!c) return false;
-    const cName = (c.name || '').trim().toLowerCase();
-    const cHex = (c.hex || '').trim().toLowerCase();
-    return cName === cleanRaw || cHex === cleanRaw;
-  });
-
-  if (match) {
-    if (match.name) colorName = match.name;
-    if (match.hex) colorHex = match.hex;
+  // Parse the color value
+  if (typeof colorVal === 'string') {
+    const trimmed = colorVal.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      // It's a JSON string
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Array of color objects - take first
+          colorName = parsed[0]?.name || '';
+          colorHex = parsed[0]?.hex || null;
+        } else if (typeof parsed === 'object') {
+          colorName = parsed.name || parsed.hex || '';
+          colorHex = parsed.hex || null;
+        }
+      } catch(e) {
+        colorName = trimmed;
+      }
+    } else if (trimmed.startsWith('#')) {
+      // Hex code directly
+      colorHex = trimmed;
+      // Try to find name from allColors
+      const m = allColors.find((c: any) => (c.hex || '').toLowerCase() === trimmed.toLowerCase());
+      colorName = m?.name || trimmed;
+    } else {
+      // Plain name
+      colorName = trimmed;
+      // Try to find hex from allColors
+      const m = allColors.find((c: any) => (c.name || '').toLowerCase() === trimmed.toLowerCase());
+      colorHex = m?.hex || null;
+    }
+  } else if (Array.isArray(colorVal) && colorVal.length > 0) {
+    // Array of color objects
+    colorName = colorVal[0]?.name || colorVal.map((c: any) => c.name || c).join(', ');
+    colorHex = colorVal[0]?.hex || null;
+  } else if (typeof colorVal === 'object' && colorVal !== null) {
+    colorName = colorVal.name || '';
+    colorHex = colorVal.hex || null;
   }
 
-  if (!colorHex && raw.startsWith('#')) {
-    colorHex = raw;
+  if (!colorName && !colorHex) return <span>Color: -</span>;
+
+  // If still no hex, search allColors by name
+  if (!colorHex && colorName) {
+    const m = allColors.find((c: any) => (c.name || '').toLowerCase() === colorName.toLowerCase());
+    colorHex = m?.hex || null;
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 break-all">
+    <span className="inline-flex items-center gap-1.5">
       <span>Color:</span>
       {colorHex && (
-        <span 
-          className="inline-block w-3 h-3 rounded-full border border-black/20 flex-shrink-0 shadow-xs" 
-          style={{ backgroundColor: colorHex }} 
-          title={colorName}
+        <span
+          className="inline-block w-3 h-3 rounded-full border border-black/20 flex-shrink-0"
+          style={{ backgroundColor: colorHex }}
+          title={colorName || colorHex}
         />
       )}
-      <span className="font-bold">{colorName}</span>
+      <span className="font-bold">{colorName || colorHex}</span>
     </span>
   );
 };
@@ -907,25 +934,25 @@ export default function Admin() {
   );
 
   return (
-    <div className="flex flex-col flex-grow p-6 md:p-12 max-w-[1400px] mx-auto w-full font-sans">
+    <div className="flex flex-col flex-grow p-4 md:p-12 max-w-[1400px] mx-auto w-full font-sans min-w-0 overflow-x-hidden">
       
-      {/* Admin Status Banner - Redesigned to be clean and minimal with line border */}
-      <div className="border border-black/10 bg-white p-6 mb-8 flex justify-between items-center rounded-none">
-        <div className="flex items-center gap-4">
-          <CheckCircle2 size={18} className="text-cobalt" />
-          <div>
+      {/* Admin Status Banner */}
+      <div className="border border-black/10 bg-white p-4 mb-8 flex justify-between items-center rounded-none gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <CheckCircle2 size={16} className="text-cobalt flex-shrink-0" />
+          <div className="min-w-0">
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-ink/30">System Status</p>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-ink">Logged in as Administrator</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-ink truncate">Logged in as Administrator</h2>
           </div>
         </div>
-        <button onClick={handleLogout} className="flex items-center gap-2 border border-orange/20 text-orange hover:bg-orange hover:text-white px-4 py-2 rounded-none transition-all text-[9px] font-bold uppercase tracking-widest cursor-pointer">
+        <button onClick={handleLogout} className="flex items-center gap-1.5 border border-orange/20 text-orange hover:bg-orange hover:text-white px-3 py-2 rounded-none transition-all text-[9px] font-bold uppercase tracking-widest cursor-pointer flex-shrink-0">
           <LogOut size={12} /> Logout
         </button>
       </div>
 
       {/* Top-Level Dashboard Category Navigation & Sub-Tabs */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-black/10 pb-4 mb-8 gap-4">
-        <div className="flex items-center gap-2 bg-black/5 p-1 rounded-none w-full md:w-auto">
+      <div className="flex flex-col gap-3 border-b border-black/10 pb-4 mb-8">
+        <div className="flex gap-1 bg-black/5 p-1 rounded-none w-full">
           <button
             type="button"
             onClick={() => {
@@ -959,7 +986,7 @@ export default function Admin() {
         </div>
 
         {/* Sub Navigation Tabs */}
-        <div className="flex gap-4 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+        <div className="flex gap-3 overflow-x-auto w-full pb-1">
           {(activeTab !== 'orders' && activeTab !== 'users') ? (
             [
               { id: 'home', label: 'Home' },
@@ -1066,14 +1093,14 @@ export default function Admin() {
             )}
 
             {activeTab === 'orders' && (
-              <div className="space-y-6 pb-20 animate-in fade-in duration-500 w-full max-w-full overflow-x-hidden">
-                <h2 className="text-xl font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="space-y-6 pb-20 w-full">
+                <h2 className="text-lg font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-wrap justify-between items-center gap-3">
                   <span>Customer Orders</span>
-                  <button onClick={loadOrders} className="text-xs bg-cobalt text-white px-4 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer self-start sm:self-auto">Refresh Orders</button>
+                  <button onClick={loadOrders} className="text-xs bg-cobalt text-white px-3 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer">Refresh</button>
                 </h2>
 
                 {/* Sub-tabs for filtering orders */}
-                <div className="flex items-center gap-2 border-b border-black/10 pb-3 flex-wrap">
+                <div className="flex gap-1.5 border-b border-black/10 pb-3 flex-wrap">
                   <button
                     type="button"
                     onClick={() => setOrderFilter('active')}
@@ -1121,46 +1148,47 @@ export default function Admin() {
                   }
 
                   return (
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                       {filteredOrders.map((o: any) => (
-                        <div key={o.id} className="bg-white border border-black/5 p-4 md:p-6 flex flex-col gap-5 shadow-sm w-full overflow-hidden">
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-black/10 pb-4 gap-4 text-xs uppercase font-sans tracking-wider text-ink/70">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full sm:w-auto">
-                              <div className="min-w-0">
+                        <div key={o.id} className="bg-white border border-black/5 p-3 md:p-5 flex flex-col gap-4 shadow-sm w-full min-w-0">
+                          {/* Order header */}
+                          <div className="flex flex-col gap-3 border-b border-black/10 pb-3 text-xs uppercase font-sans tracking-wider text-ink/70">
+                            <div className="grid grid-cols-2 gap-3 w-full">
+                              <div className="min-w-0 col-span-2">
                                 <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Order ID</span>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-mono text-ink font-bold text-xs md:text-sm break-all block">{o.id}</span>
-                                  <span className={`px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border rounded-full ${getStatusBadgeStyle(o.status)}`}>
+                                  <span className="font-mono text-ink font-bold text-[10px] break-all">{o.id}</span>
+                                  <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border rounded-full flex-shrink-0 ${getStatusBadgeStyle(o.status)}`}>
                                     ● {o.status === 'Pending' ? '대기' : o.status === 'Confirmed' ? '주문확인' : o.status === 'Processing' ? '발주' : o.status === 'Shipping' ? '배송' : o.status === 'Completed' ? '완료' : o.status}
                                   </span>
                                 </div>
                               </div>
                               <div className="min-w-0">
-                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Customer Email</span>
-                                <span className="text-cobalt font-bold text-xs md:text-sm break-all block">{o.customerEmail}</span>
+                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Email</span>
+                                <span className="text-cobalt font-bold text-[10px] break-all block">{o.customerEmail}</span>
                               </div>
-                              <div>
-                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Date Placed</span>
-                                <span className="text-ink font-semibold text-xs md:text-sm block">{new Date(o.createdAt).toLocaleString()}</span>
+                              <div className="min-w-0">
+                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Date</span>
+                                <span className="text-ink font-semibold text-[10px] block">{new Date(o.createdAt).toLocaleString()}</span>
                               </div>
-                              <div>
-                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Total Price</span>
-                                <span className="text-ink font-black text-sm md:text-base block">${Number(o.totalPrice).toLocaleString()}</span>
+                              <div className="min-w-0">
+                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Total</span>
+                                <span className="text-ink font-black text-sm block">${Number(o.totalPrice).toLocaleString()}</span>
                               </div>
-                            </div>
-                            <div className="w-full sm:w-auto flex-shrink-0">
-                              <span className="block text-[10px] text-ink/40 font-bold text-left sm:text-right mb-1 uppercase">Update Status</span>
-                              <select
-                                value={o.status}
-                                onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                                className="w-full sm:w-auto px-3 py-2 text-xs font-bold tracking-wider border border-black/20 bg-white hover:border-black/40 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer shadow-xs"
-                              >
-                                <option value="Pending">대기 (Pending)</option>
-                                <option value="Confirmed">주문확인 (Confirmed)</option>
-                                <option value="Processing">발주 (Processing)</option>
-                                <option value="Shipping">배송 (Shipping)</option>
-                                <option value="Completed">완료 (Completed)</option>
-                              </select>
+                              <div className="min-w-0">
+                                <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Update Status</span>
+                                <select
+                                  value={o.status}
+                                  onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
+                                  className="w-full px-2 py-1.5 text-[10px] font-bold tracking-wider border border-black/20 bg-white hover:border-black/40 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer"
+                                >
+                                  <option value="Pending">대기 (Pending)</option>
+                                  <option value="Confirmed">주문확인 (Confirmed)</option>
+                                  <option value="Processing">발주 (Processing)</option>
+                                  <option value="Shipping">배송 (Shipping)</option>
+                                  <option value="Completed">완료 (Completed)</option>
+                                </select>
+                              </div>
                             </div>
                           </div>
 
@@ -1230,10 +1258,10 @@ export default function Admin() {
             )}
 
             {activeTab === 'users' && (
-              <div className="space-y-6 pb-20 animate-in fade-in duration-500 w-full max-w-full overflow-x-hidden">
-                <h2 className="text-xl font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="space-y-6 pb-20 w-full">
+                <h2 className="text-lg font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-wrap justify-between items-center gap-3">
                   <span>Registered Customers</span>
-                  <button onClick={loadUsers} className="text-xs bg-cobalt text-white px-4 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer self-start sm:self-auto">Refresh Users</button>
+                  <button onClick={loadUsers} className="text-xs bg-cobalt text-white px-3 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer">Refresh</button>
                 </h2>
                 {usersList.length === 0 ? (
                   <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No registered customers yet.</p>
