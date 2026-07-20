@@ -70,7 +70,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     const customerEmail = localStorage.getItem("customer_email");
     const customerToken = localStorage.getItem("customer_token");
 
@@ -88,71 +88,8 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       return;
     }
 
-    setIsOrdering(true);
-    setErrorMsg(null);
-
-    try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerEmail,
-          items: cartItems,
-          totalPrice
-        })
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to place order on server");
-      }
-
-      const data = await res.json();
-      if (data.success) {
-        // Success
-        setOrderSuccess(true);
-        saveCart([]); // Clear cart
-        setTimeout(() => {
-          setOrderSuccess(false);
-          onClose();
-          navigate("/account");
-        }, 2000);
-      } else {
-        throw new Error(data.error || "Order creation failed");
-      }
-    } catch (err: any) {
-      console.error("API Error - falling back to localStorage:", err);
-      
-      const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-      const newOrder = {
-        id: orderId,
-        customerEmail,
-        items: cartItems,
-        totalPrice,
-        status: 'Pending',
-        createdAt: new Date().toISOString()
-      };
-      
-      const localOrdersStr = localStorage.getItem("local_orders") || "[]";
-      let localOrders = [];
-      try {
-        localOrders = JSON.parse(localOrdersStr);
-      } catch (e) {
-        localOrders = [];
-      }
-      
-      localOrders.unshift(newOrder);
-      localStorage.setItem("local_orders", JSON.stringify(localOrders));
-
-      setOrderSuccess(true);
-      saveCart([]); // Clear cart
-      setTimeout(() => {
-        setOrderSuccess(false);
-        onClose();
-        navigate("/account");
-      }, 2000);
-    } finally {
-      setIsOrdering(false);
-    }
+    onClose();
+    navigate("/checkout");
   };
 
   return (

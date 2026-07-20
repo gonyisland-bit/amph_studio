@@ -17,6 +17,7 @@ import Space from "./pages/Space";
 import SpaceDetail from "./pages/SpaceDetail";
 import Login from "./pages/Login";
 import Account from "./pages/Account";
+import Checkout from "./pages/Checkout";
 
 import { FloatingEditButton } from "./components/FloatingEditButton";
 
@@ -35,9 +36,10 @@ export default function App() {
             <Route path="/journal/:id" element={<JournalDetail />} />
             <Route path="/space" element={<Space />} />
              <Route path="/space/:id" element={<SpaceDetail />} />
-            <Route path="/admin" element={<Admin />} />
+             <Route path="/admin" element={<Admin />} />
             <Route path="/login" element={<Login />} />
             <Route path="/account" element={<Account />} />
+            <Route path="/checkout" element={<Checkout />} />
           </Routes>
         </main>
         <Footer />

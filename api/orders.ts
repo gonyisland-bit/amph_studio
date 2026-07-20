@@ -6,11 +6,16 @@ interface MockOrder {
   items: string;
   totalPrice: number;
   status: string;
+  name?: string;
+  phone?: string;
+  address?: string;
   createdAt: string;
 }
 const mockOrders: MockOrder[] = [];
 
 export default async function handler(req: any, res: any) {
+  const { action } = req.query;
+
   // Auto-create table if DB is available
   try {
     await sql`
@@ -20,6 +25,9 @@ export default async function handler(req: any, res: any) {
         items TEXT NOT NULL,
         "totalPrice" NUMERIC NOT NULL,
         status TEXT DEFAULT 'Pending',
+        name TEXT DEFAULT '',
+        phone TEXT DEFAULT '',
+        address TEXT DEFAULT '',
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
@@ -28,8 +36,27 @@ export default async function handler(req: any, res: any) {
   }
 
   if (req.method === 'POST') {
+    if (action === 'update-status') {
+      const { orderId, status } = req.body;
+      if (!orderId || !status) {
+        return res.status(400).json({ error: 'orderId and status are required' });
+      }
+      try {
+        await sql`UPDATE orders SET status = ${status} WHERE id = ${orderId}`;
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        const order = mockOrders.find(o => o.id === orderId);
+        if (order) {
+          order.status = status;
+        }
+        
+        // Also update local_orders in mock client-side (done client-side, but let's notify fallback success)
+        return res.status(200).json({ success: true, fallback: true });
+      }
+    }
+
     try {
-      const { customerEmail, items, totalPrice } = req.body;
+      const { customerEmail, items, totalPrice, name, phone, address } = req.body;
       if (!customerEmail || !items || !totalPrice) {
         return res.status(400).json({ error: 'customerEmail, items and totalPrice are required' });
       }
@@ -39,8 +66,8 @@ export default async function handler(req: any, res: any) {
 
       try {
         await sql`
-          INSERT INTO orders (id, "customerEmail", items, "totalPrice", status)
-          VALUES (${orderId}, ${customerEmail}, ${itemsString}, ${totalPrice}, 'Pending')
+          INSERT INTO orders (id, "customerEmail", items, "totalPrice", status, name, phone, address)
+          VALUES (${orderId}, ${customerEmail}, ${itemsString}, ${totalPrice}, 'Pending', ${name || ''}, ${phone || ''}, ${address || ''})
         `;
         return res.status(201).json({ success: true, orderId });
       } catch (err) {
@@ -51,6 +78,9 @@ export default async function handler(req: any, res: any) {
           items: itemsString,
           totalPrice,
           status: 'Pending',
+          name: name || '',
+          phone: phone || '',
+          address: address || '',
           createdAt: new Date().toISOString()
         };
         mockOrders.push(newOrder);
@@ -71,7 +101,10 @@ export default async function handler(req: any, res: any) {
         const { rows } = await sql`SELECT * FROM orders WHERE "customerEmail" = ${customerEmail} ORDER BY "createdAt" DESC`;
         const parsedRows = rows.map(r => ({
           ...r,
-          items: typeof r.items === 'string' ? JSON.parse(r.items) : r.items
+          items: typeof r.items === 'string' ? JSON.parse(r.items) : r.items,
+          name: r.name || '',
+          phone: r.phone || '',
+          address: r.address || ''
         }));
         return res.status(200).json(parsedRows);
       } else {
@@ -79,7 +112,10 @@ export default async function handler(req: any, res: any) {
         const { rows } = await sql`SELECT * FROM orders ORDER BY "createdAt" DESC`;
         const parsedRows = rows.map(r => ({
           ...r,
-          items: typeof r.items === 'string' ? JSON.parse(r.items) : r.items
+          items: typeof r.items === 'string' ? JSON.parse(r.items) : r.items,
+          name: r.name || '',
+          phone: r.phone || '',
+          address: r.address || ''
         }));
         return res.status(200).json(parsedRows);
       }
@@ -90,13 +126,19 @@ export default async function handler(req: any, res: any) {
           .filter(o => o.customerEmail === customerEmail)
           .map(o => ({
             ...o,
-            items: JSON.parse(o.items)
+            items: JSON.parse(o.items),
+            name: o.name || '',
+            phone: o.phone || '',
+            address: o.address || ''
           }));
         return res.status(200).json(filtered);
       } else {
         const parsed = mockOrders.map(o => ({
           ...o,
-          items: JSON.parse(o.items)
+          items: JSON.parse(o.items),
+          name: o.name || '',
+          phone: o.phone || '',
+          address: o.address || ''
         }));
         return res.status(200).json(parsed);
       }

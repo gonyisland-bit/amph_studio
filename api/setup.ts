@@ -78,6 +78,24 @@ export default async function handler(req: any, res: any) {
       )
     `;
 
+    // Migration: products table missing columns
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "subTitle" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "dimensions" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "shipping" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "sku" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "color" TEXT DEFAULT ''`; } catch(e) {}
+
+    // Migration: customer_users table info columns
+    try { await sql`ALTER TABLE customer_users ADD COLUMN IF NOT EXISTS "name" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE customer_users ADD COLUMN IF NOT EXISTS "phone" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE customer_users ADD COLUMN IF NOT EXISTS "address" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE customer_users ADD COLUMN IF NOT EXISTS "memo" TEXT DEFAULT ''`; } catch(e) {}
+
+    // Migration: orders table shipping info columns
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "name" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "phone" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "address" TEXT DEFAULT ''`; } catch(e) {}
+
     return res.status(200).json({ success: true, message: 'Tables and columns verified, migrations completed' });
   } catch (error) {
     console.error(error);

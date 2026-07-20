@@ -173,6 +173,9 @@ export default function Admin() {
   const [sortBy, setSortBy] = useState<'user' | 'name' | 'category' | 'newest'>('user');
   const [orders, setOrders] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [userMemo, setUserMemo] = useState("");
+  const [isSavingMemo, setIsSavingMemo] = useState(false);
   
   const [products, setProducts] = useState<Product[]>([]);
   const [journals, setJournals] = useState<JournalArticle[]>([]);
@@ -276,7 +279,11 @@ export default function Admin() {
             mergedMap.set(u.email, {
               id: 'mock_' + u.email,
               email: u.email,
-              createdAt: new Date().toISOString()
+              name: u.name || '',
+              phone: u.phone || '',
+              address: u.address || '',
+              memo: u.memo || '',
+              createdAt: u.createdAt || new Date().toISOString()
             });
           }
         });
@@ -290,10 +297,75 @@ export default function Admin() {
         const mapped = mockAccounts.map((u: any) => ({
           id: 'mock_' + u.email,
           email: u.email,
-          createdAt: new Date().toISOString()
+          name: u.name || '',
+          phone: u.phone || '',
+          address: u.address || '',
+          memo: u.memo || '',
+          createdAt: u.createdAt || new Date().toISOString()
         }));
         setUsersList(mapped);
       });
+  };
+
+  const handleUpdateStatus = async (orderId: string, status: string) => {
+    try {
+      const res = await fetch('/api/orders?action=update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status })
+      });
+      if (res.ok) {
+        showToast("Order status updated.");
+        loadOrders();
+      }
+    } catch (err) {
+      console.error("Error updating status:", err);
+      const localOrdersStr = localStorage.getItem("local_orders") || "[]";
+      let localOrders = [];
+      try { localOrders = JSON.parse(localOrdersStr); } catch (e) {}
+      const order = localOrders.find((o: any) => o.id === orderId);
+      if (order) {
+        order.status = status;
+        localStorage.setItem("local_orders", JSON.stringify(localOrders));
+      }
+      setOrders((prev: any) => prev.map((ord: any) => ord.id === orderId ? { ...ord, status } : ord));
+      showToast("Order status updated (Local Simulation).");
+    }
+  };
+
+  const handleSaveMemo = async () => {
+    if (!selectedUser) return;
+    setIsSavingMemo(true);
+    try {
+      const res = await fetch('/api/auth?action=update-memo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: selectedUser.email,
+          memo: userMemo
+        })
+      });
+      if (res.ok) {
+        showToast("Customer memo updated.");
+        setSelectedUser((prev: any) => ({ ...prev, memo: userMemo }));
+        loadUsers();
+      }
+    } catch (err) {
+      console.error("Failed to save memo:", err);
+      const mockAccountsStr = localStorage.getItem("mock_customer_accounts") || "[]";
+      let mockAccounts = [];
+      try { mockAccounts = JSON.parse(mockAccountsStr); } catch(e) {}
+      const idx = mockAccounts.findIndex((u: any) => u.email === selectedUser.email);
+      if (idx > -1) {
+        mockAccounts[idx].memo = userMemo;
+        localStorage.setItem("mock_customer_accounts", JSON.stringify(mockAccounts));
+      }
+      setSelectedUser((prev: any) => ({ ...prev, memo: userMemo }));
+      setUsersList((prev: any) => prev.map((u: any) => u.email === selectedUser.email ? { ...u, memo: userMemo } : u));
+      showToast("Customer memo updated (Local Simulation).");
+    } finally {
+      setIsSavingMemo(false);
+    }
   };
 
   const location = useLocation();
@@ -753,10 +825,30 @@ export default function Admin() {
                             </div>
                           </div>
                           <div>
-                            <span className="block text-[8px] text-ink/30 font-bold text-left sm:text-right">Status</span>
-                            <span className="px-2.5 py-0.5 mt-0.5 text-[8px] font-black tracking-widest border bg-orange/5 text-orange border-orange/20 uppercase inline-block">{o.status}</span>
+                            <span className="block text-[8px] text-ink/30 font-bold text-left sm:text-right mb-1">Status</span>
+                            <select
+                              value={o.status}
+                              onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
+                              className="px-2 py-1 text-[8px] font-black tracking-widest border border-black/10 bg-white hover:border-black/30 transition-colors uppercase outline-none rounded-none text-ink"
+                            >
+                              <option value="Pending">대기 (Pending)</option>
+                              <option value="Confirmed">주문확인 (Confirmed)</option>
+                              <option value="Processing">발주 (Processing)</option>
+                              <option value="Shipping">배송 (Shipping)</option>
+                              <option value="Completed">완료 (Completed)</option>
+                            </select>
                           </div>
                         </div>
+
+                        {/* Recipient details */}
+                        {o.name && (
+                          <div className="border-b border-black/[0.03] pb-4 text-[9px] uppercase tracking-wider font-bold text-ink/60 flex flex-wrap gap-x-6 gap-y-1 bg-off-white/50 p-3">
+                            <span>Recipient: {o.name}</span>
+                            <span>Phone: {o.phone}</span>
+                            <span>Address: {o.address}</span>
+                          </div>
+                        )}
+
                         <div className="space-y-4">
                           {o.items && Array.isArray(o.items) && o.items.map((item: any, idx: number) => (
                             <div key={idx} className="flex gap-4 items-center border-b border-black/[0.03] pb-3 last:border-0 last:pb-0">
@@ -800,25 +892,92 @@ export default function Admin() {
                 {usersList.length === 0 ? (
                   <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No registered customers yet.</p>
                 ) : (
-                  <div className="bg-white border border-black/5 shadow-sm overflow-hidden">
-                    <table className="w-full text-left border-collapse text-xs font-sans">
-                      <thead>
-                        <tr className="bg-off-white uppercase text-[9px] font-black tracking-widest text-ink/50 border-b border-black/10">
-                          <th className="p-4 px-6">User ID</th>
-                          <th className="p-4 px-6">Email Address</th>
-                          <th className="p-4 px-6">Registration Date</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-black/5 text-ink/80">
-                        {usersList.map((user: any) => (
-                          <tr key={user.id}>
-                            <td className="p-4 px-6 font-mono text-[10px] text-ink/40">{user.id}</td>
-                            <td className="p-4 px-6 font-bold text-ink">{user.email}</td>
-                            <td className="p-4 px-6">{new Date(user.createdAt).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* Left panel: List */}
+                    <div className={selectedUser ? "lg:col-span-7 space-y-4" : "lg:col-span-12 space-y-4"}>
+                      <span className="text-[8px] text-ink/40 uppercase tracking-widest font-black block">* Click any row to view customer profile and internal notes.</span>
+                      <div className="bg-white border border-black/5 shadow-sm overflow-hidden">
+                        <table className="w-full text-left border-collapse text-xs font-sans">
+                          <thead>
+                            <tr className="bg-off-white uppercase text-[9px] font-black tracking-widest text-ink/50 border-b border-black/10">
+                              <th className="p-4 px-6">Email Address</th>
+                              <th className="p-4 px-6">Name</th>
+                              <th className="p-4 px-6">Phone</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-black/5 text-ink/80">
+                            {usersList.map((user: any) => (
+                              <tr 
+                                key={user.id}
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setUserMemo(user.memo || "");
+                                }}
+                                className={`cursor-pointer hover:bg-off-white/80 transition-colors ${selectedUser?.email === user.email ? 'bg-off-white/85 font-semibold' : ''}`}
+                              >
+                                <td className="p-4 px-6 font-bold text-ink">{user.email}</td>
+                                <td className="p-4 px-6 font-medium">{user.name || '-'}</td>
+                                <td className="p-4 px-6">{user.phone || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Right panel: Details & Memo */}
+                    {selectedUser && (
+                      <div className="lg:col-span-5 bg-white border border-black/5 p-6 space-y-6 shadow-sm animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="flex justify-between items-center border-b border-black/5 pb-3">
+                          <h3 className="text-xs font-black uppercase tracking-widest text-ink">
+                            Customer Details
+                          </h3>
+                          <button onClick={() => setSelectedUser(null)} className="text-[9px] text-ink/40 hover:text-ink font-bold uppercase tracking-widest">Close</button>
+                        </div>
+                        
+                        <div className="space-y-4 text-xs font-sans text-ink/80">
+                          <div>
+                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Email</span>
+                            <span className="font-bold text-ink">{selectedUser.email}</span>
+                          </div>
+                          <div>
+                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Registered Name</span>
+                            <span className="font-semibold text-ink">{selectedUser.name || 'Not registered'}</span>
+                          </div>
+                          <div>
+                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Phone Number</span>
+                            <span className="font-semibold text-ink">{selectedUser.phone || 'Not registered'}</span>
+                          </div>
+                          <div>
+                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Shipping Address</span>
+                            <p className="font-semibold text-ink whitespace-pre-wrap">{selectedUser.address || 'Not registered'}</p>
+                          </div>
+                          <div>
+                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest mb-0.5">Registration Date</span>
+                            <span className="text-ink/60">{new Date(selectedUser.createdAt).toLocaleString()}</span>
+                          </div>
+                          
+                          {/* Memo section */}
+                          <div className="border-t border-black/5 pt-4 space-y-2">
+                            <span className="block text-[8px] text-ink/30 font-black uppercase tracking-widest">Customer Memo (Internal Notes)</span>
+                            <textarea
+                              value={userMemo}
+                              onChange={(e) => setUserMemo(e.target.value)}
+                              className="w-full border border-black/10 focus:border-cobalt outline-none p-3 text-xs transition-colors bg-off-white font-sans resize-none rounded-none text-ink"
+                              placeholder="Add internal notes about this customer..."
+                              rows={4}
+                            />
+                            <button
+                              onClick={handleSaveMemo}
+                              disabled={isSavingMemo}
+                              className="w-full bg-ink hover:bg-cobalt text-white py-3 font-bold uppercase tracking-widest text-[9px] transition-colors rounded-none cursor-pointer"
+                            >
+                              {isSavingMemo ? "Saving..." : "Save Memo"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

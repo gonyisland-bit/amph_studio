@@ -23,35 +23,37 @@ export function Footer() {
 
   return (
     <footer className="px-6 md:px-12 py-8 border-t border-black/10 flex flex-col md:flex-row justify-between items-center text-[10px] uppercase tracking-widest font-sans gap-4 bg-off-white">
-      <div className="flex items-center gap-2">
+      {/* Left: Brand Slogan */}
+      <div className="flex items-center gap-2 md:w-1/3 justify-start">
         <div className="w-1.5 h-1.5 bg-cobalt rounded-full"></div>
         <span>Casual Uniqueness — Seoul</span>
       </div>
       
-      {/* Admin Icon in Footer instead of text */}
-      <div className="flex items-center gap-4 text-ink/30">
-        {isAuth ? (
-          <div className="flex items-center gap-3">
-            <Link to="/admin" className="hover:text-cobalt transition-colors" title="Admin Dashboard">
-              <LayoutDashboard size={14} />
-            </Link>
-            <button onClick={handleLogout} className="hover:text-orange transition-colors cursor-pointer" title="Admin Logout">
-              <LogOut size={14} />
-            </button>
-          </div>
-        ) : (
-          <Link to="/admin" className="hover:text-cobalt transition-colors" title="Admin Access">
-            <Lock size={14} />
-          </Link>
-        )}
+      {/* Center: Copyright & Version (V0.80h) */}
+      <div className="flex items-center justify-center gap-2 md:w-1/3 text-center">
+        <span>© {new Date().getFullYear()} AMPH design</span>
+        <span className="text-ink/40 font-black">(V0.80h)</span>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span>© {new Date().getFullYear()} AMPH FLAGSHIP</span>
-          <span className="text-ink/40 font-black">(V0.80g)</span>
-        </div>
+      {/* Right: Admin Icons & Scroll Discovery */}
+      <div className="flex items-center gap-6 md:w-1/3 justify-end">
         <div className="hidden md:block text-ink/30">// SCROLL DISCOVERY</div>
+        <div className="text-ink/30">
+          {isAuth ? (
+            <div className="flex items-center gap-3">
+              <Link to="/admin" className="hover:text-cobalt transition-colors" title="Admin Dashboard">
+                <LayoutDashboard size={14} className="text-ink/50 hover:text-cobalt" />
+              </Link>
+              <button onClick={handleLogout} className="hover:text-orange transition-colors cursor-pointer" title="Admin Logout">
+                <LogOut size={14} className="text-ink/50 hover:text-orange" />
+              </button>
+            </div>
+          ) : (
+            <Link to="/admin" className="hover:text-cobalt transition-colors" title="Admin Access">
+              <Lock size={14} className="text-ink/50 hover:text-cobalt" />
+            </Link>
+          )}
+        </div>
       </div>
     </footer>
   );

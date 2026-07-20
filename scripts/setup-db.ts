@@ -53,7 +53,50 @@ async function main() {
     `;
     console.log('Created "spaces" table successfully.');
 
-    console.log('Database initialization completed successfully!');
+    // Migrations to add missing fields/tables
+    console.log('Running database migrations...');
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "subTitle" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "dimensions" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "shipping" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "sku" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "color" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "cartEnabled" BOOLEAN DEFAULT TRUE`; } catch(e) {}
+
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS customer_users (
+          id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          password_salt TEXT NOT NULL,
+          name TEXT DEFAULT '',
+          phone TEXT DEFAULT '',
+          address TEXT DEFAULT '',
+          memo TEXT DEFAULT '',
+          "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+      console.log('Created or verified "customer_users" table.');
+    } catch(e) {}
+
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS orders (
+          id TEXT PRIMARY KEY,
+          "customerEmail" TEXT NOT NULL,
+          items TEXT NOT NULL,
+          "totalPrice" NUMERIC NOT NULL,
+          status TEXT DEFAULT 'Pending',
+          name TEXT DEFAULT '',
+          phone TEXT DEFAULT '',
+          address TEXT DEFAULT '',
+          "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+      console.log('Created or verified "orders" table.');
+    } catch(e) {}
+
+    console.log('Database initialization and migrations completed successfully!');
   } catch (error) {
     console.error('Error creating database tables:', error);
     process.exit(1);
