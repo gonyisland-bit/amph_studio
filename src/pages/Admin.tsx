@@ -164,6 +164,23 @@ const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onC
   );
 };
 
+const getStatusBadgeStyle = (status: string) => {
+  switch (status) {
+    case 'Pending':
+      return 'bg-amber-500/10 text-amber-700 border-amber-500/30';
+    case 'Confirmed':
+      return 'bg-blue-500/10 text-blue-700 border-blue-500/30';
+    case 'Processing':
+      return 'bg-indigo-500/10 text-indigo-700 border-indigo-500/30';
+    case 'Shipping':
+      return 'bg-purple-500/10 text-purple-700 border-purple-500/30';
+    case 'Completed':
+      return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30';
+    default:
+      return 'bg-black/5 text-ink/70 border-black/10';
+  }
+};
+
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -684,7 +701,7 @@ export default function Admin() {
 
   const handleEdit = (item: any) => {
     setEditingId(item.id);
-    setForm(item);
+    setForm(JSON.parse(JSON.stringify(item)));
     // Always open basic section so form content is immediately visible
     setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
@@ -1012,17 +1029,22 @@ export default function Admin() {
                           </div>
                           <div className="w-full sm:w-auto flex-shrink-0">
                             <span className="block text-[10px] text-ink/40 font-bold text-left sm:text-right mb-1 uppercase">Order Status</span>
-                            <select
-                              value={o.status}
-                              onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                              className="w-full sm:w-auto px-3 py-2 text-xs font-bold tracking-wider border border-black/20 bg-white hover:border-black/40 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer shadow-xs"
-                            >
-                              <option value="Pending">대기 (Pending)</option>
-                              <option value="Confirmed">주문확인 (Confirmed)</option>
-                              <option value="Processing">발주 (Processing)</option>
-                              <option value="Shipping">배송 (Shipping)</option>
-                              <option value="Completed">완료 (Completed)</option>
-                            </select>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider border rounded-full ${getStatusBadgeStyle(o.status)}`}>
+                                ● {o.status === 'Pending' ? '대기' : o.status === 'Confirmed' ? '주문확인' : o.status === 'Processing' ? '발주' : o.status === 'Shipping' ? '배송' : o.status === 'Completed' ? '완료' : o.status}
+                              </span>
+                              <select
+                                value={o.status}
+                                onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
+                                className={`px-3 py-1.5 text-xs font-bold tracking-wider border rounded-none outline-none cursor-pointer transition-colors shadow-xs ${getStatusBadgeStyle(o.status)}`}
+                              >
+                                <option value="Pending" className="bg-white text-ink">대기 (Pending)</option>
+                                <option value="Confirmed" className="bg-white text-ink">주문확인 (Confirmed)</option>
+                                <option value="Processing" className="bg-white text-ink">발주 (Processing)</option>
+                                <option value="Shipping" className="bg-white text-ink">배송 (Shipping)</option>
+                                <option value="Completed" className="bg-white text-ink">완료 (Completed)</option>
+                              </select>
+                            </div>
                           </div>
                         </div>
 
@@ -2033,7 +2055,14 @@ export default function Admin() {
                             <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">{p.category}</span>
                           </td>
                           <td className="py-4 text-right pr-6" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-end gap-3">
+                            <div className="flex justify-end gap-3 items-center">
+                              <button 
+                                type="button"
+                                onClick={() => handleEdit(p)} 
+                                className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer"
+                              >
+                                Edit
+                              </button>
                               <Link 
                                 to={`/product/${p.id}`} 
                                 target="_blank"
@@ -2042,7 +2071,7 @@ export default function Admin() {
                               >
                                 <ExternalLink size={13} />
                               </Link>
-                              <button onClick={e => { e.stopPropagation(); handleDelete(p.id); }} className="text-orange/40 text-[10px] font-bold uppercase tracking-widest hover:text-orange transition-colors">
+                              <button onClick={e => { e.stopPropagation(); handleDelete(p.id); }} className="text-orange/40 text-[10px] font-bold uppercase tracking-widest hover:text-orange transition-colors cursor-pointer">
                                 <Trash2 size={13} />
                               </button>
                             </div>
