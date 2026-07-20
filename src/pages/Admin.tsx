@@ -189,34 +189,52 @@ const getFormattedShipping = (shipping?: string) => {
   return shipping;
 };
 
-const renderColorBadge = (colorVal: any, foundProd?: any) => {
+const renderColorBadge = (colorVal: any, foundProd?: any, colorOptionsList?: any[]) => {
   if (!colorVal || colorVal === '-') return <span>Color: -</span>;
 
-  let colorName = typeof colorVal === 'string' ? colorVal : (colorVal?.name || JSON.stringify(colorVal));
+  let raw = typeof colorVal === 'string' ? colorVal : (colorVal?.name || colorVal?.hex || JSON.stringify(colorVal));
+  let colorName = raw;
   let colorHex: string | null = typeof colorVal === 'object' && colorVal?.hex ? colorVal.hex : null;
 
-  if (!colorHex && foundProd?.color) {
+  // Gather all available color definitions
+  let allColors: any[] = [];
+
+  if (colorOptionsList && Array.isArray(colorOptionsList)) {
+    allColors.push(...colorOptionsList);
+  }
+
+  if (foundProd?.color) {
     let prodColors = foundProd.color;
-    if (typeof prodColors === 'string' && prodColors.startsWith('[')) {
+    if (typeof prodColors === 'string' && prodColors.trim().startsWith('[')) {
       try { prodColors = JSON.parse(prodColors); } catch(e) {}
     }
     if (Array.isArray(prodColors)) {
-      const match = prodColors.find((c: any) => c.name?.toLowerCase() === colorName.toLowerCase() || c.hex === colorName);
-      if (match) {
-        colorHex = match.hex;
-        if (match.name) colorName = match.name;
-      }
-    } else if (typeof prodColors === 'object' && prodColors?.hex) {
-      colorHex = prodColors.hex;
+      allColors.push(...prodColors);
+    } else if (typeof prodColors === 'object') {
+      allColors.push(prodColors);
     }
   }
 
-  if (!colorHex && colorName.startsWith('#')) {
-    colorHex = colorName;
+  // Find match by name or hex
+  const cleanRaw = raw.trim().toLowerCase();
+  const match = allColors.find((c: any) => {
+    if (!c) return false;
+    const cName = (c.name || '').trim().toLowerCase();
+    const cHex = (c.hex || '').trim().toLowerCase();
+    return cName === cleanRaw || cHex === cleanRaw;
+  });
+
+  if (match) {
+    if (match.name) colorName = match.name;
+    if (match.hex) colorHex = match.hex;
+  }
+
+  if (!colorHex && raw.startsWith('#')) {
+    colorHex = raw;
   }
 
   return (
-    <span className="flex items-center gap-1.5">
+    <span className="inline-flex items-center gap-1.5 break-all">
       <span>Color:</span>
       {colorHex && (
         <span 
@@ -225,7 +243,7 @@ const renderColorBadge = (colorVal: any, foundProd?: any) => {
           title={colorName}
         />
       )}
-      <span>{colorName}</span>
+      <span className="font-bold">{colorName}</span>
     </span>
   );
 };
@@ -982,8 +1000,8 @@ export default function Admin() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        <div className={(activeTab === 'home' || activeTab === 'orders' || activeTab === 'users') ? 'col-span-12' : 'col-span-1 lg:col-span-5'}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 min-w-0 max-w-full overflow-hidden">
+        <div className={(activeTab === 'home' || activeTab === 'orders' || activeTab === 'users') ? 'col-span-12 min-w-0 max-w-full overflow-hidden' : 'col-span-1 lg:col-span-5 min-w-0 max-w-full'}>
           <div className="sticky top-24">
             {!(activeTab === 'orders' || activeTab === 'users') && (
               <h2 className="text-xl font-semibold mb-6 flex items-center justify-between border-b border-black/10 pb-4">
@@ -1189,7 +1207,7 @@ export default function Admin() {
                                       <div className="flex flex-wrap gap-2 text-[10px] uppercase font-bold">
                                         <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5">Shipping: {shippingVal}</span>
                                         <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5">
-                                          {renderColorBadge(item.color || foundProd?.color, foundProd)}
+                                          {renderColorBadge(item.color || foundProd?.color, foundProd, colorOptions)}
                                         </span>
                                         {item.material && <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/60 border border-black/5">Mat: {item.material}</span>}
                                       </div>
@@ -1345,7 +1363,7 @@ export default function Admin() {
             )}
 
             {!(activeTab === 'orders' || activeTab === 'users') && (
-              <form id="editor-form" onSubmit={handleSave} className="space-y-4 text-sm">
+              <form id="editor-form" key={editingId || 'new'} onSubmit={handleSave} className="space-y-4 text-sm">
                 <fieldset disabled={saveStatus === 'saving'} className="space-y-4 w-full border-none p-0 m-0">
                 
                 {activeTab === 'home' && (
