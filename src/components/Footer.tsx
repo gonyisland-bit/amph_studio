@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Lock, LayoutDashboard, LogOut } from "lucide-react";
 
 export function Footer() {
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
@@ -27,15 +28,21 @@ export function Footer() {
         <span>Casual Uniqueness — Seoul</span>
       </div>
       
-      {/* Admin / Dashboard Text Links in Footer */}
-      <div className="flex items-center gap-6 text-ink/40">
+      {/* Admin Icon in Footer instead of text */}
+      <div className="flex items-center gap-4 text-ink/30">
         {isAuth ? (
-          <>
-            <Link to="/admin" className="hover:text-cobalt transition-colors font-bold">Dashboard</Link>
-            <button onClick={handleLogout} className="hover:text-orange transition-colors font-bold uppercase cursor-pointer">Logout</button>
-          </>
+          <div className="flex items-center gap-3">
+            <Link to="/admin" className="hover:text-cobalt transition-colors" title="Admin Dashboard">
+              <LayoutDashboard size={14} />
+            </Link>
+            <button onClick={handleLogout} className="hover:text-orange transition-colors cursor-pointer" title="Admin Logout">
+              <LogOut size={14} />
+            </button>
+          </div>
         ) : (
-          <Link to="/admin" className="hover:text-cobalt transition-colors font-bold">Admin Login</Link>
+          <Link to="/admin" className="hover:text-cobalt transition-colors" title="Admin Access">
+            <Lock size={14} />
+          </Link>
         )}
       </div>
 

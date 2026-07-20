@@ -52,21 +52,33 @@ export default async function handler(req: any, res: any) {
       )
     `;
 
-    // Attempt to add createdAt if missing (migration)
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`; } catch(e) {}
-    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`; } catch(e) {}
-    try { await sql`ALTER TABLE journals ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`; } catch(e) {}
-    
-    // Spaces Migrations
-    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "appliedProductIds" TEXT`; } catch(e) {}
-    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "images" TEXT`; } catch(e) {}
-    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "location" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "address" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "hours" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "image" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "contentBlocks" TEXT`; } catch(e) {}
+    // Migration: products table "cartEnabled"
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "cartEnabled" BOOLEAN DEFAULT TRUE`; } catch(e) {}
 
-    return res.status(200).json({ success: true, message: 'Tables and columns verified' });
+    // Migration: customer_users table
+    await sql`
+      CREATE TABLE IF NOT EXISTS customer_users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        password_salt TEXT NOT NULL,
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // Migration: orders table
+    await sql`
+      CREATE TABLE IF NOT EXISTS orders (
+        id TEXT PRIMARY KEY,
+        "customerEmail" TEXT NOT NULL,
+        items TEXT NOT NULL,
+        "totalPrice" NUMERIC NOT NULL,
+        status TEXT DEFAULT 'Pending',
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    return res.status(200).json({ success: true, message: 'Tables and columns verified, migrations completed' });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Failed to setup database', details: error });

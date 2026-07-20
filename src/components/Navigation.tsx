@@ -1,19 +1,33 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { LogOut, User, Search, X } from "lucide-react";
+import { LogOut, User, Search, X, ShoppingBag, ClipboardList } from "lucide-react";
 import { getProducts, getSpaces, getJournals, Product, Category } from "../lib/data";
+import { CartDrawer } from "./CartDrawer";
 
 const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
 
 export function Navigation() {
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
+  const [customerEmail, setCustomerEmail] = useState<string | null>(localStorage.getItem('customer_email'));
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
 
+  const updateCartCount = () => {
+    const cartStr = localStorage.getItem('cart') || '[]';
+    try {
+      const cart = JSON.parse(cartStr);
+      const count = cart.reduce((acc: number, item: any) => acc + item.quantity, 0);
+      setCartCount(count);
+    } catch (e) {
+      setCartCount(0);
+    }
+  };
+
   useEffect(() => {
-    // 1. Warm up all cache promises in parallel for ultimate speed
     getProducts().then(setProducts).catch(console.error);
     getSpaces().catch(console.error);
     getJournals().catch(console.error);
@@ -21,20 +35,40 @@ export function Navigation() {
     const checkAuth = () => {
       setIsAuth(localStorage.getItem('admin_auth') === 'true');
     };
+
+    const checkCustomerAuth = () => {
+      setCustomerEmail(localStorage.getItem('customer_email'));
+    };
+    
+    updateCartCount();
     
     window.addEventListener('storage', checkAuth);
+    window.addEventListener('storage', checkCustomerAuth);
     window.addEventListener('admin_auth_change', checkAuth);
+    window.addEventListener('customer_auth_change', checkCustomerAuth);
+    window.addEventListener('cart_change', updateCartCount);
     
     return () => {
       window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('storage', checkCustomerAuth);
       window.removeEventListener('admin_auth_change', checkAuth);
+      window.removeEventListener('customer_auth_change', checkCustomerAuth);
+      window.removeEventListener('cart_change', updateCartCount);
     };
   }, []);
 
-  const handleLogout = () => {
+  const handleAdminLogout = () => {
     localStorage.removeItem('admin_auth');
     setIsAuth(false);
     window.dispatchEvent(new Event('admin_auth_change'));
+    navigate('/');
+  };
+
+  const handleCustomerLogout = () => {
+    localStorage.removeItem('customer_token');
+    localStorage.removeItem('customer_email');
+    setCustomerEmail(null);
+    window.dispatchEvent(new Event('customer_auth_change'));
     navigate('/');
   };
 
@@ -167,20 +201,61 @@ export function Navigation() {
 
             <span className="hidden lg:inline text-ink/30 text-[10px] tracking-widest font-sans font-bold">KR / EN</span>
 
-            {/* Login/Out status represented as minimal icon buttons */}
+            {/* Cart Icon or Admin Orders Icon */}
+            {isAuth ? (
+              <Link 
+                to="/admin?tab=orders" 
+                className="text-ink/60 hover:text-cobalt transition-colors flex items-center justify-center"
+                title="Order Verification"
+              >
+                <ClipboardList size={16} />
+              </Link>
+            ) : (
+              <button 
+                onClick={() => setIsCartOpen(true)}
+                className="text-ink/60 hover:text-cobalt transition-colors flex items-center justify-center relative cursor-pointer"
+                title="Cart"
+              >
+                <ShoppingBag size={16} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-cobalt text-white text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Login / LogOut icons */}
             {isAuth ? (
               <button 
-                onClick={handleLogout} 
+                onClick={handleAdminLogout} 
                 className="text-orange hover:text-ink transition-colors flex items-center justify-center cursor-pointer"
                 title="Admin Logout"
               >
                 <LogOut size={16} />
               </button>
+            ) : customerEmail ? (
+              <div className="flex gap-3 items-center">
+                <Link 
+                  to="/account" 
+                  className="text-cobalt hover:text-ink transition-colors flex items-center justify-center"
+                  title="My Account"
+                >
+                  <User size={16} />
+                </Link>
+                <button 
+                  onClick={handleCustomerLogout} 
+                  className="text-orange/70 hover:text-orange transition-colors flex items-center justify-center cursor-pointer"
+                  title="Customer Logout"
+                >
+                  <LogOut size={14} />
+                </button>
+              </div>
             ) : (
               <Link 
-                to="/admin" 
+                to="/login" 
                 className="text-ink/60 hover:text-cobalt transition-colors flex items-center justify-center"
-                title="Admin Login"
+                title="Customer Login"
               >
                 <User size={16} />
               </Link>
@@ -206,6 +281,8 @@ export function Navigation() {
           </Link>
         ))}
       </div>
+
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
 }

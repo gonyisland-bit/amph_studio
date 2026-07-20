@@ -21,6 +21,7 @@ export interface Product {
   shipping?: string;
   sku?: string;
   color?: string;
+  cartEnabled?: boolean;
 }
 
 export interface JournalArticle {

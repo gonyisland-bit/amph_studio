@@ -12,6 +12,52 @@ export default function ProductDetail() {
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedMaterial, setSelectedMaterial] = useState("");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleAddToCart = () => {
+    if (!product || product.cartEnabled === false) return;
+
+    const cartStr = localStorage.getItem('cart') || '[]';
+    let cart = [];
+    try {
+      cart = JSON.parse(cartStr);
+    } catch (e) {
+      cart = [];
+    }
+
+    const defaultColor = product.color ? product.color.split(',')[0].trim() : '';
+    const defaultMaterial = product.material ? product.material.split(',')[0].trim() : '';
+
+    const color = selectedColor || defaultColor;
+    const material = selectedMaterial || defaultMaterial;
+
+    const existingIndex = cart.findIndex((item: any) => 
+      item.productId === product.id && 
+      item.color === color && 
+      item.material === material
+    );
+
+    if (existingIndex > -1) {
+      cart[existingIndex].quantity += 1;
+    } else {
+      cart.push({
+        productId: product.id,
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        image: (product.images || []).filter(Boolean)[0] || '',
+        color: color,
+        material: material,
+        quantity: 1
+      });
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+    window.dispatchEvent(new Event('cart_change'));
+    
+    setToastMessage("Added to Cart");
+    setTimeout(() => setToastMessage(null), 2000);
+  };
 
   // Grid orientation detection
   const [imageAspects, setImageAspects] = useState<Record<string, 'portrait' | 'landscape'>>({});
@@ -189,6 +235,12 @@ export default function ProductDetail() {
 
   return (
     <div className="flex flex-col flex-grow bg-white">
+      {toastMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-ink text-white px-8 py-4 uppercase text-[10px] tracking-widest font-black shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+          {toastMessage}
+        </div>
+      )}
+
       {isAuth && (
         <Link to={`/admin?edit=${product.id}`} className="fixed bottom-12 left-12 z-[100] bg-cobalt text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-orange transition-all scale-100 hover:scale-110">
           Edit Product
@@ -318,42 +370,56 @@ export default function ProductDetail() {
             <div className="border-t border-black/10 mt-8 mb-12">
               <table className="w-full text-left text-xs font-sans">
                 <tbody>
-                  <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                    <td className="font-bold text-ink/50 uppercase caption-nano">Material</td>
-                    <td className="text-ink/80 font-semibold">{product.material}</td>
-                  </tr>
+                  {product.material && (
+                    <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
+                      <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Material</td>
+                      <td className="text-ink/70 font-semibold">{product.material}</td>
+                    </tr>
+                  )}
                   {product.color && (
                     <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                      <td className="font-bold text-ink/50 uppercase caption-nano">Color Options</td>
-                      <td className="text-ink/80 font-semibold">{product.color}</td>
+                      <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Color Options</td>
+                      <td className="text-ink/70 font-semibold">{product.color}</td>
                     </tr>
                   )}
-                  <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                    <td className="font-bold text-ink/50 uppercase caption-nano">Frame Structural</td>
-                    <td className="text-ink/80 font-semibold">{frame}</td>
-                  </tr>
                   {product.dimensions && (
                     <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                      <td className="font-bold text-ink/50 uppercase caption-nano">Dimensions</td>
-                      <td className="text-ink/80 font-semibold">{product.dimensions}</td>
+                      <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Dimensions</td>
+                      <td className="text-ink/70 font-semibold">{product.dimensions}</td>
                     </tr>
                   )}
-                  <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                    <td className="font-bold text-ink/50 uppercase caption-nano">Estimated ETA</td>
-                    <td className="text-ink/80 font-semibold">{eta}</td>
-                  </tr>
-                  <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                    <td className="font-bold text-ink/50 uppercase caption-nano">SKU Code</td>
-                    <td className="text-ink/80 font-mono text-[10px]">{product.sku || product.id.toUpperCase()}</td>
-                  </tr>
+                  {product.shipping && (
+                    <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
+                      <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Shipping</td>
+                      <td className="text-ink/70 font-semibold">{product.shipping}</td>
+                    </tr>
+                  )}
+                  {product.sku && (
+                    <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
+                      <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">SKU Code</td>
+                      <td className="text-ink/70 font-mono text-[10px]">{product.sku}</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
             
             {/* Purchase CTA */}
-            <button className="bg-ink hover:bg-cobalt text-white text-[11px] uppercase tracking-[0.2em] font-black py-5 px-8 rounded-none w-full transition-all duration-300 shadow-md">
-              Add to Cart
-            </button>
+            {product.cartEnabled === false ? (
+              <button 
+                disabled 
+                className="bg-black/10 text-ink/30 text-[11px] uppercase tracking-[0.2em] font-black py-5 px-8 rounded-none w-full cursor-not-allowed border border-black/5"
+              >
+                Coming soon
+              </button>
+            ) : (
+              <button 
+                onClick={handleAddToCart}
+                className="bg-ink hover:bg-cobalt text-white text-[11px] uppercase tracking-[0.2em] font-black py-5 px-8 rounded-none w-full transition-all duration-300 shadow-md cursor-pointer"
+              >
+                Add to Cart
+              </button>
+            )}
           </div>
         </div>
       </div>

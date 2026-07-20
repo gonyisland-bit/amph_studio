@@ -10,7 +10,7 @@ import { upload } from '@vercel/blob/client';
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 
 const emptyProduct: Omit<Product, 'id'> = {
-  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: '', sku: ''
+  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: '', sku: '', cartEnabled: true
 };
 const emptyJournal: Omit<JournalArticle, 'id'> = {
   title: '', category: '', date: '', image: '', contentBlocks: []
@@ -169,8 +169,10 @@ export default function Admin() {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   
-  const [activeTab, setActiveTab] = useState<'home'|'journal'|'space'|'collection'>('collection');
+  const [activeTab, setActiveTab] = useState<'home'|'journal'|'space'|'collection'|'orders'|'users'>('collection');
   const [sortBy, setSortBy] = useState<'user' | 'name' | 'category' | 'newest'>('user');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
   
   const [products, setProducts] = useState<Product[]>([]);
   const [journals, setJournals] = useState<JournalArticle[]>([]);
@@ -231,6 +233,69 @@ export default function Admin() {
     getSpaces().then(setSpaces);
   };
 
+  const loadOrders = () => {
+    fetch('/api/orders')
+      .then(res => res.json())
+      .then(data => {
+        const localOrdersStr = localStorage.getItem("local_orders") || "[]";
+        let localOrders = [];
+        try { localOrders = JSON.parse(localOrdersStr); } catch(e) {}
+        
+        const mergedMap = new Map();
+        data.forEach((o: any) => mergedMap.set(o.id, o));
+        localOrders.forEach((o: any) => {
+          if (!mergedMap.has(o.id)) mergedMap.set(o.id, o);
+        });
+        
+        const sorted = Array.from(mergedMap.values()).sort(
+          (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setOrders(sorted);
+      })
+      .catch(err => {
+        console.error("Failed to load orders:", err);
+        const localOrdersStr = localStorage.getItem("local_orders") || "[]";
+        let localOrders = [];
+        try { localOrders = JSON.parse(localOrdersStr); } catch(e) {}
+        setOrders(localOrders);
+      });
+  };
+
+  const loadUsers = () => {
+    fetch('/api/auth?action=users')
+      .then(res => res.json())
+      .then(data => {
+        const mockAccountsStr = localStorage.getItem("mock_customer_accounts") || "[]";
+        let mockAccounts = [];
+        try { mockAccounts = JSON.parse(mockAccountsStr); } catch(e) {}
+        
+        const mergedMap = new Map();
+        data.forEach((u: any) => mergedMap.set(u.email, u));
+        mockAccounts.forEach((u: any) => {
+          if (!mergedMap.has(u.email)) {
+            mergedMap.set(u.email, {
+              id: 'mock_' + u.email,
+              email: u.email,
+              createdAt: new Date().toISOString()
+            });
+          }
+        });
+        setUsersList(Array.from(mergedMap.values()));
+      })
+      .catch(err => {
+        console.error("Failed to load users:", err);
+        const mockAccountsStr = localStorage.getItem("mock_customer_accounts") || "[]";
+        let mockAccounts = [];
+        try { mockAccounts = JSON.parse(mockAccountsStr); } catch(e) {}
+        const mapped = mockAccounts.map((u: any) => ({
+          id: 'mock_' + u.email,
+          email: u.email,
+          createdAt: new Date().toISOString()
+        }));
+        setUsersList(mapped);
+      });
+  };
+
   const location = useLocation();
 
   useEffect(() => {
@@ -251,7 +316,11 @@ export default function Admin() {
   }, [toast]);
 
   useEffect(() => {
-    if (isAuthenticated) loadData();
+    if (isAuthenticated) {
+      loadData();
+      if (activeTab === 'orders') loadOrders();
+      if (activeTab === 'users') loadUsers();
+    }
     setSelectedIds([]);
   }, [activeTab, isAuthenticated]);
 
@@ -260,7 +329,7 @@ export default function Admin() {
     if (!isAuthenticated) return;
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
-    if (tabParam && ['home', 'collection', 'space', 'journal'].includes(tabParam)) {
+    if (tabParam && ['home', 'collection', 'space', 'journal', 'orders', 'users'].includes(tabParam)) {
       setActiveTab(tabParam as any);
     }
   }, [location.search, isAuthenticated]);
@@ -299,15 +368,33 @@ export default function Admin() {
     }
   }, [isAuthenticated, products, spaces, journals, location.search, editingId]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'amph123') {
-      setIsAuthenticated(true);
-      localStorage.setItem('admin_auth', 'true');
-      window.dispatchEvent(new Event('admin_auth_change'));
-      showToast('Welcome back, admin', 'success');
-    } else {
-      showToast('Incorrect password', 'error');
+    try {
+      const res = await fetch('/api/auth?action=admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsAuthenticated(true);
+        localStorage.setItem('admin_auth', 'true');
+        window.dispatchEvent(new Event('admin_auth_change'));
+        showToast('Welcome back, admin', 'success');
+      } else {
+        showToast(data.error || 'Incorrect password', 'error');
+      }
+    } catch (err) {
+      // Fallback for offline/local development testing
+      if (password === 'amph123') {
+        setIsAuthenticated(true);
+        localStorage.setItem('admin_auth', 'true');
+        window.dispatchEvent(new Event('admin_auth_change'));
+        showToast('Welcome back, admin (Fallback)', 'success');
+      } else {
+        showToast('Incorrect password', 'error');
+      }
     }
   };
 
@@ -394,7 +481,7 @@ export default function Admin() {
     }
   };
 
-  const switchTab = (tab: 'home'|'journal'|'space'|'collection') => {
+  const switchTab = (tab: 'home'|'journal'|'space'|'collection'|'orders'|'users') => {
     setActiveTab(tab);
     setEditingId(null);
     if (tab === 'collection') setForm(emptyProduct);
@@ -559,7 +646,9 @@ export default function Admin() {
           { id: 'home', label: 'Home' },
           { id: 'collection', label: 'Collection' },
           { id: 'space', label: 'Space' },
-          { id: 'journal', label: 'Journal' }
+          { id: 'journal', label: 'Journal' },
+          { id: 'orders', label: 'Orders' },
+          { id: 'users', label: 'Users' }
         ].map(tab => (
           <button key={tab.id} onClick={() => switchTab(tab.id as any)} className={`uppercase text-[11px] font-bold tracking-widest transition-all shrink-0 ${activeTab === tab.id ? 'text-cobalt border-b-2 border-cobalt pb-1' : 'text-ink/40 hover:text-ink'}`}>
             {tab.label}
@@ -568,72 +657,179 @@ export default function Admin() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        <div className={activeTab === 'home' ? 'col-span-12' : 'col-span-1 lg:col-span-5'}>
+        <div className={(activeTab === 'home' || activeTab === 'orders' || activeTab === 'users') ? 'col-span-12' : 'col-span-1 lg:col-span-5'}>
           <div className="sticky top-24">
-            <h2 className="text-xl font-semibold mb-6 flex items-center justify-between border-b border-black/10 pb-4">
-              <span>{editingId ? 'Edit Content' : 'Add Content'}</span>
-              {activeTab !== 'home' && (
-                <div className="flex items-center gap-2">
-                  {/* 바로가기 (Go to Page) 버튼 */}
-                  {(() => {
-                    const pageUrl = editingId 
-                      ? (activeTab === 'collection' ? `/product/${editingId}` : activeTab === 'space' ? `/space/${editingId}` : activeTab === 'journal' ? `/journal/${editingId}` : null)
-                      : null;
-                    
-                    if (pageUrl) {
-                      return (
-                        <Link 
-                          to={pageUrl} 
-                          target="_blank"
-                          className="bg-cobalt text-white px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-ink transition-all flex items-center gap-1.5 rounded-none"
-                        >
-                          <ExternalLink size={10} /> View Page
-                        </Link>
-                      );
-                    } else {
-                      return (
-                        <button 
-                          type="button"
-                          disabled 
-                          className="bg-black/5 text-ink/20 border border-black/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest cursor-not-allowed rounded-none"
-                        >
-                          View Page
-                        </button>
-                      );
-                    }
-                  })()}
+            {!(activeTab === 'orders' || activeTab === 'users') && (
+              <h2 className="text-xl font-semibold mb-6 flex items-center justify-between border-b border-black/10 pb-4">
+                <span>{editingId ? 'Edit Content' : 'Add Content'}</span>
+                {activeTab !== 'home' && (
+                  <div className="flex items-center gap-2">
+                    {/* 바로가기 (Go to Page) 버튼 */}
+                    {(() => {
+                      const pageUrl = editingId 
+                        ? (activeTab === 'collection' ? `/product/${editingId}` : activeTab === 'space' ? `/space/${editingId}` : activeTab === 'journal' ? `/journal/${editingId}` : null)
+                        : null;
+                      
+                      if (pageUrl) {
+                        return (
+                          <Link 
+                            to={pageUrl} 
+                            target="_blank"
+                            className="bg-cobalt text-white px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-ink transition-all flex items-center gap-1.5 rounded-none"
+                          >
+                            <ExternalLink size={10} /> View Page
+                          </Link>
+                        );
+                      } else {
+                        return (
+                          <button 
+                            type="button"
+                            disabled 
+                            className="bg-black/5 text-ink/20 border border-black/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest cursor-not-allowed rounded-none"
+                          >
+                            View Page
+                          </button>
+                        );
+                      }
+                    })()}
 
-                  {/* Save 버튼 — form 바깥이므로 form="editor-form" 속성으로 연결 */}
-                  <button 
-                    type="submit"
-                    form="editor-form"
-                    disabled={saveStatus === 'saving'}
-                    className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-none ${
-                      saveStatus === 'saving' ? 'bg-black/10 text-ink/30 cursor-not-allowed' :
-                      saveStatus === 'saved' ? 'bg-[#ff0000] text-white hover:bg-[#d60000]' :
-                      'bg-ink text-white hover:bg-cobalt'
-                    }`}
-                  >
-                    {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save'}
-                  </button>
-
-                  {editingId && (
+                    {/* Save 버튼 — form 바깥이므로 form="editor-form" 속성으로 연결 */}
                     <button 
-                      type="button"
-                      onClick={() => { setEditingId(null); switchTab(activeTab); }} 
-                      className="text-[9px] uppercase font-bold text-orange hover:underline ml-1"
+                      type="submit"
+                      form="editor-form"
+                      disabled={saveStatus === 'saving'}
+                      className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-none ${
+                        saveStatus === 'saving' ? 'bg-black/10 text-ink/30 cursor-not-allowed' :
+                        saveStatus === 'saved' ? 'bg-[#ff0000] text-white hover:bg-[#d60000]' :
+                        'bg-ink text-white hover:bg-cobalt'
+                      }`}
                     >
-                      Cancel
+                      {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save'}
                     </button>
-                  )}
-                </div>
-              )}
-            </h2>
-            <form id="editor-form" onSubmit={handleSave} className="space-y-4 text-sm">
-              <fieldset disabled={saveStatus === 'saving'} className="space-y-4 w-full border-none p-0 m-0">
-              
-              {activeTab === 'home' && (
-                <div className="max-w-5xl mx-auto space-y-12 pb-20">
+
+                    {editingId && (
+                      <button 
+                        type="button"
+                        onClick={() => { setEditingId(null); switchTab(activeTab); }} 
+                        className="text-[9px] uppercase font-bold text-orange hover:underline ml-1"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                )}
+              </h2>
+            )}
+
+            {activeTab === 'orders' && (
+              <div className="space-y-6 pb-20 animate-in fade-in duration-500">
+                <h2 className="text-xl font-black uppercase tracking-tight border-b border-black/10 pb-4 flex justify-between items-center">
+                  <span>Customer Orders</span>
+                  <button onClick={loadOrders} className="text-[10px] bg-cobalt text-white px-3 py-1.5 font-bold uppercase tracking-widest hover:bg-ink transition-colors">Refresh Orders</button>
+                </h2>
+                {orders.length === 0 ? (
+                  <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No orders placed yet.</p>
+                ) : (
+                  <div className="space-y-6">
+                    {orders.map((o: any) => (
+                      <div key={o.id} className="bg-white border border-black/5 p-6 flex flex-col gap-4 shadow-sm">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-black/5 pb-4 gap-4 text-[10px] uppercase font-sans tracking-wider text-ink/50">
+                          <div className="flex flex-wrap gap-x-6 gap-y-2">
+                            <div>
+                              <span className="block text-[8px] text-ink/30 font-bold">Order ID</span>
+                              <span className="font-mono text-ink font-bold">{o.id}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[8px] text-ink/30 font-bold">Customer Email</span>
+                              <span className="text-cobalt font-bold">{o.customerEmail}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[8px] text-ink/30 font-bold">Date Placed</span>
+                              <span className="text-ink font-semibold">{new Date(o.createdAt).toLocaleString()}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[8px] text-ink/30 font-bold">Total Price</span>
+                              <span className="text-ink font-bold">${Number(o.totalPrice).toLocaleString()}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="block text-[8px] text-ink/30 font-bold text-left sm:text-right">Status</span>
+                            <span className="px-2.5 py-0.5 mt-0.5 text-[8px] font-black tracking-widest border bg-orange/5 text-orange border-orange/20 uppercase inline-block">{o.status}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          {o.items && Array.isArray(o.items) && o.items.map((item: any, idx: number) => (
+                            <div key={idx} className="flex gap-4 items-center border-b border-black/[0.03] pb-3 last:border-0 last:pb-0">
+                              <div className="w-12 h-12 bg-silver/10 border border-black/5 flex-shrink-0">
+                                {item.image ? (
+                                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[8px] text-ink/30 uppercase">No Img</div>
+                                )}
+                              </div>
+                              <div className="flex-grow flex justify-between items-center">
+                                <div>
+                                  <h4 className="text-xs font-bold text-ink uppercase tracking-tight">{item.name}</h4>
+                                  <p className="text-[9px] uppercase tracking-wider text-ink/40">{item.category}</p>
+                                  <div className="flex gap-2 text-[9px] text-ink/50 uppercase font-semibold">
+                                    {item.color && <span>Color: {item.color}</span>}
+                                    {item.material && <span>Mat: {item.material}</span>}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-xs font-bold text-ink">${Number(item.price).toLocaleString()}</span>
+                                  <span className="block text-[8px] text-ink/40 font-bold uppercase mt-0.5">QTY {item.quantity}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'users' && (
+              <div className="space-y-6 pb-20 animate-in fade-in duration-500">
+                <h2 className="text-xl font-black uppercase tracking-tight border-b border-black/10 pb-4 flex justify-between items-center">
+                  <span>Registered Customers</span>
+                  <button onClick={loadUsers} className="text-[10px] bg-cobalt text-white px-3 py-1.5 font-bold uppercase tracking-widest hover:bg-ink transition-colors">Refresh Users</button>
+                </h2>
+                {usersList.length === 0 ? (
+                  <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No registered customers yet.</p>
+                ) : (
+                  <div className="bg-white border border-black/5 shadow-sm overflow-hidden">
+                    <table className="w-full text-left border-collapse text-xs font-sans">
+                      <thead>
+                        <tr className="bg-off-white uppercase text-[9px] font-black tracking-widest text-ink/50 border-b border-black/10">
+                          <th className="p-4 px-6">User ID</th>
+                          <th className="p-4 px-6">Email Address</th>
+                          <th className="p-4 px-6">Registration Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-black/5 text-ink/80">
+                        {usersList.map((user: any) => (
+                          <tr key={user.id}>
+                            <td className="p-4 px-6 font-mono text-[10px] text-ink/40">{user.id}</td>
+                            <td className="p-4 px-6 font-bold text-ink">{user.email}</td>
+                            <td className="p-4 px-6">{new Date(user.createdAt).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!(activeTab === 'orders' || activeTab === 'users') && (
+              <form id="editor-form" onSubmit={handleSave} className="space-y-4 text-sm">
+                <fieldset disabled={saveStatus === 'saving'} className="space-y-4 w-full border-none p-0 m-0">
+                
+                {activeTab === 'home' && (
+                  <div className="max-w-5xl mx-auto space-y-12 pb-20">
                   {/* General Copy */}
                   <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center gap-2">
@@ -952,6 +1148,18 @@ export default function Admin() {
                           <EditorInput label="Shipping (e.g., Free shipping)" value={form.shipping || ''} onChange={val => setForm({...form, shipping: val})} />
                           <EditorInput label="SKU Code" value={form.sku || ''} onChange={val => setForm({...form, sku: val})} />
                         </div>
+                        <div className="mt-4 border-t border-black/5 pt-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={form.cartEnabled !== false} 
+                              onChange={e => setForm({...form, cartEnabled: e.target.checked})} 
+                              className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                            />
+                            <span className="text-[10px] uppercase font-black text-ink/60 tracking-wider">Enable Add to Cart Button</span>
+                          </label>
+                          <p className="text-[8px] text-ink/40 uppercase tracking-widest mt-1">If unchecked, the product detail page will show a disabled button with "Coming soon".</p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1178,10 +1386,11 @@ export default function Admin() {
 
               </fieldset>
             </form>
+            )}
           </div>
         </div>
 
-        {activeTab !== 'home' && (
+        {!(activeTab === 'home' || activeTab === 'orders' || activeTab === 'users') && (
           <div className="col-span-1 lg:col-span-7">
             {/* Inventory Controls */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
