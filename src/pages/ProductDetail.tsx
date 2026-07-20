@@ -377,7 +377,13 @@ export default function ProductDetail() {
                   </tr>
                   <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
                     <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Color Options</td>
-                    <td className="text-ink/70 font-semibold">{product.color || '-'}</td>
+                    <td className="text-ink/70 font-semibold">
+                      {product.color 
+                        ? (Array.isArray(product.color)
+                            ? product.color.map(c => c.name).join(', ')
+                            : product.color)
+                        : '-'}
+                    </td>
                   </tr>
                   <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
                     <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Dimensions</td>
