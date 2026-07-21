@@ -1096,7 +1096,7 @@ export default function Admin() {
               <div className="space-y-6 pb-20 w-full min-w-0 max-w-full overflow-hidden">
                 <h2 className="text-base sm:text-lg font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-wrap justify-between items-center gap-3">
                   <span>Customer Orders</span>
-                  <button onClick={loadOrders} className="text-xs bg-cobalt text-white px-3 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer rounded-none">Refresh</button>
+                  <button onClick={loadOrders} className="text-xs bg-cobalt text-white px-3 py-2 font-bold uppercase hover:bg-ink transition-colors cursor-pointer rounded-none flex-shrink-0">Refresh</button>
                 </h2>
 
                 {/* Sub-tabs for filtering orders */}
@@ -1273,7 +1273,7 @@ export default function Admin() {
               <div className="space-y-6 pb-20 w-full min-w-0 max-w-full overflow-hidden">
                 <h2 className="text-base sm:text-lg font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-wrap justify-between items-center gap-3">
                   <span>Registered Customers</span>
-                  <button onClick={loadUsers} className="text-xs bg-cobalt text-white px-3 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer rounded-none">Refresh</button>
+                  <button onClick={loadUsers} className="text-xs bg-cobalt text-white px-3 py-2 font-bold uppercase hover:bg-ink transition-colors cursor-pointer rounded-none flex-shrink-0">Refresh</button>
                 </h2>
                 {usersList.length === 0 ? (
                   <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-8 sm:p-12 text-center">No registered customers yet.</p>
@@ -1281,7 +1281,7 @@ export default function Admin() {
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full min-w-0 max-w-full">
                     {/* Left panel: List */}
                     <div className={selectedUser ? "lg:col-span-7 space-y-4 w-full min-w-0 max-w-full" : "lg:col-span-12 space-y-4 w-full min-w-0 max-w-full"}>
-                      <span className="text-[10px] sm:text-xs text-ink/50 uppercase tracking-wider font-bold block">* Click any row to view customer profile and internal notes.</span>
+                      <p className="text-[10px] text-ink/50 font-bold break-words leading-relaxed">※ 고객을 클릭하면 상세정보를 볼 수 있습니다.</p>
                       
                       {/* Mobile Card View (visible on small screens) */}
                       <div className="block md:hidden space-y-3 w-full min-w-0 max-w-full">
@@ -1346,52 +1346,52 @@ export default function Admin() {
 
                     {/* Right panel: Details & Memo */}
                     {selectedUser && (
-                      <div className="lg:col-span-5 bg-white border border-black/10 p-4 sm:p-6 space-y-5 shadow-sm animate-in fade-in slide-in-from-right-4 duration-300 w-full min-w-0 max-w-full overflow-hidden rounded-none">
+                      <div className="lg:col-span-5 bg-white border border-black/10 p-4 sm:p-6 space-y-5 shadow-sm w-full min-w-0 max-w-full overflow-hidden rounded-none">
                         <div className="flex justify-between items-center border-b border-black/10 pb-3">
-                          <h3 className="text-xs md:text-sm font-black uppercase tracking-widest text-ink">
+                          <h3 className="text-xs font-black uppercase tracking-normal text-ink">
                             Customer Details
                           </h3>
-                          <button onClick={() => setSelectedUser(null)} className="text-xs text-ink/50 hover:text-ink font-bold uppercase tracking-widest cursor-pointer px-2 py-1 bg-black/5 hover:bg-black/10">Close</button>
+                          <button onClick={() => setSelectedUser(null)} className="text-xs text-ink/50 hover:text-ink font-bold uppercase cursor-pointer px-2 py-1 bg-black/5 hover:bg-black/10 flex-shrink-0">Close</button>
                         </div>
                         
                         <div className="space-y-3.5 text-xs md:text-sm font-sans text-ink/80 min-w-0 max-w-full">
-                          <div className="min-w-0">
-                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Email</span>
-                            <span className="font-bold text-ink break-all block">{selectedUser.email}</span>
+                          <div className="min-w-0 overflow-hidden">
+                            <span className="block text-[9px] text-ink/40 font-black uppercase mb-0.5">Email</span>
+                            <span className="font-bold text-ink break-all block w-full">{selectedUser.email}</span>
                           </div>
-                          <div className="min-w-0">
-                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Registered Name</span>
-                            <span className="font-semibold text-ink break-words block">{selectedUser.name || 'Not registered'}</span>
+                          <div className="min-w-0 overflow-hidden">
+                            <span className="block text-[9px] text-ink/40 font-black uppercase mb-0.5">Registered Name</span>
+                            <span className="font-semibold text-ink break-all block w-full">{selectedUser.name || 'Not registered'}</span>
                           </div>
-                          <div className="min-w-0">
-                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Phone Number</span>
-                            <span className="font-semibold text-ink break-words block">{selectedUser.phone || 'Not registered'}</span>
+                          <div className="min-w-0 overflow-hidden">
+                            <span className="block text-[9px] text-ink/40 font-black uppercase mb-0.5">Phone Number</span>
+                            <span className="font-semibold text-ink break-all block w-full">{selectedUser.phone || 'Not registered'}</span>
                           </div>
-                          <div className="min-w-0">
-                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Shipping Address</span>
-                            <p className="font-semibold text-ink whitespace-pre-wrap break-all">{selectedUser.address || 'Not registered'}</p>
+                          <div className="min-w-0 overflow-hidden">
+                            <span className="block text-[9px] text-ink/40 font-black uppercase mb-0.5">Shipping Address</span>
+                            <p className="font-semibold text-ink whitespace-pre-wrap break-all w-full">{selectedUser.address || 'Not registered'}</p>
                           </div>
-                          <div className="min-w-0">
-                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Registration Date</span>
-                            <span className="text-ink/60 text-xs">{new Date(selectedUser.createdAt).toLocaleString()}</span>
+                          <div className="min-w-0 overflow-hidden">
+                            <span className="block text-[9px] text-ink/40 font-black uppercase mb-0.5">Registration Date</span>
+                            <span className="text-ink/60 text-xs break-words block">{new Date(selectedUser.createdAt).toLocaleString()}</span>
                           </div>
                           
                           {/* Memo section */}
-                          <div className="border-t border-black/10 pt-4 space-y-2 min-w-0">
-                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest">Customer Memo (Internal Notes)</span>
+                          <div className="border-t border-black/10 pt-4 space-y-2 min-w-0 overflow-hidden">
+                            <span className="block text-[9px] text-ink/40 font-black uppercase">메모 (내부 노트)</span>
                             <textarea
                               value={userMemo}
                               onChange={(e) => setUserMemo(e.target.value)}
-                              className="w-full border border-black/10 focus:border-cobalt outline-none p-3 text-xs md:text-sm transition-colors bg-off-white font-sans resize-none rounded-none text-ink"
-                              placeholder="Add internal notes about this customer..."
+                              className="w-full border border-black/10 focus:border-cobalt outline-none p-3 text-xs transition-colors bg-off-white font-sans resize-none rounded-none text-ink"
+                              placeholder="내부 메모를 입력하세요..."
                               rows={4}
                             />
                             <button
                               onClick={handleSaveMemo}
                               disabled={isSavingMemo}
-                              className="w-full bg-ink hover:bg-cobalt text-white py-3 font-bold uppercase tracking-widest text-xs transition-colors rounded-none cursor-pointer"
+                              className="w-full bg-ink hover:bg-cobalt text-white py-3 font-bold uppercase text-xs transition-colors rounded-none cursor-pointer"
                             >
-                              {isSavingMemo ? "Saving Memo..." : "Save Customer Memo"}
+                              {isSavingMemo ? "저장 중..." : "메모 저장"}
                             </button>
                           </div>
                         </div>
