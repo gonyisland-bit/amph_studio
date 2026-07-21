@@ -1,19 +1,18 @@
 import { useEffect } from 'react';
 
-export function useScrollReveal() {
+export function useScrollReveal(deps: any[] = []) {
   useEffect(() => {
     const observerOptions = {
       root: null,
-      rootMargin: '0px',
-      threshold: 0.1,
+      rootMargin: '50px 0px',
+      threshold: 0.05,
     };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('active');
-          // Optional: unobserve after revealing
-          // observer.unobserve(entry.target);
+          observer.unobserve(entry.target);
         }
       });
     }, observerOptions);
@@ -24,5 +23,5 @@ export function useScrollReveal() {
     return () => {
       revealElements.forEach((el) => observer.unobserve(el));
     };
-  }, []);
+  }, deps);
 }

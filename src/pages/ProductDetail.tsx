@@ -72,7 +72,7 @@ export default function ProductDetail() {
   const touchStartRef = useRef<{ x: number; y: number; dist: number } | null>(null);
   const thumbnailStripRef = useRef<HTMLDivElement>(null);
 
-  useScrollReveal();
+  useScrollReveal([product, recommendations]);
 
   useEffect(() => {
     if (id) {
@@ -509,7 +509,7 @@ export default function ProductDetail() {
              <Link 
               to={`/product/${rec.id}`}
               key={rec.id}
-              className="group aspect-[4/5] relative overflow-hidden flex flex-col reveal"
+              className="group aspect-[4/5] relative overflow-hidden flex flex-col"
             >
               {/* Category tag overlap on top-left */}
               <div className="absolute top-6 left-6 z-20 pointer-events-none">

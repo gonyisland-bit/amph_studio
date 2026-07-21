@@ -11,7 +11,7 @@ export default function SpaceDetail() {
   const [appliedProducts, setAppliedProducts] = useState<Product[]>([]);
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
 
-  useScrollReveal();
+  useScrollReveal([space, appliedProducts]);
 
   useEffect(() => {
     if (id) {
