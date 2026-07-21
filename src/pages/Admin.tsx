@@ -951,8 +951,8 @@ export default function Admin() {
       </div>
 
       {/* Top-Level Dashboard Category Navigation & Sub-Tabs */}
-      <div className="flex flex-col gap-3 border-b border-black/10 pb-4 mb-8">
-        <div className="flex gap-1 bg-black/5 p-1 rounded-none w-full">
+      <div className="flex flex-col gap-3 border-b border-black/10 pb-4 mb-8 min-w-0 max-w-full">
+        <div className="flex gap-1.5 bg-black/5 p-1.5 rounded-none w-full min-w-0">
           <button
             type="button"
             onClick={() => {
@@ -960,13 +960,13 @@ export default function Admin() {
                 switchTab('collection');
               }
             }}
-            className={`flex-1 md:flex-none px-4 py-2 text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all rounded-none flex items-center justify-center gap-2 cursor-pointer ${
+            className={`flex-1 px-4 py-3.5 text-xs sm:text-sm md:text-base font-black uppercase tracking-wider transition-all rounded-none flex items-center justify-center cursor-pointer text-center ${
               activeTab !== 'orders' && activeTab !== 'users'
                 ? 'bg-ink text-white shadow-sm'
                 : 'text-ink/60 hover:text-ink hover:bg-black/5'
             }`}
           >
-            🎨 홈페이지 디자인 (Site Design)
+            Site design
           </button>
           <button
             type="button"
@@ -975,18 +975,18 @@ export default function Admin() {
                 switchTab('orders');
               }
             }}
-            className={`flex-1 md:flex-none px-4 py-2 text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all rounded-none flex items-center justify-center gap-2 cursor-pointer ${
+            className={`flex-1 px-4 py-3.5 text-xs sm:text-sm md:text-base font-black uppercase tracking-wider transition-all rounded-none flex items-center justify-center cursor-pointer text-center ${
               activeTab === 'orders' || activeTab === 'users'
                 ? 'bg-cobalt text-white shadow-sm'
                 : 'text-ink/60 hover:text-ink hover:bg-black/5'
             }`}
           >
-            🛒 고객판매 (Customer & Sales)
+            Customer
           </button>
         </div>
 
         {/* Sub Navigation Tabs */}
-        <div className="flex gap-3 overflow-x-auto w-full pb-1">
+        <div className="flex gap-2 overflow-x-auto w-full pb-1 min-w-0 max-w-full no-scrollbar">
           {(activeTab !== 'orders' && activeTab !== 'users') ? (
             [
               { id: 'home', label: 'Home' },
@@ -997,10 +997,10 @@ export default function Admin() {
               <button 
                 key={tab.id} 
                 onClick={() => switchTab(tab.id as any)} 
-                className={`uppercase text-[11px] font-bold tracking-widest transition-all shrink-0 cursor-pointer ${
+                className={`uppercase text-xs sm:text-sm font-bold tracking-widest transition-all shrink-0 cursor-pointer px-3.5 py-2 rounded-none ${
                   activeTab === tab.id 
-                    ? 'text-cobalt border-b-2 border-cobalt pb-1' 
-                    : 'text-ink/40 hover:text-ink'
+                    ? 'text-cobalt border-b-2 border-cobalt font-black bg-cobalt/5' 
+                    : 'text-ink/50 hover:text-ink hover:bg-black/5'
                 }`}
               >
                 {tab.label}
@@ -1014,10 +1014,10 @@ export default function Admin() {
               <button 
                 key={tab.id} 
                 onClick={() => switchTab(tab.id as any)} 
-                className={`uppercase text-[11px] font-bold tracking-widest transition-all shrink-0 cursor-pointer ${
+                className={`uppercase text-xs sm:text-sm font-bold tracking-widest transition-all shrink-0 cursor-pointer px-4 py-2 rounded-none ${
                   activeTab === tab.id 
-                    ? 'text-cobalt border-b-2 border-cobalt pb-1' 
-                    : 'text-ink/40 hover:text-ink'
+                    ? 'text-cobalt border-b-2 border-cobalt font-black bg-cobalt/5' 
+                    : 'text-ink/50 hover:text-ink hover:bg-black/5'
                 }`}
               >
                 {tab.label}
@@ -1093,18 +1093,18 @@ export default function Admin() {
             )}
 
             {activeTab === 'orders' && (
-              <div className="space-y-6 pb-20 w-full">
-                <h2 className="text-lg font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-wrap justify-between items-center gap-3">
+              <div className="space-y-6 pb-20 w-full min-w-0 max-w-full overflow-hidden">
+                <h2 className="text-base sm:text-lg font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-wrap justify-between items-center gap-3">
                   <span>Customer Orders</span>
-                  <button onClick={loadOrders} className="text-xs bg-cobalt text-white px-3 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer">Refresh</button>
+                  <button onClick={loadOrders} className="text-xs bg-cobalt text-white px-3 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer rounded-none">Refresh</button>
                 </h2>
 
                 {/* Sub-tabs for filtering orders */}
-                <div className="flex gap-1.5 border-b border-black/10 pb-3 flex-wrap">
+                <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-1.5 border-b border-black/10 pb-3 w-full min-w-0 max-w-full">
                   <button
                     type="button"
                     onClick={() => setOrderFilter('active')}
-                    className={`px-4 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-none cursor-pointer ${
+                    className={`px-2 sm:px-4 py-2 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all rounded-none cursor-pointer text-center truncate ${
                       orderFilter === 'active' ? 'bg-cobalt text-white shadow-sm' : 'bg-black/5 text-ink/60 hover:bg-black/10'
                     }`}
                   >
@@ -1113,7 +1113,7 @@ export default function Admin() {
                   <button
                     type="button"
                     onClick={() => setOrderFilter('completed')}
-                    className={`px-4 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-none cursor-pointer ${
+                    className={`px-2 sm:px-4 py-2 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all rounded-none cursor-pointer text-center truncate ${
                       orderFilter === 'completed' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-black/5 text-ink/60 hover:bg-black/10'
                     }`}
                   >
@@ -1122,7 +1122,7 @@ export default function Admin() {
                   <button
                     type="button"
                     onClick={() => setOrderFilter('all')}
-                    className={`px-4 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-none cursor-pointer ${
+                    className={`px-2 sm:px-4 py-2 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all rounded-none cursor-pointer text-center truncate ${
                       orderFilter === 'all' ? 'bg-ink text-white shadow-sm' : 'bg-black/5 text-ink/60 hover:bg-black/10'
                     }`}
                   >
@@ -1131,7 +1131,7 @@ export default function Admin() {
                 </div>
 
                 {orders.length === 0 ? (
-                  <p className="text-sm uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No orders placed yet.</p>
+                  <p className="text-sm uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-8 sm:p-12 text-center">No orders placed yet.</p>
                 ) : (() => {
                   const filteredOrders = orders.filter((o: any) => {
                     if (orderFilter === 'active') return o.status !== 'Completed';
@@ -1141,23 +1141,23 @@ export default function Admin() {
 
                   if (filteredOrders.length === 0) {
                     return (
-                      <p className="text-sm uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">
+                      <p className="text-sm uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-8 sm:p-12 text-center">
                         No {orderFilter === 'completed' ? 'completed' : 'in-progress'} orders found.
                       </p>
                     );
                   }
 
                   return (
-                    <div className="space-y-4">
+                    <div className="space-y-4 w-full min-w-0 max-w-full">
                       {filteredOrders.map((o: any) => (
-                        <div key={o.id} className="bg-white border border-black/5 p-3 md:p-5 flex flex-col gap-4 shadow-sm w-full min-w-0">
+                        <div key={o.id} className="bg-white border border-black/10 p-3 sm:p-5 flex flex-col gap-4 shadow-sm w-full min-w-0 max-w-full overflow-hidden rounded-none">
                           {/* Order header */}
-                          <div className="flex flex-col gap-3 border-b border-black/10 pb-3 text-xs uppercase font-sans tracking-wider text-ink/70">
-                            <div className="grid grid-cols-2 gap-3 w-full">
-                              <div className="min-w-0 col-span-2">
+                          <div className="flex flex-col gap-3 border-b border-black/10 pb-3 text-xs uppercase font-sans tracking-wider text-ink/70 min-w-0 max-w-full">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full min-w-0">
+                              <div className="min-w-0 sm:col-span-2">
                                 <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Order ID</span>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-mono text-ink font-bold text-[10px] break-all">{o.id}</span>
+                                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                  <span className="font-mono text-ink font-bold text-[10px] sm:text-xs break-all">{o.id}</span>
                                   <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border rounded-full flex-shrink-0 ${getStatusBadgeStyle(o.status)}`}>
                                     ● {o.status === 'Pending' ? '대기' : o.status === 'Confirmed' ? '주문확인' : o.status === 'Processing' ? '발주' : o.status === 'Shipping' ? '배송' : o.status === 'Completed' ? '완료' : o.status}
                                   </span>
@@ -1165,22 +1165,22 @@ export default function Admin() {
                               </div>
                               <div className="min-w-0">
                                 <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Email</span>
-                                <span className="text-cobalt font-bold text-[10px] break-all block">{o.customerEmail}</span>
+                                <span className="text-cobalt font-bold text-[10px] sm:text-xs break-all block">{o.customerEmail}</span>
                               </div>
                               <div className="min-w-0">
                                 <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Date</span>
-                                <span className="text-ink font-semibold text-[10px] block">{new Date(o.createdAt).toLocaleString()}</span>
+                                <span className="text-ink font-semibold text-[10px] sm:text-xs block">{new Date(o.createdAt).toLocaleString()}</span>
                               </div>
                               <div className="min-w-0">
                                 <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Total</span>
-                                <span className="text-ink font-black text-sm block">${Number(o.totalPrice).toLocaleString()}</span>
+                                <span className="text-ink font-black text-sm sm:text-base block">${Number(o.totalPrice).toLocaleString()}</span>
                               </div>
-                              <div className="min-w-0">
+                              <div className="min-w-0 sm:col-span-2">
                                 <span className="block text-[10px] text-ink/40 font-bold uppercase mb-0.5">Update Status</span>
                                 <select
                                   value={o.status}
                                   onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                                  className="w-full px-2 py-1.5 text-[10px] font-bold tracking-wider border border-black/20 bg-white hover:border-black/40 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer"
+                                  className="w-full px-3 py-2 text-xs font-bold tracking-wider border border-black/20 bg-white hover:border-black/40 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer"
                                 >
                                   <option value="Pending">대기 (Pending)</option>
                                   <option value="Confirmed">주문확인 (Confirmed)</option>
@@ -1194,14 +1194,15 @@ export default function Admin() {
 
                           {/* Recipient details */}
                           {o.name && (
-                            <div className="border-b border-black/10 pb-4 text-xs uppercase tracking-wider font-bold text-ink/80 flex flex-col sm:flex-row flex-wrap gap-x-6 gap-y-2 bg-off-white/80 p-3.5 border border-black/5">
-                              <span className="break-words">Recipient: {o.name}</span>
-                              <span className="break-words">Phone: {o.phone}</span>
-                              <span className="break-words">Address: {o.address}</span>
+                            <div className="border-b border-black/10 pb-3 text-xs uppercase tracking-wider font-bold text-ink/80 flex flex-col sm:flex-row flex-wrap gap-x-6 gap-y-2 bg-off-white/80 p-3 sm:p-3.5 border border-black/5 min-w-0 max-w-full overflow-hidden">
+                              <span className="break-all">Recipient: {o.name}</span>
+                              <span className="break-all">Phone: {o.phone}</span>
+                              <span className="break-all">Address: {o.address}</span>
                             </div>
                           )}
 
-                          <div className="space-y-3">
+                          {/* Order items */}
+                          <div className="space-y-3 min-w-0 max-w-full">
                             {o.items && Array.isArray(o.items) && o.items.map((item: any, idx: number) => {
                               const foundProd = products.find((p: any) => p.id === item.productId);
                               const colorVal = item.color || (foundProd?.color ? (Array.isArray(foundProd.color) ? foundProd.color.map((c:any) => c.name).join(', ') : foundProd.color) : '-');
@@ -1211,38 +1212,49 @@ export default function Admin() {
                                   key={idx} 
                                   to={`/product/${item.productId}`} 
                                   target="_blank" 
-                                  className="flex gap-4 items-center border-b border-black/[0.05] pb-3 last:border-0 last:pb-0 hover:bg-black/[0.02] p-2 transition-colors group cursor-pointer rounded-none"
+                                  className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center border-b border-black/[0.05] pb-3 last:border-0 last:pb-0 hover:bg-black/[0.02] p-2 transition-colors group cursor-pointer rounded-none min-w-0 max-w-full"
                                 >
-                                  <div className="w-14 h-14 bg-silver/10 border border-black/10 flex-shrink-0 overflow-hidden">
-                                    {item.image ? (
-                                      <img 
-                                        src={item.image} 
-                                        alt={item.name} 
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                                        nopin="nopin" 
-                                        data-pin-no-hover="true" 
-                                      />
-                                    ) : (
-                                      <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[9px] text-ink/30 uppercase">No Img</div>
-                                    )}
+                                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                                    <div className="w-14 h-14 bg-silver/10 border border-black/10 flex-shrink-0 overflow-hidden">
+                                      {item.image ? (
+                                        <img 
+                                          src={item.image} 
+                                          alt={item.name} 
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                                          nopin="nopin" 
+                                          data-pin-no-hover="true" 
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[9px] text-ink/30 uppercase">No Img</div>
+                                      )}
+                                    </div>
+                                    <div className="min-w-0 flex-grow sm:hidden">
+                                      <h4 className="text-xs font-bold text-ink uppercase tracking-tight truncate group-hover:text-cobalt transition-colors flex items-center gap-1">
+                                        {item.name} <ExternalLink size={10} className="opacity-70 text-cobalt flex-shrink-0" />
+                                      </h4>
+                                      <p className="text-[10px] uppercase tracking-wider text-ink/50 font-medium truncate">{item.category}</p>
+                                    </div>
                                   </div>
-                                  <div className="flex-grow flex justify-between items-center min-w-0">
-                                    <div className="min-w-0 pr-3">
+                                  
+                                  <div className="flex-grow flex flex-col sm:flex-row justify-between sm:items-center min-w-0 w-full gap-2">
+                                    <div className="min-w-0 hidden sm:block pr-3">
                                       <h4 className="text-xs md:text-sm font-bold text-ink uppercase tracking-tight truncate group-hover:text-cobalt transition-colors flex items-center gap-1.5">
                                         {item.name} <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity text-cobalt flex-shrink-0" />
                                       </h4>
                                       <p className="text-xs uppercase tracking-wider text-ink/50 font-medium truncate mb-1">{item.category}</p>
-                                      <div className="flex flex-wrap gap-2 text-[10px] uppercase font-bold">
-                                        <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5">Shipping: {shippingVal}</span>
-                                        <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5">
-                                          {renderColorBadge(item.color || foundProd?.color, foundProd, colorOptions)}
-                                        </span>
-                                        {item.material && <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/60 border border-black/5">Mat: {item.material}</span>}
-                                      </div>
                                     </div>
-                                    <div className="text-right flex-shrink-0">
-                                      <span className="text-xs md:text-sm font-bold text-ink block">${Number(item.price).toLocaleString()}</span>
-                                      <span className="block text-xs text-ink/50 font-bold uppercase mt-0.5">QTY {item.quantity}</span>
+
+                                    <div className="flex flex-wrap gap-1.5 text-[10px] uppercase font-bold min-w-0">
+                                      <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5 max-w-full truncate">Ship: {shippingVal}</span>
+                                      <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/80 border border-black/5 max-w-full">
+                                        {renderColorBadge(item.color || foundProd?.color, foundProd, colorOptions)}
+                                      </span>
+                                      {item.material && <span className="bg-black/5 px-2 py-0.5 rounded-none text-ink/60 border border-black/5 max-w-full truncate">Mat: {item.material}</span>}
+                                    </div>
+
+                                    <div className="flex justify-between items-center sm:block sm:text-right flex-shrink-0 pt-1.5 sm:pt-0 border-t border-black/5 sm:border-0 w-full sm:w-auto mt-1 sm:mt-0">
+                                      <span className="text-xs sm:text-sm font-bold text-ink block">${Number(item.price).toLocaleString()}</span>
+                                      <span className="text-xs text-ink/50 font-bold uppercase block">QTY {item.quantity}</span>
                                     </div>
                                   </div>
                                 </Link>
@@ -1258,21 +1270,21 @@ export default function Admin() {
             )}
 
             {activeTab === 'users' && (
-              <div className="space-y-6 pb-20 w-full">
-                <h2 className="text-lg font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-wrap justify-between items-center gap-3">
+              <div className="space-y-6 pb-20 w-full min-w-0 max-w-full overflow-hidden">
+                <h2 className="text-base sm:text-lg font-black uppercase tracking-tight border-b border-black/10 pb-4 flex flex-wrap justify-between items-center gap-3">
                   <span>Registered Customers</span>
-                  <button onClick={loadUsers} className="text-xs bg-cobalt text-white px-3 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer">Refresh</button>
+                  <button onClick={loadUsers} className="text-xs bg-cobalt text-white px-3 py-2 font-bold uppercase tracking-widest hover:bg-ink transition-colors cursor-pointer rounded-none">Refresh</button>
                 </h2>
                 {usersList.length === 0 ? (
-                  <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-12 text-center">No registered customers yet.</p>
+                  <p className="text-xs uppercase tracking-wider text-ink/40 bg-white border border-black/5 p-8 sm:p-12 text-center">No registered customers yet.</p>
                 ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full min-w-0 max-w-full">
                     {/* Left panel: List */}
-                    <div className={selectedUser ? "lg:col-span-7 space-y-4 w-full" : "lg:col-span-12 space-y-4 w-full"}>
-                      <span className="text-xs text-ink/50 uppercase tracking-wider font-bold block">* Click any row to view customer profile and internal notes.</span>
+                    <div className={selectedUser ? "lg:col-span-7 space-y-4 w-full min-w-0 max-w-full" : "lg:col-span-12 space-y-4 w-full min-w-0 max-w-full"}>
+                      <span className="text-[10px] sm:text-xs text-ink/50 uppercase tracking-wider font-bold block">* Click any row to view customer profile and internal notes.</span>
                       
                       {/* Mobile Card View (visible on small screens) */}
-                      <div className="block md:hidden space-y-3 w-full">
+                      <div className="block md:hidden space-y-3 w-full min-w-0 max-w-full">
                         {usersList.map((user: any) => (
                           <div
                             key={user.id}
@@ -1280,22 +1292,22 @@ export default function Admin() {
                               setSelectedUser(user);
                               setUserMemo(user.memo || "");
                             }}
-                            className={`p-4 bg-white border border-black/10 shadow-sm cursor-pointer space-y-2 transition-colors rounded-none ${
+                            className={`p-4 bg-white border border-black/10 shadow-sm cursor-pointer space-y-2.5 transition-colors rounded-none w-full min-w-0 max-w-full overflow-hidden ${
                               selectedUser?.email === user.email ? 'border-cobalt bg-cobalt/5' : 'hover:border-black/30'
                             }`}
                           >
-                            <div>
-                              <span className="block text-[10px] uppercase font-bold text-ink/40">Email Address</span>
-                              <span className="text-sm font-bold text-ink break-all block">{user.email}</span>
+                            <div className="min-w-0">
+                              <span className="block text-[9px] uppercase font-bold text-ink/40">Email Address</span>
+                              <span className="text-xs font-bold text-ink break-all block">{user.email}</span>
                             </div>
-                            <div className="flex justify-between items-center pt-1 border-t border-black/5 text-xs">
-                              <div>
+                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-black/5 text-xs min-w-0">
+                              <div className="min-w-0">
                                 <span className="block text-[9px] uppercase font-bold text-ink/40">Name</span>
-                                <span className="font-semibold text-ink">{user.name || '-'}</span>
+                                <span className="font-semibold text-ink truncate block text-xs">{user.name || '-'}</span>
                               </div>
-                              <div className="text-right">
+                              <div className="min-w-0 text-right">
                                 <span className="block text-[9px] uppercase font-bold text-ink/40">Phone</span>
-                                <span className="font-semibold text-ink">{user.phone || '-'}</span>
+                                <span className="font-semibold text-ink truncate block text-xs">{user.phone || '-'}</span>
                               </div>
                             </div>
                           </div>
@@ -1303,7 +1315,7 @@ export default function Admin() {
                       </div>
 
                       {/* Desktop Table View (visible on md and above) */}
-                      <div className="hidden md:block bg-white border border-black/5 shadow-sm overflow-x-auto w-full">
+                      <div className="hidden md:block bg-white border border-black/5 shadow-sm overflow-x-auto w-full min-w-0 max-w-full">
                         <table className="w-full text-left border-collapse text-xs font-sans min-w-[500px]">
                           <thead>
                             <tr className="bg-off-white uppercase text-[10px] font-black tracking-widest text-ink/60 border-b border-black/10">
@@ -1334,39 +1346,39 @@ export default function Admin() {
 
                     {/* Right panel: Details & Memo */}
                     {selectedUser && (
-                      <div className="lg:col-span-5 bg-white border border-black/5 p-6 space-y-6 shadow-sm animate-in fade-in slide-in-from-right-4 duration-300 w-full">
-                        <div className="flex justify-between items-center border-b border-black/5 pb-3">
+                      <div className="lg:col-span-5 bg-white border border-black/10 p-4 sm:p-6 space-y-5 shadow-sm animate-in fade-in slide-in-from-right-4 duration-300 w-full min-w-0 max-w-full overflow-hidden rounded-none">
+                        <div className="flex justify-between items-center border-b border-black/10 pb-3">
                           <h3 className="text-xs md:text-sm font-black uppercase tracking-widest text-ink">
                             Customer Details
                           </h3>
-                          <button onClick={() => setSelectedUser(null)} className="text-xs text-ink/50 hover:text-ink font-bold uppercase tracking-widest cursor-pointer">Close</button>
+                          <button onClick={() => setSelectedUser(null)} className="text-xs text-ink/50 hover:text-ink font-bold uppercase tracking-widest cursor-pointer px-2 py-1 bg-black/5 hover:bg-black/10">Close</button>
                         </div>
                         
-                        <div className="space-y-4 text-xs md:text-sm font-sans text-ink/80">
-                          <div>
-                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Email</span>
+                        <div className="space-y-3.5 text-xs md:text-sm font-sans text-ink/80 min-w-0 max-w-full">
+                          <div className="min-w-0">
+                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Email</span>
                             <span className="font-bold text-ink break-all block">{selectedUser.email}</span>
                           </div>
-                          <div>
-                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Registered Name</span>
-                            <span className="font-semibold text-ink">{selectedUser.name || 'Not registered'}</span>
+                          <div className="min-w-0">
+                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Registered Name</span>
+                            <span className="font-semibold text-ink break-words block">{selectedUser.name || 'Not registered'}</span>
                           </div>
-                          <div>
-                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Phone Number</span>
-                            <span className="font-semibold text-ink">{selectedUser.phone || 'Not registered'}</span>
+                          <div className="min-w-0">
+                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Phone Number</span>
+                            <span className="font-semibold text-ink break-words block">{selectedUser.phone || 'Not registered'}</span>
                           </div>
-                          <div>
-                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Shipping Address</span>
-                            <p className="font-semibold text-ink whitespace-pre-wrap break-words">{selectedUser.address || 'Not registered'}</p>
+                          <div className="min-w-0">
+                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Shipping Address</span>
+                            <p className="font-semibold text-ink whitespace-pre-wrap break-all">{selectedUser.address || 'Not registered'}</p>
                           </div>
-                          <div>
-                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Registration Date</span>
-                            <span className="text-ink/60">{new Date(selectedUser.createdAt).toLocaleString()}</span>
+                          <div className="min-w-0">
+                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest mb-0.5">Registration Date</span>
+                            <span className="text-ink/60 text-xs">{new Date(selectedUser.createdAt).toLocaleString()}</span>
                           </div>
                           
                           {/* Memo section */}
-                          <div className="border-t border-black/5 pt-4 space-y-2">
-                            <span className="block text-[10px] text-ink/40 font-black uppercase tracking-widest">Customer Memo (Internal Notes)</span>
+                          <div className="border-t border-black/10 pt-4 space-y-2 min-w-0">
+                            <span className="block text-[9px] sm:text-[10px] text-ink/40 font-black uppercase tracking-widest">Customer Memo (Internal Notes)</span>
                             <textarea
                               value={userMemo}
                               onChange={(e) => setUserMemo(e.target.value)}
@@ -1379,7 +1391,7 @@ export default function Admin() {
                               disabled={isSavingMemo}
                               className="w-full bg-ink hover:bg-cobalt text-white py-3 font-bold uppercase tracking-widest text-xs transition-colors rounded-none cursor-pointer"
                             >
-                              {isSavingMemo ? "Saving..." : "Save Memo"}
+                              {isSavingMemo ? "Saving Memo..." : "Save Customer Memo"}
                             </button>
                           </div>
                         </div>
