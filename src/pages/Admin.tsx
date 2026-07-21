@@ -934,7 +934,7 @@ export default function Admin() {
   );
 
   return (
-    <div className="flex flex-col flex-grow p-4 md:p-12 max-w-[1400px] mx-auto w-full font-sans min-w-0 overflow-x-hidden">
+    <div className="flex flex-col flex-grow px-3 py-4 sm:px-6 md:px-12 md:py-12 max-w-[1400px] mx-auto w-full font-sans min-w-0 overflow-x-hidden">
       
       {/* Admin Status Banner */}
       <div className="border border-black/10 bg-white p-4 mb-8 flex justify-between items-center rounded-none gap-3">
@@ -986,7 +986,7 @@ export default function Admin() {
         </div>
 
         {/* Sub Navigation Tabs */}
-        <div className="flex gap-2 overflow-x-auto w-full pb-1 min-w-0 max-w-full no-scrollbar">
+        <div className="flex flex-wrap gap-1.5 w-full pb-1 min-w-0 max-w-full">
           {(activeTab !== 'orders' && activeTab !== 'users') ? (
             [
               { id: 'home', label: 'Home' },
@@ -997,7 +997,7 @@ export default function Admin() {
               <button 
                 key={tab.id} 
                 onClick={() => switchTab(tab.id as any)} 
-                className={`uppercase text-xs sm:text-sm font-bold tracking-widest transition-all shrink-0 cursor-pointer px-3.5 py-2 rounded-none ${
+                className={`uppercase text-xs sm:text-sm font-bold tracking-wide transition-all shrink-0 cursor-pointer px-3 py-2 rounded-none ${
                   activeTab === tab.id 
                     ? 'text-cobalt border-b-2 border-cobalt font-black bg-cobalt/5' 
                     : 'text-ink/50 hover:text-ink hover:bg-black/5'
@@ -1014,7 +1014,7 @@ export default function Admin() {
               <button 
                 key={tab.id} 
                 onClick={() => switchTab(tab.id as any)} 
-                className={`uppercase text-xs sm:text-sm font-bold tracking-widest transition-all shrink-0 cursor-pointer px-4 py-2 rounded-none ${
+                className={`uppercase text-xs sm:text-sm font-bold tracking-wide transition-all shrink-0 cursor-pointer px-4 py-2 rounded-none ${
                   activeTab === tab.id 
                     ? 'text-cobalt border-b-2 border-cobalt font-black bg-cobalt/5' 
                     : 'text-ink/50 hover:text-ink hover:bg-black/5'
@@ -1027,9 +1027,9 @@ export default function Admin() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 min-w-0 max-w-full overflow-hidden">
-        <div className={(activeTab === 'home' || activeTab === 'orders' || activeTab === 'users') ? 'col-span-12 min-w-0 max-w-full overflow-hidden' : 'col-span-1 lg:col-span-5 min-w-0 max-w-full'}>
-          <div className="sticky top-24">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 min-w-0 w-full max-w-full overflow-x-hidden">
+        <div className={(activeTab === 'home' || activeTab === 'orders' || activeTab === 'users') ? 'col-span-12 min-w-0 w-full max-w-full overflow-x-hidden' : 'col-span-1 lg:col-span-5 min-w-0 w-full max-w-full'}>
+          <div className="sticky top-24 min-w-0 w-full max-w-full overflow-x-hidden">
             {!(activeTab === 'orders' || activeTab === 'users') && (
               <h2 className="text-xl font-semibold mb-6 flex items-center justify-between border-b border-black/10 pb-4">
                 <span>{editingId ? 'Edit Content' : 'Add Content'}</span>
@@ -1180,13 +1180,13 @@ export default function Admin() {
                                 <select
                                   value={o.status}
                                   onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                                  className="w-full px-3 py-2 text-xs font-bold tracking-wider border border-black/20 bg-white hover:border-black/40 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer"
+                                  className="w-full px-2 py-2 text-xs font-bold border border-black/20 bg-white hover:border-black/40 transition-colors uppercase outline-none rounded-none text-ink cursor-pointer"
                                 >
-                                  <option value="Pending">대기 (Pending)</option>
-                                  <option value="Confirmed">주문확인 (Confirmed)</option>
-                                  <option value="Processing">발주 (Processing)</option>
-                                  <option value="Shipping">배송 (Shipping)</option>
-                                  <option value="Completed">완료 (Completed)</option>
+                                  <option value="Pending">대기</option>
+                                  <option value="Confirmed">주문확인</option>
+                                  <option value="Processing">발주</option>
+                                  <option value="Shipping">배송중</option>
+                                  <option value="Completed">완료</option>
                                 </select>
                               </div>
                             </div>

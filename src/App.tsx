@@ -25,9 +25,9 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="flex flex-col min-h-screen bg-off-white text-ink font-sans selection:bg-cobalt selection:text-white antialiased">
+      <div className="flex flex-col min-h-screen bg-off-white text-ink font-sans selection:bg-cobalt selection:text-white antialiased overflow-x-hidden w-full">
         <Navigation />
-        <main className="flex-grow flex flex-col bg-off-white">
+        <main className="flex-grow flex flex-col bg-off-white overflow-x-hidden w-full">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/collection" element={<Collection />} />
