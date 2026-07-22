@@ -37,17 +37,42 @@ export default function Home() {
   useEffect(() => {
     if (showSplash) {
       hasShownSplash = true;
+      document.body.style.overflow = 'hidden';
       window.scrollTo(0, 0);
       const timer = setTimeout(() => {
         setFadeSplash(true);
         const removeTimer = setTimeout(() => {
           setShowSplash(false);
-        }, 800);
+          document.body.style.overflow = '';
+        }, 300);
         return () => clearTimeout(removeTimer);
-      }, 1500);
-      return () => clearTimeout(timer);
+      }, 400);
+      return () => {
+        clearTimeout(timer);
+      };
+    } else {
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [showSplash]);
+
+  useEffect(() => {
+    // Preload first hero image for LCP optimization and smoother paint
+    if (settings.heroSlides && settings.heroSlides[0]?.image) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = settings.heroSlides[0].image.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) ? 'video' : 'image';
+      link.href = settings.heroSlides[0].image;
+      document.head.appendChild(link);
+      return () => {
+        try {
+          document.head.removeChild(link);
+        } catch(e) {}
+      };
+    }
+  }, [settings.heroSlides]);
 
   const featured = settings.featuredProductIds
     .map(id => products.find(p => p.id === id))
