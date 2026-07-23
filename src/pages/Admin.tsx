@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useLocation, useBlocker } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
@@ -370,17 +370,17 @@ export default function Admin() {
     }
   }, [homeSettings, originalHomeSettings]);
 
-  // Intercept route changes with react-router useBlocker
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      isDirty && currentLocation.pathname !== nextLocation.pathname
-  );
-
+  // Warn user on window refresh / tab close when form is dirty
   useEffect(() => {
-    if (blocker.state === "blocked") {
-      setPendingNavigation({ type: 'router' });
-    }
-  }, [blocker.state]);
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -2463,8 +2463,6 @@ export default function Admin() {
                       proceedTab(nav.targetTab);
                     } else if (nav.type === 'edit' && nav.targetItem) {
                       proceedEdit(nav.targetItem);
-                    } else if (nav.type === 'router') {
-                      if (blocker.state === "blocked") blocker.proceed();
                     }
                   }
                 }}
@@ -2481,8 +2479,6 @@ export default function Admin() {
                     proceedTab(nav.targetTab);
                   } else if (nav.type === 'edit' && nav.targetItem) {
                     proceedEdit(nav.targetItem);
-                  } else if (nav.type === 'router') {
-                    if (blocker.state === "blocked") blocker.proceed();
                   }
                 }}
                 className="bg-ink text-white py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-orange transition-colors rounded-none w-full cursor-pointer"
@@ -2492,9 +2488,6 @@ export default function Admin() {
               <button 
                 onClick={() => {
                   setPendingNavigation(null);
-                  if (blocker.state === "blocked") {
-                    blocker.reset();
-                  }
                 }}
                 className="bg-black/5 text-ink/60 border border-black/5 py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-black/10 transition-colors rounded-none w-full cursor-pointer"
               >
