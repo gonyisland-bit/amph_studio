@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, useBlocker } from "react-router-dom";
 import { 
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
@@ -301,6 +301,16 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previewAspects, setPreviewAspects] = useState<Record<string, 'portrait' | 'landscape'>>({});
 
+  // Unsaved changes tracking states
+  const [isDirty, setIsDirty] = useState(false);
+  const [originalForm, setOriginalForm] = useState<any>(null);
+  const [originalHomeSettings, setOriginalHomeSettings] = useState<any>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<{
+    type: 'tab' | 'edit' | 'router';
+    targetTab?: 'home'|'journal'|'space'|'collection'|'orders'|'users';
+    targetItem?: any;
+  } | null>(null);
+
   useEffect(() => {
     const images = (form.images || []).filter(Boolean);
     images.forEach((img: string) => {
@@ -324,11 +334,53 @@ export default function Admin() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [activeSections, setActiveSections] = useState<Record<string, boolean>>({ basic: true, specs: false, options: false, media: false, story: false });
 
+  // Monitor form input changes to set dirty state
   useEffect(() => {
-    if (saveStatus === 'saved') {
-      setSaveStatus('idle');
+    if (!originalForm) {
+      setIsDirty(false);
+      return;
     }
-  }, [form]);
+    const currentStr = JSON.stringify(form);
+    const originalStr = JSON.stringify(originalForm);
+    if (currentStr !== originalStr) {
+      setIsDirty(true);
+      if (saveStatus === 'saved') {
+        setSaveStatus('idle');
+      }
+    } else {
+      setIsDirty(false);
+    }
+  }, [form, originalForm]);
+
+  // Monitor home settings changes
+  useEffect(() => {
+    if (!originalHomeSettings) {
+      setIsDirty(false);
+      return;
+    }
+    const currentStr = JSON.stringify(homeSettings);
+    const originalStr = JSON.stringify(originalHomeSettings);
+    if (currentStr !== originalStr) {
+      setIsDirty(true);
+      if (saveStatus === 'saved') {
+        setSaveStatus('idle');
+      }
+    } else {
+      setIsDirty(false);
+    }
+  }, [homeSettings, originalHomeSettings]);
+
+  // Intercept route changes with react-router useBlocker
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirty && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setPendingNavigation({ type: 'router' });
+    }
+  }, [blocker.state]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -363,7 +415,10 @@ export default function Admin() {
 
   const loadData = () => {
     getProducts().then(setProducts);
-    getHomeSettings().then(setHomeSettings);
+    getHomeSettings().then(data => {
+      setHomeSettings(data);
+      setOriginalHomeSettings(JSON.parse(JSON.stringify(data)));
+    });
     getJournals().then(setJournals);
     getSpaces().then(setSpaces);
   };
@@ -441,7 +496,7 @@ export default function Admin() {
 
   const handleUpdateStatus = async (orderId: string, status: string) => {
     try {
-      const res = await fetch('/api/orders?action=update-status', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, status })
@@ -596,20 +651,26 @@ export default function Admin() {
         const found = products.find(p => p.id === editId);
         if (found) {
           setEditingId(found.id);
-          setForm(JSON.parse(JSON.stringify(found)));
+          const cloned = JSON.parse(JSON.stringify(found));
+          setForm(cloned);
+          setOriginalForm(JSON.parse(JSON.stringify(cloned)));
           setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
         }
       } else if (tabParam === 'space' && spaces.length > 0) {
         const found = spaces.find(s => s.id === editId);
         if (found) {
           setEditingId(found.id);
-          setForm(JSON.parse(JSON.stringify(found)));
+          const cloned = JSON.parse(JSON.stringify(found));
+          setForm(cloned);
+          setOriginalForm(JSON.parse(JSON.stringify(cloned)));
         }
       } else if (tabParam === 'journal' && journals.length > 0) {
         const found = journals.find(j => j.id === editId);
         if (found) {
           setEditingId(found.id);
-          setForm(JSON.parse(JSON.stringify(found)));
+          const cloned = JSON.parse(JSON.stringify(found));
+          setForm(cloned);
+          setOriginalForm(JSON.parse(JSON.stringify(cloned)));
         }
       }
     }
@@ -678,9 +739,6 @@ export default function Admin() {
     );
   }
 
-
-
-
   const handleReorder = async (type: 'collection' | 'space' | 'journal', id: string, direction: 'up' | 'down') => {
     let orderKey: 'globalProductOrder' | 'spaceOrder' | 'journalOrder';
     let items: any[];
@@ -728,79 +786,113 @@ export default function Admin() {
     }
   };
 
-  const switchTab = (tab: 'home'|'journal'|'space'|'collection'|'orders'|'users') => {
+  const proceedTab = (tab: 'home'|'journal'|'space'|'collection'|'orders'|'users') => {
     setActiveTab(tab);
     setEditingId(null);
-    if (tab === 'collection') setForm(emptyProduct);
-    if (tab === 'journal') setForm(emptyJournal);
-    if (tab === 'space') setForm(emptySpace);
+    const empty = tab === 'collection' ? emptyProduct : tab === 'journal' ? emptyJournal : tab === 'space' ? emptySpace : null;
+    if (empty) {
+      setForm(empty);
+      setOriginalForm(JSON.parse(JSON.stringify(empty)));
+    } else {
+      setForm(null);
+      setOriginalForm(null);
+    }
+    setIsDirty(false);
+    setSaveStatus('idle');
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (saveStatus === 'saving') return;
+  const switchTab = (tab: 'home'|'journal'|'space'|'collection'|'orders'|'users') => {
+    if (isDirty) {
+      setPendingNavigation({ type: 'tab', targetTab: tab });
+    } else {
+      proceedTab(tab);
+    }
+  };
+
+  const handleSave = async (e?: React.FormEvent): Promise<boolean> => {
+    if (e) e.preventDefault();
+    if (saveStatus === 'saving') return false;
     setSaveStatus('saving');
     try {
+      let savedData: any = null;
       if (activeTab === 'collection') {
         const cleanedImages = (form.images || []).filter(Boolean);
         const cleanedForm = { ...form, images: cleanedImages, color: colorOptions };
         if (editingId) {
           await updateProduct(editingId, cleanedForm);
-          setForm(cleanedForm);
+          savedData = cleanedForm;
         } else {
           const newId = `prod-${Date.now()}`;
           const newProduct = { ...cleanedForm, id: newId };
           await addProduct(newProduct);
           setEditingId(newId);
-          setForm(newProduct);
+          savedData = newProduct;
         }
       } else if (activeTab === 'journal') {
         if (editingId) {
           await updateJournal(editingId, form);
+          savedData = form;
         } else {
           const newId = `j-${Date.now()}`;
           const newJournal = { ...form, id: newId };
           await addJournal(newJournal);
           setEditingId(newId);
-          setForm(newJournal);
+          savedData = newJournal;
         }
       } else if (activeTab === 'space') {
         const cleanedImages = (form.images || []).filter(Boolean);
         const cleanedForm = { ...form, images: cleanedImages };
         if (editingId) {
           await updateSpace(editingId, cleanedForm);
-          setForm(cleanedForm);
+          savedData = cleanedForm;
         } else {
           const newId = `s-${Date.now()}`;
           const newSpace = { ...cleanedForm, id: newId };
           await addSpace(newSpace);
           setEditingId(newId);
-          setForm(newSpace);
+          savedData = newSpace;
         }
       }
+      
+      if (savedData) {
+        setForm(savedData);
+        setOriginalForm(JSON.parse(JSON.stringify(savedData)));
+      }
+      
       loadData();
+      setIsDirty(false);
       setSaveStatus('saved');
       showToast('Saved successfully!', 'success');
-      setTimeout(() => {
-        setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
-      }, 3000);
+      return true;
     } catch (error) {
       console.error(error);
       setSaveStatus('idle');
       showToast('Failed to save. Please try again.', 'error');
+      return false;
     }
   };
 
-  const handleEdit = (item: any) => {
+  const proceedEdit = (item: any) => {
     setEditingId(item.id);
-    setForm(JSON.parse(JSON.stringify(item)));
-    // Always open basic section so form content is immediately visible
+    const cloned = JSON.parse(JSON.stringify(item));
+    setForm(cloned);
+    setOriginalForm(JSON.parse(JSON.stringify(cloned)));
+    setIsDirty(false);
+    setSaveStatus('idle');
     setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
     const params = new URLSearchParams(window.location.search);
     params.set('tab', activeTab);
     params.set('edit', item.id);
     navigate(`/admin?${params.toString()}`, { replace: true });
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  };
+
+  const handleEdit = (item: any) => {
+    if (isDirty) {
+      setPendingNavigation({ type: 'edit', targetItem: item });
+    } else {
+      proceedEdit(item);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -2347,6 +2439,70 @@ export default function Admin() {
           </div>
         )}
       </div>
+      )}
+      {/* Unsaved Changes Confirmation Modal */}
+      {pendingNavigation && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-200">
+          <div className="bg-white p-8 border-2 border-orange max-w-sm w-full mx-4 text-center shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-150 rounded-none">
+            <div className="w-3 h-3 mb-4 bg-orange" />
+            <h4 className="text-xs font-black uppercase tracking-widest text-ink mb-2">
+              Unsaved Changes
+            </h4>
+            <p className="text-[10px] text-ink/60 mb-6 uppercase tracking-wider leading-relaxed">
+              You have unsaved modifications.<br />
+              Would you like to save them before leaving?
+            </p>
+            <div className="w-full flex flex-col gap-2">
+              <button 
+                onClick={async () => {
+                  const success = await handleSave();
+                  if (success) {
+                    const nav = pendingNavigation;
+                    setPendingNavigation(null);
+                    if (nav.type === 'tab' && nav.targetTab) {
+                      proceedTab(nav.targetTab);
+                    } else if (nav.type === 'edit' && nav.targetItem) {
+                      proceedEdit(nav.targetItem);
+                    } else if (nav.type === 'router') {
+                      if (blocker.state === "blocked") blocker.proceed();
+                    }
+                  }
+                }}
+                className="bg-cobalt text-white py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-ink transition-colors rounded-none w-full cursor-pointer"
+              >
+                Save & Leave
+              </button>
+              <button 
+                onClick={() => {
+                  const nav = pendingNavigation;
+                  setIsDirty(false);
+                  setPendingNavigation(null);
+                  if (nav.type === 'tab' && nav.targetTab) {
+                    proceedTab(nav.targetTab);
+                  } else if (nav.type === 'edit' && nav.targetItem) {
+                    proceedEdit(nav.targetItem);
+                  } else if (nav.type === 'router') {
+                    if (blocker.state === "blocked") blocker.proceed();
+                  }
+                }}
+                className="bg-ink text-white py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-orange transition-colors rounded-none w-full cursor-pointer"
+              >
+                Discard & Leave
+              </button>
+              <button 
+                onClick={() => {
+                  setPendingNavigation(null);
+                  if (blocker.state === "blocked") {
+                    blocker.reset();
+                  }
+                }}
+                className="bg-black/5 text-ink/60 border border-black/5 py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-black/10 transition-colors rounded-none w-full cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {toast && (
         <div 
