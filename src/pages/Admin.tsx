@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useLocation, useBlocker } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
@@ -371,17 +371,6 @@ export default function Admin() {
     }
   }, [homeSettings, originalHomeSettings]);
 
-  // Intercept route changes with react-router useBlocker
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      isDirty && currentLocation.pathname !== nextLocation.pathname
-  );
-
-  useEffect(() => {
-    if (blocker.state === "blocked") {
-      setPendingNavigation({ type: 'router' });
-    }
-  }, [blocker.state]);
 
   // Warn user on window refresh / tab close when form is dirty
   useEffect(() => {
@@ -471,7 +460,9 @@ export default function Admin() {
         try { localOrders = JSON.parse(localOrdersStr); } catch(e) {}
         
         const mergedMap = new Map();
-        data.forEach((o: any) => mergedMap.set(o.id, o));
+        if (Array.isArray(data)) {
+          data.forEach((o: any) => mergedMap.set(o.id, o));
+        }
         localOrders.forEach((o: any) => {
           if (!mergedMap.has(o.id)) mergedMap.set(o.id, o);
         });
@@ -499,7 +490,9 @@ export default function Admin() {
         try { mockAccounts = JSON.parse(mockAccountsStr); } catch(e) {}
         
         const mergedMap = new Map();
-        data.forEach((u: any) => mergedMap.set(u.email, u));
+        if (Array.isArray(data)) {
+          data.forEach((u: any) => mergedMap.set(u.email, u));
+        }
         mockAccounts.forEach((u: any) => {
           if (!mergedMap.has(u.email)) {
             mergedMap.set(u.email, {
@@ -2506,8 +2499,6 @@ export default function Admin() {
                       }
                     } else if (nav.type === 'edit' && nav.targetItem) {
                       proceedEdit(nav.targetItem);
-                    } else if (nav.type === 'router') {
-                      if (blocker.state === "blocked") blocker.proceed();
                     }
                   }
                 }}
@@ -2528,8 +2519,6 @@ export default function Admin() {
                     }
                   } else if (nav.type === 'edit' && nav.targetItem) {
                     proceedEdit(nav.targetItem);
-                  } else if (nav.type === 'router') {
-                    if (blocker.state === "blocked") blocker.proceed();
                   }
                 }}
                 className="bg-ink text-white py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-orange transition-colors rounded-none w-full cursor-pointer"
@@ -2539,9 +2528,6 @@ export default function Admin() {
               <button 
                 onClick={() => {
                   setPendingNavigation(null);
-                  if (blocker.state === "blocked") {
-                    blocker.reset();
-                  }
                 }}
                 className="bg-black/5 text-ink/60 border border-black/5 py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-black/10 transition-colors rounded-none w-full cursor-pointer"
               >
