@@ -37,25 +37,18 @@ export default function Home() {
   useEffect(() => {
     if (showSplash) {
       hasShownSplash = true;
-      document.body.style.overflow = 'hidden';
       window.scrollTo(0, 0);
       const timer = setTimeout(() => {
         setFadeSplash(true);
         const removeTimer = setTimeout(() => {
           setShowSplash(false);
-          document.body.style.overflow = '';
-        }, 300);
+        }, 200);
         return () => clearTimeout(removeTimer);
-      }, 400);
+      }, 300);
       return () => {
         clearTimeout(timer);
       };
-    } else {
-      document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [showSplash]);
 
   useEffect(() => {
@@ -94,8 +87,8 @@ export default function Home() {
     <div className="flex flex-col flex-grow w-full bg-off-white overflow-hidden">
       {showSplash && (
         <div 
-          className={`fixed inset-0 z-[9999] bg-cobalt flex flex-col justify-between p-12 transition-opacity duration-700 ease-in-out ${
-            fadeSplash ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          className={`fixed inset-0 z-[9999] bg-cobalt flex flex-col justify-between p-12 transition-opacity duration-500 ease-in-out pointer-events-none ${
+            fadeSplash ? 'opacity-0' : 'opacity-100'
           }`}
         >
           <div></div>
