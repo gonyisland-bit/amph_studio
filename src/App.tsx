@@ -1,9 +1,4 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
@@ -21,32 +16,42 @@ import Catalog from "./pages/Catalog";
 import Checkout from "./pages/Checkout";
 import { FloatingEditButton } from "./components/FloatingEditButton";
 
-export default function App() {
+function Layout() {
   return (
-    <Router>
+    <div className="flex flex-col min-h-screen bg-off-white text-ink font-sans selection:bg-cobalt selection:text-white antialiased overflow-x-hidden w-full">
       <ScrollToTop />
-      <div className="flex flex-col min-h-screen bg-off-white text-ink font-sans selection:bg-cobalt selection:text-white antialiased overflow-x-hidden w-full">
-        <Navigation />
-        <main className="flex-grow flex flex-col bg-off-white overflow-x-hidden w-full">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/collection" element={<Collection />} />
-            <Route path="/catalog" element={<Catalog />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/journal" element={<Journal />} />
-            <Route path="/journal/:id" element={<JournalDetail />} />
-            <Route path="/space" element={<Space />} />
-             <Route path="/space/:id" element={<SpaceDetail />} />
-             <Route path="/admin" element={<Admin />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/checkout" element={<Checkout />} />
-          </Routes>
-        </main>
-        <Footer />
-        <FloatingEditButton />
-      </div>
-    </Router>
+      <Navigation />
+      <main className="flex-grow flex flex-col bg-off-white overflow-x-hidden w-full">
+        <Outlet />
+      </main>
+      <Footer />
+      <FloatingEditButton />
+    </div>
   );
+}
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Layout />,
+    children: [
+      { path: "", element: <Home /> },
+      { path: "collection", element: <Collection /> },
+      { path: "catalog", element: <Catalog /> },
+      { path: "product/:id", element: <ProductDetail /> },
+      { path: "journal", element: <Journal /> },
+      { path: "journal/:id", element: <JournalDetail /> },
+      { path: "space", element: <Space /> },
+      { path: "space/:id", element: <SpaceDetail /> },
+      { path: "admin", element: <Admin /> },
+      { path: "login", element: <Login /> },
+      { path: "account", element: <Account /> },
+      { path: "checkout", element: <Checkout /> },
+    ],
+  },
+]);
+
+export default function App() {
+  return <RouterProvider router={router} />;
 }
 

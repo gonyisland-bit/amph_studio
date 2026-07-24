@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, useBlocker } from "react-router-dom";
 import { 
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
@@ -312,6 +312,7 @@ export default function Admin() {
   } | null>(null);
 
   useEffect(() => {
+    if (!form) return;
     const images = (form.images || []).filter(Boolean);
     images.forEach((img: string) => {
       if (!img || previewAspects[img]) return;
@@ -370,6 +371,18 @@ export default function Admin() {
     }
   }, [homeSettings, originalHomeSettings]);
 
+  // Intercept route changes with react-router useBlocker
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirty && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setPendingNavigation({ type: 'router' });
+    }
+  }, [blocker.state]);
+
   // Warn user on window refresh / tab close when form is dirty
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -381,6 +394,32 @@ export default function Admin() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty]);
+
+  const proceedCancelEdit = () => {
+    setEditingId(null);
+    proceedTab(activeTab);
+  };
+
+  const handleCancelEdit = () => {
+    if (isDirty) {
+      setPendingNavigation({ type: 'tab', targetTab: activeTab });
+    } else {
+      proceedCancelEdit();
+    }
+  };
+
+  const proceedNewItem = () => {
+    setEditingId(null);
+    proceedTab(activeTab);
+  };
+
+  const handleNewItem = () => {
+    if (isDirty) {
+      setPendingNavigation({ type: 'tab', targetTab: activeTab });
+    } else {
+      proceedNewItem();
+    }
+  };
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -1489,7 +1528,7 @@ export default function Admin() {
                     {editingId && (
                       <button 
                         type="button"
-                        onClick={() => { setEditingId(null); switchTab(activeTab); }} 
+                        onClick={handleCancelEdit} 
                         className="text-[9px] uppercase font-bold text-orange hover:underline ml-1"
                       >
                         Cancel
@@ -2172,7 +2211,7 @@ export default function Admin() {
                   <h2 className="text-xl font-bold font-sans uppercase tracking-tight">
                     {activeTab === 'collection' ? 'Collection' : activeTab === 'space' ? 'Space' : 'Journal'}
                   </h2>
-                  <button onClick={() => { setEditingId(null); switchTab(activeTab); }} className="flex items-center gap-2 bg-cobalt text-white px-4 py-2 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all">
+                  <button onClick={handleNewItem} className="flex items-center gap-2 bg-cobalt text-white px-4 py-2 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all">
                     <Plus size={14} /> New Item
                   </button>
                   
@@ -2460,9 +2499,15 @@ export default function Admin() {
                     const nav = pendingNavigation;
                     setPendingNavigation(null);
                     if (nav.type === 'tab' && nav.targetTab) {
-                      proceedTab(nav.targetTab);
+                      if (nav.targetTab === activeTab) {
+                        proceedCancelEdit();
+                      } else {
+                        proceedTab(nav.targetTab);
+                      }
                     } else if (nav.type === 'edit' && nav.targetItem) {
                       proceedEdit(nav.targetItem);
+                    } else if (nav.type === 'router') {
+                      if (blocker.state === "blocked") blocker.proceed();
                     }
                   }
                 }}
@@ -2476,9 +2521,15 @@ export default function Admin() {
                   setIsDirty(false);
                   setPendingNavigation(null);
                   if (nav.type === 'tab' && nav.targetTab) {
-                    proceedTab(nav.targetTab);
+                    if (nav.targetTab === activeTab) {
+                      proceedCancelEdit();
+                    } else {
+                      proceedTab(nav.targetTab);
+                    }
                   } else if (nav.type === 'edit' && nav.targetItem) {
                     proceedEdit(nav.targetItem);
+                  } else if (nav.type === 'router') {
+                    if (blocker.state === "blocked") blocker.proceed();
                   }
                 }}
                 className="bg-ink text-white py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-orange transition-colors rounded-none w-full cursor-pointer"
@@ -2488,6 +2539,9 @@ export default function Admin() {
               <button 
                 onClick={() => {
                   setPendingNavigation(null);
+                  if (blocker.state === "blocked") {
+                    blocker.reset();
+                  }
                 }}
                 className="bg-black/5 text-ink/60 border border-black/5 py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-black/10 transition-colors rounded-none w-full cursor-pointer"
               >
