@@ -609,7 +609,7 @@ export default function Admin() {
     } else {
       setColorOptions([]);
     }
-  }, [form.id, form.color, activeTab]);
+  }, [form?.id, form?.color, activeTab]);
 
   const handleAddColorOption = () => {
     if (!newColorName.trim()) {
@@ -821,14 +821,9 @@ export default function Admin() {
   const proceedTab = (tab: 'home'|'journal'|'space'|'collection'|'orders'|'users') => {
     setActiveTab(tab);
     setEditingId(null);
-    const empty = tab === 'collection' ? emptyProduct : tab === 'journal' ? emptyJournal : tab === 'space' ? emptySpace : null;
-    if (empty) {
-      setForm(empty);
-      setOriginalForm(JSON.parse(JSON.stringify(empty)));
-    } else {
-      setForm(null);
-      setOriginalForm(null);
-    }
+    const empty = tab === 'collection' ? emptyProduct : tab === 'journal' ? emptyJournal : tab === 'space' ? emptySpace : emptyProduct;
+    setForm(empty);
+    setOriginalForm(JSON.parse(JSON.stringify(empty)));
     setIsDirty(false);
     setSaveStatus('idle');
   };
