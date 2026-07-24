@@ -12,7 +12,7 @@ import Space from "./pages/Space";
 import SpaceDetail from "./pages/SpaceDetail";
 import Login from "./pages/Login";
 import Account from "./pages/Account";
-import Catalog from "./pages/Catalog";
+import Catalogue from "./pages/Catalogue";
 import Checkout from "./pages/Checkout";
 import { FloatingEditButton } from "./components/FloatingEditButton";
 
@@ -26,7 +26,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/collection" element={<Collection />} />
-            <Route path="/catalog" element={<Catalog />} />
+            <Route path="/catalogue" element={<Catalogue />} />
+            <Route path="/catalog" element={<Catalogue />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/journal" element={<Journal />} />
             <Route path="/journal/:id" element={<JournalDetail />} />

@@ -4,7 +4,7 @@ import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultH
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
-export default function Catalog() {
+export default function Catalogue() {
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
@@ -15,7 +15,7 @@ export default function Catalog() {
   useEffect(() => {
     getProducts().then(setProducts).catch(console.error);
     getHomeSettings().then(setSettings).catch(console.error);
-    document.title = "Catalog — Amph";
+    document.title = "Catalogue — Amph";
   }, []);
 
   const filteredProducts = products.filter(p => {
@@ -36,22 +36,21 @@ export default function Catalog() {
 
   return (
     <div className="flex flex-col flex-grow bg-white font-sans text-ink">
-      {/* Catalog Intro Header */}
-      <div className="px-6 md:px-12 py-16 md:py-24 border-b border-black/10 bg-off-white">
-        <div className="max-w-4xl">
-          <span className="text-[10px] font-black uppercase text-cobalt tracking-[0.2em] block mb-3 font-mono">Product Index</span>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] mb-6">
-            Catalog
+      {/* Catalogue Intro Header — Aligned with Collection & Space Header layout */}
+      <div className="px-6 md:px-12 pt-12 md:pt-24 pb-8 md:pb-12 border-b border-black/10 bg-off-white">
+        <div className="max-w-4xl mb-8 md:mb-12">
+          <h1 className="text-4xl md:text-6xl font-light tracking-tighter uppercase leading-[0.9] mb-4 md:mb-6 font-sans">
+            Catalogue
           </h1>
-          <p className="text-sm md:text-base font-serif italic text-ink/60 max-w-xl">
-            A comprehensive list of products, configurations, and core designs available in the studio.
+          <p className="text-lg md:text-xl font-serif italic text-ink/60 max-w-2xl">
+            Comprehensive index of architectural objects, material specifications, and design configurations.
           </p>
         </div>
 
-        {/* Filter and Search controls */}
-        <div className="mt-12 flex flex-col md:flex-row gap-6 justify-between items-stretch md:items-center border-t border-black/5 pt-8">
+        {/* Filter and Search controls — Tight, balanced margins */}
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-between items-stretch md:items-center border-t border-black/10 pt-6">
           {/* Categories Tab */}
-          <div className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest">
+          <div className="flex flex-wrap gap-1.5 text-[9px] font-black uppercase tracking-widest">
             {['All', 'Chairs', 'Furniture', 'Lighting', 'Objects'].map(cat => (
               <button
                 key={cat}
@@ -71,7 +70,7 @@ export default function Catalog() {
               placeholder="QUICK INDEX SEARCH (NAME, SKU, MATERIAL)..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-black/10 focus:border-cobalt outline-none p-3.5 pl-4 text-[9px] font-black uppercase tracking-wider rounded-none shadow-sm transition-all"
+              className="w-full bg-white border border-black/10 focus:border-cobalt outline-none p-3 pl-4 text-[9px] font-black uppercase tracking-wider rounded-none shadow-sm transition-all"
             />
           </div>
         </div>
@@ -80,7 +79,7 @@ export default function Catalog() {
       {/* Grid List */}
       {filteredProducts.length === 0 ? (
         <div className="p-24 text-center border-b border-black/5">
-          <p className="text-xs uppercase tracking-widest text-ink/40 font-mono">No catalog entries match your search criteria.</p>
+          <p className="text-xs uppercase tracking-widest text-ink/40 font-mono">No catalogue entries match your search criteria.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 border-b border-black/10 bg-black/[0.03] gap-px">
@@ -88,34 +87,37 @@ export default function Catalog() {
             <Link
               key={p.id}
               to={`/product/${p.id}`}
-              className="group bg-white p-6 flex flex-col justify-between hover:bg-off-white/40 transition-colors duration-500 min-w-0"
+              className="bg-white p-4 flex flex-col justify-between group hover:bg-silver/10 transition-colors relative reveal"
             >
-              {/* Product Thumbnail inside center alignment */}
-              <div className="aspect-square w-full bg-silver/5 border border-black/5 overflow-hidden flex items-center justify-center relative mb-6">
-                <MediaRenderer
-                  src={p.images[0]}
-                  alt={p.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  loading="lazy"
-                  nopin="nopin"
-                />
-              </div>
-
-              {/* Specs and Names */}
-              <div className="space-y-3 font-sans min-w-0">
-                <div className="flex justify-between items-baseline gap-2">
-                  <span className="text-[9px] font-black text-ink/40 uppercase tracking-widest truncate">{p.category}</span>
-                  <span className="text-[9px] font-mono text-ink/30 shrink-0">{p.sku || '-'}</span>
+              <div>
+                <div className="aspect-square bg-silver/5 mb-3 overflow-hidden border border-black/5 rounded-none relative">
+                  <MediaRenderer
+                    src={p.images[0]}
+                    alt={p.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-2 left-2 z-10">
+                    <span className="text-[8px] uppercase font-bold tracking-widest text-ink/60 bg-white/90 backdrop-blur-md px-1.5 py-0.5 border border-black/10">
+                      {p.category}
+                    </span>
+                  </div>
                 </div>
-                
-                <h3 className="text-xs font-black uppercase text-ink group-hover:text-cobalt transition-colors truncate tracking-wide leading-tight">
+                <h3 className="text-xs font-bold uppercase tracking-tight text-ink group-hover:text-cobalt transition-colors truncate mb-1">
                   {p.name}
                 </h3>
-                
-                <div className="border-t border-black/[0.06] pt-2 flex justify-between items-center text-[10px]">
-                  <span className="text-ink/50 truncate max-w-[70%] font-mono text-[9px]">{p.material?.split(',')[0] || '-'}</span>
-                  <span className="font-bold text-ink shrink-0">${Number(p.price).toLocaleString()}</span>
-                </div>
+                <p className="text-[9px] text-ink/40 font-mono uppercase tracking-wider mb-2">
+                  SKU: {p.sku || p.id}
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-black/5 flex justify-between items-center text-[9px]">
+                <span className="text-ink/60 font-mono truncate max-w-[60%]">
+                  {p.material || 'Standard'}
+                </span>
+                <span className="font-bold text-ink">
+                  ${p.price.toLocaleString()}
+                </span>
               </div>
             </Link>
           ))}

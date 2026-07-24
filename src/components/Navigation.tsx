@@ -113,7 +113,7 @@ export function Navigation() {
           <div className="hidden md:flex justify-center gap-10 text-[14px] uppercase tracking-[0.2em] font-light font-sans">
             <Link to="/" onClick={() => { (window as any).__triggerSplash = true; }} className="hover:text-cobalt transition-all">Home</Link>
             <Link to="/collection" className="hover:text-cobalt transition-all">Collection</Link>
-            <Link to="/catalog" className="hover:text-cobalt transition-all">Catalog</Link>
+            <Link to="/catalogue" className="hover:text-cobalt transition-all">Catalogue</Link>
             <Link to="/space" className="hover:text-cobalt transition-all">Space</Link>
             <Link to="/journal" className="hover:text-cobalt transition-all">Journal</Link>
           </div>
@@ -270,7 +270,7 @@ export function Navigation() {
         {[
           { path: '/', label: 'HOME' },
           { path: '/collection', label: 'COLLECTION' },
-          { path: '/catalog', label: 'CATALOG' },
+          { path: '/catalogue', label: 'CATALOGUE' },
           { path: '/space', label: 'SPACE' },
           { path: '/journal', label: 'JOURNAL' }
         ].map(tab => (
