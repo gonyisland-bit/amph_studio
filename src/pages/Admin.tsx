@@ -10,7 +10,7 @@ import { upload } from '@vercel/blob/client';
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 
 const emptyProduct: Omit<Product, 'id'> = {
-  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, forcePortraitImages: false
+  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []
 };
 const emptyJournal: Omit<JournalArticle, 'id'> = {
   title: '', category: '', date: '', image: '', contentBlocks: []
@@ -1812,15 +1812,47 @@ export default function Admin() {
                   <div className="bg-black/5 rounded-none border border-black/10 overflow-hidden shadow-none">
                     {(form.images || []).filter(Boolean).length > 0 ? (
                       <div className="grid grid-cols-2 gap-px bg-black/10">
-                        {(form.images || []).filter(Boolean).map((img: string, i: number) => {
-                          const isLandscape = !form.forcePortraitImages && previewAspects[img] === 'landscape';
-                          const spanClass = isLandscape ? "col-span-2 aspect-[16/10]" : "col-span-1 aspect-[4/5]";
-                          return (
-                            <div key={i} className={`${spanClass} overflow-hidden bg-silver/5 relative`}>
-                              <img src={img} alt={`Preview ${i+1}`} className="absolute inset-0 w-full h-full object-cover" nopin="nopin" data-pin-no-hover="true" />
-                            </div>
-                          );
-                        })}
+                        {(() => {
+                          const originalImages = (form.images || []).filter(Boolean);
+                          const portraitList = form.portraitImages || [];
+                          const gridItems: Array<{ type: 'image'; src: string; isLandscape: boolean } | { type: 'blank' }> = [];
+                          let col = 0;
+                          
+                          originalImages.forEach(img => {
+                            const isForcedPortrait = portraitList.includes(img);
+                            const physicalAspect = previewAspects[img] || 'portrait';
+                            const isLandscape = !isForcedPortrait && physicalAspect === 'landscape';
+                            
+                            if (isLandscape) {
+                              if (col === 1) {
+                                gridItems.push({ type: 'blank' });
+                                col = 0;
+                              }
+                              gridItems.push({ type: 'image', src: img, isLandscape: true });
+                            } else {
+                              gridItems.push({ type: 'image', src: img, isLandscape: false });
+                              col = (col + 1) % 2;
+                            }
+                          });
+                          
+                          if (col === 1) {
+                            gridItems.push({ type: 'blank' });
+                          }
+                          
+                          return gridItems.map((item, idx) => {
+                            if (item.type === 'blank') {
+                              return (
+                                <div key={`blank-${idx}`} className="col-span-1 aspect-[4/5] bg-white" />
+                              );
+                            }
+                            const spanClass = item.isLandscape ? "col-span-2 aspect-[16/10]" : "col-span-1 aspect-[4/5]";
+                            return (
+                              <div key={`img-${idx}`} className={`${spanClass} overflow-hidden bg-silver/5 relative`}>
+                                <img src={item.src} alt={`Preview ${idx+1}`} className="absolute inset-0 w-full h-full object-cover" nopin="nopin" data-pin-no-hover="true" />
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
                     ) : (
                       <div className="h-40 flex items-center justify-center text-[10px] text-ink/20 font-bold uppercase">No Media Uploaded</div>
@@ -2013,22 +2045,6 @@ export default function Admin() {
                     </button>
                     {activeSections.media && (
                         <div className="p-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                          {/* Force Portrait Images Option */}
-                          <div className="bg-black/5 p-4 border border-black/5 rounded-none flex items-center justify-between">
-                            <div>
-                              <h4 className="text-[10px] font-black uppercase text-ink/75 mb-0.5 tracking-wider">Force Portrait Mode</h4>
-                              <p className="text-[9px] text-ink/40 uppercase tracking-wide">Display landscape (horizontal) images in vertical portrait slot format</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer select-none">
-                              <input 
-                                type="checkbox" 
-                                checked={!!form.forcePortraitImages}
-                                onChange={e => setForm({...form, forcePortraitImages: e.target.checked})}
-                                className="w-4 h-4 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
-                              />
-                            </label>
-                          </div>
-
                           {/* Primary/Main Images — 2-col grid, larger drag zones */}
                           <div>
                             <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Product Main Gallery</h4>
@@ -2055,51 +2071,70 @@ export default function Admin() {
                                       }} 
                                     />
                                     {img && (
-                                      <div className="mt-2 flex items-center justify-between border-t border-black/5 pt-2">
-                                        <label className="flex items-center gap-2 cursor-pointer select-none">
-                                          <input 
-                                            type="checkbox" 
-                                            checked={(form.hoverImages || []).includes(img)}
-                                            onChange={e => {
-                                              if (e.target.checked) {
-                                                setForm({...form, hoverImages: [img]}); // Set as hover (only one)
-                                              } else {
-                                                setForm({...form, hoverImages: []}); // Clear if unchecked
-                                              }
-                                            }}
-                                            className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
-                                          />
-                                          <span className="text-[9px] uppercase font-bold text-ink/60">Hover Effect</span>
-                                        </label>
-                                        <div className="flex items-center gap-1">
-                                          <button 
-                                            type="button" 
-                                            disabled={i === 0} 
-                                            onClick={() => {
-                                              const currentImages = form.images || [];
-                                              const newImg = [...currentImages];
-                                              [newImg[i], newImg[i - 1]] = [newImg[i - 1], newImg[i]];
-                                              setForm({ ...form, images: newImg.filter(Boolean) });
-                                            }}
-                                            className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
-                                            title="Move Prev"
-                                          >
-                                            <ChevronLeft size={14} />
-                                          </button>
-                                          <button 
-                                            type="button" 
-                                            disabled={i >= displayImages.length - 2} 
-                                            onClick={() => {
-                                              const currentImages = form.images || [];
-                                              const newImg = [...currentImages];
-                                              [newImg[i], newImg[i + 1]] = [newImg[i + 1], newImg[i]];
-                                              setForm({ ...form, images: newImg.filter(Boolean) });
-                                            }}
-                                            className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
-                                            title="Move Next"
-                                          >
-                                            <ChevronRight size={14} />
-                                          </button>
+                                      <div className="mt-2 flex flex-col gap-2 border-t border-black/5 pt-2">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex gap-4">
+                                            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                                              <input 
+                                                type="checkbox" 
+                                                checked={(form.hoverImages || []).includes(img)}
+                                                onChange={e => {
+                                                  if (e.target.checked) {
+                                                    setForm({...form, hoverImages: [img]}); // Set as hover (only one)
+                                                  } else {
+                                                    setForm({...form, hoverImages: []}); // Clear if unchecked
+                                                  }
+                                                }}
+                                                className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                                              />
+                                              <span className="text-[9px] uppercase font-bold text-ink/60">Hover Effect</span>
+                                            </label>
+                                            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                                              <input 
+                                                type="checkbox" 
+                                                checked={(form.portraitImages || []).includes(img)}
+                                                onChange={e => {
+                                                  const current = form.portraitImages || [];
+                                                  const next = e.target.checked 
+                                                    ? [...current, img] 
+                                                    : current.filter(x => x !== img);
+                                                  setForm({...form, portraitImages: next});
+                                                }}
+                                                className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                                              />
+                                              <span className="text-[9px] uppercase font-bold text-ink/60">Portrait View</span>
+                                            </label>
+                                          </div>
+                                          <div className="flex items-center gap-1">
+                                            <button 
+                                              type="button" 
+                                              disabled={i === 0} 
+                                              onClick={() => {
+                                                const currentImages = form.images || [];
+                                                const newImg = [...currentImages];
+                                                [newImg[i], newImg[i - 1]] = [newImg[i - 1], newImg[i]];
+                                                setForm({ ...form, images: newImg.filter(Boolean) });
+                                              }}
+                                              className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
+                                              title="Move Prev"
+                                            >
+                                              <ChevronLeft size={14} />
+                                            </button>
+                                            <button 
+                                              type="button" 
+                                              disabled={i >= displayImages.length - 2} 
+                                              onClick={() => {
+                                                const currentImages = form.images || [];
+                                                const newImg = [...currentImages];
+                                                [newImg[i], newImg[i + 1]] = [newImg[i + 1], newImg[i]];
+                                                setForm({ ...form, images: newImg.filter(Boolean) });
+                                              }}
+                                              className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
+                                              title="Move Next"
+                                            >
+                                              <ChevronRight size={14} />
+                                            </button>
+                                          </div>
                                         </div>
                                       </div>
                                     )}

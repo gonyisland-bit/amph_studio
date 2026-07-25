@@ -286,30 +286,62 @@ export default function ProductDetail() {
       <div className="flex flex-col md:flex-row flex-grow border-b border-black/10">
         {/* Left Side: Media Gallery (Split 60%) - Auto 2-column for portrait, 1-column for landscape, seamless grids */}
         <div className="w-full md:w-[60%] grid grid-cols-1 md:grid-cols-2 gap-px bg-black/10 border-b md:border-b-0 md:border-r border-black/10 auto-rows-min">
-          {displayImages.map((img, idx) => {
-            const isLandscape = !product.forcePortraitImages && imageAspects[img] === 'landscape';
-            const spanClass = isLandscape ? "col-span-1 md:col-span-2 aspect-[16/10]" : "col-span-1 aspect-[3/4] md:aspect-[4/5]";
-            return (
-              <div 
-                key={idx} 
-                onClick={() => {
-                  setLightboxIndex(idx);
-                  setZoomScale(1);
-                }}
-                className={`${spanClass} bg-silver/5 overflow-hidden relative cursor-zoom-in group border-0 shadow-none rounded-none`}
-              >
-                <MediaRenderer 
-                  src={img} 
-                  alt={`${product.name} view ${idx + 1}`} 
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" 
-                  loading={idx === 0 ? "eager" : "lazy"}
-                  fetchpriority={idx === 0 ? "high" : "auto"}
-                  nopin="nopin"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500 z-10" />
-              </div>
-            );
-          })}
+          {(() => {
+            const portraitList = product.portraitImages || [];
+            const gridItems: Array<{ type: 'image'; src: string; originalIndex: number; isLandscape: boolean } | { type: 'blank' }> = [];
+            let col = 0;
+            
+            displayImages.forEach((img, idx) => {
+              const isForcedPortrait = portraitList.includes(img);
+              const physicalAspect = imageAspects[img] || 'portrait';
+              const isLandscape = !isForcedPortrait && physicalAspect === 'landscape';
+              
+              if (isLandscape) {
+                if (col === 1) {
+                  gridItems.push({ type: 'blank' });
+                  col = 0;
+                }
+                gridItems.push({ type: 'image', src: img, originalIndex: idx, isLandscape: true });
+              } else {
+                gridItems.push({ type: 'image', src: img, originalIndex: idx, isLandscape: false });
+                col = (col + 1) % 2;
+              }
+            });
+            
+            if (col === 1) {
+              gridItems.push({ type: 'blank' });
+            }
+            
+            return gridItems.map((item, gridIdx) => {
+              if (item.type === 'blank') {
+                return (
+                  <div key={`blank-${gridIdx}`} className="col-span-1 aspect-[3/4] md:aspect-[4/5] bg-white" />
+                );
+              }
+              
+              const spanClass = item.isLandscape ? "col-span-1 md:col-span-2 aspect-[16/10]" : "col-span-1 aspect-[3/4] md:aspect-[4/5]";
+              return (
+                <div 
+                  key={`img-${gridIdx}`} 
+                  onClick={() => {
+                    setLightboxIndex(item.originalIndex);
+                    setZoomScale(1);
+                  }}
+                  className={`${spanClass} bg-silver/5 overflow-hidden relative cursor-zoom-in group border-0 shadow-none rounded-none`}
+                >
+                  <MediaRenderer 
+                    src={item.src} 
+                    alt={`${product.name} view ${item.originalIndex + 1}`} 
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" 
+                    loading={item.originalIndex === 0 ? "eager" : "lazy"}
+                    fetchpriority={item.originalIndex === 0 ? "high" : "auto"}
+                    nopin="nopin"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500 z-10" />
+                </div>
+              );
+            });
+          })()}
         </div>
 
         {/* Right Side: Overview & Purchase Controls (Split 40% - Sticky) */}

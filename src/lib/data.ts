@@ -28,7 +28,7 @@ export interface Product {
   sku?: string;
   color?: string | ColorOption[];
   cartEnabled?: boolean;
-  forcePortraitImages?: boolean;
+  portraitImages?: string[];
 }
 
 export interface JournalArticle {
