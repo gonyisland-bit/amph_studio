@@ -1532,9 +1532,48 @@ export default function Admin() {
                       {/* General Copy */}
                   <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center gap-2">
-                      <ExternalLink size={14} /> Global Settings
+                      <ExternalLink size={14} /> Global Settings & Brand Logo
                     </h3>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
+                      {/* Brand Logo Settings */}
+                      <div className="bg-white p-6 rounded-none border border-black/10 shadow-sm space-y-4">
+                        <h4 className="text-[11px] font-black uppercase text-ink tracking-wider">Brand Logo & Favicon Display</h4>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-2">Logo Display Type</label>
+                          <div className="flex items-center gap-6 text-xs font-bold uppercase">
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                              <input 
+                                type="radio" 
+                                name="logoType" 
+                                value="image" 
+                                checked={(homeSettings.logoType || 'image') === 'image'} 
+                                onChange={() => setHomeSettings({ ...homeSettings, logoType: 'image' })} 
+                                className="text-cobalt focus:ring-cobalt"
+                              />
+                              <span>Logo Image (로고 이미지 표기)</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                              <input 
+                                type="radio" 
+                                name="logoType" 
+                                value="text" 
+                                checked={homeSettings.logoType === 'text'} 
+                                onChange={() => setHomeSettings({ ...homeSettings, logoType: 'text' })} 
+                                className="text-cobalt focus:ring-cobalt"
+                              />
+                              <span>Text Font (폰트 표기 "Amph")</span>
+                            </label>
+                          </div>
+                        </div>
+                        {(homeSettings.logoType || 'image') === 'image' && (
+                          <MediaUploadInput 
+                            label="Upload / Custom Logo Image (PNG / SVG)" 
+                            value={homeSettings.logoImage || '/logo.png'} 
+                            onChange={val => setHomeSettings({ ...homeSettings, logoImage: val })} 
+                          />
+                        )}
+                      </div>
+
                       <div>
                         <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Marquee Text</label>
                         <input value={homeSettings.marquee} onChange={e => setHomeSettings({...homeSettings, marquee: e.target.value})} className="w-full border border-black/20 p-2 bg-white outline-none focus:border-cobalt rounded-none" />
@@ -1543,7 +1582,19 @@ export default function Admin() {
                         <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Hero Transition Speed (sec)</label>
                         <input type="number" value={homeSettings.heroTransitionSpeed} onChange={e => setHomeSettings({...homeSettings, heroTransitionSpeed: Number(e.target.value)})} className="w-full border border-black/20 p-2 bg-white outline-none focus:border-cobalt rounded-none" />
                       </div>
-                      <button type="button" onClick={async () => { setSavingSettings(true); await updateHomeSettings(homeSettings); setSavingSettings(false); showToast('Global settings saved!', 'success'); }} className="w-full bg-cobalt text-white py-3 uppercase text-[10px] font-black hover:bg-ink transition-colors rounded-none shadow-md">{savingSettings ? 'Saving...' : 'Save All Global Settings'}</button>
+                      <button 
+                        type="button" 
+                        onClick={async () => { 
+                          setSavingSettings(true); 
+                          await updateHomeSettings(homeSettings); 
+                          window.dispatchEvent(new Event('settings_change'));
+                          setSavingSettings(false); 
+                          showToast('Global settings saved!', 'success'); 
+                        }} 
+                        className="w-full bg-cobalt text-white py-3 uppercase text-[10px] font-black hover:bg-ink transition-colors rounded-none shadow-md"
+                      >
+                        {savingSettings ? 'Saving...' : 'Save All Global Settings'}
+                      </button>
                     </div>
                   </div>
 

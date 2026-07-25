@@ -285,7 +285,7 @@ export default function ProductDetail() {
 
       <div className="flex flex-col md:flex-row flex-grow border-b border-black/10">
         {/* Left Side: Media Gallery (Split 60%) - Auto 2-column for portrait, 1-column for landscape, seamless grids */}
-        <div className="w-full md:w-[60%] grid grid-cols-1 md:grid-cols-2 gap-px bg-black/10 border-b md:border-b-0 md:border-r border-black/10 auto-rows-min">
+        <div className="w-full md:w-[60%] bg-[#f2f2f2] grid grid-cols-1 md:grid-cols-2 gap-px border-b md:border-b-0 md:border-r border-black/10 auto-rows-min self-start md:self-stretch">
           {(() => {
             const portraitList = product.portraitImages || [];
             const gridItems: Array<{ type: 'image'; src: string; originalIndex: number; isLandscape: boolean } | { type: 'blank' }> = [];
@@ -315,7 +315,7 @@ export default function ProductDetail() {
             return gridItems.map((item, gridIdx) => {
               if (item.type === 'blank') {
                 return (
-                  <div key={`blank-${gridIdx}`} className="col-span-1 aspect-[3/4] md:aspect-[4/5] bg-white" />
+                  <div key={`blank-${gridIdx}`} className="col-span-1 aspect-[3/4] md:aspect-[4/5] bg-[#f2f2f2]" />
                 );
               }
               

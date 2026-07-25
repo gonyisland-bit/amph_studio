@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { LogOut, User, Search, X, ShoppingBag, ClipboardList } from "lucide-react";
-import { getProducts, getSpaces, getJournals, Product, Category } from "../lib/data";
+import { getProducts, getSpaces, getJournals, getHomeSettings, Product, Category, HomeSettings } from "../lib/data";
 import { CartDrawer } from "./CartDrawer";
 
 const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
@@ -14,6 +14,7 @@ export function Navigation() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [homeSettings, setHomeSettings] = useState<HomeSettings | null>(null);
   const navigate = useNavigate();
 
   const updateCartCount = () => {
@@ -40,6 +41,11 @@ export function Navigation() {
       setCustomerEmail(localStorage.getItem('customer_email'));
     };
     
+    const loadSettings = () => {
+      getHomeSettings().then(setHomeSettings).catch(console.error);
+    };
+
+    loadSettings();
     updateCartCount();
     
     window.addEventListener('storage', checkAuth);
@@ -47,6 +53,7 @@ export function Navigation() {
     window.addEventListener('admin_auth_change', checkAuth);
     window.addEventListener('customer_auth_change', checkCustomerAuth);
     window.addEventListener('cart_change', updateCartCount);
+    window.addEventListener('settings_change', loadSettings);
     
     return () => {
       window.removeEventListener('storage', checkAuth);
@@ -54,6 +61,7 @@ export function Navigation() {
       window.removeEventListener('admin_auth_change', checkAuth);
       window.removeEventListener('customer_auth_change', checkCustomerAuth);
       window.removeEventListener('cart_change', updateCartCount);
+      window.removeEventListener('settings_change', loadSettings);
     };
   }, []);
 
@@ -105,8 +113,20 @@ export function Navigation() {
       <nav className="px-6 md:px-12 py-6 border-b border-black/5 bg-white z-50 relative">
         <div className="max-w-[1800px] mx-auto grid grid-cols-2 md:grid-cols-3 items-center">
           {/* Logo */}
-          <div className="flex justify-start">
-            <Link to="/" onClick={() => { (window as any).__triggerSplash = true; }} className="text-2xl md:text-3xl font-bold tracking-tighter uppercase font-sans">Amph</Link>
+          <div className="flex justify-start items-center">
+            <Link to="/" onClick={() => { (window as any).__triggerSplash = true; }} className="flex items-center group">
+              {homeSettings?.logoType === 'text' ? (
+                <span className="text-2xl md:text-3xl font-bold tracking-tighter uppercase font-sans group-hover:text-cobalt transition-colors">Amph</span>
+              ) : (
+                <img 
+                  src={homeSettings?.logoImage || "/logo.png"} 
+                  alt="Amph Studio" 
+                  className="h-8 md:h-10 w-auto object-contain transition-transform group-hover:scale-105" 
+                  nopin="nopin"
+                  data-pin-no-hover="true"
+                />
+              )}
+            </Link>
           </div>
           
           {/* Center Menu (Desktop) - Font enlarged by 30% and set to light font weight */}

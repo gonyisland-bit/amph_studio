@@ -270,6 +270,8 @@ export interface PhilosophyCard {
 }
 
 export interface HomeSettings {
+  logoType?: 'text' | 'image';
+  logoImage?: string;
   featuredProductIds: string[];
   globalProductOrder: string[];
   spaceOrder: string[];
@@ -294,6 +296,8 @@ export interface HomeSettings {
 }
 
 export const defaultHomeSettings: HomeSettings = {
+  logoType: 'image',
+  logoImage: '/logo.png',
   heroSlides: [],
   heroTransitionSpeed: 5,
   spaceOrder: [],
