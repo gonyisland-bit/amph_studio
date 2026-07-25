@@ -121,7 +121,7 @@ export function Navigation() {
                 <img 
                   src={homeSettings?.logoImage || "/logo.png"} 
                   alt="Amph Studio" 
-                  className="h-8 md:h-10 w-auto object-contain transition-transform group-hover:scale-105" 
+                  className="h-8 md:h-11 w-auto object-contain transition-transform group-hover:scale-105" 
                   nopin="nopin"
                   data-pin-no-hover="true"
                 />
