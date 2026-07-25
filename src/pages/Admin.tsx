@@ -1559,10 +1559,45 @@ export default function Admin() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {(homeSettings.heroSlides || []).map((slide, idx) => (
                         <div key={slide.id} className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4 relative">
-                          <button type="button" onClick={() => {
-                            const newSlides = (homeSettings.heroSlides || []).filter((_, i) => i !== idx);
-                            setHomeSettings({...homeSettings, heroSlides: newSlides});
-                          }} className="absolute top-2 right-2 text-orange hover:scale-110 transition-transform"><Trash2 size={14}/></button>
+                          <div className="absolute top-2 right-2 flex items-center gap-2">
+                            <button 
+                              type="button" 
+                              disabled={idx === 0} 
+                              onClick={() => {
+                                const newSlides = [...(homeSettings.heroSlides || [])];
+                                [newSlides[idx], newSlides[idx - 1]] = [newSlides[idx - 1], newSlides[idx]];
+                                setHomeSettings({...homeSettings, heroSlides: newSlides});
+                              }} 
+                              className="text-ink/40 hover:text-cobalt disabled:opacity-30 transition-colors cursor-pointer"
+                              title="Move Left"
+                            >
+                              <ChevronLeft size={14}/>
+                            </button>
+                            <button 
+                              type="button" 
+                              disabled={idx === (homeSettings.heroSlides || []).length - 1} 
+                              onClick={() => {
+                                const newSlides = [...(homeSettings.heroSlides || [])];
+                                [newSlides[idx], newSlides[idx + 1]] = [newSlides[idx + 1], newSlides[idx]];
+                                setHomeSettings({...homeSettings, heroSlides: newSlides});
+                              }} 
+                              className="text-ink/40 hover:text-cobalt disabled:opacity-30 transition-colors cursor-pointer"
+                              title="Move Right"
+                            >
+                              <ChevronRight size={14}/>
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={() => {
+                                const newSlides = (homeSettings.heroSlides || []).filter((_, i) => i !== idx);
+                                setHomeSettings({...homeSettings, heroSlides: newSlides});
+                              }} 
+                              className="text-orange hover:scale-110 transition-transform cursor-pointer ml-1"
+                              title="Delete Slide"
+                            >
+                              <Trash2 size={14}/>
+                            </button>
+                          </div>
                           
                           <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title (use \n for line breaks)</label>
                             <textarea value={slide.title} onChange={e => {
