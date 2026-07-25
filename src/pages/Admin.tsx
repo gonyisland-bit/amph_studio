@@ -983,7 +983,7 @@ export default function Admin() {
                 }} 
                 className="border border-black/15 bg-white p-1 text-[10px] uppercase font-bold text-ink outline-none rounded-none"
               >
-                <option value="image">Image (이미지)</option>
+                <option value="image">Media / Image / Video (이미지/영상)</option>
                 <option value="text">Text Only (텍스트)</option>
               </select>
             </div>
@@ -1001,7 +1001,7 @@ export default function Admin() {
           {(cb.type === 'image' || !cb.type) ? (
             <div className="space-y-2">
               <MediaUploadInput 
-                label="Editorial Image" 
+                label="Editorial Media (Image or Video)" 
                 value={cb.value} 
                 onChange={val => {
                   const newCb = [...(form.contentBlocks || [])]; 
@@ -2239,7 +2239,7 @@ export default function Admin() {
                   {renderContentBlocksEditor()}
 
                   <div className="border-t border-black/10 pt-4 mt-4">
-                    <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Gallery Images</h3>
+                    <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Gallery Media (Images & Videos)</h3>
                     {(() => {
                       const currentImages = form.images || [];
                       const displayImages = [...currentImages];
@@ -2512,12 +2512,13 @@ export default function Admin() {
                     }).map((s, index) => (
                       <tr 
                         key={s.id} 
-                        className={`hover:bg-black/[0.02] group transition-all duration-300 ${selectedIds.includes(s.id) ? 'bg-cobalt/5' : ''} ${editingId === s.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
+                        onClick={() => handleEdit(s)}
+                        className={`hover:bg-cobalt/5 group transition-all duration-200 cursor-pointer ${selectedIds.includes(s.id) ? 'bg-cobalt/5' : ''} ${editingId === s.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
                       >
-                        <td className="p-4">
+                        <td className="p-4" onClick={e => e.stopPropagation()}>
                           <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
                         </td>
-                        <td className="py-4">
+                        <td className="py-4" onClick={e => e.stopPropagation()}>
                           <div className="flex flex-col items-center gap-0.5">
                             <button onClick={() => handleReorder('space', s.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
                             <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
@@ -2542,11 +2543,11 @@ export default function Admin() {
                               : 'None'}
                           </span>
                         </td>
-                        <td className="py-4 text-right pr-6">
+                        <td className="py-4 text-right pr-6" onClick={e => e.stopPropagation()}>
                           <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity items-center">
                             <Link to={`/space/${s.id}`} target="_blank" className="text-ink/20 hover:text-cobalt"><ExternalLink size={14} /></Link>
-                            <button onClick={() => handleEdit(s)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
-                            <button onClick={() => handleDelete(s.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
+                            <button onClick={() => handleEdit(s)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer">Edit</button>
+                            <button onClick={e => { e.stopPropagation(); handleDelete(s.id); }} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer">Delete</button>
                           </div>
                         </td>
                       </tr>
@@ -2562,12 +2563,13 @@ export default function Admin() {
                     }).map((j, index) => (
                       <tr 
                         key={j.id} 
-                        className={`hover:bg-black/[0.02] group transition-all duration-300 ${selectedIds.includes(j.id) ? 'bg-cobalt/5' : ''} ${editingId === j.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
+                        onClick={() => handleEdit(j)}
+                        className={`hover:bg-cobalt/5 group transition-all duration-200 cursor-pointer ${selectedIds.includes(j.id) ? 'bg-cobalt/5' : ''} ${editingId === j.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
                       >
-                        <td className="p-4">
+                        <td className="p-4" onClick={e => e.stopPropagation()}>
                           <input type="checkbox" checked={selectedIds.includes(j.id)} onChange={() => toggleSelect(j.id)} />
                         </td>
-                        <td className="py-4">
+                        <td className="py-4" onClick={e => e.stopPropagation()}>
                           <div className="flex flex-col items-center gap-0.5">
                             <button onClick={() => handleReorder('journal', j.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
                             <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
@@ -2588,11 +2590,11 @@ export default function Admin() {
                         <td className="py-4">
                           <span className="caption-nano text-cobalt px-3 py-1 border border-cobalt/20 rounded-full font-bold">{j.category}</span>
                         </td>
-                        <td className="py-4 text-right pr-6">
+                        <td className="py-4 text-right pr-6" onClick={e => e.stopPropagation()}>
                           <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity items-center">
                             <Link to={`/journal/${j.id}`} target="_blank" className="text-ink/20 hover:text-cobalt"><ExternalLink size={14} /></Link>
-                            <button onClick={() => handleEdit(j)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</button>
-                            <button onClick={() => handleDelete(j.id)} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline">Delete</button>
+                            <button onClick={() => handleEdit(j)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer">Edit</button>
+                            <button onClick={e => { e.stopPropagation(); handleDelete(j.id); }} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer">Delete</button>
                           </div>
                         </td>
                       </tr>
