@@ -10,7 +10,7 @@ import { upload } from '@vercel/blob/client';
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 
 const emptyProduct: Omit<Product, 'id'> = {
-  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true
+  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, forcePortraitImages: false
 };
 const emptyJournal: Omit<JournalArticle, 'id'> = {
   title: '', category: '', date: '', image: '', contentBlocks: []
@@ -1813,7 +1813,7 @@ export default function Admin() {
                     {(form.images || []).filter(Boolean).length > 0 ? (
                       <div className="grid grid-cols-2 gap-px bg-black/10">
                         {(form.images || []).filter(Boolean).map((img: string, i: number) => {
-                          const isLandscape = previewAspects[img] === 'landscape';
+                          const isLandscape = !form.forcePortraitImages && previewAspects[img] === 'landscape';
                           const spanClass = isLandscape ? "col-span-2 aspect-[16/10]" : "col-span-1 aspect-[4/5]";
                           return (
                             <div key={i} className={`${spanClass} overflow-hidden bg-silver/5 relative`}>
@@ -2013,6 +2013,22 @@ export default function Admin() {
                     </button>
                     {activeSections.media && (
                         <div className="p-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                          {/* Force Portrait Images Option */}
+                          <div className="bg-black/5 p-4 border border-black/5 rounded-none flex items-center justify-between">
+                            <div>
+                              <h4 className="text-[10px] font-black uppercase text-ink/75 mb-0.5 tracking-wider">Force Portrait Mode</h4>
+                              <p className="text-[9px] text-ink/40 uppercase tracking-wide">Display landscape (horizontal) images in vertical portrait slot format</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer select-none">
+                              <input 
+                                type="checkbox" 
+                                checked={!!form.forcePortraitImages}
+                                onChange={e => setForm({...form, forcePortraitImages: e.target.checked})}
+                                className="w-4 h-4 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                              />
+                            </label>
+                          </div>
+
                           {/* Primary/Main Images — 2-col grid, larger drag zones */}
                           <div>
                             <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Product Main Gallery</h4>

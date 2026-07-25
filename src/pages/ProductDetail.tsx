@@ -287,7 +287,7 @@ export default function ProductDetail() {
         {/* Left Side: Media Gallery (Split 60%) - Auto 2-column for portrait, 1-column for landscape, seamless grids */}
         <div className="w-full md:w-[60%] grid grid-cols-1 md:grid-cols-2 gap-px bg-black/10 border-b md:border-b-0 md:border-r border-black/10 auto-rows-min">
           {displayImages.map((img, idx) => {
-            const isLandscape = imageAspects[img] === 'landscape';
+            const isLandscape = !product.forcePortraitImages && imageAspects[img] === 'landscape';
             const spanClass = isLandscape ? "col-span-1 md:col-span-2 aspect-[16/10]" : "col-span-1 aspect-[3/4] md:aspect-[4/5]";
             return (
               <div 

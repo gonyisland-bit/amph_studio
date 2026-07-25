@@ -31,6 +31,7 @@ export default async function handler(req: any, res: any) {
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "sku" TEXT DEFAULT ''`; } catch(e) {}
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "color" TEXT DEFAULT ''`; } catch(e) {}
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "cartEnabled" BOOLEAN DEFAULT TRUE`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "forcePortraitImages" BOOLEAN DEFAULT FALSE`; } catch(e) {}
   } catch (e) {}
 
   if (req.method === 'GET') {
@@ -51,7 +52,8 @@ export default async function handler(req: any, res: any) {
           hoverImages: typeof r.hoverImages === 'string' ? JSON.parse(r.hoverImages) : (r.hoverImages || []),
           contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
           color: colorParsed,
-          cartEnabled: r.cartEnabled !== false
+          cartEnabled: r.cartEnabled !== false,
+          forcePortraitImages: r.forcePortraitImages === true
         };
       });
       return res.status(200).json(parsedRows);
@@ -63,10 +65,10 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST') {
     try {
-      const { id: newId, name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, cartEnabled } = req.body;
+      const { id: newId, name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, cartEnabled, forcePortraitImages } = req.body;
       await sql`
         INSERT INTO products (
-          id, name, category, description, "subTitle", material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color, "cartEnabled"
+          id, name, category, description, "subTitle", material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color, "cartEnabled", "forcePortraitImages"
         ) VALUES (
           ${newId}, ${name}, ${category}, ${description}, ${subTitle || ''}, ${material}, ${price}, 
           ${JSON.stringify(images || [])}, 
@@ -77,7 +79,8 @@ export default async function handler(req: any, res: any) {
           ${shipping || ''},
           ${sku || ''},
           ${typeof color === 'string' ? color : JSON.stringify(color || [])},
-          ${cartEnabled !== false}
+          ${cartEnabled !== false},
+          ${forcePortraitImages || false}
         )
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
@@ -94,7 +97,8 @@ export default async function handler(req: any, res: any) {
           shipping = EXCLUDED.shipping,
           sku = EXCLUDED.sku,
           color = EXCLUDED.color,
-          "cartEnabled" = EXCLUDED."cartEnabled"
+          "cartEnabled" = EXCLUDED."cartEnabled",
+          "forcePortraitImages" = EXCLUDED."forcePortraitImages"
       `;
       return res.status(201).json({ success: true, id: newId });
     } catch (error) {
@@ -106,7 +110,7 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'PUT') {
     if (!id) return res.status(400).json({ error: 'ID is required' });
     try {
-      const { name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, cartEnabled } = req.body;
+      const { name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, cartEnabled, forcePortraitImages } = req.body;
       await sql`
         UPDATE products SET 
           name = ${name}, 
@@ -123,7 +127,8 @@ export default async function handler(req: any, res: any) {
           shipping = ${shipping},
           sku = ${sku},
           color = ${typeof color === 'string' ? color : JSON.stringify(color || [])},
-          "cartEnabled" = ${cartEnabled !== false}
+          "cartEnabled" = ${cartEnabled !== false},
+          "forcePortraitImages" = ${forcePortraitImages || false}
         WHERE id = ${id}
       `;
       return res.status(200).json({ success: true, id });
