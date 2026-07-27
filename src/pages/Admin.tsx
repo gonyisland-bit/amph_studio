@@ -826,6 +826,13 @@ export default function Admin() {
     setOriginalForm(JSON.parse(JSON.stringify(empty)));
     setIsDirty(false);
     setSaveStatus('idle');
+    setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
+    
+    // Clear ?edit= from URL when switching tabs to prevent auto-reloading previous item
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', tab);
+    params.delete('edit');
+    navigate(`/admin?${params.toString()}`, { replace: true });
   };
 
   const switchTab = (tab: 'home'|'journal'|'space'|'collection'|'orders'|'users') => {
@@ -1760,34 +1767,7 @@ export default function Admin() {
                     </div>
                   </div>
 
-                  {/* Hub Settings */}
-                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
-                    <h3 className="font-bold text-xs uppercase text-cobalt mb-6">Hub Page Settings (Landings)</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {(['collection', 'space', 'journal'] as const).map(hub => (
-                        <div key={hub} className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4">
-                          <span className="text-[10px] font-black uppercase text-ink/30">{hub} Hub</span>
-                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Page Title</label>
-                            <input value={homeSettings.hubSettings?.[hub]?.title || ''} onChange={e => {
-                              const next = { ...(homeSettings.hubSettings || {}) };
-                              next[hub] = { ...next[hub], title: e.target.value };
-                              setHomeSettings({...homeSettings, hubSettings: next as any});
-                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
-                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
-                            <textarea value={homeSettings.hubSettings?.[hub]?.description || ''} onChange={e => {
-                              const next = { ...(homeSettings.hubSettings || {}) };
-                              next[hub] = { ...next[hub], description: e.target.value };
-                              setHomeSettings({...homeSettings, hubSettings: next as any});
-                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
-                          <MediaUploadInput label="Header Media" value={homeSettings.hubSettings?.[hub]?.image || ''} onChange={val => {
-                            const next = { ...(homeSettings.hubSettings || {}) };
-                            next[hub] = { ...next[hub], image: val };
-                            setHomeSettings({...homeSettings, hubSettings: next as any});
-                          }} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+
 
                   {/* Featured Products (Selected Works) */}
                   <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">

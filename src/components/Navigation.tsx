@@ -110,7 +110,7 @@ export function Navigation() {
 
   return (
     <>
-      <nav className="px-6 md:px-12 py-6 border-b border-black/5 bg-white z-50 relative">
+      <nav className="px-6 md:px-12 py-6 border-b border-black/5 bg-white z-50 relative select-none">
         <div className="max-w-[1800px] mx-auto grid grid-cols-2 md:grid-cols-3 items-center">
           {/* Logo */}
           <div className="flex justify-start items-center">
@@ -130,12 +130,12 @@ export function Navigation() {
           </div>
           
           {/* Center Menu (Desktop) - Font enlarged by 30% and set to light font weight */}
-          <div className="hidden md:flex justify-center gap-6 lg:gap-10 text-[14px] uppercase tracking-[0.2em] font-light font-sans z-10 relative">
-            <Link to="/" onClick={() => { (window as any).__triggerSplash = true; }} className="hover:text-cobalt transition-all py-2 px-2 -my-2 inline-block">Home</Link>
-            <Link to="/collection" className="hover:text-cobalt transition-all py-2 px-2 -my-2 inline-block">Collection</Link>
-            <Link to="/catalogue" className="hover:text-cobalt transition-all py-2 px-2 -my-2 inline-block">Catalogue</Link>
-            <Link to="/space" className="hover:text-cobalt transition-all py-2 px-2 -my-2 inline-block">Space</Link>
-            <Link to="/journal" className="hover:text-cobalt transition-all py-2 px-2 -my-2 inline-block">Journal</Link>
+          <div className="hidden md:flex justify-center gap-6 lg:gap-10 text-[14px] uppercase tracking-[0.2em] font-light font-sans z-10 relative select-none">
+            <Link to="/" onClick={() => { (window as any).__triggerSplash = true; }} className="hover:text-cobalt transition-colors duration-200 py-2 px-2 -my-2 inline-block select-none cursor-pointer">Home</Link>
+            <Link to="/collection" className="hover:text-cobalt transition-colors duration-200 py-2 px-2 -my-2 inline-block select-none cursor-pointer">Collection</Link>
+            <Link to="/catalogue" className="hover:text-cobalt transition-colors duration-200 py-2 px-2 -my-2 inline-block select-none cursor-pointer">Catalogue</Link>
+            <Link to="/space" className="hover:text-cobalt transition-colors duration-200 py-2 px-2 -my-2 inline-block select-none cursor-pointer">Space</Link>
+            <Link to="/journal" className="hover:text-cobalt transition-colors duration-200 py-2 px-2 -my-2 inline-block select-none cursor-pointer">Journal</Link>
           </div>
  
           {/* Right Actions */}
@@ -286,7 +286,7 @@ export function Navigation() {
       </nav>
 
       {/* Mobile Tab Switcher */}
-      <div className="flex md:hidden border-b border-black/10 bg-white sticky top-0 z-[49] overflow-x-auto hide-scrollbar">
+      <div className="flex md:hidden border-b border-black/10 bg-white sticky top-0 z-[49] overflow-x-auto hide-scrollbar select-none">
         {[
           { path: '/', label: 'HOME' },
           { path: '/collection', label: 'COLLECTION' },
@@ -297,7 +297,7 @@ export function Navigation() {
           <Link 
             key={tab.path} 
             to={tab.path} 
-            className="flex-1 py-4 text-center text-[10px] font-black tracking-widest border-r border-black/5 last:border-r-0 hover:bg-silver/10 active:bg-silver/20"
+            className="flex-1 py-4 text-center text-[10px] font-black tracking-widest border-r border-black/5 last:border-r-0 hover:bg-silver/10 active:bg-silver/20 select-none cursor-pointer"
           >
             {tab.label}
           </Link>
