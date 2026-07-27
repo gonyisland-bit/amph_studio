@@ -13,8 +13,33 @@ export default function SpaceDetail() {
   // Fullscreen Lightbox State
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [zoomScale, setZoomScale] = useState<number>(1);
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
   const [touchDelta, setTouchDelta] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoomScale > 1) {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStartPos({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && zoomScale > 1) {
+      e.preventDefault();
+      setPanOffset({
+        x: e.clientX - dragStartPos.x,
+        y: e.clientY - dragStartPos.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   useScrollReveal([space, appliedProducts]);
 
@@ -259,20 +284,36 @@ export default function SpaceDetail() {
             <span className="text-[10px] font-sans font-bold tracking-widest uppercase">
               {space.title} — {lightboxIndex + 1} / {allImages.length}
             </span>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setZoomScale(prev => prev === 1 ? 2.5 : 1)}
-                className="hover:text-white transition-colors p-1.5 cursor-pointer"
-                title={zoomScale === 1 ? "Zoom In" : "Zoom Out"}
-              >
-                {zoomScale === 1 ? <ZoomIn size={18} /> : <ZoomOut size={18} />}
-              </button>
+            <div className="flex items-center gap-4 text-white/70 text-xs font-mono">
+              <div className="flex items-center gap-2 border-l border-white/20 pl-4">
+                <button 
+                  onClick={() => setZoomScale(prev => Math.min(prev + 0.5, 3))}
+                  className="hover:text-white transition-colors p-1 cursor-pointer"
+                  title="Zoom In"
+                >
+                  <ZoomIn size={18} />
+                </button>
+                <button 
+                  onClick={() => {
+                    setZoomScale(prev => {
+                      const next = Math.max(prev - 0.5, 1);
+                      if (next === 1) setPanOffset({ x: 0, y: 0 });
+                      return next;
+                    });
+                  }}
+                  className="hover:text-white transition-colors p-1 cursor-pointer"
+                  title="Zoom Out"
+                >
+                  <ZoomOut size={18} />
+                </button>
+              </div>
               <button 
                 onClick={() => {
                   setLightboxIndex(null);
                   setZoomScale(1);
+                  setPanOffset({ x: 0, y: 0 });
                 }}
-                className="hover:text-white transition-colors p-1.5 cursor-pointer"
+                className="hover:text-white transition-colors p-1.5 cursor-pointer ml-2"
                 title="Close (Esc)"
               >
                 <X size={22} />
@@ -294,17 +335,43 @@ export default function SpaceDetail() {
             </button>
 
             <div 
-              className="w-full h-full flex items-center justify-center transition-transform duration-300 ease-out"
+              className="w-full h-full flex items-center justify-center select-none"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
               style={{
-                transform: `translate3d(${touchDelta.x}px, ${touchDelta.y}px, 0)`
+                transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
+                transformOrigin: 'center center',
+                cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
+                transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+              }}
+              onClick={() => {
+                if (!isDragging) {
+                  setZoomScale(prev => {
+                    const next = prev > 1 ? 1 : 2.5;
+                    if (next === 1) setPanOffset({ x: 0, y: 0 });
+                    return next;
+                  });
+                }
               }}
             >
-              <MediaRenderer
+              <img
                 src={allImages[lightboxIndex]}
                 alt={`${space.title} view ${lightboxIndex + 1}`}
-                className="max-h-full max-w-full object-contain transition-transform duration-300 ease-out rounded-none cursor-pointer"
-                style={{ transform: `scale(${zoomScale})` }}
-                onClick={() => setZoomScale(prev => prev === 1 ? 2.5 : 1)}
+                style={{
+                  maxWidth: 'calc(100vw - 80px)',
+                  maxHeight: 'calc(100vh - 150px)',
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  display: 'block',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                }}
+                loading="eager"
+                data-pin-nopin="true"
+                draggable={false}
               />
             </div>
 

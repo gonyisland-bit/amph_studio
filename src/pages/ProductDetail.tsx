@@ -69,8 +69,34 @@ export default function ProductDetail() {
   // Fullscreen Lightbox state
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [zoomScale, setZoomScale] = useState(1);
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
   const touchStartRef = useRef<{ x: number; y: number; dist: number } | null>(null);
   const thumbnailStripRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoomScale > 1) {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStartPos({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && zoomScale > 1) {
+      e.preventDefault();
+      setPanOffset({
+        x: e.clientX - dragStartPos.x,
+        y: e.clientY - dragStartPos.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   useScrollReveal([product, recommendations]);
 
@@ -652,11 +678,28 @@ export default function ProductDetail() {
               <ChevronLeft size={24} />
             </button>
 
-            {/* Image with zoom transform — scale(1) always = viewport-fit baseline */}
+            {/* Image with zoom & pan transform */}
             <div 
-              className="transition-transform duration-300 ease-out flex items-center justify-center cursor-zoom-in"
-              style={{ transform: `scale(${zoomScale})`, transformOrigin: 'center center' }}
-              onDoubleClick={() => setZoomScale(prev => prev < 3.5 ? Math.min(prev + 1, 3.5) : 1)}
+              className="flex items-center justify-center select-none"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              style={{
+                transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
+                transformOrigin: 'center center',
+                cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
+                transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+              }}
+              onClick={() => {
+                if (!isDragging) {
+                  setZoomScale(prev => {
+                    const next = prev > 1 ? 1 : 2.5;
+                    if (next === 1) setPanOffset({ x: 0, y: 0 });
+                    return next;
+                  });
+                }
+              }}
             >
               <img
                 src={allDetailImages[lightboxIndex]}
