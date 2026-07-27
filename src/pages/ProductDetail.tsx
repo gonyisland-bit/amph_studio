@@ -687,10 +687,10 @@ export default function ProductDetail() {
           </div>
 
           {/* Thumbnail Strip (Bottom) */}
-          <div className="flex-shrink-0 pb-3 pt-2 px-4">
+          <div className="flex-shrink-0 pb-3 pt-2 px-4 w-full flex justify-center">
             <div 
               ref={thumbnailStripRef}
-              className="flex gap-1.5 overflow-x-auto scrollbar-none scroll-smooth"
+              className="flex gap-1.5 overflow-x-auto scrollbar-none scroll-smooth justify-center max-w-full"
               style={{ scrollbarWidth: 'none' }}
             >
               {allDetailImages.map((img, idx) => (

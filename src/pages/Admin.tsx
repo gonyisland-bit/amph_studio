@@ -967,41 +967,71 @@ export default function Admin() {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
-  const renderContentBlocksEditor = () => (
-    <div className="mb-4 space-y-4">
-      <div className="flex justify-between items-center border-b border-black/5 pb-2">
-        <label className="block text-[10px] font-bold uppercase text-ink/60 tracking-wider">Product Editorial Story Blocks</label>
-        <span className="text-[9px] text-ink/40 font-medium">Image + Optional Caption</span>
-      </div>
-      {form.contentBlocks?.map((cb: ContentBlock, i: number) => (
-        <div key={i} className="flex flex-col gap-3 mb-3 bg-black/[0.02] border border-black/5 p-3 rounded-none">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] font-mono font-bold text-ink/40">#{i + 1}</span>
-              <select 
-                value={cb.type || 'image'} 
-                onChange={e => {
-                  const newCb = [...(form.contentBlocks || [])];
-                  newCb[i] = { ...newCb[i], type: e.target.value as 'text'|'image' };
-                  setForm({...form, contentBlocks: newCb});
-                }} 
-                className="border border-black/15 bg-white p-1 text-[10px] uppercase font-bold text-ink outline-none rounded-none"
-              >
-                <option value="image">Media / Image / Video (이미지/영상)</option>
-                <option value="text">Text Only (텍스트)</option>
-              </select>
-            </div>
-            <button 
-              type="button" 
-              onClick={() => {
-                setForm({...form, contentBlocks: form.contentBlocks.filter((_:any, idx:number) => idx !== i)});
-              }} 
-              className="text-orange text-[10px] font-bold uppercase tracking-wider hover:underline"
-            >
-              Remove Block
-            </button>
-          </div>
+  const renderContentBlocksEditor = () => {
+    const moveBlock = (fromIndex: number, toIndex: number) => {
+      const blocks = [...(form.contentBlocks || [])];
+      if (toIndex < 0 || toIndex >= blocks.length) return;
+      const [moved] = blocks.splice(fromIndex, 1);
+      blocks.splice(toIndex, 0, moved);
+      setForm({ ...form, contentBlocks: blocks });
+    };
 
+    return (
+      <div className="mb-4 space-y-4">
+        <div className="flex justify-between items-center border-b border-black/5 pb-2">
+          <label className="block text-[10px] font-bold uppercase text-ink/60 tracking-wider">Editorial Story Blocks</label>
+          <span className="text-[9px] text-ink/40 font-medium">Reorder, Image & Text Blocks</span>
+        </div>
+        {form.contentBlocks?.map((cb: ContentBlock, i: number) => (
+          <div key={i} className="flex flex-col gap-3 mb-3 bg-black/[0.02] border border-black/5 p-3 rounded-none">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-mono font-bold text-ink/40">#{i + 1}</span>
+                <select 
+                  value={cb.type || 'image'} 
+                  onChange={e => {
+                    const newCb = [...(form.contentBlocks || [])];
+                    newCb[i] = { ...newCb[i], type: e.target.value as 'text'|'image' };
+                    setForm({...form, contentBlocks: newCb});
+                  }} 
+                  className="border border-black/15 bg-white p-1 text-[10px] uppercase font-bold text-ink outline-none rounded-none"
+                >
+                  <option value="image">Media / Image / Video (이미지/영상)</option>
+                  <option value="text">Text Only (텍스트)</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 border-r border-black/10 pr-3">
+                  <button 
+                    type="button" 
+                    disabled={i === 0} 
+                    onClick={() => moveBlock(i, i - 1)} 
+                    className="p-1 hover:bg-black/10 disabled:opacity-20 text-ink/60 hover:text-ink cursor-pointer rounded-none transition-colors" 
+                    title="Move Up"
+                  >
+                    <ChevronUp size={14} />
+                  </button>
+                  <button 
+                    type="button" 
+                    disabled={i === (form.contentBlocks || []).length - 1} 
+                    onClick={() => moveBlock(i, i + 1)} 
+                    className="p-1 hover:bg-black/10 disabled:opacity-20 text-ink/60 hover:text-ink cursor-pointer rounded-none transition-colors" 
+                    title="Move Down"
+                  >
+                    <ChevronDown size={14} />
+                  </button>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setForm({...form, contentBlocks: form.contentBlocks.filter((_:any, idx:number) => idx !== i)});
+                  }} 
+                  className="text-orange text-[10px] font-bold uppercase tracking-wider hover:underline"
+                >
+                  Remove Block
+                </button>
+              </div>
+            </div>
           {(cb.type === 'image' || !cb.type) ? (
             <div className="space-y-2">
               <MediaUploadInput 
@@ -1077,6 +1107,7 @@ export default function Admin() {
       </button>
     </div>
   );
+};
 
   return (
     <div className="flex flex-col flex-grow px-3 py-4 sm:px-6 md:px-12 md:py-12 max-w-[1400px] mx-auto w-full font-sans min-w-0 overflow-x-hidden">

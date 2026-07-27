@@ -326,7 +326,7 @@ export default function SpaceDetail() {
           </div>
 
           {/* Lightbox Thumbnails Bar */}
-          <div className="py-4 px-6 z-30 flex justify-center items-center gap-2 overflow-x-auto hide-scrollbar flex-shrink-0 bg-black/60 backdrop-blur-md border-t border-white/10">
+          <div className="py-4 px-6 z-30 flex justify-center items-center gap-2 overflow-x-auto hide-scrollbar flex-shrink-0 bg-black/60 backdrop-blur-md border-t border-white/10 w-full">
             {allImages.map((img, i) => (
               <button
                 key={i}
