@@ -1023,6 +1023,28 @@ export default function Admin() {
                   rows={2}
                 />
               </div>
+              {cb.value && (
+                <div className="pt-2 border-t border-black/5 flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input 
+                      type="checkbox" 
+                      checked={form.image === cb.value || (form.images && form.images[0] === cb.value)}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          if (activeTab === 'space') {
+                            const otherImages = (form.images || []).filter((x: string) => x !== cb.value);
+                            setForm({...form, image: cb.value, images: [cb.value, ...otherImages]});
+                          } else {
+                            setForm({...form, image: cb.value});
+                          }
+                        }
+                      }}
+                      className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                    />
+                    <span className="text-[9px] uppercase font-bold text-cobalt">Set as Hero Cover (히어로 커버 지정)</span>
+                  </label>
+                </div>
+              )}
             </div>
           ) : (
             <div>

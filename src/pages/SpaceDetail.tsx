@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getSpaces, getProducts, SpaceModel, Product } from "../lib/data";
-import { MoveRight } from "lucide-react";
+import { MoveRight, X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
@@ -9,7 +9,12 @@ export default function SpaceDetail() {
   const { id } = useParams<{ id: string }>();
   const [space, setSpace] = useState<SpaceModel | null>(null);
   const [appliedProducts, setAppliedProducts] = useState<Product[]>([]);
-  const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
+  
+  // Fullscreen Lightbox State
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [zoomScale, setZoomScale] = useState<number>(1);
+  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [touchDelta, setTouchDelta] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   useScrollReveal([space, appliedProducts]);
 
@@ -29,28 +34,115 @@ export default function SpaceDetail() {
     }
   }, [id]);
 
+  // Keyboard navigation for Lightbox
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (lightboxIndex === null) return;
+      if (e.key === 'Escape') {
+        setLightboxIndex(null);
+        setZoomScale(1);
+      } else if (e.key === 'ArrowRight') {
+        const allImgs = getAllImages();
+        if (allImgs.length > 0) {
+          setLightboxIndex((prev) => (prev !== null ? (prev + 1) % allImgs.length : 0));
+          setZoomScale(1);
+        }
+      } else if (e.key === 'ArrowLeft') {
+        const allImgs = getAllImages();
+        if (allImgs.length > 0) {
+          setLightboxIndex((prev) => (prev !== null ? (prev - 1 + allImgs.length) % allImgs.length : 0));
+          setZoomScale(1);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxIndex]);
+
   if (!space) return <div className="p-12 font-sans animate-pulse">Loading Space...</div>;
 
   const displayImages = space.images || [];
+  
+  // Collect all images for Lightbox navigation
+  const getAllImages = () => {
+    const list: string[] = [];
+    if (displayImages[0] || space.image) {
+      list.push(displayImages[0] || space.image);
+    }
+    if (space.contentBlocks) {
+      space.contentBlocks.forEach(b => {
+        if (b.type === 'image' && b.value && !list.includes(b.value)) {
+          list.push(b.value);
+        }
+      });
+    }
+    displayImages.forEach(img => {
+      if (img && !list.includes(img)) list.push(img);
+    });
+    return list;
+  };
+
+  const allImages = getAllImages();
+
+  // Touch gesture handlers for Lightbox
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setTouchStartPos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+      setTouchDelta({ x: 0, y: 0 });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartPos || e.touches.length !== 1) return;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    setTouchDelta({ x: currentX - touchStartPos.x, y: currentY - touchStartPos.y });
+  };
+
+  const handleTouchEnd = () => {
+    if (zoomScale > 1) {
+      setTouchStartPos(null);
+      setTouchDelta({ x: 0, y: 0 });
+      return;
+    }
+    if (touchDelta.x < -60) {
+      setLightboxIndex((prev) => (prev !== null ? (prev + 1) % allImages.length : 0));
+      setZoomScale(1);
+    } else if (touchDelta.x > 60) {
+      setLightboxIndex((prev) => (prev !== null ? (prev - 1 + allImages.length) % allImages.length : 0));
+      setZoomScale(1);
+    } else if (Math.abs(touchDelta.y) > 100) {
+      setLightboxIndex(null);
+      setZoomScale(1);
+    }
+    setTouchStartPos(null);
+    setTouchDelta({ x: 0, y: 0 });
+  };
 
   return (
     <div className="flex flex-col flex-grow bg-white font-sans text-ink">
-
-
       {/* Immersive Hero Header */}
-      <div className="relative w-full h-[85vh] md:h-[95vh] bg-black overflow-hidden">
+      <div 
+        onClick={() => {
+          const heroImg = displayImages[0] || space.image;
+          const idx = allImages.indexOf(heroImg);
+          setLightboxIndex(idx !== -1 ? idx : 0);
+          setZoomScale(1);
+        }}
+        className="relative w-full h-[85vh] md:h-[95vh] bg-black overflow-hidden cursor-zoom-in group"
+      >
         <MediaRenderer 
           src={displayImages[0] || space.image} 
           alt={space.title} 
-          className="w-full h-full opacity-80"
+          className="w-full h-full opacity-80 group-hover:scale-105 transition-transform duration-1000"
           loading="eager"
           fetchpriority="high"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
         
-        <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-24">
+        <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-24 pointer-events-none">
           <div className="max-w-7xl mx-auto w-full">
-            <Link to="/space" className="text-[10px] font-black uppercase tracking-[0.3em] mb-6 block text-white/60 hover:text-white transition-colors">
+            <Link to="/space" className="text-[10px] font-black uppercase tracking-[0.3em] mb-6 block text-white/60 hover:text-white transition-colors pointer-events-auto w-fit">
               <span className="inline-block mr-2">←</span> Back to Spaces
             </Link>
             <h1 className="text-[8.5vw] md:text-[7vw] font-medium uppercase tracking-tighter leading-[0.85] text-white mix-blend-lighten">
@@ -84,9 +176,16 @@ export default function SpaceDetail() {
               const imageUrl = block.type === 'image' ? block.value : '';
 
               if (block.type === 'image' && imageUrl) {
+                const targetIdx = allImages.indexOf(imageUrl);
                 return (
                   <div key={idx} className="flex flex-col reveal group w-full">
-                    <div className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none">
+                    <div 
+                      onClick={() => {
+                        setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
+                        setZoomScale(1);
+                      }}
+                      className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none cursor-zoom-in"
+                    >
                       <MediaRenderer 
                         src={imageUrl} 
                         alt={`Space view ${idx + 1}`} 
@@ -123,13 +222,22 @@ export default function SpaceDetail() {
         <div className="w-full px-4 md:px-8 lg:px-12 py-12 border-t border-black/10">
           <h3 className="text-xs uppercase font-black tracking-[0.2em] mb-8 text-ink/40 font-mono border-b border-black/10 pb-4">Gallery View</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 w-full">
-            {displayImages.slice(1).map((img, idx) => (
-              <div key={idx} className="flex flex-col reveal group w-full">
-                <div className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none">
-                  <MediaRenderer src={img} className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" loading="lazy" />
+            {displayImages.slice(1).map((img, idx) => {
+              const targetIdx = allImages.indexOf(img);
+              return (
+                <div key={idx} className="flex flex-col reveal group w-full">
+                  <div 
+                    onClick={() => {
+                      setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
+                      setZoomScale(1);
+                    }}
+                    className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none cursor-zoom-in"
+                  >
+                    <MediaRenderer src={img} className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" loading="lazy" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -161,6 +269,100 @@ export default function SpaceDetail() {
           Next Space <MoveRight size={64} className="group-hover:translate-x-6 transition-transform" />
         </Link>
       </div>
+
+      {/* Fullscreen Lightbox Modal with Controls */}
+      {lightboxIndex !== null && (
+        <div 
+          className="fixed inset-0 bg-black z-[200] flex flex-col select-none touch-none animate-fade-in"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Lightbox Header Controls */}
+          <div className="flex justify-between items-center w-full z-30 text-white/60 px-6 pt-4 pb-2 flex-shrink-0">
+            <span className="text-[10px] font-sans font-bold tracking-widest uppercase">
+              {space.title} — {lightboxIndex + 1} / {allImages.length}
+            </span>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setZoomScale(prev => prev === 1 ? 2.5 : 1)}
+                className="hover:text-white transition-colors p-1.5 cursor-pointer"
+                title={zoomScale === 1 ? "Zoom In" : "Zoom Out"}
+              >
+                {zoomScale === 1 ? <ZoomIn size={18} /> : <ZoomOut size={18} />}
+              </button>
+              <button 
+                onClick={() => {
+                  setLightboxIndex(null);
+                  setZoomScale(1);
+                }}
+                className="hover:text-white transition-colors p-1.5 cursor-pointer"
+                title="Close (Esc)"
+              >
+                <X size={22} />
+              </button>
+            </div>
+          </div>
+
+          {/* Lightbox Main Stage */}
+          <div className="flex-1 relative flex items-center justify-center overflow-hidden px-4 md:px-16 py-2">
+            <button 
+              onClick={() => {
+                setLightboxIndex((prev) => (prev !== null ? (prev - 1 + allImages.length) % allImages.length : 0));
+                setZoomScale(1);
+              }}
+              className="absolute left-4 z-30 text-white/40 hover:text-white p-3 transition-all hover:scale-110 cursor-pointer hidden sm:block"
+              title="Previous"
+            >
+              <ChevronLeft size={36} />
+            </button>
+
+            <div 
+              className="w-full h-full flex items-center justify-center transition-transform duration-300 ease-out"
+              style={{
+                transform: `translate3d(${touchDelta.x}px, ${touchDelta.y}px, 0)`
+              }}
+            >
+              <MediaRenderer
+                src={allImages[lightboxIndex]}
+                alt={`${space.title} view ${lightboxIndex + 1}`}
+                className="max-h-full max-w-full object-contain transition-transform duration-300 ease-out rounded-none cursor-pointer"
+                style={{ transform: `scale(${zoomScale})` }}
+                onClick={() => setZoomScale(prev => prev === 1 ? 2.5 : 1)}
+              />
+            </div>
+
+            <button 
+              onClick={() => {
+                setLightboxIndex((prev) => (prev !== null ? (prev + 1) % allImages.length : 0));
+                setZoomScale(1);
+              }}
+              className="absolute right-4 z-30 text-white/40 hover:text-white p-3 transition-all hover:scale-110 cursor-pointer hidden sm:block"
+              title="Next"
+            >
+              <ChevronRight size={36} />
+            </button>
+          </div>
+
+          {/* Lightbox Thumbnails Bar */}
+          <div className="py-4 px-6 z-30 flex justify-center items-center gap-2 overflow-x-auto hide-scrollbar flex-shrink-0 bg-black/60 backdrop-blur-md border-t border-white/10">
+            {allImages.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  setLightboxIndex(i);
+                  setZoomScale(1);
+                }}
+                className={`w-12 h-12 flex-shrink-0 border transition-all duration-300 overflow-hidden rounded-none cursor-pointer ${
+                  lightboxIndex === i ? 'border-cobalt scale-105 opacity-100' : 'border-white/20 opacity-40 hover:opacity-80'
+                }`}
+              >
+                <MediaRenderer src={img} alt={`Thumb ${i+1}`} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
