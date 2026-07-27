@@ -63,22 +63,26 @@ export default function SpaceDetail() {
 
   const displayImages = space.images || [];
   
-  // Collect all images for Lightbox navigation
+  const heroImage = space.image || (displayImages.length > 0 ? displayImages[0] : '');
+
+  // Collect all images for Lightbox navigation (Deduplicated, excluding separate hero duplicate)
   const getAllImages = () => {
     const list: string[] = [];
-    if (displayImages[0] || space.image) {
-      list.push(displayImages[0] || space.image);
-    }
     if (space.contentBlocks) {
       space.contentBlocks.forEach(b => {
-        if (b.type === 'image' && b.value && !list.includes(b.value)) {
+        if (b.type === 'image' && b.value && b.value !== heroImage && !list.includes(b.value)) {
           list.push(b.value);
         }
       });
     }
     displayImages.forEach(img => {
-      if (img && !list.includes(img)) list.push(img);
+      if (img && img !== heroImage && !list.includes(img)) {
+        list.push(img);
+      }
     });
+    if (list.length === 0 && heroImage) {
+      list.push(heroImage);
+    }
     return list;
   };
 
@@ -205,8 +209,10 @@ export default function SpaceDetail() {
 
               if (block.type === 'text') {
                 return (
-                  <div key={idx} className="flex flex-col reveal py-4 w-full">
-                    <p className="text-xl md:text-2xl font-serif italic leading-relaxed text-ink/80">{block.value}</p>
+                  <div key={idx} className="flex flex-col reveal py-6 w-full justify-center">
+                    <p className="text-3xl md:text-5xl lg:text-6xl font-bold uppercase tracking-tighter leading-[0.9] font-sans text-ink whitespace-pre-wrap">
+                      {block.value}
+                    </p>
                   </div>
                 );
               }

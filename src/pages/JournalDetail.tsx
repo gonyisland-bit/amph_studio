@@ -50,18 +50,18 @@ export default function JournalDetail() {
 
   if (!article) return <div className="p-12 font-sans animate-pulse">Loading...</div>;
 
-  // Collect all images for Lightbox navigation
+  // Collect all images for Lightbox navigation (Deduplicated, excluding separate hero duplicate)
   const getAllImages = () => {
     const list: string[] = [];
-    if (article.image) {
-      list.push(article.image);
-    }
     if (article.contentBlocks) {
       article.contentBlocks.forEach(b => {
-        if (b.type === 'image' && b.value && !list.includes(b.value)) {
+        if (b.type === 'image' && b.value && b.value !== article.image && !list.includes(b.value)) {
           list.push(b.value);
         }
       });
+    }
+    if (list.length === 0 && article.image) {
+      list.push(article.image);
     }
     return list;
   };
@@ -105,34 +105,34 @@ export default function JournalDetail() {
 
   return (
     <div className="flex flex-col flex-grow bg-white">
-      {/* Immersive Article Hero */}
+      {/* Immersive Article Hero (Identical to Space Hero Layout) */}
       <div 
         onClick={() => {
           const idx = allImages.indexOf(article.image);
           setLightboxIndex(idx !== -1 ? idx : 0);
           setZoomScale(1);
         }}
-        className="relative w-full h-[70vh] md:h-[85vh] bg-black overflow-hidden flex items-end cursor-zoom-in group"
+        className="relative w-full h-[85vh] md:h-[95vh] bg-black overflow-hidden cursor-zoom-in group"
       >
         <MediaRenderer 
           src={article.image} 
           alt={article.title} 
-          className="absolute inset-0 w-full h-full opacity-80 group-hover:scale-105 transition-transform duration-1000"
+          className="w-full h-full opacity-80 group-hover:scale-105 transition-transform duration-1000"
           loading="eager"
           fetchpriority="high"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
         
-        <div className="relative z-10 p-6 md:p-12 lg:p-24 w-full flex flex-col pointer-events-none">
+        <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-24 pointer-events-none">
           <div className="max-w-7xl mx-auto w-full">
-            <Link to="/journal" className="text-white/60 hover:text-white flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-black mb-8 w-fit transition-colors pointer-events-auto">
-              <MoveLeft size={14} /> Back to Journal
+            <Link to="/journal" className="text-[10px] font-black uppercase tracking-[0.3em] mb-6 block text-white/60 hover:text-white transition-colors pointer-events-auto w-fit">
+              <span className="inline-block mr-2">←</span> Back to Journal
             </Link>
-            <span className="text-orange text-xs uppercase font-black tracking-[0.2em] mb-6 inline-block">{article.category}</span>
-            <h1 className="text-3.5xl md:text-5.5xl lg:text-6.5xl font-medium tracking-tighter text-white font-sans max-w-5xl leading-[0.85] mix-blend-lighten uppercase">
+            <span className="text-orange text-xs uppercase font-black tracking-[0.2em] mb-4 inline-block">{article.category}</span>
+            <h1 className="text-[8.5vw] md:text-[7vw] font-medium uppercase tracking-tighter leading-[0.85] text-white mix-blend-lighten">
               {article.title}
             </h1>
-            <div className="flex items-center gap-4 mt-10">
+            <div className="flex items-center gap-4 mt-8">
               <div className="w-10 h-[1px] bg-white/30"></div>
               <span className="text-white/50 font-bold text-[10px] uppercase tracking-widest">{article.date}</span>
             </div>
@@ -149,8 +149,8 @@ export default function JournalDetail() {
             {article.contentBlocks.map((block, idx) => {
               if (block.type === 'text') {
                 return (
-                  <div key={idx} className="flex flex-col reveal py-4 w-full">
-                    <p className="text-xl md:text-2xl font-serif italic leading-relaxed text-ink/80 first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-cobalt">
+                  <div key={idx} className="flex flex-col reveal py-6 w-full justify-center">
+                    <p className="text-3xl md:text-5xl lg:text-6xl font-bold uppercase tracking-tighter leading-[0.9] font-sans text-ink whitespace-pre-wrap">
                       {block.value}
                     </p>
                   </div>

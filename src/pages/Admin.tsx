@@ -1028,20 +1028,19 @@ export default function Admin() {
                   <label className="flex items-center gap-1.5 cursor-pointer select-none">
                     <input 
                       type="checkbox" 
-                      checked={form.image === cb.value || (form.images && form.images[0] === cb.value)}
+                      checked={form.image === cb.value}
                       onChange={e => {
                         if (e.target.checked) {
-                          if (activeTab === 'space') {
-                            const otherImages = (form.images || []).filter((x: string) => x !== cb.value);
-                            setForm({...form, image: cb.value, images: [cb.value, ...otherImages]});
-                          } else {
-                            setForm({...form, image: cb.value});
-                          }
+                          setForm({...form, image: cb.value});
+                        } else {
+                          setForm({...form, image: ''});
                         }
                       }}
                       className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
                     />
-                    <span className="text-[9px] uppercase font-bold text-cobalt">Set as Hero Cover (히어로 커버 지정)</span>
+                    <span className="text-[9px] uppercase font-bold text-cobalt">
+                      {form.image === cb.value ? "✓ Hero Cover (히어로 커버 지정됨)" : "Set as Hero Cover (히어로 커버 지정)"}
+                    </span>
                   </label>
                 </div>
               )}
@@ -2247,7 +2246,6 @@ export default function Admin() {
                     <input required value={form.category || ''} onChange={e => setForm({...form, category: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Date</label>
                     <input required value={form.date || ''} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                  <div><MediaUploadInput label="Hero Media" value={form.image || ''} onChange={val => setForm({...form, image: val})} /></div>
                   {renderContentBlocksEditor()}
                 </>
               )}
