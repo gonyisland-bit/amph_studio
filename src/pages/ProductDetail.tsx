@@ -75,18 +75,21 @@ export default function ProductDetail() {
 
   const touchStartRef = useRef<{ x: number; y: number; dist: number } | null>(null);
   const thumbnailStripRef = useRef<HTMLDivElement>(null);
+  const dragDistanceRef = useRef<number>(0);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (zoomScale > 1) {
       e.preventDefault();
       setIsDragging(true);
       setDragStartPos({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+      dragDistanceRef.current = 0;
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isDragging && zoomScale > 1) {
       e.preventDefault();
+      dragDistanceRef.current += Math.abs(e.movementX) + Math.abs(e.movementY);
       setPanOffset({
         x: e.clientX - dragStartPos.x,
         y: e.clientY - dragStartPos.y
@@ -692,16 +695,18 @@ export default function ProductDetail() {
                 transition: isDragging ? 'none' : 'transform 0.3s ease-out'
               }}
               onClick={() => {
-                if (!isDragging) {
-                  setZoomScale(prev => {
-                    const next = prev > 1 ? 1 : 2.5;
-                    if (next === 1) setPanOffset({ x: 0, y: 0 });
-                    return next;
-                  });
+                if (dragDistanceRef.current > 5) {
+                  dragDistanceRef.current = 0;
+                  return;
                 }
+                setZoomScale(prev => {
+                  const next = prev > 1 ? 1 : 2.5;
+                  if (next === 1) setPanOffset({ x: 0, y: 0 });
+                  return next;
+                });
               }}
             >
-              <img
+              <MediaRenderer
                 src={allDetailImages[lightboxIndex]}
                 alt={`${product.name} fullscreen view`}
                 style={{
@@ -711,12 +716,10 @@ export default function ProductDetail() {
                   height: 'auto',
                   objectFit: 'contain',
                   display: 'block',
-                  pointerEvents: 'none',
+                  pointerEvents: zoomScale > 1 ? 'none' : 'auto',
                   userSelect: 'none',
                 }}
                 loading="eager"
-                data-pin-nopin="true"
-                draggable={false}
               />
             </div>
 

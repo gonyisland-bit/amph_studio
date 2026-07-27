@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getSpaces, getProducts, SpaceModel, Product } from "../lib/data";
 import { MoveRight, X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
@@ -19,18 +19,21 @@ export default function SpaceDetail() {
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
   const [touchDelta, setTouchDelta] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const dragDistanceRef = useRef<number>(0);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (zoomScale > 1) {
       e.preventDefault();
       setIsDragging(true);
       setDragStartPos({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+      dragDistanceRef.current = 0;
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isDragging && zoomScale > 1) {
       e.preventDefault();
+      dragDistanceRef.current += Math.abs(e.movementX) + Math.abs(e.movementY);
       setPanOffset({
         x: e.clientX - dragStartPos.x,
         y: e.clientY - dragStartPos.y
@@ -419,16 +422,18 @@ export default function SpaceDetail() {
                 transition: isDragging ? 'none' : 'transform 0.3s ease-out'
               }}
               onClick={() => {
-                if (!isDragging) {
-                  setZoomScale(prev => {
-                    const next = prev > 1 ? 1 : 2.5;
-                    if (next === 1) setPanOffset({ x: 0, y: 0 });
-                    return next;
-                  });
+                if (dragDistanceRef.current > 5) {
+                  dragDistanceRef.current = 0;
+                  return;
                 }
+                setZoomScale(prev => {
+                  const next = prev > 1 ? 1 : 2.5;
+                  if (next === 1) setPanOffset({ x: 0, y: 0 });
+                  return next;
+                });
               }}
             >
-              <img
+              <MediaRenderer
                 src={allImages[lightboxIndex]}
                 alt={`${space.title} view ${lightboxIndex + 1}`}
                 style={{
@@ -438,12 +443,10 @@ export default function SpaceDetail() {
                   height: 'auto',
                   objectFit: 'contain',
                   display: 'block',
-                  pointerEvents: 'none',
+                  pointerEvents: zoomScale > 1 ? 'none' : 'auto',
                   userSelect: 'none',
                 }}
                 loading="eager"
-                data-pin-nopin="true"
-                draggable={false}
               />
             </div>
 
