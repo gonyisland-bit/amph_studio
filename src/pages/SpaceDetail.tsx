@@ -65,23 +65,18 @@ export default function SpaceDetail() {
   
   const heroImage = space.image || (displayImages.length > 0 ? displayImages[0] : '');
 
-  // Collect all images for Lightbox navigation (Deduplicated, excluding separate hero duplicate)
+  // Collect all images for Lightbox navigation (Strictly Hero Cover + Current Story ContentBlocks)
   const getAllImages = () => {
     const list: string[] = [];
+    if (heroImage) {
+      list.push(heroImage);
+    }
     if (space.contentBlocks) {
       space.contentBlocks.forEach(b => {
-        if (b.type === 'image' && b.value && b.value !== heroImage && !list.includes(b.value)) {
+        if (b.type === 'image' && b.value && !list.includes(b.value)) {
           list.push(b.value);
         }
       });
-    }
-    displayImages.forEach(img => {
-      if (img && img !== heroImage && !list.includes(img)) {
-        list.push(img);
-      }
-    });
-    if (list.length === 0 && heroImage) {
-      list.push(heroImage);
     }
     return list;
   };

@@ -50,18 +50,18 @@ export default function JournalDetail() {
 
   if (!article) return <div className="p-12 font-sans animate-pulse">Loading...</div>;
 
-  // Collect all images for Lightbox navigation (Deduplicated, excluding separate hero duplicate)
+  // Collect all images for Lightbox navigation (Strictly Hero Cover + Current Story ContentBlocks)
   const getAllImages = () => {
     const list: string[] = [];
+    if (article.image) {
+      list.push(article.image);
+    }
     if (article.contentBlocks) {
       article.contentBlocks.forEach(b => {
-        if (b.type === 'image' && b.value && b.value !== article.image && !list.includes(b.value)) {
+        if (b.type === 'image' && b.value && !list.includes(b.value)) {
           list.push(b.value);
         }
       });
-    }
-    if (list.length === 0 && article.image) {
-      list.push(article.image);
     }
     return list;
   };
