@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { MoveLeft, MoveRight, X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
-import { getJournalById, JournalArticle } from "../lib/data";
+import { getJournalById, getJournals, JournalArticle } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
 export default function JournalDetail() {
   const { id } = useParams<{ id: string }>();
   const [article, setArticle] = useState<JournalArticle | null>(null);
+  const [allArticles, setAllArticles] = useState<JournalArticle[]>([]);
 
   // Fullscreen Lightbox State
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -44,7 +45,11 @@ export default function JournalDetail() {
 
   useEffect(() => {
     if (id) {
-      getJournalById(id).then(setArticle);
+      getJournals().then(all => {
+        setAllArticles(all);
+        const found = all.find(a => a.id === id);
+        if (found) setArticle(found);
+      });
     }
   }, [id]);
 
@@ -214,6 +219,77 @@ export default function JournalDetail() {
           </div>
         )}
       </div>
+
+      {/* Related Journal Articles Carousel Slider Section */}
+      {(() => {
+        const getRelatedArticles = () => {
+          if (article.relatedJournalIds && article.relatedJournalIds.length > 0) {
+            const explicit = allArticles.filter(a => article.relatedJournalIds?.includes(a.id));
+            if (explicit.length > 0) return explicit;
+          }
+          const featured = allArticles.filter(a => a.id !== article.id && a.featured);
+          if (featured.length > 0) return featured;
+          return allArticles.filter(a => a.id !== article.id);
+        };
+
+        const relatedArticles = getRelatedArticles();
+        if (relatedArticles.length === 0) return null;
+
+        const scrollSlider = (dir: 'left' | 'right') => {
+          const el = document.getElementById('related-journals-slider');
+          if (el) {
+            el.scrollBy({ left: dir === 'left' ? -350 : 350, behavior: 'smooth' });
+          }
+        };
+
+        return (
+          <div className="w-full px-4 md:px-8 lg:px-12 py-20 border-t border-black/10 reveal">
+            <div className="flex justify-between items-end mb-8 border-b border-black/10 pb-4">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-orange block mb-1">Journal Stories</span>
+                <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tighter">More Stories to Explore</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => scrollSlider('left')} 
+                  className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                  title="Scroll Left"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button 
+                  onClick={() => scrollSlider('right')} 
+                  className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                  title="Scroll Right"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div 
+              id="related-journals-slider"
+              className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth snap-x pb-4"
+            >
+              {relatedArticles.map(a => (
+                <Link key={a.id} to={`/journal/${a.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
+                  <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden mb-3 border border-black/5 relative">
+                    <MediaRenderer src={a.image} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    {a.featured && (
+                      <span className="absolute top-3 left-3 z-10 text-orange bg-black/40 backdrop-blur-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border border-orange/30">
+                        ★ Featured
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-orange text-[9px] font-black uppercase tracking-widest block mb-1">{a.category}</span>
+                  <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{a.title}</h4>
+                  <p className="text-[10px] font-bold text-ink/40 uppercase tracking-widest">{a.date}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Footer Navigation */}
       <div className="px-6 py-24 border-t border-black/10 bg-off-white text-center">

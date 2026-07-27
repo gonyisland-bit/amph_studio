@@ -9,6 +9,7 @@ export default function SpaceDetail() {
   const { id } = useParams<{ id: string }>();
   const [space, setSpace] = useState<SpaceModel | null>(null);
   const [appliedProducts, setAppliedProducts] = useState<Product[]>([]);
+  const [allSpaces, setAllSpaces] = useState<SpaceModel[]>([]);
   
   // Fullscreen Lightbox State
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -46,6 +47,7 @@ export default function SpaceDetail() {
   useEffect(() => {
     if (id) {
       getSpaces().then(all => {
+        setAllSpaces(all);
         const found = all.find(s => s.id === id);
         if (found) {
           setSpace(found);
@@ -263,6 +265,76 @@ export default function SpaceDetail() {
           </div>
         </div>
       )}
+
+      {/* Related Spaces Carousel Slider Section */}
+      {(() => {
+        const getRelatedSpaces = () => {
+          if (space.relatedSpaceIds && space.relatedSpaceIds.length > 0) {
+            const explicit = allSpaces.filter(s => space.relatedSpaceIds?.includes(s.id));
+            if (explicit.length > 0) return explicit;
+          }
+          const featured = allSpaces.filter(s => s.id !== space.id && s.featured);
+          if (featured.length > 0) return featured;
+          return allSpaces.filter(s => s.id !== space.id);
+        };
+
+        const relatedSpaces = getRelatedSpaces();
+        if (relatedSpaces.length === 0) return null;
+
+        const scrollSlider = (dir: 'left' | 'right') => {
+          const el = document.getElementById('related-spaces-slider');
+          if (el) {
+            el.scrollBy({ left: dir === 'left' ? -350 : 350, behavior: 'smooth' });
+          }
+        };
+
+        return (
+          <div className="w-full px-4 md:px-8 lg:px-12 py-20 border-t border-black/10 reveal">
+            <div className="flex justify-between items-end mb-8 border-b border-black/10 pb-4">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-1">Spaces</span>
+                <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tighter">Explore Related Spaces</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => scrollSlider('left')} 
+                  className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                  title="Scroll Left"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button 
+                  onClick={() => scrollSlider('right')} 
+                  className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                  title="Scroll Right"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div 
+              id="related-spaces-slider"
+              className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth snap-x pb-4"
+            >
+              {relatedSpaces.map(s => (
+                <Link key={s.id} to={`/space/${s.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
+                  <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden mb-3 border border-black/5 relative">
+                    <MediaRenderer src={s.image || (s.images && s.images[0])} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    {s.featured && (
+                      <span className="absolute top-3 left-3 z-10 text-orange bg-black/40 backdrop-blur-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border border-orange/30">
+                        ★ Featured
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{s.title}</h4>
+                  <p className="text-[10px] font-bold text-ink/40 uppercase tracking-widest line-clamp-1">{s.description}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Footer Navigation */}
       <div className="p-12 md:p-32 border-t border-black/10 bg-off-white text-center">

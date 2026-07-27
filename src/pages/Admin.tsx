@@ -7,7 +7,7 @@ import {
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob
 } from "../lib/data";
 import { upload } from '@vercel/blob/client';
-import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star } from "lucide-react";
 
 const emptyProduct: Omit<Product, 'id'> = {
   name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []
@@ -2256,7 +2256,7 @@ export default function Admin() {
                     </div>
 
                   {/* Card 4: Story Blocks (Accordion) */}
-                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden mb-4">
                     <button 
                       type="button"
                       onClick={() => toggleSection('story')}
@@ -2271,11 +2271,47 @@ export default function Admin() {
                       </div>
                     )}
                   </div>
+
+                  {/* Card 5: Related Products */}
+                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
+                    <div className="p-6">
+                      <h3 className="font-bold text-[10px] uppercase mb-3 text-cobalt">Related Products (하단 연관 추천 상품 선택)</h3>
+                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
+                        {products.filter(p => p.id !== form.id).map(p => (
+                          <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={form.relatedProductIds?.includes(p.id)} 
+                              onChange={(e) => {
+                                const current = form.relatedProductIds || [];
+                                const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
+                                setForm({...form, relatedProductIds: next});
+                              }}
+                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                            />
+                            <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {activeTab === 'journal' && (
                 <>
+                  <label className="flex items-center gap-2 cursor-pointer border border-black/10 p-2.5 bg-black/[0.02] mb-3">
+                    <input 
+                      type="checkbox" 
+                      checked={!!form.featured} 
+                      onChange={e => setForm({...form, featured: e.target.checked})} 
+                      className="w-4 h-4 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                    />
+                    <span className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-1">
+                      <Star size={14} className={form.featured ? "fill-orange text-orange" : "text-ink/40"} />
+                      Set as Featured / ⭐ 별표 지정 (하단 연관 추천 우대 정렬)
+                    </span>
+                  </label>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                     <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Category</label>
@@ -2283,35 +2319,91 @@ export default function Admin() {
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Date</label>
                     <input required value={form.date || ''} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   {renderContentBlocksEditor()}
+
+                  <div className="border-t border-black/10 pt-4 mt-4">
+                    <h3 className="font-bold text-[10px] uppercase mb-3 text-cobalt">Related Journal Articles (하단 연관 저널 선택)</h3>
+                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
+                      {journals.filter(j => j.id !== form.id).map(j => (
+                        <label key={j.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={form.relatedJournalIds?.includes(j.id)} 
+                            onChange={(e) => {
+                              const current = form.relatedJournalIds || [];
+                              const next = e.target.checked ? [...current, j.id] : current.filter((id:string) => id !== j.id);
+                              setForm({...form, relatedJournalIds: next});
+                            }}
+                            className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                          />
+                          <span className="text-[9px] font-bold uppercase truncate">{j.title}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </>
               )}
 
               {activeTab === 'space' && (
                 <>
+                  <label className="flex items-center gap-2 cursor-pointer border border-black/10 p-2.5 bg-black/[0.02] mb-3">
+                    <input 
+                      type="checkbox" 
+                      checked={!!form.featured} 
+                      onChange={e => setForm({...form, featured: e.target.checked})} 
+                      className="w-4 h-4 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                    />
+                    <span className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-1">
+                      <Star size={14} className={form.featured ? "fill-orange text-orange" : "text-ink/40"} />
+                      Set as Featured / ⭐ 별표 지정 (하단 연관 추천 우대 정렬)
+                    </span>
+                  </label>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Space Title</label>
                     <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
                     <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={4}/></div>
                   {renderContentBlocksEditor()}
 
-                  <div className="border-t border-black/10 pt-4 mt-4">
-                    <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Amplify with (Linked Products)</h3>
-                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-black/10 p-4 bg-black/5 rounded-none">
-                      {products.map(p => (
-                        <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={form.appliedProductIds?.includes(p.id)} 
-                            onChange={(e) => {
-                              const current = form.appliedProductIds || [];
-                              const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
-                              setForm({...form, appliedProductIds: next});
-                            }}
-                            className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                          />
-                          <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
-                        </label>
-                      ))}
+                  <div className="border-t border-black/10 pt-4 mt-4 space-y-4">
+                    <div>
+                      <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Amplify with (Linked Products)</h3>
+                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
+                        {products.map(p => (
+                          <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={form.appliedProductIds?.includes(p.id)} 
+                              onChange={(e) => {
+                                const current = form.appliedProductIds || [];
+                                const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
+                                setForm({...form, appliedProductIds: next});
+                              }}
+                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                            />
+                            <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Related Spaces (하단 연관 스페이스 선택)</h3>
+                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
+                        {spaces.filter(s => s.id !== form.id).map(s => (
+                          <label key={s.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={form.relatedSpaceIds?.includes(s.id)} 
+                              onChange={(e) => {
+                                const current = form.relatedSpaceIds || [];
+                                const next = e.target.checked ? [...current, s.id] : current.filter((id:string) => id !== s.id);
+                                setForm({...form, relatedSpaceIds: next});
+                              }}
+                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                            />
+                            <span className="text-[9px] font-bold uppercase truncate">{s.title}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </>
@@ -2527,8 +2619,28 @@ export default function Admin() {
                           )}
                         </td>
                         <td className="py-4">
-                          <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{s.title}</div>
-                          <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{s.description}</div>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                const updated = { ...s, featured: !s.featured };
+                                updateSpace(s.id, updated).then(loadData);
+                              }}
+                              className="focus:outline-none transition-transform hover:scale-125 active:scale-90"
+                              title="Toggle Featured Star"
+                            >
+                              {s.featured ? (
+                                <span className="text-orange text-sm">★</span>
+                              ) : (
+                                <span className="text-ink/10 hover:text-orange/60 text-sm">☆</span>
+                              )}
+                            </button>
+                            <div>
+                              <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{s.title}</div>
+                              <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{s.description}</div>
+                            </div>
+                          </div>
                         </td>
                         <td className="py-4">
                           <span className="text-[10px] font-sans font-bold text-ink/40">
@@ -2578,8 +2690,28 @@ export default function Admin() {
                           )}
                         </td>
                         <td className="py-4">
-                          <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{j.title}</div>
-                          <div className="text-[10px] text-ink/40 font-sans">{j.date}</div>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                const updated = { ...j, featured: !j.featured };
+                                updateJournal(j.id, updated).then(loadData);
+                              }}
+                              className="focus:outline-none transition-transform hover:scale-125 active:scale-90"
+                              title="Toggle Featured Star"
+                            >
+                              {j.featured ? (
+                                <span className="text-orange text-sm">★</span>
+                              ) : (
+                                <span className="text-ink/10 hover:text-orange/60 text-sm">☆</span>
+                              )}
+                            </button>
+                            <div>
+                              <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{j.title}</div>
+                              <div className="text-[10px] text-ink/40 font-sans">{j.date}</div>
+                            </div>
+                          </div>
                         </td>
                         <td className="py-4">
                           <span className="caption-nano text-cobalt px-3 py-1 border border-cobalt/20 rounded-full font-bold">{j.category}</span>

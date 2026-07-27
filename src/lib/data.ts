@@ -37,6 +37,8 @@ export interface JournalArticle {
   category: string;
   date: string;
   image: string;
+  featured?: boolean;
+  relatedJournalIds?: string[];
   contentBlocks?: ContentBlock[];
 }
 
@@ -45,6 +47,9 @@ export interface SpaceModel {
   title: string;
   description: string;
   images: string[];
+  image?: string;
+  featured?: boolean;
+  relatedSpaceIds?: string[];
   appliedProductIds?: string[];
   contentBlocks?: ContentBlock[];
 }
