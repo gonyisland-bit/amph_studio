@@ -2259,68 +2259,6 @@ export default function Admin() {
                   {renderContentBlocksEditor()}
 
                   <div className="border-t border-black/10 pt-4 mt-4">
-                    <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Gallery Media (Images & Videos)</h3>
-                    {(() => {
-                      const currentImages = form.images || [];
-                      const displayImages = [...currentImages];
-                      if (displayImages.length === 0 || displayImages[displayImages.length - 1] !== '') {
-                        displayImages.push('');
-                      }
-                      return displayImages.map((img: string, i: number) => (
-                        <div key={i} className="mb-2 bg-black/[0.01] border border-black/5 p-3 rounded-none">
-                          <MediaUploadInput 
-                            label={i === 0 ? "Main" : `Media ${i+1}`} 
-                            value={img} 
-                            onChange={val => { 
-                              let newI = [...displayImages]; 
-                              newI[i] = val; 
-                              if (val === '') {
-                                newI = newI.filter((_, idx) => idx !== i);
-                              }
-                              const compacted = newI.filter(Boolean);
-                              setForm({...form, images: compacted}); 
-                            }} 
-                          />
-                          {img && (
-                            <div className="mt-2 flex items-center justify-end border-t border-black/5 pt-2">
-                              <div className="flex items-center gap-1">
-                                <button 
-                                  type="button" 
-                                  disabled={i === 0} 
-                                  onClick={() => {
-                                    const currentImages = form.images || [];
-                                    const newImg = [...currentImages];
-                                    [newImg[i], newImg[i - 1]] = [newImg[i - 1], newImg[i]];
-                                    setForm({ ...form, images: newImg.filter(Boolean) });
-                                  }}
-                                  className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
-                                  title="Move Prev"
-                                >
-                                  <ChevronLeft size={14} />
-                                </button>
-                                <button 
-                                  type="button" 
-                                  disabled={i >= displayImages.length - 2} 
-                                  onClick={() => {
-                                    const currentImages = form.images || [];
-                                    const newImg = [...currentImages];
-                                    [newImg[i], newImg[i + 1]] = [newImg[i + 1], newImg[i]];
-                                    setForm({ ...form, images: newImg.filter(Boolean) });
-                                  }}
-                                  className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
-                                  title="Move Next"
-                                >
-                                  <ChevronRight size={14} />
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ));
-                    })()}
-                  </div>
-
-                  <div className="border-t border-black/10 pt-4 mt-4">
                     <h3 className="font-bold text-[10px] uppercase mb-4 text-cobalt">Amplify with (Linked Products)</h3>
                     <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-black/10 p-4 bg-black/5 rounded-none">
                       {products.map(p => (
