@@ -60,95 +60,100 @@ export default function SpaceDetail() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto w-full px-6 md:px-24 py-12 md:py-24">
-        {/* Intro Text */}
-        <div className="max-w-3xl mb-24">
+      {/* Intro Text Container */}
+      <div className="w-full px-4 md:px-8 lg:px-12 pt-12 md:pt-16 pb-8">
+        <div className="max-w-4xl mb-12">
           <p className="text-xl md:text-3xl leading-relaxed font-serif italic text-ink/80 whitespace-pre-wrap">{space.description}</p>
         </div>
+      </div>
 
-        {/* Content Blocks (Editorial Section - Full-Width 2-Column Grid) */}
-        {space.contentBlocks && space.contentBlocks.length > 0 && (
-          <div className="mb-24 w-full">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-8 text-cobalt font-mono border-b border-black/10 pb-4">
+      {/* Content Blocks (Editorial Section - Full-Bleed 2-Column Grid) */}
+      {space.contentBlocks && space.contentBlocks.length > 0 && (
+        <div className="w-full px-4 md:px-8 lg:px-12 py-12 border-t border-black/10">
+          <div className="flex justify-between items-center mb-8 border-b border-black/10 pb-4">
+            <h3 className="text-xs uppercase font-black tracking-[0.2em] text-cobalt font-mono">
               EDITORIAL STORY
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
-              {space.contentBlocks.map((block, idx) => {
-                const textContent = block.caption || (block.type === 'text' ? block.value : '');
-                const imageUrl = block.type === 'image' ? block.value : '';
+            <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-ink/40 font-mono">
+              {space.title}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
+            {space.contentBlocks.map((block, idx) => {
+              const textContent = block.caption || (block.type === 'text' ? block.value : '');
+              const imageUrl = block.type === 'image' ? block.value : '';
 
-                if (block.type === 'image' && imageUrl) {
-                  return (
-                    <div key={idx} className="flex flex-col reveal group w-full">
-                      <div className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none">
-                        <MediaRenderer 
-                          src={imageUrl} 
-                          alt={`Space view ${idx + 1}`} 
-                          className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
-                          loading="lazy" 
-                          nopin="nopin"
-                        />
+              if (block.type === 'image' && imageUrl) {
+                return (
+                  <div key={idx} className="flex flex-col reveal group w-full">
+                    <div className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none">
+                      <MediaRenderer 
+                        src={imageUrl} 
+                        alt={`Space view ${idx + 1}`} 
+                        className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
+                        loading="lazy" 
+                        nopin="nopin"
+                      />
+                    </div>
+                    {textContent && (
+                      <div className="mt-4">
+                        <p className="text-sm md:text-base font-sans leading-relaxed text-ink/80">{textContent}</p>
                       </div>
-                      {textContent && (
-                        <div className="mt-4">
-                          <p className="text-sm md:text-base font-sans leading-relaxed text-ink/80">{textContent}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                if (block.type === 'text') {
-                  return (
-                    <div key={idx} className="flex flex-col reveal py-4 w-full">
-                      <p className="text-xl md:text-2xl font-serif italic leading-relaxed text-ink/80">{block.value}</p>
-                    </div>
-                  );
-                }
-
-                return null;
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Remaining Gallery Images (2-Column Grid) */}
-        {displayImages.length > 1 && (
-          <div className="mb-24">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-8 text-ink/30 border-b border-black/10 pb-4">Gallery View</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12">
-              {displayImages.slice(1).map((img, idx) => (
-                <div key={idx} className="flex flex-col reveal group w-full">
-                  <div className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none">
-                    <MediaRenderer src={img} className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" loading="lazy" />
+                    )}
                   </div>
+                );
+              }
+
+              if (block.type === 'text') {
+                return (
+                  <div key={idx} className="flex flex-col reveal py-4 w-full">
+                    <p className="text-xl md:text-2xl font-serif italic leading-relaxed text-ink/80">{block.value}</p>
+                  </div>
+                );
+              }
+
+              return null;
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Remaining Gallery Images (Full-Bleed 2-Column Grid) */}
+      {displayImages.length > 1 && (
+        <div className="w-full px-4 md:px-8 lg:px-12 py-12 border-t border-black/10">
+          <h3 className="text-xs uppercase font-black tracking-[0.2em] mb-8 text-ink/40 font-mono border-b border-black/10 pb-4">Gallery View</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 w-full">
+            {displayImages.slice(1).map((img, idx) => (
+              <div key={idx} className="flex flex-col reveal group w-full">
+                <div className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none">
+                  <MediaRenderer src={img} className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Applied Products */}
-        {appliedProducts.length > 0 && (
-          <div className="pt-24 border-t border-black/10 reveal">
-            <div className="flex flex-col md:flex-row justify-between items-baseline mb-16 gap-4">
-              <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">Shop the Space</h3>
-              <p className="text-sm font-serif italic text-ink/40">Curated objects featured in this environment.</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {appliedProducts.map(p => (
-                <Link key={p.id} to={`/product/${p.id}`} className="group block">
-                  <div className="aspect-[4/5] bg-silver/20 rounded-[20px] overflow-hidden mb-6 shadow-sm border border-black/5">
-                    <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 mix-blend-multiply" />
-                  </div>
-                  <h4 className="text-sm font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors">{p.name}</h4>
-                  <p className="text-[10px] font-bold text-ink/30 uppercase tracking-widest">{p.category}</p>
-                </Link>
-              ))}
-            </div>
+      {/* Applied Products */}
+      {appliedProducts.length > 0 && (
+        <div className="w-full px-4 md:px-8 lg:px-12 py-24 border-t border-black/10 reveal">
+          <div className="flex flex-col md:flex-row justify-between items-baseline mb-16 gap-4">
+            <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">Shop the Space</h3>
+            <p className="text-sm font-serif italic text-ink/40">Curated objects featured in this environment.</p>
           </div>
-        )}
-      </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {appliedProducts.map(p => (
+              <Link key={p.id} to={`/product/${p.id}`} className="group block">
+                <div className="aspect-[4/5] bg-silver/20 rounded-none overflow-hidden mb-4 border border-black/5">
+                  <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                </div>
+                <h4 className="text-sm font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors">{p.name}</h4>
+                <p className="text-[10px] font-bold text-ink/30 uppercase tracking-widest">{p.category}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Footer Navigation */}
       <div className="p-12 md:p-32 border-t border-black/10 bg-off-white text-center">

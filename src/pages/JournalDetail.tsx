@@ -50,7 +50,7 @@ export default function JournalDetail() {
       </div>
 
       {/* Article Body Elements (Editorial 2-Column Grid Layout) */}
-      <div className="max-w-7xl mx-auto w-full px-6 md:px-12 py-16 md:py-24">
+      <div className="w-full px-4 md:px-8 lg:px-12 py-16">
         {!article.contentBlocks || article.contentBlocks.length === 0 ? (
           <p className="italic text-ink/50 text-center font-serif text-xl">No additional body content available.</p>
         ) : (
