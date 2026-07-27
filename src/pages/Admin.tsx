@@ -867,8 +867,12 @@ export default function Admin() {
           savedData = newJournal;
         }
       } else if (activeTab === 'space') {
-        const cleanedImages = (form.images || []).filter(Boolean);
-        const cleanedForm = { ...form, images: cleanedImages };
+        let cleanedImages = (form.images || []).filter(Boolean);
+        if (form.image) {
+          cleanedImages = [form.image, ...cleanedImages.filter((x: string) => x !== form.image)];
+        }
+        const heroImg = form.image || cleanedImages[0] || '';
+        const cleanedForm = { ...form, image: heroImg, images: cleanedImages };
         if (editingId) {
           await updateSpace(editingId, cleanedForm);
           savedData = cleanedForm;
@@ -1031,7 +1035,8 @@ export default function Admin() {
                       checked={form.image === cb.value}
                       onChange={e => {
                         if (e.target.checked) {
-                          setForm({...form, image: cb.value});
+                          const currentImages = (form.images || []).filter((x: string) => x !== cb.value);
+                          setForm({...form, image: cb.value, images: [cb.value, ...currentImages]});
                         } else {
                           setForm({...form, image: ''});
                         }

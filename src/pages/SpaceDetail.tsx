@@ -209,7 +209,7 @@ export default function SpaceDetail() {
 
               if (block.type === 'text') {
                 return (
-                  <div key={idx} className="flex flex-col reveal py-6 w-full justify-center text-center">
+                  <div key={idx} className="flex flex-col reveal py-12 w-full h-full min-h-[250px] md:min-h-[350px] justify-center items-center text-center my-auto">
                     <p className="text-3xl md:text-5xl lg:text-6xl font-bold uppercase tracking-tighter leading-[0.9] font-sans text-ink whitespace-pre-wrap text-center mx-auto max-w-4xl">
                       {block.value}
                     </p>
@@ -218,31 +218,6 @@ export default function SpaceDetail() {
               }
 
               return null;
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Remaining Gallery Images (Full-Bleed 2-Column Grid) */}
-      {displayImages.length > 1 && (
-        <div className="w-full px-4 md:px-8 lg:px-12 py-12 border-t border-black/10">
-          <h3 className="text-xs uppercase font-black tracking-[0.2em] mb-8 text-ink/40 font-mono border-b border-black/10 pb-4">Gallery View</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 w-full">
-            {displayImages.slice(1).map((img, idx) => {
-              const targetIdx = allImages.indexOf(img);
-              return (
-                <div key={idx} className="flex flex-col reveal group w-full">
-                  <div 
-                    onClick={() => {
-                      setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
-                      setZoomScale(1);
-                    }}
-                    className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none cursor-zoom-in"
-                  >
-                    <MediaRenderer src={img} className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" loading="lazy" />
-                  </div>
-                </div>
-              );
             })}
           </div>
         </div>

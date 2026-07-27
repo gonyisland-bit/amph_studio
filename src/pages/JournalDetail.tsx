@@ -149,7 +149,7 @@ export default function JournalDetail() {
             {article.contentBlocks.map((block, idx) => {
               if (block.type === 'text') {
                 return (
-                  <div key={idx} className="flex flex-col reveal py-6 w-full justify-center text-center">
+                  <div key={idx} className="flex flex-col reveal py-12 w-full h-full min-h-[250px] md:min-h-[350px] justify-center items-center text-center my-auto">
                     <p className="text-3xl md:text-5xl lg:text-6xl font-bold uppercase tracking-tighter leading-[0.9] font-sans text-ink whitespace-pre-wrap text-center mx-auto max-w-4xl">
                       {block.value}
                     </p>
