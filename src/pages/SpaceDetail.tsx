@@ -66,31 +66,62 @@ export default function SpaceDetail() {
           <p className="text-xl md:text-3xl leading-relaxed font-serif italic text-ink/80 whitespace-pre-wrap">{space.description}</p>
         </div>
 
-        {/* Content Blocks (Magazine Style) */}
-        <div className="space-y-24 mb-24">
-          {space.contentBlocks?.map((block, idx) => (
-            <div key={idx} className={`flex flex-col ${idx % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 items-center reveal`}>
-              {block.type === 'image' ? (
-                <div className="w-full md:w-1/2 aspect-[4/5] rounded-[32px] overflow-hidden shadow-2xl bg-black/5">
-                  <MediaRenderer src={block.value} className="w-full h-full" loading="lazy" />
-                </div>
-              ) : (
-                <div className="w-full md:w-1/2">
-                  <p className="text-lg md:text-xl leading-relaxed text-ink/70 whitespace-pre-wrap font-serif italic">{block.value}</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        {/* Content Blocks (Editorial Section - Full-Width 2-Column Grid) */}
+        {space.contentBlocks && space.contentBlocks.length > 0 && (
+          <div className="mb-24 w-full">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-8 text-cobalt font-mono border-b border-black/10 pb-4">
+              EDITORIAL STORY
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
+              {space.contentBlocks.map((block, idx) => {
+                const textContent = block.caption || (block.type === 'text' ? block.value : '');
+                const imageUrl = block.type === 'image' ? block.value : '';
 
-        {/* Remaining Gallery Images */}
+                if (block.type === 'image' && imageUrl) {
+                  return (
+                    <div key={idx} className="flex flex-col reveal group w-full">
+                      <div className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none">
+                        <MediaRenderer 
+                          src={imageUrl} 
+                          alt={`Space view ${idx + 1}`} 
+                          className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
+                          loading="lazy" 
+                          nopin="nopin"
+                        />
+                      </div>
+                      {textContent && (
+                        <div className="mt-4">
+                          <p className="text-sm md:text-base font-sans leading-relaxed text-ink/80">{textContent}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                if (block.type === 'text') {
+                  return (
+                    <div key={idx} className="flex flex-col reveal py-4 w-full">
+                      <p className="text-xl md:text-2xl font-serif italic leading-relaxed text-ink/80">{block.value}</p>
+                    </div>
+                  );
+                }
+
+                return null;
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Remaining Gallery Images (2-Column Grid) */}
         {displayImages.length > 1 && (
           <div className="mb-24">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-12 text-ink/30 border-b border-black/10 pb-4">Gallery View</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-8 text-ink/30 border-b border-black/10 pb-4">Gallery View</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12">
               {displayImages.slice(1).map((img, idx) => (
-                <div key={idx} className="aspect-square rounded-[24px] overflow-hidden bg-black/5 group cursor-zoom-in reveal">
-                  <MediaRenderer src={img} className="w-full h-full group-hover:scale-105 transition-transform duration-700" loading="lazy" />
+                <div key={idx} className="flex flex-col reveal group w-full">
+                  <div className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none">
+                    <MediaRenderer src={img} className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" loading="lazy" />
+                  </div>
                 </div>
               ))}
             </div>

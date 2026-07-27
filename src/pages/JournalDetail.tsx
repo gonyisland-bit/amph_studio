@@ -49,28 +49,46 @@ export default function JournalDetail() {
         </div>
       </div>
 
-      {/* Article Body Elements */}
-      <div className="max-w-4xl mx-auto w-full px-6 py-16 md:py-32 flex flex-col gap-16 font-serif text-ink/90 text-xl leading-relaxed">
+      {/* Article Body Elements (Editorial 2-Column Grid Layout) */}
+      <div className="max-w-7xl mx-auto w-full px-6 md:px-12 py-16 md:py-24">
         {!article.contentBlocks || article.contentBlocks.length === 0 ? (
-          <p className="italic text-ink/50 text-center">No additional body content available.</p>
+          <p className="italic text-ink/50 text-center font-serif text-xl">No additional body content available.</p>
         ) : (
-          article.contentBlocks.map((block, idx) => {
-            if (block.type === 'text') {
-              return (
-                <div key={idx} className="reveal">
-                  <p className="first-letter:text-6xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-ink">{block.value}</p>
-                </div>
-              );
-            }
-            if (block.type === 'image') {
-              return (
-                <div key={idx} className="my-12 rounded-[40px] overflow-hidden shadow-2xl bg-silver/10 reveal aspect-[16/9]">
-                  <MediaRenderer src={block.value} className="w-full h-full" loading="lazy" />
-                </div>
-              );
-            }
-            return null;
-          })
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
+            {article.contentBlocks.map((block, idx) => {
+              if (block.type === 'text') {
+                return (
+                  <div key={idx} className="flex flex-col reveal py-4 w-full">
+                    <p className="text-xl md:text-2xl font-serif italic leading-relaxed text-ink/80 first-letter:text-5xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:text-cobalt">
+                      {block.value}
+                    </p>
+                  </div>
+                );
+              }
+              if (block.type === 'image') {
+                const textContent = block.caption || '';
+                return (
+                  <div key={idx} className="flex flex-col reveal group w-full">
+                    <div className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none">
+                      <MediaRenderer 
+                        src={block.value} 
+                        alt={`Journal view ${idx + 1}`} 
+                        className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
+                        loading="lazy" 
+                        nopin="nopin"
+                      />
+                    </div>
+                    {textContent && (
+                      <div className="mt-4">
+                        <p className="text-sm md:text-base font-sans leading-relaxed text-ink/80">{textContent}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
         )}
       </div>
 
