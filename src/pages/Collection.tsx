@@ -116,7 +116,7 @@ export default function Collection() {
               <MediaRenderer 
                 src={product.images[0]} 
                 alt={product.name}
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${product.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out scale-100 ${product.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'}`}
                 loading="lazy"
                 nopin="nopin"
               />
@@ -125,13 +125,13 @@ export default function Collection() {
                 <MediaRenderer 
                   src={product.hoverImages[0]} 
                   alt={`${product.name} alternative view`}
-                  className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-1000 ease-in-out group-hover:opacity-100 group-hover:scale-100 scale-95"
+                  className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-1000 ease-in-out scale-100 group-hover:opacity-100 group-hover:scale-105"
                   loading="lazy"
                   nopin="nopin"
                 />
               )}
-              {/* Subtle hover tint layer for text readability */}
-              <div className="absolute inset-0 bg-black/[0.08] group-hover:bg-black/30 transition-all duration-700 z-10 pointer-events-none" />
+              {/* Subtle bottom gradient for text contrast without dark hover filter */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none" />
             </div>
           </Link>
         ))}
