@@ -3,26 +3,52 @@ import { sql } from '@vercel/postgres';
 export default async function handler(req: any, res: any) {
   const { id } = req.query;
 
-  // Auto-setup
+  // Auto-setup table & migrations
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS journals (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
+        description TEXT,
         category TEXT,
         date TEXT,
         image TEXT,
+        featured BOOLEAN DEFAULT false,
+        "relatedJournalIds" TEXT,
+        "appliedProductIds" TEXT,
         "contentBlocks" TEXT,
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+    const columns = [
+      { name: 'description', type: 'TEXT' },
+      { name: 'featured', type: 'BOOLEAN DEFAULT false' },
+      { name: 'relatedJournalIds', type: 'TEXT' },
+      { name: 'appliedProductIds', type: 'TEXT' },
+      { name: 'contentBlocks', type: 'TEXT' }
+    ];
+    for (const col of columns) {
+      try {
+        await sql.query(`ALTER TABLE journals ADD COLUMN IF NOT EXISTS "${col.name}" ${col.type}`);
+      } catch (e) {
+        try { await sql.query(`ALTER TABLE journals ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`); } catch(e2) {}
+      }
+    }
   } catch (e) {}
 
   if (req.method === 'GET') {
     try {
-      const { rows } = await sql`SELECT * FROM journals ORDER BY "createdAt" DESC`;
-      const parsedRows = rows.map(r => ({
+      let result;
+      try {
+        result = await sql`SELECT * FROM journals ORDER BY "createdAt" DESC`;
+      } catch (e) {
+        result = await sql`SELECT * FROM journals ORDER BY id DESC`;
+      }
+      
+      const parsedRows = result.rows.map(r => ({
         ...r,
+        relatedJournalIds: typeof r.relatedJournalIds === 'string' ? JSON.parse(r.relatedJournalIds) : (r.relatedJournalIds || []),
+        appliedProductIds: typeof r.appliedProductIds === 'string' ? JSON.parse(r.appliedProductIds) : (r.appliedProductIds || []),
         contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
       }));
       return res.status(200).json(parsedRows);
@@ -32,39 +58,45 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  if (req.method === 'POST') {
+  if (req.method === 'POST' || req.method === 'PUT') {
     try {
-      const { id: newId, title, category, date, image, contentBlocks } = req.body;
+      const { id: bodyId, title, description, category, date, image, featured, relatedJournalIds, appliedProductIds, contentBlocks } = req.body;
+      const targetId = id || bodyId;
+
+      if (!targetId) return res.status(400).json({ error: 'ID is required' });
+
       await sql`
-        INSERT INTO journals (id, title, category, date, image, "contentBlocks")
-        VALUES (${newId}, ${title}, ${category}, ${date}, ${image}, ${JSON.stringify(contentBlocks || [])})
+        INSERT INTO journals (
+          id, title, description, category, date, image, featured, 
+          "relatedJournalIds", "appliedProductIds", "contentBlocks"
+        )
+        VALUES (
+          ${targetId}, 
+          ${title || ''}, 
+          ${description || ''}, 
+          ${category || ''}, 
+          ${date || ''}, 
+          ${image || ''}, 
+          ${!!featured}, 
+          ${JSON.stringify(relatedJournalIds || [])}, 
+          ${JSON.stringify(appliedProductIds || [])}, 
+          ${JSON.stringify(contentBlocks || [])}
+        )
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
+          description = EXCLUDED.description,
           category = EXCLUDED.category,
           date = EXCLUDED.date,
           image = EXCLUDED.image,
+          featured = EXCLUDED.featured,
+          "relatedJournalIds" = EXCLUDED."relatedJournalIds",
+          "appliedProductIds" = EXCLUDED."appliedProductIds",
           "contentBlocks" = EXCLUDED."contentBlocks"
       `;
-      return res.status(201).json({ success: true, id: newId });
+      return res.status(200).json({ success: true, id: targetId });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ error: 'Failed to insert' });
-    }
-  }
-
-  if (req.method === 'PUT') {
-    if (!id) return res.status(400).json({ error: 'ID is required' });
-    try {
-      const { title, category, date, image, contentBlocks } = req.body;
-      await sql`
-        UPDATE journals 
-        SET title = ${title}, category = ${category}, date = ${date}, image = ${image}, "contentBlocks" = ${JSON.stringify(contentBlocks || [])}
-        WHERE id = ${id}
-      `;
-      return res.status(200).json({ success: true, id });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Failed to update' });
+      return res.status(500).json({ error: 'Failed to save journal' });
     }
   }
 

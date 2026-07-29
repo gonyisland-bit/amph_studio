@@ -181,8 +181,17 @@ export default function JournalDetail() {
         </div>
       </div>
 
+      {/* Intro Text Container */}
+      {article.description && (
+        <div className="w-full px-4 md:px-8 lg:px-12 pt-12 md:pt-16 pb-4">
+          <div className="max-w-4xl mb-8">
+            <p className="text-xl md:text-3xl leading-relaxed font-serif italic text-ink/80 whitespace-pre-wrap">{article.description}</p>
+          </div>
+        </div>
+      )}
+
       {/* Article Body Elements (Editorial 2-Column Grid Layout) */}
-      <div className="w-full px-4 md:px-8 lg:px-12 py-16">
+      <div className="w-full px-4 md:px-8 lg:px-12 py-12">
         {!article.contentBlocks || article.contentBlocks.length === 0 ? (
           <p className="italic text-ink/50 text-center font-serif text-xl">No additional body content available.</p>
         ) : (
