@@ -40,10 +40,15 @@ export function MembersOnlyGate() {
       window.removeEventListener('settings_change', handleSettingsChange);
       window.removeEventListener('storage', handleAuthChange);
     };
-  }, []);
+  }, [location.pathname]);
 
-  // Bypass gate if membersOnly is false, or user is logged in, or on admin / login page
-  if (!settings.membersOnly || isAuth || location.pathname.startsWith('/admin') || location.pathname === '/login') {
+  // Realtime live check for authenticated status
+  const currentIsAdmin = localStorage.getItem('admin_auth') === 'true';
+  const currentIsCustomer = !!localStorage.getItem('customer_token');
+  const loggedIn = isAuth || currentIsAdmin || currentIsCustomer;
+
+  // Bypass gate if membersOnly is false, or user/admin is logged in, or on admin / login page
+  if (!settings.membersOnly || loggedIn || location.pathname.startsWith('/admin') || location.pathname === '/login') {
     return null;
   }
 
