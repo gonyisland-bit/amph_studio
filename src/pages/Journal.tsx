@@ -61,7 +61,6 @@ export default function Journal() {
             key={article.id} 
             onMouseEnter={() => {
               setHoveredArticle(i);
-              // Preload detailed journal data on hover for instant navigation
               import("../lib/data").then(module => {
                 module.getJournalById(article.id);
               });
@@ -69,12 +68,11 @@ export default function Journal() {
             onMouseLeave={() => setHoveredArticle(null)}
             className="group border-b border-black/10 px-6 md:px-12 py-10 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-silver/10 transition-colors cursor-pointer relative z-0 reveal"
           >
-            <div className="flex flex-col md:flex-row md:items-baseline gap-4 md:gap-8 md:w-2/3">
-              <span className="text-xs uppercase font-semibold font-sans text-orange w-32 shrink-0">{article.category}</span>
-              <h2 className="text-xl md:text-2.5xl font-medium font-sans tracking-tight group-hover:text-cobalt transition-colors">{article.title}</h2>
+            <div className="flex flex-col md:flex-row md:items-baseline gap-4 md:gap-8 md:w-3/4">
+              <span className="text-[10px] uppercase font-bold font-mono text-ink/30 w-12 shrink-0">0{i + 1}</span>
+              <h2 className="text-xl md:text-3xl font-medium font-sans tracking-tight group-hover:text-cobalt transition-colors uppercase">{article.title}</h2>
             </div>
-            <div className="flex items-center gap-6 justify-between md:justify-end md:w-1/3 text-sm font-semibold font-sans text-ink/50 mt-4 md:mt-0">
-              <span>{article.date}</span>
+            <div className="flex items-center justify-end md:w-1/4 text-sm font-semibold font-sans text-ink/50 mt-4 md:mt-0">
               <div className="w-12 h-12 rounded-full border border-black/20 flex items-center justify-center group-hover:border-cobalt group-hover:text-cobalt group-hover:bg-cobalt/5 transition-all">
                 <MoveRight size={18} />
               </div>

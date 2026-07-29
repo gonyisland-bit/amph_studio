@@ -161,14 +161,9 @@ export default function JournalDetail() {
             <Link to="/journal" className="text-[10px] font-black uppercase tracking-[0.3em] mb-6 block text-white/60 hover:text-white transition-colors pointer-events-auto w-fit">
               <span className="inline-block mr-2">←</span> Back to Journal
             </Link>
-            <span className="text-orange text-xs uppercase font-black tracking-[0.2em] mb-4 inline-block">{article.category}</span>
             <h1 className="text-[8.5vw] md:text-[7vw] font-medium uppercase tracking-tighter leading-[0.85] text-white mix-blend-lighten">
               {article.title}
             </h1>
-            <div className="flex items-center gap-4 mt-8">
-              <div className="w-10 h-[1px] bg-white/30"></div>
-              <span className="text-white/50 font-bold text-[10px] uppercase tracking-widest">{article.date}</span>
-            </div>
           </div>
         </div>
       </div>
@@ -284,9 +279,7 @@ export default function JournalDetail() {
                       </span>
                     )}
                   </div>
-                  <span className="text-orange text-[9px] font-black uppercase tracking-widest block mb-1">{a.category}</span>
                   <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{a.title}</h4>
-                  <p className="text-[10px] font-bold text-ink/40 uppercase tracking-widest">{a.date}</p>
                 </Link>
               ))}
             </div>

@@ -34,8 +34,8 @@ export interface Product {
 export interface JournalArticle {
   id: string;
   title: string;
-  category: string;
-  date: string;
+  category?: string;
+  date?: string;
   image: string;
   featured?: boolean;
   relatedJournalIds?: string[];

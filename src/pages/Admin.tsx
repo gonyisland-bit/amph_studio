@@ -980,7 +980,17 @@ export default function Admin() {
       if (toIndex < 0 || toIndex >= blocks.length) return;
       const [moved] = blocks.splice(fromIndex, 1);
       blocks.splice(toIndex, 0, moved);
-      setForm({ ...form, contentBlocks: blocks });
+      
+      // Auto sync hero cover if first block changed
+      const mediaBlocks = blocks.filter(b => (b.type === 'image' || !b.type) && b.value);
+      const newForm: any = { ...form, contentBlocks: blocks };
+      if (mediaBlocks.length > 0 && !mediaBlocks.some(b => b.value === form.image)) {
+        const firstMedia = mediaBlocks[0].value;
+        const currentImages = (form.images || []).filter((x: string) => x !== firstMedia);
+        newForm.image = firstMedia;
+        newForm.images = [firstMedia, ...currentImages];
+      }
+      setForm(newForm);
     };
 
     return (
@@ -1047,7 +1057,16 @@ export default function Admin() {
                 onChange={val => {
                   const newCb = [...(form.contentBlocks || [])]; 
                   newCb[i] = { ...newCb[i], value: val }; 
-                  setForm({...form, contentBlocks: newCb});
+                  const newForm: any = { ...form, contentBlocks: newCb };
+                  // If hero is not selected yet or first image uploaded, auto-select as hero
+                  const mediaBlocks = newCb.filter(b => (b.type === 'image' || !b.type) && b.value);
+                  if (mediaBlocks.length > 0 && (!form.image || !mediaBlocks.some(b => b.value === form.image))) {
+                    const firstMedia = mediaBlocks[0].value;
+                    const currentImages = (form.images || []).filter((x: string) => x !== firstMedia);
+                    newForm.image = firstMedia;
+                    newForm.images = [firstMedia, ...currentImages];
+                  }
+                  setForm(newForm);
                 }} 
               />
               <div>
@@ -1105,13 +1124,28 @@ export default function Admin() {
           )}
         </div>
       ))}
-      <button 
-        type="button" 
-        onClick={() => setForm({...form, contentBlocks: [...(form.contentBlocks || []), { type: 'image', value: '', caption: '' }]})} 
-        className="w-full py-2.5 bg-cobalt/5 hover:bg-cobalt text-cobalt hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors border border-cobalt/20 rounded-none cursor-pointer"
-      >
-        + Add Editorial Image Block
-      </button>
+      <div className="flex gap-2">
+        <button 
+          type="button" 
+          onClick={() => {
+            const current = form.contentBlocks || [];
+            setForm({ ...form, contentBlocks: [...current, { type: 'image', value: '', caption: '' }] });
+          }} 
+          className="flex-1 py-2.5 bg-cobalt/5 hover:bg-cobalt text-cobalt hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors border border-cobalt/20 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
+        >
+          <Plus size={12} /> Add Media Block (미디어 추가)
+        </button>
+        <button 
+          type="button" 
+          onClick={() => {
+            const current = form.contentBlocks || [];
+            setForm({ ...form, contentBlocks: [...current, { type: 'text', value: '', caption: '' }] });
+          }} 
+          className="flex-1 py-2.5 bg-black/5 hover:bg-ink text-ink hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors border border-black/10 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
+        >
+          <Plus size={12} /> Add Text Block (텍스트 추가)
+        </button>
+      </div>
     </div>
   );
 };
@@ -2294,10 +2328,6 @@ export default function Admin() {
                   </label>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                     <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Category</label>
-                    <input required value={form.category || ''} onChange={e => setForm({...form, category: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Date</label>
-                    <input required value={form.date || ''} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   {renderContentBlocksEditor()}
 
                   <div className="border-t border-black/10 pt-4 mt-4">
