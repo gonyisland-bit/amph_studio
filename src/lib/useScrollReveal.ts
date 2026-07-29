@@ -2,10 +2,22 @@ import { useEffect } from 'react';
 
 export function useScrollReveal(deps: any[] = []) {
   useEffect(() => {
+    const revealElements = document.querySelectorAll('.reveal');
+    const windowHeight = window.innerHeight || 800;
+
+    // 1. Immediately activate top viewport elements to prevent scroll lag
+    revealElements.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < windowHeight + 200) {
+        el.classList.add('active');
+      }
+    });
+
+    // 2. Observer for remaining elements
     const observerOptions = {
       root: null,
-      rootMargin: '50px 0px',
-      threshold: 0.05,
+      rootMargin: '200px 0px',
+      threshold: 0.01,
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -17,8 +29,11 @@ export function useScrollReveal(deps: any[] = []) {
       });
     }, observerOptions);
 
-    const revealElements = document.querySelectorAll('.reveal');
-    revealElements.forEach((el) => observer.observe(el));
+    revealElements.forEach((el) => {
+      if (!el.classList.contains('active')) {
+        observer.observe(el);
+      }
+    });
 
     return () => {
       revealElements.forEach((el) => observer.unobserve(el));
