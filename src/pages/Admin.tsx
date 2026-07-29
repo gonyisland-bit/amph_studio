@@ -982,14 +982,16 @@ export default function Admin() {
         const [moved] = blocks.splice(fromIndex, 1);
         blocks.splice(toIndex, 0, moved);
         
-        // Auto sync hero cover if first block changed
-        const mediaBlocks = blocks.filter(b => (b.type === 'image' || !b.type) && b.value);
+        // Auto sync hero cover for Space and Journal if first block changed
         const newForm: any = { ...prev, contentBlocks: blocks };
-        if (mediaBlocks.length > 0 && !mediaBlocks.some(b => b.value === prev.image)) {
-          const firstMedia = mediaBlocks[0].value;
-          const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
-          newForm.image = firstMedia;
-          newForm.images = [firstMedia, ...currentImages];
+        if (activeTab !== 'collection') {
+          const mediaBlocks = blocks.filter(b => (b.type === 'image' || !b.type) && b.value);
+          if (mediaBlocks.length > 0 && (!prev.image || !mediaBlocks.some(b => b.value === prev.image))) {
+            const firstMedia = mediaBlocks[0].value;
+            const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
+            newForm.image = firstMedia;
+            newForm.images = [firstMedia, ...currentImages];
+          }
         }
         return newForm;
       });
@@ -1085,13 +1087,15 @@ export default function Admin() {
                     }
                     
                     const newForm: any = { ...prev, contentBlocks: currentBlocks };
-                    // If hero is not selected yet or first image uploaded, auto-select as hero
-                    const mediaBlocks = currentBlocks.filter(b => (b.type === 'image' || !b.type) && b.value);
-                    if (mediaBlocks.length > 0 && (!prev.image || !mediaBlocks.some(b => b.value === prev.image))) {
-                      const firstMedia = mediaBlocks[0].value;
-                      const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
-                      newForm.image = firstMedia;
-                      newForm.images = [firstMedia, ...currentImages];
+                    // For Space and Journal: If hero is not selected yet or first image uploaded, auto-select as hero
+                    if (activeTab !== 'collection') {
+                      const mediaBlocks = currentBlocks.filter(b => (b.type === 'image' || !b.type) && b.value);
+                      if (mediaBlocks.length > 0 && (!prev.image || !mediaBlocks.some(b => b.value === prev.image))) {
+                        const firstMedia = mediaBlocks[0].value;
+                        const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
+                        newForm.image = firstMedia;
+                        newForm.images = [firstMedia, ...currentImages];
+                      }
                     }
                     return newForm;
                   });
