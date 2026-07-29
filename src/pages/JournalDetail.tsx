@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { MoveLeft, MoveRight, X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
-import { getJournalById, getJournals, JournalArticle } from "../lib/data";
+import { getJournalById, getJournals, getProducts, JournalArticle, Product } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
 export default function JournalDetail() {
   const { id } = useParams<{ id: string }>();
   const [article, setArticle] = useState<JournalArticle | null>(null);
+  const [appliedProducts, setAppliedProducts] = useState<Product[]>([]);
   const [allArticles, setAllArticles] = useState<JournalArticle[]>([]);
 
   // Fullscreen Lightbox State
@@ -44,14 +45,21 @@ export default function JournalDetail() {
     setIsDragging(false);
   };
 
-  useScrollReveal();
+  useScrollReveal([article, appliedProducts]);
 
   useEffect(() => {
     if (id) {
       getJournals().then(all => {
         setAllArticles(all);
         const found = all.find(a => a.id === id);
-        if (found) setArticle(found);
+        if (found) {
+          setArticle(found);
+          if (found.appliedProductIds) {
+            getProducts().then(prods => {
+              setAppliedProducts(prods.filter(p => found.appliedProductIds?.includes(p.id)));
+            });
+          }
+        }
       });
     }
   }, [id]);
@@ -222,6 +230,27 @@ export default function JournalDetail() {
           </div>
         )}
       </div>
+
+      {/* Applied Products (Amplify With) */}
+      {appliedProducts.length > 0 && (
+        <div className="w-full px-4 md:px-8 lg:px-12 py-24 border-t border-black/10 reveal">
+          <div className="flex flex-col md:flex-row justify-between items-baseline mb-16 gap-4">
+            <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">Amplify With</h3>
+            <p className="text-sm font-serif italic text-ink/40">Curated objects featured in this story.</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {appliedProducts.map(p => (
+              <Link key={p.id} to={`/product/${p.id}`} className="group block">
+                <div className="aspect-[4/5] bg-silver/20 rounded-none overflow-hidden mb-4 border border-black/5">
+                  <MediaRenderer src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                </div>
+                <h4 className="text-sm font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors">{p.name}</h4>
+                <p className="text-[10px] font-bold text-ink/30 uppercase tracking-widest">${p.price} — {p.category}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Related Journal Articles Carousel Slider Section */}
       {(() => {

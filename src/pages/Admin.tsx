@@ -13,7 +13,7 @@ const emptyProduct: Omit<Product, 'id'> = {
   name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []
 };
 const emptyJournal: Omit<JournalArticle, 'id'> = {
-  title: '', category: '', date: '', image: '', contentBlocks: []
+  title: '', category: '', date: '', image: '', appliedProductIds: [], contentBlocks: []
 };
 const emptySpace: Omit<SpaceModel, 'id'> = {
   title: '', description: '', images: [''], appliedProductIds: [], contentBlocks: []
@@ -2383,24 +2383,47 @@ export default function Admin() {
                     <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={4}/></div>
                   {renderContentBlocksEditor()}
 
-                  <div className="border-t border-black/10 pt-4 mt-4">
-                    <h3 className="font-bold text-[10px] uppercase mb-3 text-cobalt">Related Journal Articles (하단 연관 저널 선택)</h3>
-                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                      {journals.filter(j => j.id !== form.id).map(j => (
-                        <label key={j.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={form.relatedJournalIds?.includes(j.id)} 
-                            onChange={(e) => {
-                              const current = form.relatedJournalIds || [];
-                              const next = e.target.checked ? [...current, j.id] : current.filter((id:string) => id !== j.id);
-                              setForm({...form, relatedJournalIds: next});
-                            }}
-                            className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                          />
-                          <span className="text-[9px] font-bold uppercase truncate">{j.title}</span>
-                        </label>
-                      ))}
+                  <div className="border-t border-black/10 pt-4 mt-4 space-y-4">
+                    <div>
+                      <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Amplify with (Linked Products)</h3>
+                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
+                        {products.map(p => (
+                          <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={form.appliedProductIds?.includes(p.id)} 
+                              onChange={(e) => {
+                                const current = form.appliedProductIds || [];
+                                const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
+                                setForm({...form, appliedProductIds: next});
+                              }}
+                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                            />
+                            <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Related Journal Articles (하단 연관 저널 선택)</h3>
+                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
+                        {journals.filter(j => j.id !== form.id).map(j => (
+                          <label key={j.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={form.relatedJournalIds?.includes(j.id)} 
+                              onChange={(e) => {
+                                const current = form.relatedJournalIds || [];
+                                const next = e.target.checked ? [...current, j.id] : current.filter((id:string) => id !== j.id);
+                                setForm({...form, relatedJournalIds: next});
+                              }}
+                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                            />
+                            <span className="text-[9px] font-bold uppercase truncate">{j.title}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </>

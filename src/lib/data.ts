@@ -41,6 +41,7 @@ export interface JournalArticle {
   image: string;
   featured?: boolean;
   relatedJournalIds?: string[];
+  appliedProductIds?: string[];
   contentBlocks?: ContentBlock[];
 }
 
