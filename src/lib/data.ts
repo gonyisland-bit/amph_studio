@@ -35,6 +35,7 @@ export interface Product {
 export interface JournalArticle {
   id: string;
   title: string;
+  description?: string;
   category?: string;
   date?: string;
   image: string;

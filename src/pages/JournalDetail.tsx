@@ -161,9 +161,14 @@ export default function JournalDetail() {
             <Link to="/journal" className="text-[10px] font-black uppercase tracking-[0.3em] mb-6 block text-white/60 hover:text-white transition-colors pointer-events-auto w-fit">
               <span className="inline-block mr-2">←</span> Back to Journal
             </Link>
-            <h1 className="text-[8.5vw] md:text-[7vw] font-medium uppercase tracking-tighter leading-[0.85] text-white mix-blend-lighten">
+            <h1 className="text-[8.5vw] md:text-[7vw] font-medium uppercase tracking-tighter leading-[0.85] text-white mix-blend-lighten mb-6">
               {article.title}
             </h1>
+            {article.description && (
+              <p className="max-w-2xl text-lg md:text-2xl font-serif italic text-white/80 leading-relaxed drop-shadow-md">
+                {article.description}
+              </p>
+            )}
           </div>
         </div>
       </div>

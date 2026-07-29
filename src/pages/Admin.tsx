@@ -2379,6 +2379,8 @@ export default function Admin() {
                   </label>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                     <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
+                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
+                    <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={4}/></div>
                   {renderContentBlocksEditor()}
 
                   <div className="border-t border-black/10 pt-4 mt-4">
@@ -2418,7 +2420,7 @@ export default function Admin() {
                       Set as Featured / ⭐ 별표 지정 (하단 연관 추천 우대 정렬)
                     </span>
                   </label>
-                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Space Title</label>
+                  <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                     <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
                     <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={4}/></div>
@@ -2770,12 +2772,9 @@ export default function Admin() {
                             </button>
                             <div>
                               <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{j.title}</div>
-                              <div className="text-[10px] text-ink/40 font-sans">{j.date}</div>
+                              <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{j.description}</div>
                             </div>
                           </div>
-                        </td>
-                        <td className="py-4">
-                          <span className="caption-nano text-cobalt px-3 py-1 border border-cobalt/20 rounded-full font-bold">{j.category}</span>
                         </td>
                         <td className="py-4 text-right pr-6" onClick={e => e.stopPropagation()}>
                           <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity items-center">

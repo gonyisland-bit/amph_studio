@@ -70,7 +70,10 @@ export default function Journal() {
           >
             <div className="flex flex-col md:flex-row md:items-baseline gap-4 md:gap-8 md:w-3/4">
               <span className="text-[10px] uppercase font-bold font-mono text-ink/30 w-12 shrink-0">0{i + 1}</span>
-              <h2 className="text-xl md:text-3xl font-medium font-sans tracking-tight group-hover:text-cobalt transition-colors uppercase">{article.title}</h2>
+              <div>
+                <h2 className="text-xl md:text-3xl font-medium font-sans tracking-tight group-hover:text-cobalt transition-colors uppercase">{article.title}</h2>
+                {article.description && <p className="text-xs md:text-sm font-serif text-ink/50 mt-1 line-clamp-1">{article.description}</p>}
+              </div>
             </div>
             <div className="flex items-center justify-end md:w-1/4 text-sm font-semibold font-sans text-ink/50 mt-4 md:mt-0">
               <div className="w-12 h-12 rounded-full border border-black/20 flex items-center justify-center group-hover:border-cobalt group-hover:text-cobalt group-hover:bg-cobalt/5 transition-all">
