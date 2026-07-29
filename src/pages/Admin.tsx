@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
@@ -60,6 +60,7 @@ const EditorInput = ({ label, required, value, onChange, placeholder, type = "te
 const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onChange: (val: string) => void, label?: string }) => {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const inputIdRef = useRef(`file-input-${Math.random().toString(36).substring(2, 9)}`);
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -81,7 +82,6 @@ const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onC
   const onDrag = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.type === "dragenter" || e.type === "dragover") setDragActive(true); else if (e.type === "dragleave") setDragActive(false); };
   const onDrop = async (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) await handleUpload(e.dataTransfer.files[0]); };
 
-  const idSafeLabel = label ? label.replace(/\s+/g, '-') : Math.random().toString(36).substring(7);
   const isVideo = (value || '').toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || (value || '').includes('video');
 
   const isExternalUrl = value && !value.includes('blob.vercel-storage.com');
@@ -101,11 +101,11 @@ const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onC
         onDragEnter={onDrag} onDragLeave={onDrag} onDragOver={onDrag} onDrop={onDrop}
         onClick={(e) => {
           if ((e.target as HTMLElement).closest('.remove-btn')) return;
-          document.getElementById(`file-${idSafeLabel}`)?.click();
+          document.getElementById(inputIdRef.current)?.click();
         }}
       >
         <input 
-          id={`file-${idSafeLabel}`} 
+          id={inputIdRef.current} 
           type="file" 
           accept="image/*,video/*" 
           className="hidden" 
@@ -976,22 +976,30 @@ export default function Admin() {
 
   const renderContentBlocksEditor = () => {
     const moveBlock = (fromIndex: number, toIndex: number) => {
-      const blocks = [...(form.contentBlocks || [])];
-      if (toIndex < 0 || toIndex >= blocks.length) return;
-      const [moved] = blocks.splice(fromIndex, 1);
-      blocks.splice(toIndex, 0, moved);
-      
-      // Auto sync hero cover if first block changed
-      const mediaBlocks = blocks.filter(b => (b.type === 'image' || !b.type) && b.value);
-      const newForm: any = { ...form, contentBlocks: blocks };
-      if (mediaBlocks.length > 0 && !mediaBlocks.some(b => b.value === form.image)) {
-        const firstMedia = mediaBlocks[0].value;
-        const currentImages = (form.images || []).filter((x: string) => x !== firstMedia);
-        newForm.image = firstMedia;
-        newForm.images = [firstMedia, ...currentImages];
-      }
-      setForm(newForm);
+      setForm(prev => {
+        const blocks = [...(prev.contentBlocks || [])];
+        if (toIndex < 0 || toIndex >= blocks.length) return prev;
+        const [moved] = blocks.splice(fromIndex, 1);
+        blocks.splice(toIndex, 0, moved);
+        
+        // Auto sync hero cover if first block changed
+        const mediaBlocks = blocks.filter(b => (b.type === 'image' || !b.type) && b.value);
+        const newForm: any = { ...prev, contentBlocks: blocks };
+        if (mediaBlocks.length > 0 && !mediaBlocks.some(b => b.value === prev.image)) {
+          const firstMedia = mediaBlocks[0].value;
+          const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
+          newForm.image = firstMedia;
+          newForm.images = [firstMedia, ...currentImages];
+        }
+        return newForm;
+      });
     };
+
+    // Ensure all blocks have unique IDs
+    const contentBlocksWithIds = (form.contentBlocks || []).map((cb: ContentBlock, idx: number) => ({
+      ...cb,
+      id: cb.id || `block-${idx}-${Math.random().toString(36).substring(2, 9)}`
+    }));
 
     return (
       <div className="mb-4 space-y-4">
@@ -999,17 +1007,24 @@ export default function Admin() {
           <label className="block text-[10px] font-bold uppercase text-ink/60 tracking-wider">Editorial Story Blocks</label>
           <span className="text-[9px] text-ink/40 font-medium">Reorder, Image & Text Blocks</span>
         </div>
-        {form.contentBlocks?.map((cb: ContentBlock, i: number) => (
-          <div key={i} className="flex flex-col gap-3 mb-3 bg-black/[0.02] border border-black/5 p-3 rounded-none">
+        {contentBlocksWithIds.map((cb: ContentBlock & { id: string }, i: number) => (
+          <div key={cb.id} className="flex flex-col gap-3 mb-3 bg-black/[0.02] border border-black/5 p-3 rounded-none">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <span className="text-[9px] font-mono font-bold text-ink/40">#{i + 1}</span>
                 <select 
                   value={cb.type || 'image'} 
                   onChange={e => {
-                    const newCb = [...(form.contentBlocks || [])];
-                    newCb[i] = { ...newCb[i], type: e.target.value as 'text'|'image' };
-                    setForm({...form, contentBlocks: newCb});
+                    const blockId = cb.id;
+                    const nextType = e.target.value as 'text'|'image';
+                    setForm(prev => {
+                      const newCb = [...(prev.contentBlocks || [])];
+                      const targetIdx = newCb.findIndex(b => (b.id || `block-${newCb.indexOf(b)}`) === blockId || newCb.indexOf(b) === i);
+                      if (targetIdx !== -1) {
+                        newCb[targetIdx] = { ...newCb[targetIdx], type: nextType };
+                      }
+                      return { ...prev, contentBlocks: newCb };
+                    });
                   }} 
                   className="border border-black/15 bg-white p-1 text-[10px] uppercase font-bold text-ink outline-none rounded-none"
                 >
@@ -1030,7 +1045,7 @@ export default function Admin() {
                   </button>
                   <button 
                     type="button" 
-                    disabled={i === (form.contentBlocks || []).length - 1} 
+                    disabled={i === contentBlocksWithIds.length - 1} 
                     onClick={() => moveBlock(i, i + 1)} 
                     className="p-1 hover:bg-black/10 disabled:opacity-20 text-ink/60 hover:text-ink cursor-pointer rounded-none transition-colors" 
                     title="Move Down"
@@ -1041,7 +1056,11 @@ export default function Admin() {
                 <button 
                   type="button" 
                   onClick={() => {
-                    setForm({...form, contentBlocks: form.contentBlocks.filter((_:any, idx:number) => idx !== i)});
+                    const blockId = cb.id;
+                    setForm(prev => ({
+                      ...prev,
+                      contentBlocks: (prev.contentBlocks || []).filter((b: any, idx: number) => (b.id || `block-${idx}`) !== blockId && idx !== i)
+                    }));
                   }} 
                   className="text-orange text-[10px] font-bold uppercase tracking-wider hover:underline"
                 >
@@ -1055,18 +1074,27 @@ export default function Admin() {
                 label="Editorial Media (Image or Video)" 
                 value={cb.value} 
                 onChange={val => {
-                  const newCb = [...(form.contentBlocks || [])]; 
-                  newCb[i] = { ...newCb[i], value: val }; 
-                  const newForm: any = { ...form, contentBlocks: newCb };
-                  // If hero is not selected yet or first image uploaded, auto-select as hero
-                  const mediaBlocks = newCb.filter(b => (b.type === 'image' || !b.type) && b.value);
-                  if (mediaBlocks.length > 0 && (!form.image || !mediaBlocks.some(b => b.value === form.image))) {
-                    const firstMedia = mediaBlocks[0].value;
-                    const currentImages = (form.images || []).filter((x: string) => x !== firstMedia);
-                    newForm.image = firstMedia;
-                    newForm.images = [firstMedia, ...currentImages];
-                  }
-                  setForm(newForm);
+                  const blockId = cb.id;
+                  setForm(prev => {
+                    const currentBlocks = [...(prev.contentBlocks || [])];
+                    const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
+                    if (targetIdx !== -1) {
+                      currentBlocks[targetIdx] = { ...currentBlocks[targetIdx], id: blockId, value: val };
+                    } else {
+                      currentBlocks.push({ id: blockId, type: 'image', value: val });
+                    }
+                    
+                    const newForm: any = { ...prev, contentBlocks: currentBlocks };
+                    // If hero is not selected yet or first image uploaded, auto-select as hero
+                    const mediaBlocks = currentBlocks.filter(b => (b.type === 'image' || !b.type) && b.value);
+                    if (mediaBlocks.length > 0 && (!prev.image || !mediaBlocks.some(b => b.value === prev.image))) {
+                      const firstMedia = mediaBlocks[0].value;
+                      const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
+                      newForm.image = firstMedia;
+                      newForm.images = [firstMedia, ...currentImages];
+                    }
+                    return newForm;
+                  });
                 }} 
               />
               <div>
@@ -1074,9 +1102,16 @@ export default function Admin() {
                 <textarea 
                   value={cb.caption || ''} 
                   onChange={e => {
-                    const newCb = [...(form.contentBlocks || [])]; 
-                    newCb[i] = { ...newCb[i], caption: e.target.value }; 
-                    setForm({...form, contentBlocks: newCb});
+                    const blockId = cb.id;
+                    const nextCaption = e.target.value;
+                    setForm(prev => {
+                      const currentBlocks = [...(prev.contentBlocks || [])];
+                      const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
+                      if (targetIdx !== -1) {
+                        currentBlocks[targetIdx] = { ...currentBlocks[targetIdx], caption: nextCaption };
+                      }
+                      return { ...prev, contentBlocks: currentBlocks };
+                    });
                   }} 
                   className="w-full border border-black/15 bg-white p-2 text-xs outline-none rounded-none font-sans" 
                   placeholder="Enter text to display below this image (optional)..." 
@@ -1090,12 +1125,15 @@ export default function Admin() {
                       type="checkbox" 
                       checked={form.image === cb.value}
                       onChange={e => {
-                        if (e.target.checked) {
-                          const currentImages = (form.images || []).filter((x: string) => x !== cb.value);
-                          setForm({...form, image: cb.value, images: [cb.value, ...currentImages]});
-                        } else {
-                          setForm({...form, image: ''});
-                        }
+                        const targetValue = cb.value;
+                        setForm(prev => {
+                          if (e.target.checked) {
+                            const currentImages = (prev.images || []).filter((x: string) => x !== targetValue);
+                            return { ...prev, image: targetValue, images: [targetValue, ...currentImages] };
+                          } else {
+                            return { ...prev, image: '' };
+                          }
+                        });
                       }}
                       className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
                     />
@@ -1112,9 +1150,16 @@ export default function Admin() {
               <textarea 
                 value={cb.value} 
                 onChange={e => {
-                  const newCb = [...(form.contentBlocks || [])]; 
-                  newCb[i] = { ...newCb[i], value: e.target.value }; 
-                  setForm({...form, contentBlocks: newCb});
+                  const blockId = cb.id;
+                  const nextText = e.target.value;
+                  setForm(prev => {
+                    const currentBlocks = [...(prev.contentBlocks || [])];
+                    const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
+                    if (targetIdx !== -1) {
+                      currentBlocks[targetIdx] = { ...currentBlocks[targetIdx], value: nextText };
+                    }
+                    return { ...prev, contentBlocks: currentBlocks };
+                  });
                 }} 
                 className="w-full border border-black/15 bg-white p-2 text-xs outline-none rounded-none font-sans" 
                 placeholder="Text Content" 
@@ -1128,8 +1173,11 @@ export default function Admin() {
         <button 
           type="button" 
           onClick={() => {
-            const current = form.contentBlocks || [];
-            setForm({ ...form, contentBlocks: [...current, { type: 'image', value: '', caption: '' }] });
+            const newBlockId = `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+            setForm(prev => ({
+              ...prev,
+              contentBlocks: [...(prev.contentBlocks || []), { id: newBlockId, type: 'image', value: '', caption: '' }]
+            }));
           }} 
           className="flex-1 py-2.5 bg-cobalt/5 hover:bg-cobalt text-cobalt hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors border border-cobalt/20 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
         >
@@ -1138,8 +1186,11 @@ export default function Admin() {
         <button 
           type="button" 
           onClick={() => {
-            const current = form.contentBlocks || [];
-            setForm({ ...form, contentBlocks: [...current, { type: 'text', value: '', caption: '' }] });
+            const newBlockId = `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+            setForm(prev => ({
+              ...prev,
+              contentBlocks: [...(prev.contentBlocks || []), { id: newBlockId, type: 'text', value: '', caption: '' }]
+            }));
           }} 
           className="flex-1 py-2.5 bg-black/5 hover:bg-ink text-ink hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors border border-black/10 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
         >

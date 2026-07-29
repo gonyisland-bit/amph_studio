@@ -1,6 +1,7 @@
 export type Category = 'Chairs' | 'Furniture' | 'Lighting' | 'Objects';
 
 export interface ContentBlock {
+  id?: string;
   type: 'text' | 'image';
   value: string;
   caption?: string;
