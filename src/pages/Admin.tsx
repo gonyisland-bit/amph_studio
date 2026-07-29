@@ -7,7 +7,7 @@ import {
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob
 } from "../lib/data";
 import { upload } from '@vercel/blob/client';
-import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star } from "lucide-react";
+import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock } from "lucide-react";
 
 const emptyProduct: Omit<Product, 'id'> = {
   name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []
@@ -1688,6 +1688,30 @@ export default function Admin() {
                       <ExternalLink size={14} /> Global Settings & Brand Logo
                     </h3>
                     <div className="space-y-6">
+                      {/* Security & Members-Only Access Settings */}
+                      <div className="bg-white p-6 rounded-none border border-black/10 shadow-sm space-y-3">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="text-[11px] font-black uppercase text-ink tracking-wider flex items-center gap-1.5">
+                              <Lock size={14} className="text-cobalt" />
+                              Site Security & Members-Only Access (홈페이지 회원전용 공개 설정)
+                            </h4>
+                            <p className="text-[10px] text-ink/50 mt-0.5">
+                              ON 설정 시 비로그인 일반 사용자의 접근이 차단되며 로그인/회원가입 게이트 모달이 표기됩니다.
+                            </p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input 
+                              type="checkbox" 
+                              checked={!!homeSettings.membersOnly} 
+                              onChange={e => setHomeSettings({ ...homeSettings, membersOnly: e.target.checked })} 
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cobalt"></div>
+                          </label>
+                        </div>
+                      </div>
+
                       {/* Brand Logo Settings */}
                       <div className="bg-white p-6 rounded-none border border-black/10 shadow-sm space-y-4">
                         <h4 className="text-[11px] font-black uppercase text-ink tracking-wider">Brand Logo & Favicon Display</h4>

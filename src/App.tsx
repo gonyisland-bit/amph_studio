@@ -15,11 +15,13 @@ import Account from "./pages/Account";
 import Catalogue from "./pages/Catalogue";
 import Checkout from "./pages/Checkout";
 import { FloatingEditButton } from "./components/FloatingEditButton";
+import { MembersOnlyGate } from "./components/MembersOnlyGate";
 
 export default function App() {
   return (
     <Router>
       <ScrollToTop />
+      <MembersOnlyGate />
       <div className="flex flex-col min-h-screen bg-off-white text-ink font-sans selection:bg-cobalt selection:text-white antialiased w-full overflow-x-clip">
         <Navigation />
         <main className="flex-grow flex flex-col bg-off-white w-full min-h-screen">

@@ -1,12 +1,11 @@
-import { MoveRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getJournals, JournalArticle, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
+import { MoveRight } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
 export default function Journal() {
-  const [hoveredArticle, setHoveredArticle] = useState<number | null>(null);
   const [articles, setArticles] = useState<JournalArticle[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
 
@@ -18,9 +17,7 @@ export default function Journal() {
     document.title = "Journal — Amph";
   }, []);
 
-  const _a = (prompt: string) => `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=600&height=400&nologo=true`;
-
-  const sortedArticles = [...articles].sort((a,b) => {
+  const sortedArticles = [...articles].sort((a, b) => {
     const aIdx = settings.journalOrder?.indexOf(a.id);
     const bIdx = settings.journalOrder?.indexOf(b.id);
     if (aIdx === -1 && bIdx === -1) return 0;
@@ -30,60 +27,62 @@ export default function Journal() {
   });
 
   return (
-    <div className="flex flex-col flex-grow bg-white relative">
+    <div className="flex flex-col flex-grow bg-white">
+      {/* Editorial Hub Header (Identical to Space Header Format) */}
       <div className="px-6 md:px-12 pt-12 md:pt-24 pb-12 border-b border-black/10 bg-off-white">
-        <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase font-sans mb-6 leading-[0.9]">
+        <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] mb-6">
           {settings.hubSettings?.journal?.title || 'Journal'}
         </h1>
-        <p className="max-w-2xl text-lg md:text-xl font-serif text-ink/80 leading-relaxed italic">
-          {settings.hubSettings?.journal?.description}
+        <p className="text-lg md:text-xl font-serif italic text-ink/60 max-w-2xl">
+          {settings.hubSettings?.journal?.description || 'Letters on Amplified Living & Architectural Stories.'}
         </p>
       </div>
 
-      <div className="flex-grow relative">
-        {/* Floating image that follows hover state */}
-        <div className="hidden lg:block absolute right-24 top-1/2 -translate-y-1/2 w-[300px] h-[200px] pointer-events-none z-10 transition-opacity duration-300">
-          {sortedArticles.map((article, i) => (
-             <MediaRenderer 
-               key={article.id}
-               src={article.image}
-               alt={article.title}
-               className={`absolute inset-0 w-full h-full rounded-2xl shadow-xl transition-opacity duration-500 ${hoveredArticle === i ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-               loading="lazy"
-               nopin="nopin"
-             />
-          ))}
-        </div>
-
-        {sortedArticles.map((article, i) => (
-          <Link 
-            to={`/journal/${article.id}`}
-            key={article.id} 
-            onMouseEnter={() => {
-              setHoveredArticle(i);
-              import("../lib/data").then(module => {
-                module.getJournalById(article.id);
-              });
-            }}
-            onMouseLeave={() => setHoveredArticle(null)}
-            className="group border-b border-black/10 px-6 md:px-12 py-10 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-silver/10 transition-colors cursor-pointer relative z-0 reveal"
-          >
-            <div className="flex flex-col md:flex-row md:items-baseline gap-4 md:gap-8 md:w-3/4">
-              <span className="text-[10px] uppercase font-bold font-mono text-ink/30 w-12 shrink-0">0{i + 1}</span>
-              <div>
-                <h2 className="text-xl md:text-3xl font-medium font-sans tracking-tight group-hover:text-cobalt transition-colors uppercase">{article.title}</h2>
-                {article.description && <p className="text-xs md:text-sm font-serif text-ink/50 mt-1 line-clamp-1">{article.description}</p>}
-              </div>
+      {/* Alternating 2-Column Full-Bleed Grid (Identical to Space Design) */}
+      {sortedArticles.map((article, i) => (
+        <Link 
+          to={`/journal/${article.id}`} 
+          key={article.id} 
+          className="group flex flex-col md:flex-row min-h-[60vh] border-b border-black/10 transition-colors hover:bg-black/[0.01] reveal"
+          onMouseEnter={() => {
+            import("../lib/data").then(module => {
+              module.getJournalById(article.id);
+            });
+          }}
+        >
+          <div className={`flex-1 p-8 md:p-16 lg:p-24 flex flex-col justify-center ${i % 2 === 0 ? "md:border-r" : "md:order-last md:border-l"} border-black/10`}>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-cobalt font-sans block mb-6">Journal 0{i + 1}</span>
+            <h2 className="text-3xl md:text-5xl font-medium tracking-tighter uppercase font-sans mb-8 leading-[0.9] group-hover:text-cobalt transition-colors">{article.title}</h2>
+            {article.description && (
+              <p className="text-lg font-serif italic text-ink/80 leading-relaxed max-w-sm mb-12 line-clamp-3">
+                {article.description}
+              </p>
+            )}
+            <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest group-hover:gap-6 transition-all">
+              <span>Read Story</span>
+              <MoveRight size={16} />
             </div>
-            <div className="flex items-center justify-end md:w-1/4 text-sm font-semibold font-sans text-ink/50 mt-4 md:mt-0">
-              <div className="w-12 h-12 rounded-full border border-black/20 flex items-center justify-center group-hover:border-cobalt group-hover:text-cobalt group-hover:bg-cobalt/5 transition-all">
-                <MoveRight size={18} />
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+          </div>
+          
+          <div className="flex-[1.2] bg-silver/10 relative min-h-[40vh] md:min-h-0 overflow-hidden">
+            <MediaRenderer 
+              src={article.image} 
+              alt={article.title} 
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "auto"}
+              nopin="nopin"
+            />
+            <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
+          </div>
+        </Link>
+      ))}
       
+      {articles.length === 0 && (
+         <div className="p-24 text-center text-ink/40 text-sm font-semibold italic font-serif">No journal stories published yet.</div>
+      )}
+
+      {/* Newsletter Subscription Footer Section */}
       <div className="w-full h-[30vh] bg-off-white relative flex items-center justify-center text-center p-6 border-t border-black/10">
         <div className="relative z-10">
           <span className="text-xs uppercase tracking-widest font-bold text-cobalt mb-4 block">Subscribe</span>
