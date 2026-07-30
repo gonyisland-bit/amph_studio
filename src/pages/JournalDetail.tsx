@@ -316,15 +316,19 @@ export default function JournalDetail() {
             >
               {relatedArticles.map(a => {
                 const mediaUrl = a.image || '';
-                const isVideo = mediaUrl ? (mediaUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mediaUrl.includes('video')) : false;
                 return (
                   <Link key={a.id} to={`/journal/${a.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
-                    <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden isolate transform-gpu mb-3 border border-black/5 relative">
-                      <MediaRenderer 
-                        src={mediaUrl} 
-                        alt={a.title} 
-                        className={`w-full h-full object-cover pointer-events-none transition-all duration-500 ${isVideo ? 'scale-100 group-hover:brightness-105' : 'scale-100 group-hover:scale-105'}`} 
-                      />
+                    <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden mb-3 border border-black/5 relative">
+                      <div 
+                        className="w-full h-full overflow-hidden transform-gpu group-hover:scale-105 transition-transform duration-700 ease-out"
+                        style={{ contain: 'paint' }}
+                      >
+                        <MediaRenderer 
+                          src={mediaUrl} 
+                          alt={a.title} 
+                          className="w-full h-full object-cover scale-100 pointer-events-none transform-gpu" 
+                        />
+                      </div>
                       {a.featured && (
                         <span className="absolute top-3 left-3 z-10 text-orange bg-black/40 backdrop-blur-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border border-orange/30">
                           ★ Featured

@@ -68,15 +68,20 @@ export default function Journal() {
             </div>
             
             <div className="flex-[1.2] bg-silver/10 relative min-h-[40vh] md:min-h-0 overflow-hidden">
-              <MediaRenderer 
-                src={mediaUrl} 
-                alt={article.title} 
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${isVideo ? 'scale-100 group-hover:brightness-105' : 'scale-100 group-hover:scale-105'}`} 
-                loading={i === 0 ? "eager" : "lazy"}
-                fetchpriority={i === 0 ? "high" : "auto"}
-                nopin="nopin"
-              />
-              <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
+              <div 
+                className="w-full h-full overflow-hidden transform-gpu group-hover:scale-105 transition-transform duration-700 ease-out"
+                style={{ contain: 'paint' }}
+              >
+                <MediaRenderer 
+                  src={mediaUrl} 
+                  alt={article.title} 
+                  className="w-full h-full object-cover scale-100 pointer-events-none transform-gpu" 
+                  loading={i === 0 ? "eager" : "lazy"}
+                  fetchpriority={i === 0 ? "high" : "auto"}
+                  nopin="nopin"
+                />
+              </div>
+              <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700 pointer-events-none"></div>
             </div>
           </Link>
         );

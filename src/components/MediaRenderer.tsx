@@ -77,8 +77,6 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
     transform: 'translate3d(0, 0, 0)',
     backfaceVisibility: 'hidden',
     WebkitBackfaceVisibility: 'hidden',
-    perspective: '1000px',
-    transformStyle: 'preserve-3d',
     willChange: 'transform',
     ...style
   };
@@ -90,7 +88,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
         transform: 'translate3d(0, 0, 0)', 
         backfaceVisibility: 'hidden', 
         WebkitBackfaceVisibility: 'hidden',
-        perspective: '1000px'
+        contain: 'paint'
       }}
     >
       {!isLoaded && !error && (
@@ -109,7 +107,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           playsInline={playsInline}
           onLoadedData={handleLoad}
           onCanPlay={handleLoad}
-          onPlay={() => setIsLoaded(true)} // 추가적인 보장
+          onPlay={() => setIsLoaded(true)}
           onError={() => setError(true)}
         />
       ) : (
