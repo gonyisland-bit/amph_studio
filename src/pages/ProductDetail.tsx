@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getProductById, getProducts, Product, ColorOption } from "../lib/data";
-import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { getProductById, getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, ColorOption } from "../lib/data";
+import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
@@ -9,6 +9,8 @@ export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
+  const [linkedSpaces, setLinkedSpaces] = useState<SpaceModel[]>([]);
+  const [linkedJournals, setLinkedJournals] = useState<JournalArticle[]>([]);
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedMaterial, setSelectedMaterial] = useState("");
@@ -101,13 +103,36 @@ export default function ProductDetail() {
     setIsDragging(false);
   };
 
-  useScrollReveal([product, recommendations]);
+  useScrollReveal();
 
   useEffect(() => {
     if (id) {
-      getProductById(id).then(setProduct);
-      getProducts().then(all => {
-        setRecommendations(all.filter(p => p.id !== id).slice(0, 6));
+      getProductById(id).then(p => {
+        setProduct(p || null);
+        if (p) {
+          document.title = `${p.name} — Amph`;
+          getProducts().then(allProds => {
+            setRecommendations(allProds.filter(prod => prod.id !== id));
+          });
+
+          // Bidirectional auto-linking for Spaces
+          getSpaces().then(allSpaces => {
+            const matches = allSpaces.filter(s => 
+              (p.relatedSpaceIds || []).includes(s.id) ||
+              (s.appliedProductIds || []).includes(p.id)
+            );
+            setLinkedSpaces(matches);
+          });
+
+          // Bidirectional auto-linking for Journals
+          getJournals().then(allJournals => {
+            const matches = allJournals.filter(j => 
+              (p.relatedJournalIds || []).includes(j.id) ||
+              (j.appliedProductIds || j.relatedJournalIds || []).includes(p.id)
+            );
+            setLinkedJournals(matches);
+          });
+        }
       });
     }
     setLightboxIndex(null);
@@ -552,6 +577,63 @@ export default function ProductDetail() {
 
               return null;
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Linked Spaces & Journals Section (Bidirectional Auto-Link) */}
+      {(linkedSpaces.length > 0 || linkedJournals.length > 0) && (
+        <div className="px-6 md:px-12 py-20 border-t border-black/10 bg-off-white/40 reveal">
+          <div className="max-w-7xl mx-auto space-y-16">
+            {linkedSpaces.length > 0 && (
+              <div>
+                <div className="flex justify-between items-baseline mb-8 border-b border-black/10 pb-4">
+                  <h3 className="text-xs uppercase font-black tracking-widest text-cobalt flex items-center gap-2 font-mono">
+                    <span>Linked Spaces (연결된 공간 스페이스)</span>
+                    <span className="text-[10px] bg-cobalt/10 text-cobalt px-2 py-0.5 rounded-full font-bold">{linkedSpaces.length}</span>
+                  </h3>
+                  <Link to="/space" className="text-[10px] font-black uppercase tracking-widest text-ink/40 hover:text-cobalt transition-colors flex items-center gap-1">
+                    Explore All Spaces <ArrowUpRight size={12} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {linkedSpaces.map(s => (
+                    <Link key={s.id} to={`/space/${s.id}`} className="group block bg-white border border-black/5 hover:border-cobalt/30 transition-all p-4 shadow-sm hover:shadow-md">
+                      <div className="aspect-[16/10] overflow-hidden bg-silver/10 mb-4 relative">
+                        <MediaRenderer src={s.images?.[0] || ''} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                      </div>
+                      <h4 className="text-base font-bold tracking-tight uppercase group-hover:text-cobalt transition-colors truncate mb-1">{s.title}</h4>
+                      {s.description && <p className="text-xs font-serif text-ink/60 italic line-clamp-2">{s.description}</p>}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {linkedJournals.length > 0 && (
+              <div>
+                <div className="flex justify-between items-baseline mb-8 border-b border-black/10 pb-4">
+                  <h3 className="text-xs uppercase font-black tracking-widest text-cobalt flex items-center gap-2 font-mono">
+                    <span>Linked Journal Stories (연결된 저널 스토리)</span>
+                    <span className="text-[10px] bg-cobalt/10 text-cobalt px-2 py-0.5 rounded-full font-bold">{linkedJournals.length}</span>
+                  </h3>
+                  <Link to="/journal" className="text-[10px] font-black uppercase tracking-widest text-ink/40 hover:text-cobalt transition-colors flex items-center gap-1">
+                    Explore All Journal <ArrowUpRight size={12} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {linkedJournals.map(j => (
+                    <Link key={j.id} to={`/journal/${j.id}`} className="group block bg-white border border-black/5 hover:border-cobalt/30 transition-all p-4 shadow-sm hover:shadow-md">
+                      <div className="aspect-[16/10] overflow-hidden bg-silver/10 mb-4 relative">
+                        <MediaRenderer src={j.image} alt={j.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                      </div>
+                      <h4 className="text-base font-bold tracking-tight uppercase group-hover:text-cobalt transition-colors truncate mb-1">{j.title}</h4>
+                      {j.description && <p className="text-xs font-serif text-ink/60 italic line-clamp-2">{j.description}</p>}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

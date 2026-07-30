@@ -30,6 +30,8 @@ export interface Product {
   color?: string | ColorOption[];
   cartEnabled?: boolean;
   portraitImages?: string[];
+  relatedSpaceIds?: string[];
+  relatedJournalIds?: string[];
 }
 
 export interface JournalArticle {
