@@ -233,9 +233,16 @@ export default function SpaceDetail() {
               }
 
               if (block.type === 'text') {
+                const len = block.value ? block.value.trim().length : 0;
+                const textStyleClass = len < 40 
+                  ? "text-lg sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight md:leading-[0.95]"
+                  : len < 120 
+                    ? "text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight leading-snug md:leading-tight"
+                    : "text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium leading-relaxed";
+
                 return (
-                  <div key={idx} className="flex flex-col reveal py-8 md:py-16 w-full h-full min-h-[180px] md:min-h-[300px] justify-center items-center text-center my-auto px-4 sm:px-6 overflow-hidden">
-                    <p className="text-base sm:text-xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold uppercase tracking-tight leading-tight md:leading-[0.95] font-sans text-ink whitespace-pre-wrap text-center mx-auto w-full max-w-full [word-break:break-word] [overflow-wrap:anywhere] break-words">
+                  <div key={idx} className="flex flex-col reveal py-8 md:py-16 w-full h-full min-h-[180px] md:min-h-[300px] justify-center items-center text-center my-auto px-4 sm:px-6 overflow-hidden max-w-full">
+                    <p className={`w-full max-w-full [word-break:break-all] sm:[word-break:break-word] [overflow-wrap:anywhere] break-words whitespace-pre-wrap font-sans text-ink uppercase text-center mx-auto ${textStyleClass}`}>
                       {block.value}
                     </p>
                   </div>
@@ -320,23 +327,31 @@ export default function SpaceDetail() {
               id="related-spaces-slider"
               className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth snap-x pb-4"
             >
-              {relatedSpaces.map(s => (
-                <Link key={s.id} to={`/space/${s.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
-                  <div 
-                    className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden isolate transform-gpu mb-3 border border-black/5 relative"
-                    style={{ transform: 'translate3d(0, 0, 0)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-                  >
-                    <MediaRenderer src={s.image || (s.images && s.images[0])} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none transform-gpu" />
-                    {s.featured && (
-                      <span className="absolute top-3 left-3 z-10 text-orange bg-black/40 backdrop-blur-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border border-orange/30">
-                        ★ Featured
-                      </span>
-                    )}
-                  </div>
-                  <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{s.title}</h4>
-                  <p className="text-[10px] font-bold text-ink/40 uppercase tracking-widest line-clamp-1">{s.description}</p>
-                </Link>
-              ))}
+              {relatedSpaces.map(s => {
+                const mediaUrl = s.image || (s.images && s.images[0]) || '';
+                const isVideo = mediaUrl ? (mediaUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mediaUrl.includes('video')) : false;
+                return (
+                  <Link key={s.id} to={`/space/${s.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
+                    <div 
+                      className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden isolate transform-gpu mb-3 border border-black/5 relative"
+                      style={{ transform: 'translate3d(0, 0, 0)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                    >
+                      <MediaRenderer 
+                        src={mediaUrl} 
+                        alt={s.title} 
+                        className={`w-full h-full object-cover pointer-events-none transition-all duration-500 ${isVideo ? 'scale-100 group-hover:brightness-105' : 'group-hover:scale-105'}`} 
+                      />
+                      {s.featured && (
+                        <span className="absolute top-3 left-3 z-10 text-orange bg-black/40 backdrop-blur-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border border-orange/30">
+                          ★ Featured
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{s.title}</h4>
+                    <p className="text-[10px] font-bold text-ink/40 uppercase tracking-widest line-clamp-1">{s.description}</p>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         );

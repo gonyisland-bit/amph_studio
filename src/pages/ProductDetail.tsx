@@ -568,9 +568,16 @@ export default function ProductDetail() {
               }
 
               if (block.type === 'text') {
+                const len = block.value ? block.value.trim().length : 0;
+                const textStyleClass = len < 40 
+                  ? "text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight leading-snug md:leading-tight"
+                  : len < 120 
+                    ? "text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold tracking-tight leading-snug"
+                    : "text-sm sm:text-base md:text-lg font-medium leading-relaxed";
+
                 return (
-                  <div key={idx} className="flex flex-col reveal py-4 w-full overflow-hidden">
-                    <p className="text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-sans leading-relaxed text-ink/80 [word-break:break-word] [overflow-wrap:anywhere] break-words max-w-full px-2">{block.value}</p>
+                  <div key={idx} className="flex flex-col reveal py-4 w-full overflow-hidden max-w-full">
+                    <p className={`w-full max-w-full [word-break:break-all] sm:[word-break:break-word] [overflow-wrap:anywhere] break-words whitespace-pre-wrap font-sans text-ink/80 ${textStyleClass}`}>{block.value}</p>
                   </div>
                 );
               }
