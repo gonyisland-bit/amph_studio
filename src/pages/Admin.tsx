@@ -707,6 +707,10 @@ export default function Admin() {
         if (found) {
           setEditingId(found.id);
           const cloned = JSON.parse(JSON.stringify(found));
+          const autoSpaces = spaces.filter(s => s.appliedProductIds?.includes(found.id)).map(s => s.id);
+          const autoJournals = journals.filter(j => j.appliedProductIds?.includes(found.id)).map(j => j.id);
+          cloned.relatedSpaceIds = Array.from(new Set([...(cloned.relatedSpaceIds || []), ...autoSpaces]));
+          cloned.relatedJournalIds = Array.from(new Set([...(cloned.relatedJournalIds || []), ...autoJournals]));
           setForm(cloned);
           setOriginalForm(JSON.parse(JSON.stringify(cloned)));
           setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
@@ -885,6 +889,31 @@ export default function Admin() {
           setEditingId(newId);
           savedData = newProduct;
         }
+
+        // Bi-directional cross-save to Spaces and Journals
+        const prodId = savedData.id;
+        const currentSpaceIds: string[] = cleanedForm.relatedSpaceIds || [];
+        const currentJournalIds: string[] = cleanedForm.relatedJournalIds || [];
+
+        for (const s of spaces) {
+          const hasProd = s.appliedProductIds?.includes(prodId);
+          const shouldHaveProd = currentSpaceIds.includes(s.id);
+          if (shouldHaveProd && !hasProd) {
+            await updateSpace(s.id, { ...s, appliedProductIds: [...(s.appliedProductIds || []), prodId] });
+          } else if (!shouldHaveProd && hasProd) {
+            await updateSpace(s.id, { ...s, appliedProductIds: (s.appliedProductIds || []).filter(id => id !== prodId) });
+          }
+        }
+
+        for (const j of journals) {
+          const hasProd = j.appliedProductIds?.includes(prodId);
+          const shouldHaveProd = currentJournalIds.includes(j.id);
+          if (shouldHaveProd && !hasProd) {
+            await updateJournal(j.id, { ...j, appliedProductIds: [...(j.appliedProductIds || []), prodId] });
+          } else if (!shouldHaveProd && hasProd) {
+            await updateJournal(j.id, { ...j, appliedProductIds: (j.appliedProductIds || []).filter(id => id !== prodId) });
+          }
+        }
       } else if (activeTab === 'journal') {
         if (editingId) {
           await updateJournal(editingId, form);
@@ -895,6 +924,19 @@ export default function Admin() {
           await addJournal(newJournal);
           setEditingId(newId);
           savedData = newJournal;
+        }
+
+        // Bi-directional cross-save to Products
+        const journalId = savedData.id;
+        const currentAppliedProds: string[] = form.appliedProductIds || [];
+        for (const p of products) {
+          const hasJournal = p.relatedJournalIds?.includes(journalId);
+          const shouldHaveJournal = currentAppliedProds.includes(p.id);
+          if (shouldHaveJournal && !hasJournal) {
+            await updateProduct(p.id, { ...p, relatedJournalIds: [...(p.relatedJournalIds || []), journalId] });
+          } else if (!shouldHaveJournal && hasJournal) {
+            await updateProduct(p.id, { ...p, relatedJournalIds: (p.relatedJournalIds || []).filter(id => id !== journalId) });
+          }
         }
       } else if (activeTab === 'space') {
         let cleanedImages = (form.images || []).filter(Boolean);
@@ -912,6 +954,19 @@ export default function Admin() {
           await addSpace(newSpace);
           setEditingId(newId);
           savedData = newSpace;
+        }
+
+        // Bi-directional cross-save to Products
+        const spaceId = savedData.id;
+        const currentAppliedProds: string[] = cleanedForm.appliedProductIds || [];
+        for (const p of products) {
+          const hasSpace = p.relatedSpaceIds?.includes(spaceId);
+          const shouldHaveSpace = currentAppliedProds.includes(p.id);
+          if (shouldHaveSpace && !hasSpace) {
+            await updateProduct(p.id, { ...p, relatedSpaceIds: [...(p.relatedSpaceIds || []), spaceId] });
+          } else if (!shouldHaveSpace && hasSpace) {
+            await updateProduct(p.id, { ...p, relatedSpaceIds: (p.relatedSpaceIds || []).filter(id => id !== spaceId) });
+          }
         }
       }
       
@@ -936,6 +991,12 @@ export default function Admin() {
   const proceedEdit = (item: any) => {
     setEditingId(item.id);
     const cloned = JSON.parse(JSON.stringify(item));
+    if (activeTab === 'collection') {
+      const autoSpaces = spaces.filter(s => s.appliedProductIds?.includes(item.id)).map(s => s.id);
+      const autoJournals = journals.filter(j => j.appliedProductIds?.includes(item.id)).map(j => j.id);
+      cloned.relatedSpaceIds = Array.from(new Set([...(cloned.relatedSpaceIds || []), ...autoSpaces]));
+      cloned.relatedJournalIds = Array.from(new Set([...(cloned.relatedJournalIds || []), ...autoJournals]));
+    }
     setForm(cloned);
     setOriginalForm(JSON.parse(JSON.stringify(cloned)));
     setIsDirty(false);
