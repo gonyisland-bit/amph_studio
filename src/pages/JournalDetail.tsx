@@ -194,8 +194,8 @@ export default function JournalDetail() {
             {article.contentBlocks.map((block, idx) => {
               if (block.type === 'text') {
                 return (
-                  <div key={idx} className="flex flex-col reveal py-8 md:py-12 w-full h-full min-h-[180px] md:min-h-[280px] justify-center items-center text-center my-auto px-4 overflow-hidden">
-                    <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold uppercase tracking-tight leading-snug font-sans text-ink whitespace-pre-wrap text-center mx-auto max-w-full break-words">
+                  <div key={idx} className="flex flex-col reveal py-8 md:py-16 w-full h-full min-h-[180px] md:min-h-[300px] justify-center items-center text-center my-auto px-4 sm:px-6 overflow-hidden">
+                    <p className="text-base sm:text-xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold uppercase tracking-tight leading-tight md:leading-[0.95] font-sans text-ink whitespace-pre-wrap text-center mx-auto w-full max-w-full [word-break:break-word] [overflow-wrap:anywhere] break-words">
                       {block.value}
                     </p>
                   </div>
@@ -309,7 +309,10 @@ export default function JournalDetail() {
             >
               {relatedArticles.map(a => (
                 <Link key={a.id} to={`/journal/${a.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
-                  <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden isolate transform-gpu mb-3 border border-black/5 relative">
+                  <div 
+                    className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden isolate transform-gpu mb-3 border border-black/5 relative"
+                    style={{ transform: 'translate3d(0, 0, 0)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                  >
                     <MediaRenderer src={a.image} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none transform-gpu" />
                     {a.featured && (
                       <span className="absolute top-3 left-3 z-10 text-orange bg-black/40 backdrop-blur-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border border-orange/30">

@@ -570,7 +570,7 @@ export default function ProductDetail() {
               if (block.type === 'text') {
                 return (
                   <div key={idx} className="flex flex-col reveal py-4 w-full overflow-hidden">
-                    <p className="text-base sm:text-lg md:text-xl font-sans leading-relaxed text-ink/80 break-words max-w-full px-2">{block.value}</p>
+                    <p className="text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-sans leading-relaxed text-ink/80 [word-break:break-word] [overflow-wrap:anywhere] break-words max-w-full px-2">{block.value}</p>
                   </div>
                 );
               }

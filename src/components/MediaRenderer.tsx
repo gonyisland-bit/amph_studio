@@ -73,8 +73,19 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
     if (onLoad) onLoad();
   };
 
+  const gpuStyle: React.CSSProperties = {
+    transform: 'translate3d(0, 0, 0)',
+    backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
+    willChange: 'transform',
+    ...style
+  };
+
   return (
-    <div className={`overflow-hidden transform-gpu isolate ${className.includes('absolute') ? '' : 'relative'} ${className}`}>
+    <div 
+      className={`overflow-hidden transform-gpu isolate ${className.includes('absolute') ? '' : 'relative'} ${className}`}
+      style={{ transform: 'translate3d(0, 0, 0)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+    >
       {!isLoaded && !error && (
         <div className="absolute inset-0 shimmer bg-silver/10 z-0" />
       )}
@@ -84,6 +95,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           ref={videoRef}
           src={src}
           className={`w-full h-full object-cover pointer-events-none transform-gpu backface-hidden transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          style={gpuStyle}
           autoPlay={autoPlay}
           loop={loop}
           muted={muted}
@@ -98,7 +110,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           ref={imgRef}
           src={src}
           className={`w-full h-full object-cover pointer-events-none transform-gpu backface-hidden transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-          style={style}
+          style={gpuStyle}
           alt={alt}
           loading={loading}
           // @ts-ignore
