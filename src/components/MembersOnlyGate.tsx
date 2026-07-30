@@ -102,10 +102,10 @@ export function MembersOnlyGate() {
             SECURITY MEMBERS-ONLY ACCESS
           </span>
           <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-tight text-ink mb-3 font-sans">
-            회원전용 공개 커뮤니티
+            Only for members
           </h2>
           <p className="text-xs md:text-sm font-serif italic text-ink/60 leading-relaxed">
-            본 사이트는 회원전용으로 공개된 미학적 스튜디오 공간입니다. 본 사이트의 모든 컬렉션과 스토리를 감상하시려면 로그인해 주세요.
+            Amph에 오신것을 환영합니다. 로그인 후 입장 가능합니다.
           </p>
         </div>
 
@@ -163,10 +163,10 @@ export function MembersOnlyGate() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-black text-white p-4 text-xs font-bold uppercase tracking-widest hover:bg-cobalt transition-colors flex items-center justify-center gap-2 cursor-pointer mt-6"
+            className="w-full bg-black text-white p-4 text-sm md:text-base font-black uppercase tracking-widest hover:bg-cobalt transition-colors flex items-center justify-center gap-2 cursor-pointer mt-6"
           >
-            {loading ? "처리중..." : isRegister ? "회원가입 후 입장" : "회원 로그인 입장"}
-            <ArrowRight size={16} />
+            {loading ? "Processing..." : isRegister ? "Sign up" : "Log in"}
+            <ArrowRight size={18} />
           </button>
         </form>
 
