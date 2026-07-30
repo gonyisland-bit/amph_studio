@@ -2393,18 +2393,6 @@ export default function Admin() {
 
               {activeTab === 'journal' && (
                 <>
-                  <label className="flex items-center gap-2 cursor-pointer border border-black/10 p-2.5 bg-black/[0.02] mb-3">
-                    <input 
-                      type="checkbox" 
-                      checked={!!form.featured} 
-                      onChange={e => setForm({...form, featured: e.target.checked})} 
-                      className="w-4 h-4 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
-                    />
-                    <span className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-1">
-                      <Star size={14} className={form.featured ? "fill-orange text-orange" : "text-ink/40"} />
-                      Set as Featured / ⭐ 별표 지정 (하단 연관 추천 우대 정렬)
-                    </span>
-                  </label>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                     <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
@@ -2459,18 +2447,6 @@ export default function Admin() {
 
               {activeTab === 'space' && (
                 <>
-                  <label className="flex items-center gap-2 cursor-pointer border border-black/10 p-2.5 bg-black/[0.02] mb-3">
-                    <input 
-                      type="checkbox" 
-                      checked={!!form.featured} 
-                      onChange={e => setForm({...form, featured: e.target.checked})} 
-                      className="w-4 h-4 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
-                    />
-                    <span className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-1">
-                      <Star size={14} className={form.featured ? "fill-orange text-orange" : "text-ink/40"} />
-                      Set as Featured / ⭐ 별표 지정 (하단 연관 추천 우대 정렬)
-                    </span>
-                  </label>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                     <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
@@ -2658,14 +2634,13 @@ export default function Admin() {
                               <button 
                                 type="button"
                                 onClick={e => { e.stopPropagation(); toggleFeatured(p.id); }}
-                                className="focus:outline-none transition-transform hover:scale-125 active:scale-90"
-                                title="Toggle Home Selected Works"
+                                className="p-2 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
+                                title="Toggle Home Selected Works (★ Featured)"
                               >
-                                {(homeSettings.featuredProductIds || []).includes(p.id) ? (
-                                  <span className="text-orange text-sm">★</span>
-                                ) : (
-                                  <span className="text-ink/10 hover:text-orange/60 text-sm">☆</span>
-                                )}
+                                <Star 
+                                  size={18} 
+                                  className={(homeSettings.featuredProductIds || []).includes(p.id) ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
+                                />
                               </button>
                               <div>
                                 <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{p.name}</div>
@@ -2741,14 +2716,13 @@ export default function Admin() {
                                 const updated = { ...s, featured: !s.featured };
                                 updateSpace(s.id, updated).then(loadData);
                               }}
-                              className="focus:outline-none transition-transform hover:scale-125 active:scale-90"
-                              title="Toggle Featured Star"
+                              className="p-2 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
+                              title="Toggle Featured Star (★ Featured)"
                             >
-                              {s.featured ? (
-                                <span className="text-orange text-sm">★</span>
-                              ) : (
-                                <span className="text-ink/10 hover:text-orange/60 text-sm">☆</span>
-                              )}
+                              <Star 
+                                size={18} 
+                                className={s.featured ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
+                              />
                             </button>
                             <div>
                               <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{s.title}</div>
@@ -2812,14 +2786,13 @@ export default function Admin() {
                                 const updated = { ...j, featured: !j.featured };
                                 updateJournal(j.id, updated).then(loadData);
                               }}
-                              className="focus:outline-none transition-transform hover:scale-125 active:scale-90"
-                              title="Toggle Featured Star"
+                              className="p-2 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
+                              title="Toggle Featured Star (★ Featured)"
                             >
-                              {j.featured ? (
-                                <span className="text-orange text-sm">★</span>
-                              ) : (
-                                <span className="text-ink/10 hover:text-orange/60 text-sm">☆</span>
-                              )}
+                              <Star 
+                                size={18} 
+                                className={j.featured ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
+                              />
                             </button>
                             <div>
                               <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{j.title}</div>
