@@ -581,63 +581,6 @@ export default function ProductDetail() {
         </div>
       )}
 
-      {/* Linked Spaces & Journals Section (Bidirectional Auto-Link) */}
-      {(linkedSpaces.length > 0 || linkedJournals.length > 0) && (
-        <div className="px-6 md:px-12 py-20 border-t border-black/10 bg-off-white/40 reveal">
-          <div className="max-w-7xl mx-auto space-y-16">
-            {linkedSpaces.length > 0 && (
-              <div>
-                <div className="flex justify-between items-baseline mb-8 border-b border-black/10 pb-4">
-                  <h3 className="text-xs uppercase font-black tracking-widest text-cobalt flex items-center gap-2 font-mono">
-                    <span>Linked Spaces (연결된 공간 스페이스)</span>
-                    <span className="text-[10px] bg-cobalt/10 text-cobalt px-2 py-0.5 rounded-full font-bold">{linkedSpaces.length}</span>
-                  </h3>
-                  <Link to="/space" className="text-[10px] font-black uppercase tracking-widest text-ink/40 hover:text-cobalt transition-colors flex items-center gap-1">
-                    Explore All Spaces <ArrowUpRight size={12} />
-                  </Link>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {linkedSpaces.map(s => (
-                    <Link key={s.id} to={`/space/${s.id}`} className="group block bg-white border border-black/5 hover:border-cobalt/30 transition-all p-4 shadow-sm hover:shadow-md">
-                      <div className="aspect-[16/10] overflow-hidden bg-silver/10 mb-4 relative">
-                        <MediaRenderer src={s.images?.[0] || ''} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                      </div>
-                      <h4 className="text-base font-bold tracking-tight uppercase group-hover:text-cobalt transition-colors truncate mb-1">{s.title}</h4>
-                      {s.description && <p className="text-xs font-serif text-ink/60 italic line-clamp-2">{s.description}</p>}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {linkedJournals.length > 0 && (
-              <div>
-                <div className="flex justify-between items-baseline mb-8 border-b border-black/10 pb-4">
-                  <h3 className="text-xs uppercase font-black tracking-widest text-cobalt flex items-center gap-2 font-mono">
-                    <span>Linked Journal Stories (연결된 저널 스토리)</span>
-                    <span className="text-[10px] bg-cobalt/10 text-cobalt px-2 py-0.5 rounded-full font-bold">{linkedJournals.length}</span>
-                  </h3>
-                  <Link to="/journal" className="text-[10px] font-black uppercase tracking-widest text-ink/40 hover:text-cobalt transition-colors flex items-center gap-1">
-                    Explore All Journal <ArrowUpRight size={12} />
-                  </Link>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {linkedJournals.map(j => (
-                    <Link key={j.id} to={`/journal/${j.id}`} className="group block bg-white border border-black/5 hover:border-cobalt/30 transition-all p-4 shadow-sm hover:shadow-md">
-                      <div className="aspect-[16/10] overflow-hidden bg-silver/10 mb-4 relative">
-                        <MediaRenderer src={j.image} alt={j.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                      </div>
-                      <h4 className="text-base font-bold tracking-tight uppercase group-hover:text-cobalt transition-colors truncate mb-1">{j.title}</h4>
-                      {j.description && <p className="text-xs font-serif text-ink/60 italic line-clamp-2">{j.description}</p>}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Amplify With (Recommended Grid 4 Items) - Unified with Collection cards */}
       <div className="border-t border-black/10 py-24 px-6 md:px-12 lg:px-20 bg-white reveal">
         <div className="flex justify-between items-end mb-16">
@@ -695,6 +638,112 @@ export default function ProductDetail() {
           ))}
         </div>
       </div>
+
+      {/* Linked Spaces Carousel Slider Section (Bidirectional Auto-Link) */}
+      {linkedSpaces.length > 0 && (
+        <div className="w-full px-6 md:px-12 lg:px-20 py-24 border-t border-black/10 bg-off-white/40 reveal">
+          <div className="flex justify-between items-end mb-12 border-b border-black/10 pb-6">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-2 font-mono">
+                LINKED SPACES ({linkedSpaces.length})
+              </span>
+              <h3 className="text-4xl lg:text-5xl font-black tracking-tighter uppercase font-sans leading-none">
+                Spaces to Explore
+              </h3>
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => {
+                  const el = document.getElementById('linked-spaces-slider');
+                  if (el) el.scrollBy({ left: -350, behavior: 'smooth' });
+                }} 
+                className="p-3 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                title="Scroll Left"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button 
+                onClick={() => {
+                  const el = document.getElementById('linked-spaces-slider');
+                  if (el) el.scrollBy({ left: 350, behavior: 'smooth' });
+                }} 
+                className="p-3 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                title="Scroll Right"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div 
+            id="linked-spaces-slider"
+            className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth snap-x pb-4"
+          >
+            {linkedSpaces.map(s => (
+              <Link key={s.id} to={`/space/${s.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
+                <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden mb-3 border border-black/5 relative">
+                  <MediaRenderer src={s.images?.[0] || ''} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                </div>
+                <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{s.title}</h4>
+                {s.description && <p className="text-xs font-serif text-ink/60 italic line-clamp-2">{s.description}</p>}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Linked Journals Carousel Slider Section (Bidirectional Auto-Link) */}
+      {linkedJournals.length > 0 && (
+        <div className="w-full px-6 md:px-12 lg:px-20 py-24 border-t border-black/10 bg-off-white/40 reveal">
+          <div className="flex justify-between items-end mb-12 border-b border-black/10 pb-6">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-2 font-mono">
+                LINKED JOURNAL STORIES ({linkedJournals.length})
+              </span>
+              <h3 className="text-4xl lg:text-5xl font-black tracking-tighter uppercase font-sans leading-none">
+                Stories to Explore
+              </h3>
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => {
+                  const el = document.getElementById('linked-journals-slider');
+                  if (el) el.scrollBy({ left: -350, behavior: 'smooth' });
+                }} 
+                className="p-3 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                title="Scroll Left"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button 
+                onClick={() => {
+                  const el = document.getElementById('linked-journals-slider');
+                  if (el) el.scrollBy({ left: 350, behavior: 'smooth' });
+                }} 
+                className="p-3 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                title="Scroll Right"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div 
+            id="linked-journals-slider"
+            className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth snap-x pb-4"
+          >
+            {linkedJournals.map(j => (
+              <Link key={j.id} to={`/journal/${j.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
+                <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden mb-3 border border-black/5 relative">
+                  <MediaRenderer src={j.image} alt={j.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                </div>
+                <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{j.title}</h4>
+                {j.description && <p className="text-xs font-serif text-ink/60 italic line-clamp-2">{j.description}</p>}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Fullscreen Lightbox Modal with Gestures */}
       {lightboxIndex !== null && (
