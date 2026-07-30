@@ -37,43 +37,46 @@ export default function Space() {
         </p>
       </div>
 
-      {sortedSpaces.map((space, i) => (
-        <Link 
-          to={`/space/${space.id}`} 
-          key={space.id} 
-          className="group flex flex-col md:flex-row min-h-[60vh] border-b border-black/10 transition-colors hover:bg-black/[0.01] reveal"
-          onMouseEnter={() => {
-            // Preload detailed space data on hover for instant navigation
-            import("../lib/data").then(module => {
-              module.getSpaceById(space.id);
-            });
-          }}
-        >
-          <div className={`flex-1 p-8 md:p-16 lg:p-24 flex flex-col justify-center ${i % 2 === 0 ? "md:border-r" : "md:order-last md:border-l"} border-black/10`}>
-            <span className="text-[10px] uppercase tracking-widest font-bold text-cobalt font-sans block mb-6">Space 0{i + 1}</span>
-            <h2 className="text-3xl md:text-5xl font-medium tracking-tighter uppercase font-sans mb-8 leading-[0.9] group-hover:text-cobalt transition-colors">{space.title}</h2>
-            <p className="text-lg font-serif italic text-ink/80 leading-relaxed max-w-sm mb-12 line-clamp-3">
-              {space.description}
-            </p>
-            <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest group-hover:gap-6 transition-all">
-              <span>Enter Experience</span>
-              <MoveRight size={16} />
+      {sortedSpaces.map((space, i) => {
+        const mediaUrl = space.images?.[0] || '';
+        const isVideo = mediaUrl ? (mediaUrl.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mediaUrl.includes('video')) : false;
+        return (
+          <Link 
+            to={`/space/${space.id}`} 
+            key={space.id} 
+            className="group flex flex-col md:flex-row min-h-[60vh] border-b border-black/10 transition-colors hover:bg-black/[0.01] reveal"
+            onMouseEnter={() => {
+              import("../lib/data").then(module => {
+                module.getSpaceById(space.id);
+              });
+            }}
+          >
+            <div className={`flex-1 p-8 md:p-16 lg:p-24 flex flex-col justify-center ${i % 2 === 0 ? "md:border-r" : "md:order-last md:border-l"} border-black/10`}>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-cobalt font-sans block mb-6">Space 0{i + 1}</span>
+              <h2 className="text-3xl md:text-5xl font-medium tracking-tighter uppercase font-sans mb-8 leading-[0.9] group-hover:text-cobalt transition-colors">{space.title}</h2>
+              <p className="text-lg font-serif italic text-ink/80 leading-relaxed max-w-sm mb-12 line-clamp-3">
+                {space.description}
+              </p>
+              <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest group-hover:gap-6 transition-all">
+                <span>Enter Experience</span>
+                <MoveRight size={16} />
+              </div>
             </div>
-          </div>
-          
-          <div className="flex-[1.2] bg-silver/10 relative min-h-[40vh] md:min-h-0 overflow-hidden">
-            <MediaRenderer 
-              src={space.images?.[0]} 
-              alt={space.title} 
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
-              loading={i === 0 ? "eager" : "lazy"}
-              fetchpriority={i === 0 ? "high" : "auto"}
-              nopin="nopin"
-            />
-            <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
-          </div>
-        </Link>
-      ))}
+            
+            <div className="flex-[1.2] bg-silver/10 relative min-h-[40vh] md:min-h-0 overflow-hidden">
+              <MediaRenderer 
+                src={mediaUrl} 
+                alt={space.title} 
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${isVideo ? 'scale-100 group-hover:brightness-105' : 'scale-100 group-hover:scale-105'}`} 
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchpriority={i === 0 ? "high" : "auto"}
+                nopin="nopin"
+              />
+              <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-700"></div>
+            </div>
+          </Link>
+        );
+      })}
       
       {spaces.length === 0 && (
          <div className="p-24 text-center text-ink/40 text-sm font-semibold italic font-serif">No spaces recorded in our physical world yet.</div>
