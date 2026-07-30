@@ -77,6 +77,8 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
     transform: 'translate3d(0, 0, 0)',
     backfaceVisibility: 'hidden',
     WebkitBackfaceVisibility: 'hidden',
+    perspective: '1000px',
+    transformStyle: 'preserve-3d',
     willChange: 'transform',
     ...style
   };
@@ -84,7 +86,12 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   return (
     <div 
       className={`overflow-hidden transform-gpu isolate ${className.includes('absolute') ? '' : 'relative'} ${className}`}
-      style={{ transform: 'translate3d(0, 0, 0)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+      style={{ 
+        transform: 'translate3d(0, 0, 0)', 
+        backfaceVisibility: 'hidden', 
+        WebkitBackfaceVisibility: 'hidden',
+        perspective: '1000px'
+      }}
     >
       {!isLoaded && !error && (
         <div className="absolute inset-0 shimmer bg-silver/10 z-0" />
