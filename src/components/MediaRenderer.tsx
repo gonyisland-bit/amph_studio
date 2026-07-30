@@ -74,7 +74,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   };
 
   return (
-    <div className={`overflow-hidden ${className.includes('absolute') ? '' : 'relative'} ${className}`}>
+    <div className={`overflow-hidden transform-gpu isolate ${className.includes('absolute') ? '' : 'relative'} ${className}`}>
       {!isLoaded && !error && (
         <div className="absolute inset-0 shimmer bg-silver/10 z-0" />
       )}
@@ -83,7 +83,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
         <video
           ref={videoRef}
           src={src}
-          className={`w-full h-full object-cover transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`w-full h-full object-cover pointer-events-none transform-gpu backface-hidden transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           autoPlay={autoPlay}
           loop={loop}
           muted={muted}
@@ -97,7 +97,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
         <img
           ref={imgRef}
           src={src}
-          className={`w-full h-full object-cover transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`w-full h-full object-cover pointer-events-none transform-gpu backface-hidden transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           style={style}
           alt={alt}
           loading={loading}

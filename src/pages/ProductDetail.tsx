@@ -560,7 +560,7 @@ export default function ProductDetail() {
                     </div>
                     {textContent && (
                       <div className="mt-4">
-                        <p className="text-sm md:text-base font-sans leading-relaxed text-ink/80">{textContent}</p>
+                        <p className="text-xs sm:text-sm md:text-base font-sans leading-relaxed text-ink/80 break-words max-w-full px-2">{textContent}</p>
                       </div>
                     )}
                   </div>
@@ -569,8 +569,8 @@ export default function ProductDetail() {
 
               if (block.type === 'text') {
                 return (
-                  <div key={idx} className="flex flex-col reveal py-4 w-full">
-                    <p className="text-xl md:text-2xl font-sans leading-relaxed text-ink/80">{block.value}</p>
+                  <div key={idx} className="flex flex-col reveal py-4 w-full overflow-hidden">
+                    <p className="text-base sm:text-lg md:text-xl font-sans leading-relaxed text-ink/80 break-words max-w-full px-2">{block.value}</p>
                   </div>
                 );
               }
