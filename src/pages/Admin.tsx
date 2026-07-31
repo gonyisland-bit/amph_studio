@@ -888,6 +888,17 @@ export default function Admin() {
           await addProduct(newProduct);
           setEditingId(newId);
           savedData = newProduct;
+
+          // Auto prepending new product ID to globalProductOrder top (1st item)
+          const currentOrder = homeSettings.globalProductOrder || [];
+          const nextOrder = [newId, ...currentOrder.filter(id => id !== newId)];
+          const updatedSettings = { ...homeSettings, globalProductOrder: nextOrder };
+          setHomeSettings(updatedSettings);
+          fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedSettings)
+          }).catch(e => console.error('Failed to auto update product order', e));
         }
 
         // Bi-directional cross-save to Spaces and Journals
@@ -2450,70 +2461,82 @@ export default function Admin() {
                   </div>
 
                   {/* Card 5: Related Products & Linked Spaces/Journals */}
-                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden space-y-4 p-6">
-                    <div>
-                      <h3 className="font-bold text-[10px] uppercase mb-3 text-cobalt">Related Products (하단 연관 추천 상품 선택)</h3>
-                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                        {products.filter(p => p.id !== form.id).map(p => (
-                          <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={form.relatedProductIds?.includes(p.id)} 
-                              onChange={(e) => {
-                                const current = form.relatedProductIds || [];
-                                const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
-                                setForm({...form, relatedProductIds: next});
-                              }}
-                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                            />
-                            <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
+                  {(() => {
+                    const sortedProducts = [...products].sort((a, b) => {
+                      const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
+                      const bIdx = (homeSettings.globalProductOrder || []).indexOf(b.id);
+                      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                      if (aIdx !== -1) return 1;
+                      if (bIdx !== -1) return -1;
+                      return 0;
+                    });
+                    return (
+                      <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden space-y-4 p-6">
+                        <div>
+                          <h3 className="font-bold text-[10px] uppercase mb-3 text-cobalt">Related Products (하단 연관 추천 상품 선택)</h3>
+                          <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
+                            {sortedProducts.filter(p => p.id !== form.id).map(p => (
+                              <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  checked={form.relatedProductIds?.includes(p.id)} 
+                                  onChange={(e) => {
+                                    const current = form.relatedProductIds || [];
+                                    const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
+                                    setForm({...form, relatedProductIds: next});
+                                  }}
+                                  className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                                />
+                                <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
 
-                    <div>
-                      <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Linked Spaces (연결된 공간 스페이스 선택)</h3>
-                      <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                        {spaces.map(s => (
-                          <label key={s.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={form.relatedSpaceIds?.includes(s.id)} 
-                              onChange={(e) => {
-                                const current = form.relatedSpaceIds || [];
-                                const next = e.target.checked ? [...current, s.id] : current.filter((id:string) => id !== s.id);
-                                setForm({...form, relatedSpaceIds: next});
-                              }}
-                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                            />
-                            <span className="text-[9px] font-bold uppercase truncate">{s.title}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
+                        <div>
+                          <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Linked Spaces (연결된 공간 스페이스 선택)</h3>
+                          <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
+                            {spaces.map(s => (
+                              <label key={s.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  checked={form.relatedSpaceIds?.includes(s.id)} 
+                                  onChange={(e) => {
+                                    const current = form.relatedSpaceIds || [];
+                                    const next = e.target.checked ? [...current, s.id] : current.filter((id:string) => id !== s.id);
+                                    setForm({...form, relatedSpaceIds: next});
+                                  }}
+                                  className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                                />
+                                <span className="text-[9px] font-bold uppercase truncate">{s.title}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
 
-                    <div>
-                      <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Linked Journal Stories (연결된 저널 선택)</h3>
-                      <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                        {journals.map(j => (
-                          <label key={j.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={form.relatedJournalIds?.includes(j.id)} 
-                              onChange={(e) => {
-                                const current = form.relatedJournalIds || [];
-                                const next = e.target.checked ? [...current, j.id] : current.filter((id:string) => id !== j.id);
-                                setForm({...form, relatedJournalIds: next});
-                              }}
-                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                            />
-                            <span className="text-[9px] font-bold uppercase truncate">{j.title}</span>
-                          </label>
-                        ))}
+                        <div>
+                          <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Linked Journal Stories (연결된 저널 선택)</h3>
+                          <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
+                            {journals.map(j => (
+                              <label key={j.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  checked={form.relatedJournalIds?.includes(j.id)} 
+                                  onChange={(e) => {
+                                    const current = form.relatedJournalIds || [];
+                                    const next = e.target.checked ? [...current, j.id] : current.filter((id:string) => id !== j.id);
+                                    setForm({...form, relatedJournalIds: next});
+                                  }}
+                                  className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                                />
+                                <span className="text-[9px] font-bold uppercase truncate">{j.title}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -2529,21 +2552,31 @@ export default function Admin() {
                     <div>
                       <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Amplify with (Linked Products)</h3>
                       <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                        {products.map(p => (
-                          <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={form.appliedProductIds?.includes(p.id)} 
-                              onChange={(e) => {
-                                const current = form.appliedProductIds || [];
-                                const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
-                                setForm({...form, appliedProductIds: next});
-                              }}
-                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                            />
-                            <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
-                          </label>
-                        ))}
+                        {(() => {
+                          const sortedProducts = [...products].sort((a, b) => {
+                            const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
+                            const bIdx = (homeSettings.globalProductOrder || []).indexOf(b.id);
+                            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                            if (aIdx !== -1) return 1;
+                            if (bIdx !== -1) return -1;
+                            return 0;
+                          });
+                          return sortedProducts.map(p => (
+                            <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                checked={form.appliedProductIds?.includes(p.id)} 
+                                onChange={(e) => {
+                                  const current = form.appliedProductIds || [];
+                                  const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
+                                  setForm({...form, appliedProductIds: next});
+                                }}
+                                className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                              />
+                              <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
+                            </label>
+                          ));
+                        })()}
                       </div>
                     </div>
 
@@ -2583,21 +2616,31 @@ export default function Admin() {
                     <div>
                       <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Amplify with (Linked Products)</h3>
                       <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                        {products.map(p => (
-                          <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={form.appliedProductIds?.includes(p.id)} 
-                              onChange={(e) => {
-                                const current = form.appliedProductIds || [];
-                                const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
-                                setForm({...form, appliedProductIds: next});
-                              }}
-                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                            />
-                            <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
-                          </label>
-                        ))}
+                        {(() => {
+                          const sortedProducts = [...products].sort((a, b) => {
+                            const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
+                            const bIdx = (homeSettings.globalProductOrder || []).indexOf(b.id);
+                            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                            if (aIdx !== -1) return 1;
+                            if (bIdx !== -1) return -1;
+                            return 0;
+                          });
+                          return sortedProducts.map(p => (
+                            <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                checked={form.appliedProductIds?.includes(p.id)} 
+                                onChange={(e) => {
+                                  const current = form.appliedProductIds || [];
+                                  const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
+                                  setForm({...form, appliedProductIds: next});
+                                }}
+                                className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                              />
+                              <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
+                            </label>
+                          ));
+                        })()}
                       </div>
                     </div>
 

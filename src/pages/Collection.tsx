@@ -52,12 +52,12 @@ export default function Collection() {
 
     return categoryMatches;
   }).sort((a, b) => {
-    const aIdx = settings.globalProductOrder.indexOf(a.id);
-    const bIdx = settings.globalProductOrder.indexOf(b.id);
-    if (aIdx === -1 && bIdx === -1) return 0;
-    if (aIdx === -1) return 1;
-    if (bIdx === -1) return -1;
-    return aIdx - bIdx;
+    const aIdx = (settings.globalProductOrder || []).indexOf(a.id);
+    const bIdx = (settings.globalProductOrder || []).indexOf(b.id);
+    if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+    if (aIdx !== -1) return 1;
+    if (bIdx !== -1) return -1;
+    return 0;
   });
 
   return (
