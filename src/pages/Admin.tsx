@@ -889,16 +889,12 @@ export default function Admin() {
           setEditingId(newId);
           savedData = newProduct;
 
-          // Auto prepending new product ID to globalProductOrder top (1st item)
+          // Force prepending new product ID to globalProductOrder top (1st item slot)
           const currentOrder = homeSettings.globalProductOrder || [];
           const nextOrder = [newId, ...currentOrder.filter(id => id !== newId)];
           const updatedSettings = { ...homeSettings, globalProductOrder: nextOrder };
           setHomeSettings(updatedSettings);
-          fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedSettings)
-          }).catch(e => console.error('Failed to auto update product order', e));
+          await updateHomeSettings(updatedSettings);
         }
 
         // Bi-directional cross-save to Spaces and Journals

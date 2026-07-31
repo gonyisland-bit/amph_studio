@@ -28,7 +28,7 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  if (req.method === 'PUT') {
+  if (req.method === 'PUT' || req.method === 'POST') {
     const id = req.query.id || 'home';
     try {
       const data = req.body;
