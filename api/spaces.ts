@@ -11,6 +11,7 @@ export default async function handler(req: any, res: any) {
         title TEXT NOT NULL,
         description TEXT,
         images TEXT,
+        featured BOOLEAN DEFAULT false,
         "appliedProductIds" TEXT,
         location TEXT DEFAULT '',
         address TEXT DEFAULT '',
@@ -23,6 +24,7 @@ export default async function handler(req: any, res: any) {
     // Comprehensive Migration: ensure all possible columns exist to prevent save failures
     const columns = [
       { name: 'contentBlocks', type: 'TEXT' },
+      { name: 'featured', type: 'BOOLEAN DEFAULT false' },
       { name: 'appliedProductIds', type: 'TEXT' },
       { name: 'images', type: 'TEXT' },
       { name: 'location', type: 'TEXT DEFAULT \'\'' },
@@ -52,6 +54,7 @@ export default async function handler(req: any, res: any) {
       
       const parsedRows = result.rows.map(r => ({
         ...r,
+        featured: Boolean(r.featured),
         images: typeof r.images === 'string' ? JSON.parse(r.images) : (r.images || []),
         appliedProductIds: typeof r.appliedProductIds === 'string' ? JSON.parse(r.appliedProductIds) : (r.appliedProductIds || []),
         contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
@@ -65,7 +68,7 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST' || req.method === 'PUT') {
     try {
-      const { id: bodyId, title, description, images, appliedProductIds, contentBlocks } = req.body;
+      const { id: bodyId, title, description, images, featured, appliedProductIds, contentBlocks } = req.body;
       const targetId = id || bodyId;
       
       if (!targetId) return res.status(400).json({ error: 'ID is required' });
@@ -73,7 +76,7 @@ export default async function handler(req: any, res: any) {
       // Extremely defensive INSERT providing values for all known columns
       await sql`
         INSERT INTO spaces (
-          id, title, description, images, "appliedProductIds", "contentBlocks", 
+          id, title, description, images, featured, "appliedProductIds", "contentBlocks", 
           location, address, hours, image
         )
         VALUES (
@@ -81,6 +84,7 @@ export default async function handler(req: any, res: any) {
           ${title || ''}, 
           ${description || ''}, 
           ${JSON.stringify(images || [])}, 
+          ${!!featured},
           ${JSON.stringify(appliedProductIds || [])},
           ${JSON.stringify(contentBlocks || [])},
           '', '', '', ''
@@ -89,6 +93,7 @@ export default async function handler(req: any, res: any) {
           title = EXCLUDED.title,
           description = EXCLUDED.description,
           images = EXCLUDED.images,
+          featured = EXCLUDED.featured,
           "appliedProductIds" = EXCLUDED."appliedProductIds",
           "contentBlocks" = EXCLUDED."contentBlocks"
       `;
