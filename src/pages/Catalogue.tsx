@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
+import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings, ColorOption } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
@@ -9,6 +9,7 @@ export default function Catalogue() {
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSpecs, setShowSpecs] = useState(true);
 
   useScrollReveal([products, activeCategory, searchQuery]);
 
@@ -26,12 +27,12 @@ export default function Catalogue() {
                           p.material?.toLowerCase().includes(searchQuery.toLowerCase());
     return categoryMatches && matchesSearch;
   }).sort((a, b) => {
-    const aIdx = settings.globalProductOrder.indexOf(a.id);
-    const bIdx = settings.globalProductOrder.indexOf(b.id);
-    if (aIdx === -1 && bIdx === -1) return 0;
-    if (aIdx === -1) return 1;
-    if (bIdx === -1) return -1;
-    return aIdx - bIdx;
+    const aIdx = (settings.globalProductOrder || []).indexOf(a.id);
+    const bIdx = (settings.globalProductOrder || []).indexOf(b.id);
+    if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+    if (aIdx !== -1) return 1;
+    if (bIdx !== -1) return -1;
+    return 0;
   });
 
   return (
@@ -63,15 +64,30 @@ export default function Catalogue() {
             ))}
           </div>
 
-          {/* Quick Search */}
-          <div className="relative max-w-md w-full">
-            <input
-              type="text"
-              placeholder="QUICK INDEX SEARCH (NAME, SKU, MATERIAL)..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-black/10 focus:border-cobalt outline-none p-3 pl-4 text-[9px] font-black uppercase tracking-wider rounded-none shadow-sm transition-all"
-            />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            {/* Specs Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setShowSpecs(prev => !prev)}
+              className="px-4 py-3 border text-[9px] font-black uppercase tracking-widest transition-all duration-300 rounded-none cursor-pointer flex items-center justify-between sm:justify-start gap-2 border-black/10 hover:border-black/30 bg-white hover:bg-black/5"
+              title="Toggle Product Specifications View"
+            >
+              <span className="text-ink/60">SPECS VIEW</span>
+              <span className={`px-2 py-0.5 text-[8px] font-bold tracking-wider ${showSpecs ? 'bg-cobalt text-white' : 'bg-black/10 text-ink/40'}`}>
+                {showSpecs ? 'ON' : 'OFF'}
+              </span>
+            </button>
+
+            {/* Quick Search */}
+            <div className="relative max-w-md w-full">
+              <input
+                type="text"
+                placeholder="QUICK INDEX SEARCH (NAME, SKU, MATERIAL)..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full bg-white border border-black/10 focus:border-cobalt outline-none p-3 pl-4 text-[9px] font-black uppercase tracking-wider rounded-none shadow-sm transition-all"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -111,13 +127,62 @@ export default function Catalogue() {
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-black/5 flex justify-between items-center text-[9px]">
-                <span className="text-ink/60 font-mono truncate max-w-[60%]">
-                  {p.material || 'Standard'}
-                </span>
-                <span className="font-bold text-ink">
-                  ${p.price.toLocaleString()}
-                </span>
+              <div>
+                {/* Product Specifications Section (Toggleable) */}
+                {showSpecs && (
+                  <div className="my-2.5 pt-2.5 border-t border-black/10 space-y-1.5 text-[9px] animate-in fade-in duration-200">
+                    {/* Dimensions */}
+                    {p.dimensions && (
+                      <div className="flex justify-between items-start text-ink/70">
+                        <span className="font-mono text-ink/40 uppercase tracking-wider text-[8px]">DIM</span>
+                        <span className="font-mono text-right font-medium truncate max-w-[70%]" title={p.dimensions}>{p.dimensions}</span>
+                      </div>
+                    )}
+
+                    {/* Material */}
+                    <div className="flex justify-between items-start text-ink/70">
+                      <span className="font-mono text-ink/40 uppercase tracking-wider text-[8px]">MAT</span>
+                      <span className="font-mono text-right font-medium truncate max-w-[70%]" title={p.material || 'Standard'}>{p.material || 'Standard'}</span>
+                    </div>
+
+                    {/* Color Options */}
+                    {(() => {
+                      const colors: ColorOption[] = Array.isArray(p.color) 
+                        ? p.color 
+                        : (p.color ? [{ name: p.color, hex: '#000000' }] : []);
+                      
+                      if (colors.length === 0) return null;
+
+                      return (
+                        <div className="flex justify-between items-center text-ink/70 pt-0.5">
+                          <span className="font-mono text-ink/40 uppercase tracking-wider text-[8px]">CLR</span>
+                          <div className="flex items-center gap-1 max-w-[70%] overflow-hidden justify-end">
+                            {colors.slice(0, 4).map((c, i) => (
+                              <span 
+                                key={i} 
+                                className="w-2.5 h-2.5 rounded-full border border-black/20 flex-shrink-0 inline-block" 
+                                style={{ backgroundColor: c.hex || '#000' }}
+                                title={c.name}
+                              />
+                            ))}
+                            {colors.length > 4 && (
+                              <span className="text-[8px] font-mono text-ink/40">+{colors.length - 4}</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-black/5 flex justify-between items-center text-[9px]">
+                  <span className="text-ink/60 font-mono truncate max-w-[60%]">
+                    {p.material || 'Standard'}
+                  </span>
+                  <span className="font-bold text-ink">
+                    ${p.price.toLocaleString()}
+                  </span>
+                </div>
               </div>
             </Link>
           ))}
