@@ -2787,12 +2787,13 @@ export default function Admin() {
                         if (sortBy === 'category') return list.sort((a,b) => a.category.localeCompare(b.category));
                         if (sortBy === 'newest') return list;
                         return list.sort((a,b) => {
-                          const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
-                          const bIdx = (homeSettings.globalProductOrder || []).indexOf(b.id);
-                          if (aIdx === -1 && bIdx === -1) return 0;
-                          if (aIdx === -1) return 1;
-                          if (bIdx === -1) return -1;
-                          return aIdx - bIdx;
+                          const orderList = homeSettings.globalProductOrder || [];
+                          const aIdx = orderList.indexOf(a.id);
+                          const bIdx = orderList.indexOf(b.id);
+                          if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                          if (aIdx !== -1) return -1;
+                          if (bIdx !== -1) return 1;
+                          return 0;
                         });
                       };
                       return getSorted().map((p, index) => (

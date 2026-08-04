@@ -27,11 +27,12 @@ export default function Catalogue() {
                           p.material?.toLowerCase().includes(searchQuery.toLowerCase());
     return categoryMatches && matchesSearch;
   }).sort((a, b) => {
-    const aIdx = (settings.globalProductOrder || []).indexOf(a.id);
-    const bIdx = (settings.globalProductOrder || []).indexOf(b.id);
+    const orderList = settings.globalProductOrder || [];
+    const aIdx = orderList.indexOf(a.id);
+    const bIdx = orderList.indexOf(b.id);
     if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-    if (aIdx !== -1) return 1;
-    if (bIdx !== -1) return -1;
+    if (aIdx !== -1) return -1;
+    if (bIdx !== -1) return 1;
     return 0;
   });
 
@@ -175,10 +176,7 @@ export default function Catalogue() {
                   </div>
                 )}
 
-                <div className="pt-2 border-t border-black/5 flex justify-between items-center text-[9px]">
-                  <span className="text-ink/60 font-mono truncate max-w-[60%]">
-                    {p.material || 'Standard'}
-                  </span>
+                <div className="pt-2 border-t border-black/5 flex justify-end items-center text-[9px]">
                   <span className="font-bold text-ink">
                     ${p.price.toLocaleString()}
                   </span>
