@@ -897,48 +897,55 @@ export default function Admin() {
           await updateHomeSettings(updatedSettings);
         }
 
-        // Bi-directional cross-save to Spaces and Journals
+        // Bi-directional cross-save with Promise.all (초고속 병렬 비동기 처리)
         const prodId = savedData.id;
         const currentSpaceIds: string[] = cleanedForm.relatedSpaceIds || [];
         const currentJournalIds: string[] = cleanedForm.relatedJournalIds || [];
+        const currentRelatedProdIds: string[] = cleanedForm.relatedProductIds || [];
+        const syncPromises: Promise<any>[] = [];
 
+        // Spaces sync
         for (const s of spaces) {
           const hasProd = s.appliedProductIds?.includes(prodId);
           const shouldHaveProd = currentSpaceIds.includes(s.id);
           if (shouldHaveProd && !hasProd) {
-            await updateSpace(s.id, { ...s, appliedProductIds: [...(s.appliedProductIds || []), prodId] });
+            syncPromises.push(updateSpace(s.id, { ...s, appliedProductIds: [...(s.appliedProductIds || []), prodId] }));
           } else if (!shouldHaveProd && hasProd) {
-            await updateSpace(s.id, { ...s, appliedProductIds: (s.appliedProductIds || []).filter(id => id !== prodId) });
+            syncPromises.push(updateSpace(s.id, { ...s, appliedProductIds: (s.appliedProductIds || []).filter(id => id !== prodId) }));
           }
         }
 
+        // Journals sync
         for (const j of journals) {
           const hasProd = j.appliedProductIds?.includes(prodId);
           const shouldHaveProd = currentJournalIds.includes(j.id);
           if (shouldHaveProd && !hasProd) {
-            await updateJournal(j.id, { ...j, appliedProductIds: [...(j.appliedProductIds || []), prodId] });
+            syncPromises.push(updateJournal(j.id, { ...j, appliedProductIds: [...(j.appliedProductIds || []), prodId] }));
           } else if (!shouldHaveProd && hasProd) {
-            await updateJournal(j.id, { ...j, appliedProductIds: (j.appliedProductIds || []).filter(id => id !== prodId) });
+            syncPromises.push(updateJournal(j.id, { ...j, appliedProductIds: (j.appliedProductIds || []).filter(id => id !== prodId) }));
           }
         }
 
-        // Bi-directional cross-save to Products (제품 간 상호 연관 자동 체크/저장)
-        const currentRelatedProdIds: string[] = cleanedForm.relatedProductIds || [];
+        // Products cross sync
         for (const targetProd of products) {
           if (targetProd.id === prodId) continue;
           const targetHasProd = targetProd.relatedProductIds?.includes(prodId);
           const shouldHaveProd = currentRelatedProdIds.includes(targetProd.id);
           if (shouldHaveProd && !targetHasProd) {
-            await updateProduct(targetProd.id, { 
+            syncPromises.push(updateProduct(targetProd.id, { 
               ...targetProd, 
               relatedProductIds: [...(targetProd.relatedProductIds || []), prodId] 
-            });
+            }));
           } else if (!shouldHaveProd && targetHasProd) {
-            await updateProduct(targetProd.id, { 
+            syncPromises.push(updateProduct(targetProd.id, { 
               ...targetProd, 
               relatedProductIds: (targetProd.relatedProductIds || []).filter(id => id !== prodId) 
-            });
+            }));
           }
+        }
+
+        if (syncPromises.length > 0) {
+          await Promise.all(syncPromises);
         }
       } else if (activeTab === 'journal') {
         if (editingId) {

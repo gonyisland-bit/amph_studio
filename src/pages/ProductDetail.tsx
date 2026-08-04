@@ -504,7 +504,7 @@ export default function ProductDetail() {
                   </tr>
                   <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
                     <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Product Code</td>
-                    <td className="text-ink/70 font-mono text-[10px]">{product.sku || generateProductCode(product.category, product.name)}</td>
+                    <td className="text-ink/70 font-semibold font-mono tracking-wider">{product.sku || generateProductCode(product.category, product.name)}</td>
                   </tr>
                 </tbody>
               </table>
