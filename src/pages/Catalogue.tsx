@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings, ColorOption } from "../lib/data";
+import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings, ColorOption, generateProductCode } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
@@ -82,7 +82,7 @@ export default function Catalogue() {
             <div className="relative max-w-md w-full">
               <input
                 type="text"
-                placeholder="QUICK INDEX SEARCH (NAME, SKU, MATERIAL)..."
+                placeholder="QUICK INDEX SEARCH (NAME, PRODUCT CODE, MATERIAL)..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full bg-white border border-black/10 focus:border-cobalt outline-none p-3 pl-4 text-[9px] font-black uppercase tracking-wider rounded-none shadow-sm transition-all"
@@ -123,7 +123,7 @@ export default function Catalogue() {
                   {p.name}
                 </h3>
                 <p className="text-[9px] text-ink/40 font-mono uppercase tracking-wider mb-2">
-                  SKU: {p.sku || p.id}
+                  CODE: {p.sku || generateProductCode(p.category, p.name)}
                 </p>
               </div>
 

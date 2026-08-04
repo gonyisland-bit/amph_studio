@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getProductById, getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, ColorOption } from "../lib/data";
+import { getProductById, getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, ColorOption, generateProductCode } from "../lib/data";
 import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
@@ -112,7 +112,22 @@ export default function ProductDetail() {
         if (p) {
           document.title = `${p.name} — Amph`;
           getProducts().then(allProds => {
-            setRecommendations(allProds.filter(prod => prod.id !== id));
+            const otherProds = allProds.filter(prod => prod.id !== id);
+            // 1등: 본 제품이 지목하거나 나를 지목한 연관 추천 상품
+            const explicitRelatedIds = p.relatedProductIds || [];
+            const related = otherProds.filter(prod => 
+              explicitRelatedIds.includes(prod.id) || (prod.relatedProductIds || []).includes(p.id)
+            );
+            // 2등: 같은 카테고리 상품
+            const sameCategory = otherProds.filter(prod => 
+              prod.category === p.category && !related.some(r => r.id === prod.id)
+            );
+            // 3등: 나머지 상품
+            const others = otherProds.filter(prod => 
+              !related.some(r => r.id === prod.id) && !sameCategory.some(c => c.id === prod.id)
+            );
+
+            setRecommendations([...related, ...sameCategory, ...others]);
           });
 
           // Bidirectional auto-linking for Spaces
@@ -488,8 +503,8 @@ export default function ProductDetail() {
                     <td className="text-ink/70 font-semibold">{getFormattedShipping(product.shipping)}</td>
                   </tr>
                   <tr className="border-b border-black/10 py-3.5 flex justify-between items-center">
-                    <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">제품 코드</td>
-                    <td className="text-ink/70 font-mono text-[10px]">{product.sku || '-'}</td>
+                    <td className="font-medium text-ink/80 uppercase text-[11px] tracking-wider">Product Code</td>
+                    <td className="text-ink/70 font-mono text-[10px]">{product.sku || generateProductCode(product.category, product.name)}</td>
                   </tr>
                 </tbody>
               </table>

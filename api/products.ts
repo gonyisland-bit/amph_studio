@@ -32,6 +32,9 @@ export default async function handler(req: any, res: any) {
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "color" TEXT DEFAULT ''`; } catch(e) {}
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "cartEnabled" BOOLEAN DEFAULT TRUE`; } catch(e) {}
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "portraitImages" TEXT DEFAULT '[]'`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "relatedProductIds" TEXT DEFAULT '[]'`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "relatedSpaceIds" TEXT DEFAULT '[]'`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "relatedJournalIds" TEXT DEFAULT '[]'`; } catch(e) {}
   } catch (e) {}
 
   if (req.method === 'GET') {
@@ -53,7 +56,10 @@ export default async function handler(req: any, res: any) {
           contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
           color: colorParsed,
           cartEnabled: r.cartEnabled !== false,
-          portraitImages: typeof r.portraitImages === 'string' ? JSON.parse(r.portraitImages) : (r.portraitImages || [])
+          portraitImages: typeof r.portraitImages === 'string' ? JSON.parse(r.portraitImages) : (r.portraitImages || []),
+          relatedProductIds: typeof r.relatedProductIds === 'string' ? JSON.parse(r.relatedProductIds) : (r.relatedProductIds || []),
+          relatedSpaceIds: typeof r.relatedSpaceIds === 'string' ? JSON.parse(r.relatedSpaceIds) : (r.relatedSpaceIds || []),
+          relatedJournalIds: typeof r.relatedJournalIds === 'string' ? JSON.parse(r.relatedJournalIds) : (r.relatedJournalIds || [])
         };
       });
       return res.status(200).json(parsedRows);
@@ -65,10 +71,10 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST') {
     try {
-      const { id: newId, name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, cartEnabled, portraitImages } = req.body;
+      const { id: newId, name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, cartEnabled, portraitImages, relatedProductIds, relatedSpaceIds, relatedJournalIds } = req.body;
       await sql`
         INSERT INTO products (
-          id, name, category, description, "subTitle", material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color, "cartEnabled", "portraitImages"
+          id, name, category, description, "subTitle", material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color, "cartEnabled", "portraitImages", "relatedProductIds", "relatedSpaceIds", "relatedJournalIds"
         ) VALUES (
           ${newId}, ${name}, ${category}, ${description}, ${subTitle || ''}, ${material}, ${price}, 
           ${JSON.stringify(images || [])}, 
@@ -80,7 +86,10 @@ export default async function handler(req: any, res: any) {
           ${sku || ''},
           ${typeof color === 'string' ? color : JSON.stringify(color || [])},
           ${cartEnabled !== false},
-          ${JSON.stringify(portraitImages || [])}
+          ${JSON.stringify(portraitImages || [])},
+          ${JSON.stringify(relatedProductIds || [])},
+          ${JSON.stringify(relatedSpaceIds || [])},
+          ${JSON.stringify(relatedJournalIds || [])}
         )
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
@@ -98,7 +107,10 @@ export default async function handler(req: any, res: any) {
           sku = EXCLUDED.sku,
           color = EXCLUDED.color,
           "cartEnabled" = EXCLUDED."cartEnabled",
-          "portraitImages" = EXCLUDED."portraitImages"
+          "portraitImages" = EXCLUDED."portraitImages",
+          "relatedProductIds" = EXCLUDED."relatedProductIds",
+          "relatedSpaceIds" = EXCLUDED."relatedSpaceIds",
+          "relatedJournalIds" = EXCLUDED."relatedJournalIds"
       `;
       return res.status(201).json({ success: true, id: newId });
     } catch (error) {
@@ -110,7 +122,7 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'PUT') {
     if (!id) return res.status(400).json({ error: 'ID is required' });
     try {
-      const { name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, cartEnabled, portraitImages } = req.body;
+      const { name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, cartEnabled, portraitImages, relatedProductIds, relatedSpaceIds, relatedJournalIds } = req.body;
       await sql`
         UPDATE products SET 
           name = ${name}, 
@@ -128,7 +140,10 @@ export default async function handler(req: any, res: any) {
           sku = ${sku},
           color = ${typeof color === 'string' ? color : JSON.stringify(color || [])},
           "cartEnabled" = ${cartEnabled !== false},
-          "portraitImages" = ${JSON.stringify(portraitImages || [])}
+          "portraitImages" = ${JSON.stringify(portraitImages || [])},
+          "relatedProductIds" = ${JSON.stringify(relatedProductIds || [])},
+          "relatedSpaceIds" = ${JSON.stringify(relatedSpaceIds || [])},
+          "relatedJournalIds" = ${JSON.stringify(relatedJournalIds || [])}
         WHERE id = ${id}
       `;
       return res.status(200).json({ success: true, id });

@@ -4,7 +4,7 @@ import {
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
-  HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob
+  HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode
 } from "../lib/data";
 import { upload } from '@vercel/blob/client';
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock } from "lucide-react";
@@ -919,6 +919,25 @@ export default function Admin() {
             await updateJournal(j.id, { ...j, appliedProductIds: [...(j.appliedProductIds || []), prodId] });
           } else if (!shouldHaveProd && hasProd) {
             await updateJournal(j.id, { ...j, appliedProductIds: (j.appliedProductIds || []).filter(id => id !== prodId) });
+          }
+        }
+
+        // Bi-directional cross-save to Products (제품 간 상호 연관 자동 체크/저장)
+        const currentRelatedProdIds: string[] = cleanedForm.relatedProductIds || [];
+        for (const targetProd of products) {
+          if (targetProd.id === prodId) continue;
+          const targetHasProd = targetProd.relatedProductIds?.includes(prodId);
+          const shouldHaveProd = currentRelatedProdIds.includes(targetProd.id);
+          if (shouldHaveProd && !targetHasProd) {
+            await updateProduct(targetProd.id, { 
+              ...targetProd, 
+              relatedProductIds: [...(targetProd.relatedProductIds || []), prodId] 
+            });
+          } else if (!shouldHaveProd && targetHasProd) {
+            await updateProduct(targetProd.id, { 
+              ...targetProd, 
+              relatedProductIds: (targetProd.relatedProductIds || []).filter(id => id !== prodId) 
+            });
           }
         }
       } else if (activeTab === 'journal') {
@@ -2218,7 +2237,11 @@ export default function Admin() {
                               <option value="Pickup">Pickup</option>
                             </select>
                           </div>
-                          <EditorInput label="제품 코드" value={form.sku || ''} onChange={val => setForm({...form, sku: val})} />
+                          <EditorInput 
+                            label="Product Code (제품코드)" 
+                            value={form.sku || generateProductCode(form.category || 'Chairs', form.name || '')} 
+                            onChange={val => setForm({...form, sku: val})} 
+                          />
                         </div>
                         <div className="mt-4 border-t border-black/5 pt-4">
                           <label className="flex items-center gap-2 cursor-pointer">

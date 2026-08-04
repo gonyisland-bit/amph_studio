@@ -26,13 +26,35 @@ export interface Product {
   isFeatured?: boolean;
   dimensions?: string;
   shipping?: string;
-  sku?: string;
+  sku?: string; // Product Code (제품코드)
   color?: string | ColorOption[];
   cartEnabled?: boolean;
   portraitImages?: string[];
+  relatedProductIds?: string[];
   relatedSpaceIds?: string[];
   relatedJournalIds?: string[];
 }
+
+export const generateProductCode = (category: string, name: string): string => {
+  let prefix = 'OB';
+  const catLower = (category || '').toLowerCase();
+  if (catLower.includes('furniture') || catLower.includes('table')) prefix = 'FU';
+  else if (catLower.includes('chair')) prefix = 'CH';
+  else if (catLower.includes('light')) prefix = 'LI';
+  else if (catLower.includes('object')) prefix = 'OB';
+
+  const cleanName = (name || '').replace(/[^a-zA-Z]/g, '').toUpperCase();
+  const nameCode = cleanName.length >= 2 ? cleanName.slice(0, 2) : (cleanName + 'XX').slice(0, 2);
+
+  let numHash = 0;
+  for (let i = 0; i < (name || '').length; i++) {
+    numHash = (numHash << 5) - numHash + (name || '').charCodeAt(i);
+    numHash |= 0;
+  }
+  const num4 = String(1000 + Math.abs(numHash) % 9000).padStart(4, '0');
+
+  return `${prefix}-${nameCode}${num4}`;
+};
 
 export interface JournalArticle {
   id: string;
