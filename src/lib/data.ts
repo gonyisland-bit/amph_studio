@@ -301,6 +301,24 @@ export interface PhilosophyCard {
   author: string;
 }
 
+export const defaultColorAssets: ColorOption[] = [
+  { name: 'Oak', hex: '#d7c29d' },
+  { name: 'Ash', hex: '#e5dec9' },
+  { name: 'Walnut', hex: '#4b382a' },
+  { name: 'Steel', hex: '#8a9597' },
+  { name: 'Black', hex: '#1c1c1c' },
+  { name: 'White', hex: '#ffffff' },
+  { name: 'Cobalt', hex: '#0047AB' },
+  { name: 'Orange', hex: '#FF4500' },
+  { name: 'Pink', hex: '#F8BBD0' },
+  { name: 'Silver', hex: '#E0E0E2' },
+  { name: 'Gray', hex: '#808080' },
+  { name: 'Charcoal', hex: '#36454F' },
+  { name: 'Cream', hex: '#FFFDD0' },
+  { name: 'Beige', hex: '#F5F5DC' },
+  { name: 'Natural', hex: '#e8d8c1' }
+];
+
 export interface HomeSettings {
   logoType?: 'text' | 'image';
   logoImage?: string;
@@ -312,6 +330,7 @@ export interface HomeSettings {
   heroSlides: HeroSlide[];
   heroTransitionSpeed: number;
   marquee: string;
+  colorAssets?: ColorOption[];
   intros: {
     collection: CategoryIntro;
     space: CategoryIntro;
@@ -337,6 +356,7 @@ export const defaultHomeSettings: HomeSettings = {
   spaceOrder: [],
   journalOrder: [],
   marquee: 'Amplify Your Ordinary',
+  colorAssets: defaultColorAssets,
   intros: {
     collection: { title: '', description: '', image: '' },
     space: { title: '', description: '', image: '' },

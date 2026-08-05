@@ -4,7 +4,7 @@ import {
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
-  HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode
+  HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets
 } from "../lib/data";
 import { upload } from '@vercel/blob/client';
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock } from "lucide-react";
@@ -313,7 +313,7 @@ export default function Admin() {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   
-  const [activeTab, setActiveTab] = useState<'home'|'journal'|'space'|'collection'|'orders'|'users'>('collection');
+  const [activeTab, setActiveTab] = useState<'home'|'journal'|'space'|'collection'|'colorAssets'|'orders'|'users'>('collection');
   const [orderFilter, setOrderFilter] = useState<'active' | 'completed' | 'all'>('active');
   const [sortBy, setSortBy] = useState<'user' | 'name' | 'category' | 'newest'>('user');
   const [orders, setOrders] = useState<any[]>([]);
@@ -340,7 +340,7 @@ export default function Admin() {
   const [originalHomeSettings, setOriginalHomeSettings] = useState<any>(null);
   const [pendingNavigation, setPendingNavigation] = useState<{
     type: 'tab' | 'edit' | 'router';
-    targetTab?: 'home'|'journal'|'space'|'collection'|'orders'|'users';
+    targetTab?: 'home'|'journal'|'space'|'collection'|'colorAssets'|'orders'|'users';
     targetItem?: any;
   } | null>(null);
 
@@ -649,15 +649,41 @@ export default function Admin() {
       showToast("Please enter a color name.", "error");
       return;
     }
-    const exists = colorOptions.some(c => c.name.toLowerCase() === newColorName.trim().toLowerCase());
+    const colorNameTrimmed = newColorName.trim();
+    const exists = colorOptions.some(c => c.name.toLowerCase() === colorNameTrimmed.toLowerCase());
     if (exists) {
-      showToast("Color name already exists.", "error");
+      showToast("Color name already added to this product.", "error");
       return;
     }
-    const updated = [...colorOptions, { name: newColorName.trim(), hex: newColorHex }];
+    const newColorItem = { name: colorNameTrimmed, hex: newColorHex };
+    const updated = [...colorOptions, newColorItem];
     setColorOptions(updated);
     setForm((prev: any) => ({ ...prev, color: updated }));
+
+    // Global Asset auto-registration
+    const currentAssets = homeSettings.colorAssets || defaultColorAssets;
+    const globalExists = currentAssets.some(c => c.name.toLowerCase() === colorNameTrimmed.toLowerCase());
+    if (!globalExists) {
+      const updatedAssets = [...currentAssets, newColorItem];
+      setHomeSettings(prev => ({ ...prev, colorAssets: updatedAssets }));
+      showToast(`Added '${colorNameTrimmed}' to Product & Global Assets Library!`, "success");
+    } else {
+      showToast(`Added '${colorNameTrimmed}' to Product option!`, "success");
+    }
+
     setNewColorName("");
+  };
+
+  const handleSelectGlobalAsset = (asset: { name: string, hex: string }) => {
+    const exists = colorOptions.some(c => c.name.toLowerCase() === asset.name.toLowerCase());
+    if (exists) {
+      showToast(`'${asset.name}' is already added to this product.`, "info");
+      return;
+    }
+    const updated = [...colorOptions, asset];
+    setColorOptions(updated);
+    setForm((prev: any) => ({ ...prev, color: updated }));
+    showToast(`Added asset '${asset.name}' to product options!`, "success");
   };
 
   const handleRemoveColorOption = (name: string) => {
@@ -878,7 +904,7 @@ export default function Admin() {
     }
   };
 
-  const proceedTab = (tab: 'home'|'journal'|'space'|'collection'|'orders'|'users') => {
+  const proceedTab = (tab: 'home'|'journal'|'space'|'collection'|'colorAssets'|'orders'|'users') => {
     setActiveTab(tab);
     setEditingId(null);
     const empty = tab === 'collection' ? emptyProduct : tab === 'journal' ? emptyJournal : tab === 'space' ? emptySpace : emptyProduct;
@@ -895,7 +921,7 @@ export default function Admin() {
     navigate(`/admin?${params.toString()}`, { replace: true });
   };
 
-  const switchTab = (tab: 'home'|'journal'|'space'|'collection'|'orders'|'users') => {
+  const switchTab = (tab: 'home'|'journal'|'space'|'collection'|'colorAssets'|'orders'|'users') => {
     if (isDirty) {
       setPendingNavigation({ type: 'tab', targetTab: tab });
     } else {
@@ -1414,7 +1440,8 @@ export default function Admin() {
               { id: 'home', label: 'Home' },
               { id: 'collection', label: 'Collection' },
               { id: 'space', label: 'Space' },
-              { id: 'journal', label: 'Journal' }
+              { id: 'journal', label: 'Journal' },
+              { id: 'colorAssets', label: 'Color Assets' }
             ].map(tab => (
               <button 
                 key={tab.id} 
@@ -1449,7 +1476,196 @@ export default function Admin() {
         </div>
       </div>
       
-      {(activeTab === 'orders' || activeTab === 'users') ? (
+      {activeTab === 'colorAssets' ? (
+        <div className="w-full min-w-0 max-w-full space-y-6 pb-20">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-black/10 pb-4 gap-4">
+            <div>
+              <h2 className="text-base sm:text-lg font-black uppercase tracking-tight text-ink">
+                Global Color Assets Library
+              </h2>
+              <p className="text-xs text-ink/50 mt-1 font-sans">
+                Manage system-wide color swatches and assets reusable across all products.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                setSavingSettings(true);
+                try {
+                  const res = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(homeSettings)
+                  });
+                  if (res.ok) {
+                    setOriginalHomeSettings(homeSettings);
+                    setIsDirty(false);
+                    showToast("Color assets saved successfully!", "success");
+                  } else {
+                    showToast("Failed to save color assets.", "error");
+                  }
+                } catch (err) {
+                  console.error(err);
+                  showToast("Error saving color assets.", "error");
+                } finally {
+                  setSavingSettings(false);
+                }
+              }}
+              disabled={savingSettings}
+              className="bg-cobalt text-white text-xs font-black uppercase px-5 py-3 tracking-wider hover:bg-ink transition-all shadow-sm rounded-none cursor-pointer"
+            >
+              {savingSettings ? 'Saving...' : 'Save Color Assets'}
+            </button>
+          </div>
+
+          {/* Add New Color Asset Form */}
+          <div className="bg-white border border-black/10 p-6 shadow-sm space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-wider text-cobalt flex items-center gap-2">
+              <Plus size={14} /> Add New Color Asset
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+              <div>
+                <label className="block text-[10px] font-black uppercase text-ink/40 tracking-wider mb-2">Color Name (e.g. Sage Green)</label>
+                <input
+                  type="text"
+                  value={newColorName}
+                  onChange={e => setNewColorName(e.target.value)}
+                  placeholder="e.g., Sage Green"
+                  className="w-full border border-black/10 p-3 text-xs outline-none focus:border-cobalt bg-white rounded-none text-ink font-sans"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black uppercase text-ink/40 tracking-wider mb-2">Color Hex Code</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={newColorHex}
+                    onChange={e => setNewColorHex(e.target.value)}
+                    className="w-10 h-10 border border-black/10 cursor-pointer p-1 bg-white rounded-none shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={newColorHex}
+                    onChange={e => setNewColorHex(e.target.value)}
+                    placeholder="#000000"
+                    className="w-full border border-black/10 p-3 text-xs outline-none focus:border-cobalt font-mono bg-white rounded-none uppercase text-ink"
+                  />
+                </div>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!newColorName.trim()) {
+                      alert('Please enter color name');
+                      return;
+                    }
+                    const currentAssets = homeSettings.colorAssets || defaultColorAssets;
+                    const exists = currentAssets.some(c => c.name.toLowerCase() === newColorName.trim().toLowerCase());
+                    if (exists) {
+                      alert('Color asset with this name already exists');
+                      return;
+                    }
+                    const updatedAssets = [...currentAssets, { name: newColorName.trim(), hex: newColorHex }];
+                    setHomeSettings({ ...homeSettings, colorAssets: updatedAssets });
+                    setNewColorName('');
+                    showToast(`Color asset '${newColorName.trim()}' added.`);
+                  }}
+                  className="w-full bg-ink text-white font-black text-xs uppercase py-3.5 px-4 hover:bg-cobalt transition-colors rounded-none cursor-pointer"
+                >
+                  + Register Asset
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Color Assets Grid Manager */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {(homeSettings.colorAssets || defaultColorAssets).map((asset, idx) => {
+              const usageCount = products.filter(p => {
+                if (!p.color) return false;
+                if (Array.isArray(p.color)) {
+                  return p.color.some(c => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
+                }
+                return p.color.toLowerCase().includes(asset.name.toLowerCase());
+              }).length;
+
+              return (
+                <div key={`${asset.name}-${idx}`} className="bg-white border border-black/10 p-4 shadow-sm flex flex-col justify-between group hover:border-cobalt transition-all rounded-none">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div 
+                        className="w-8 h-8 rounded-full border border-black/20 shadow-inner flex-shrink-0"
+                        style={{ backgroundColor: asset.hex || '#000000' }}
+                        title={asset.name}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Delete color asset '${asset.name}'?`)) {
+                            const current = homeSettings.colorAssets || defaultColorAssets;
+                            const updated = current.filter((_, i) => i !== idx);
+                            setHomeSettings({ ...homeSettings, colorAssets: updated });
+                            showToast(`Deleted '${asset.name}'`);
+                          }
+                        }}
+                        className="text-ink/20 hover:text-orange transition-colors p-1 cursor-pointer"
+                        title="Delete Asset"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={asset.name}
+                      onChange={e => {
+                        const val = e.target.value;
+                        const current = [...(homeSettings.colorAssets || defaultColorAssets)];
+                        current[idx] = { ...current[idx], name: val };
+                        setHomeSettings({ ...homeSettings, colorAssets: current });
+                      }}
+                      className="w-full font-black text-xs uppercase text-ink border-b border-transparent focus:border-cobalt outline-none bg-transparent mb-1"
+                    />
+                    
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={asset.hex || '#000000'}
+                        onChange={e => {
+                          const val = e.target.value;
+                          const current = [...(homeSettings.colorAssets || defaultColorAssets)];
+                          current[idx] = { ...current[idx], hex: val };
+                          setHomeSettings({ ...homeSettings, colorAssets: current });
+                        }}
+                        className="w-4 h-4 rounded-full border-none cursor-pointer bg-transparent p-0"
+                      />
+                      <input
+                        type="text"
+                        value={asset.hex || '#000000'}
+                        onChange={e => {
+                          const val = e.target.value;
+                          const current = [...(homeSettings.colorAssets || defaultColorAssets)];
+                          current[idx] = { ...current[idx], hex: val };
+                          setHomeSettings({ ...homeSettings, colorAssets: current });
+                        }}
+                        className="font-mono text-[10px] text-ink/50 uppercase border-b border-transparent focus:border-cobalt outline-none bg-transparent w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-black/5 flex items-center justify-between text-[9px]">
+                    <span className="font-mono text-ink/40">USAGE</span>
+                    <span className="font-bold text-cobalt bg-cobalt/10 px-2 py-0.5 rounded-full">
+                      {usageCount} {usageCount === 1 ? 'Product' : 'Products'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (activeTab === 'orders' || activeTab === 'users') ? (
         <div className="w-full min-w-0 max-w-full space-y-6 pb-20">
           {activeTab === 'orders' && (
             <div className="space-y-6 w-full min-w-0 max-w-full">
@@ -2311,6 +2527,48 @@ export default function Admin() {
                     </button>
                     {activeSections.options && (
                       <div className="p-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300 text-ink">
+                        {/* Global Assets Quick Picker */}
+                        <div className="bg-white p-4 border border-black/10 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-black uppercase text-cobalt tracking-wider flex items-center gap-1">
+                              ★ Global Color Assets Quick Selector
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => switchTab('colorAssets')}
+                              className="text-[9px] font-black uppercase text-ink/40 hover:text-cobalt underline"
+                            >
+                              Manage Assets Dashboard →
+                            </button>
+                          </div>
+                          <p className="text-[9px] text-ink/50 uppercase font-sans">Click any global asset below to instantly attach it to this product:</p>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {(homeSettings.colorAssets || defaultColorAssets).map((asset, aIdx) => {
+                              const isAlreadyAdded = colorOptions.some(c => c.name.toLowerCase() === asset.name.toLowerCase());
+                              return (
+                                <button
+                                  key={`${asset.name}-${aIdx}`}
+                                  type="button"
+                                  disabled={isAlreadyAdded}
+                                  onClick={() => handleSelectGlobalAsset(asset)}
+                                  className={`px-3 py-1.5 border text-[10px] font-bold uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer ${
+                                    isAlreadyAdded 
+                                      ? 'bg-black/5 text-ink/30 border-black/10 cursor-not-allowed opacity-50' 
+                                      : 'bg-white text-ink border-black/15 hover:border-cobalt hover:text-cobalt hover:bg-cobalt/5 shadow-xs'
+                                  }`}
+                                  title={isAlreadyAdded ? 'Already added' : `Add ${asset.name}`}
+                                >
+                                  <span 
+                                    className="w-3 h-3 rounded-full border border-black/20 flex-shrink-0" 
+                                    style={{ backgroundColor: asset.hex || '#000000' }} 
+                                  />
+                                  <span>{asset.name}</span>
+                                  {isAlreadyAdded && <span className="text-[8px] text-cobalt font-black">✓</span>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
                         {/* Add Color Form */}
                         <div className="bg-off-white/50 p-4 border border-black/5 space-y-4">
                           <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">Add Color Option</h4>
