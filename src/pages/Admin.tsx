@@ -660,12 +660,16 @@ export default function Admin() {
     setColorOptions(updated);
     setForm((prev: any) => ({ ...prev, color: updated }));
 
-    // Global Asset auto-registration
+    // Global Asset auto-registration and instant backend save
     const currentAssets = homeSettings.colorAssets || defaultColorAssets;
     const globalExists = currentAssets.some(c => c.name.toLowerCase() === colorNameTrimmed.toLowerCase());
     if (!globalExists) {
       const updatedAssets = [...currentAssets, newColorItem];
-      setHomeSettings(prev => ({ ...prev, colorAssets: updatedAssets }));
+      const nextSettings = { ...homeSettings, colorAssets: updatedAssets };
+      setHomeSettings(nextSettings);
+      updateHomeSettings(nextSettings)
+        .then(() => setOriginalHomeSettings(JSON.parse(JSON.stringify(nextSettings))))
+        .catch(console.error);
       showToast(`Added '${colorNameTrimmed}' to Product & Global Assets Library!`, "success");
     } else {
       showToast(`Added '${colorNameTrimmed}' to Product option!`, "success");
