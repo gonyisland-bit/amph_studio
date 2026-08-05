@@ -676,14 +676,19 @@ export default function Admin() {
 
   const handleSelectGlobalAsset = (asset: { name: string, hex: string }) => {
     const exists = colorOptions.some(c => c.name.toLowerCase() === asset.name.toLowerCase());
-    if (exists) {
-      showToast(`'${asset.name}' is already added to this product.`, "info");
-      return;
-    }
+    if (exists) return;
     const updated = [...colorOptions, asset];
     setColorOptions(updated);
     setForm((prev: any) => ({ ...prev, color: updated }));
-    showToast(`Added asset '${asset.name}' to product options!`, "success");
+  };
+
+  const handleReorderColorOption = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= colorOptions.length) return;
+    const updated = [...colorOptions];
+    [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+    setColorOptions(updated);
+    setForm((prev: any) => ({ ...prev, color: updated }));
   };
 
   const handleRemoveColorOption = (name: string) => {
@@ -2613,30 +2618,58 @@ export default function Admin() {
 
                         {/* Colors List */}
                         <div className="space-y-3">
-                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">Registered Color Options</h4>
+                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">
+                            Registered Color Options ({colorOptions.length})
+                          </h4>
                           {colorOptions.length === 0 ? (
                             <p className="text-[10px] uppercase tracking-wider text-ink/40">No colors added yet.</p>
                           ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                              {colorOptions.map((c) => (
-                                <div key={c.name} className="border border-black/5 p-3 flex items-center justify-between bg-off-white/30">
-                                  <div className="flex items-center gap-2 truncate">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                              {colorOptions.map((c, index) => (
+                                <div key={`${c.name}-${index}`} className="border border-black/10 p-3 flex items-center justify-between bg-white shadow-xs gap-2 rounded-none">
+                                  {/* Color swatch & details */}
+                                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                     <div 
-                                      className="w-3.5 h-3.5 rounded-full border border-black/15 flex-shrink-0" 
+                                      className="w-4 h-4 rounded-full border border-black/20 flex-shrink-0 shadow-inner" 
                                       style={{ backgroundColor: c.hex }} 
                                     />
-                                    <div className="truncate">
-                                      <span className="block text-[9px] font-bold uppercase text-ink truncate">{c.name}</span>
-                                      <span className="block text-[8px] font-mono text-ink/40 uppercase">{c.hex}</span>
+                                    <div className="min-w-0 flex-1">
+                                      <span className="block text-xs font-bold uppercase text-ink truncate" title={c.name}>{c.name}</span>
+                                      <span className="block text-[9px] font-mono text-ink/40 uppercase">{c.hex}</span>
                                     </div>
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveColorOption(c.name)}
-                                    className="text-[9px] font-black text-orange hover:underline uppercase ml-2 flex-shrink-0"
-                                  >
-                                    Delete
-                                  </button>
+
+                                  {/* Controls: Reorder Up/Down & Remove Mini Cross (✕) */}
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <div className="flex items-center gap-0.5 border-r border-black/10 pr-1.5">
+                                      <button 
+                                        type="button"
+                                        disabled={index === 0} 
+                                        onClick={() => handleReorderColorOption(index, 'up')}
+                                        className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5"
+                                        title="Move Up"
+                                      >
+                                        <ChevronUp size={14}/>
+                                      </button>
+                                      <button 
+                                        type="button"
+                                        disabled={index === colorOptions.length - 1} 
+                                        onClick={() => handleReorderColorOption(index, 'down')}
+                                        className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5"
+                                        title="Move Down"
+                                      >
+                                        <ChevronDown size={14}/>
+                                      </button>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveColorOption(c.name)}
+                                      className="text-ink/30 hover:text-orange transition-colors text-xs font-black px-1.5 py-0.5 cursor-pointer"
+                                      title="Remove Option"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
                                 </div>
                               ))}
                             </div>
