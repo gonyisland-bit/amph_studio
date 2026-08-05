@@ -2624,11 +2624,11 @@ export default function Admin() {
                           {colorOptions.length === 0 ? (
                             <p className="text-[10px] uppercase tracking-wider text-ink/40">No colors added yet.</p>
                           ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-2">
+                            <div className="flex flex-wrap gap-3 pt-2">
                               {colorOptions.map((c, index) => (
                                 <div 
                                   key={`${c.name}-${index}`} 
-                                  className="relative border border-black/15 p-2.5 pr-7 bg-white shadow-xs flex items-center gap-2 rounded-none group hover:border-cobalt transition-all"
+                                  className="relative border border-black/15 px-3.5 py-2 pr-7 bg-white shadow-xs flex items-center gap-2.5 rounded-none group hover:border-cobalt transition-all min-w-[140px]"
                                 >
                                   {/* Delete Mini Floating Badge Button (✕) */}
                                   <button
@@ -2646,12 +2646,12 @@ export default function Admin() {
                                     style={{ backgroundColor: c.hex }} 
                                   />
 
-                                  {/* Name & Hex Code (Full width, no truncation) */}
+                                  {/* Name & Hex Code (Always on one line, never breaking) */}
                                   <div className="min-w-0 flex-1">
-                                    <span className="block text-xs font-bold uppercase text-ink leading-tight break-words" title={c.name}>
+                                    <span className="block text-[11px] sm:text-xs font-bold uppercase text-ink whitespace-nowrap leading-none" title={c.name}>
                                       {c.name}
                                     </span>
-                                    <span className="block text-[8px] font-mono text-ink/40 uppercase mt-0.5">{c.hex}</span>
+                                    <span className="block text-[8px] font-mono text-ink/40 uppercase mt-1 leading-none">{c.hex}</span>
                                   </div>
 
                                   {/* Vertical Stack Reorder Buttons */}
