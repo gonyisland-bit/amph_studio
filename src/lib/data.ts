@@ -301,6 +301,15 @@ export interface PhilosophyCard {
   author: string;
 }
 
+export interface MagazineCard {
+  id: string;
+  title: string;
+  quote: string;
+  author: string;
+  insertAfterIndex: number;
+  image?: string;
+}
+
 export const defaultColorAssets: ColorOption[] = [
   { name: 'Oak', hex: '#d7c29d' },
   { name: 'Ash', hex: '#e5dec9' },
@@ -331,6 +340,7 @@ export interface HomeSettings {
   heroTransitionSpeed: number;
   marquee: string;
   colorAssets?: ColorOption[];
+  magazineCards?: MagazineCard[];
   intros: {
     collection: CategoryIntro;
     space: CategoryIntro;
@@ -357,6 +367,7 @@ export const defaultHomeSettings: HomeSettings = {
   journalOrder: [],
   marquee: 'Amplify Your Ordinary',
   colorAssets: defaultColorAssets,
+  magazineCards: [],
   intros: {
     collection: { title: '', description: '', image: '' },
     space: { title: '', description: '', image: '' },

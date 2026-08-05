@@ -187,36 +187,29 @@ export default function Home() {
           {(() => {
             const items: React.ReactNode[] = [];
             
-            featured.forEach((product, index) => {
-              // 1. Philosophy card before index 2
-              if (index === 2) {
-                const card1 = settings.philosophy1 || defaultHomeSettings.philosophy1 || { title: 'Design Philosophy', quote: 'Form follows function, but also emotion. Sensory simplicity for modern architectural spaces.', author: '// AMPH ORIGINALS' };
-                items.push(
-                  <div key="philosophy-1" className="border-b border-r border-black/10 aspect-[4/5] p-8 lg:p-12 bg-ink text-white flex flex-col justify-between reveal w-full h-full">
-                    <span className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-bold block mb-8">{card1.title}</span>
-                    <blockquote className="text-lg md:text-xl lg:text-2xl font-serif italic font-light leading-relaxed my-auto text-white/90 pr-4">
-                      "{card1.quote}"
-                    </blockquote>
-                    <span className="text-[9px] uppercase tracking-widest text-white/30 block mt-8">{card1.author}</span>
-                  </div>
-                );
-              }
+            const magazineCardsList = settings.magazineCards && settings.magazineCards.length > 0
+              ? settings.magazineCards
+              : [
+                  { id: 'mag-1', title: settings.philosophy1?.title || 'Design Philosophy', quote: settings.philosophy1?.quote || 'Form follows function, but also emotion. Sensory simplicity for modern architectural spaces.', author: settings.philosophy1?.author || '// AMPH ORIGINALS', insertAfterIndex: 2, image: '' },
+                  { id: 'mag-2', title: settings.philosophy2?.title || 'Materiality', quote: settings.philosophy2?.quote || 'Materials tell stories. Raw timber, hand-finished steel, sensory wool, and architectural tension.', author: settings.philosophy2?.author || '// HONEST CRAFT', insertAfterIndex: 4, image: '' }
+                ];
 
-              // 2. Standard grid card (uniform 1-column size, images fully filling grid borders with overlap text)
+            featured.forEach((product, index) => {
+              const productPosition = index + 1;
+
+              // Standard product grid card
               items.push(
                 <Link 
                   to={`/product/${product.id}`}
                   key={product.id}
                   className="group border-b border-r border-black/10 aspect-[4/5] relative overflow-hidden flex flex-col reveal"
                 >
-                  {/* Category tag overlap on top-left */}
                   <div className="absolute top-6 left-6 z-20 pointer-events-none">
                     <span className="text-[9px] uppercase font-bold tracking-widest text-white/90 px-3 py-1 bg-black/30 backdrop-blur-md rounded-full border border-white/10">
                       {product.category}
                     </span>
                   </div>
 
-                  {/* Product Name overlap on bottom-left */}
                   <div className="absolute bottom-6 left-6 z-20 pointer-events-none">
                     <h2 className="text-sm md:text-base font-bold font-sans tracking-tight leading-tight text-white drop-shadow-md group-hover:text-cobalt transition-colors">
                       {product.name}
@@ -224,7 +217,6 @@ export default function Home() {
                   </div>
                   
                   <div className="absolute inset-0 w-full h-full bg-silver/5 overflow-hidden rounded-none">
-                    {/* Primary Image with hover swap */}
                     <MediaRenderer 
                       src={product.images?.[0] || ''} 
                       alt={product.name} 
@@ -232,7 +224,6 @@ export default function Home() {
                       loading="lazy"
                       nopin="nopin"
                     />
-                    {/* Secondary Hover Image */}
                     {product.hoverImages?.[0] && (
                       <MediaRenderer 
                         src={product.hoverImages[0]} 
@@ -242,25 +233,39 @@ export default function Home() {
                         nopin="nopin"
                       />
                     )}
-                    {/* Subtle bottom gradient for text contrast without dark hover filter */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none" />
                   </div>
                 </Link>
               );
 
-              // 3. Philosophy card before index 4
-              if (index === 4) {
-                const card2 = settings.philosophy2 || defaultHomeSettings.philosophy2 || { title: 'Materiality', quote: 'Materials tell stories. Raw timber, hand-finished steel, sensory wool, and architectural tension.', author: '// HONEST CRAFT' };
+              // Check if any magazine card should be inserted AFTER this product
+              const matchedCards = magazineCardsList.filter(mag => Number(mag.insertAfterIndex) === productPosition);
+              matchedCards.forEach((card, mIdx) => {
+                const isEven = (index + mIdx) % 2 === 0;
                 items.push(
-                  <div key="philosophy-2" className="border-b border-r border-black/10 aspect-[4/5] p-8 lg:p-12 bg-silver/10 text-ink flex flex-col justify-between reveal w-full h-full">
-                    <span className="text-[9px] uppercase tracking-[0.3em] text-ink/40 font-bold block mb-8">{card2.title}</span>
-                    <blockquote className="text-lg md:text-xl lg:text-2xl font-serif italic font-light leading-relaxed my-auto text-ink/80 pr-4">
-                      "{card2.quote}"
-                    </blockquote>
-                    <span className="text-[9px] uppercase tracking-widest text-ink/30 block mt-8">{card2.author}</span>
+                  <div 
+                    key={`mag-card-${card.id || mIdx}-${index}`} 
+                    className={`border-b border-r border-black/10 aspect-[4/5] p-8 lg:p-12 ${isEven ? 'bg-ink text-white' : 'bg-silver/10 text-ink'} flex flex-col justify-between reveal w-full h-full relative overflow-hidden`}
+                  >
+                    {card.image && (
+                      <div className="absolute inset-0 w-full h-full opacity-20 z-0">
+                        <MediaRenderer src={card.image} alt={card.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="relative z-10 flex flex-col justify-between h-full">
+                      <span className={`text-[9px] uppercase tracking-[0.3em] font-bold block mb-8 ${isEven ? 'text-white/40' : 'text-ink/40'}`}>
+                        {card.title}
+                      </span>
+                      <blockquote className={`text-lg md:text-xl lg:text-2xl font-serif italic font-light leading-relaxed my-auto pr-4 ${isEven ? 'text-white/90' : 'text-ink/80'}`}>
+                        "{card.quote}"
+                      </blockquote>
+                      <span className={`text-[9px] uppercase tracking-widest block mt-8 ${isEven ? 'text-white/30' : 'text-ink/30'}`}>
+                        {card.author}
+                      </span>
+                    </div>
                   </div>
                 );
-              }
+              });
             });
 
             return items;

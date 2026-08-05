@@ -4,7 +4,7 @@ import {
   getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
-  HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets
+  HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets, MagazineCard
 } from "../lib/data";
 import { upload } from '@vercel/blob/client';
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock } from "lucide-react";
@@ -2157,11 +2157,11 @@ export default function Admin() {
                       <button type="button" onClick={() => {
                         const newSlides = [...(homeSettings.heroSlides || []), { id: Date.now().toString(), title: '', subtitle: '', image: '' }];
                         setHomeSettings({...homeSettings, heroSlides: newSlides});
-                      }} className="bg-ink text-white px-3 py-1 rounded-none text-[9px]">+ Add Slide</button>
+                      }} className="bg-ink text-white px-3.5 py-1.5 rounded-none text-[9px] font-black uppercase tracking-wider hover:bg-cobalt transition-colors cursor-pointer">+ Add Slide</button>
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {(homeSettings.heroSlides || []).map((slide, idx) => (
-                        <div key={slide.id} className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4 relative">
+                        <div key={slide.id} className="p-4 bg-white rounded-none border border-black/10 shadow-sm space-y-4 relative group">
                           <div className="absolute top-2 right-2 flex items-center gap-2">
                             <button 
                               type="button" 
@@ -2202,19 +2202,37 @@ export default function Admin() {
                             </button>
                           </div>
                           
-                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title (use \n for line breaks)</label>
-                            <textarea value={slide.title} onChange={e => {
-                              const newSlides = [...(homeSettings.heroSlides || [])];
-                              newSlides[idx] = { ...newSlides[idx], title: e.target.value };
-                              setHomeSettings({...homeSettings, heroSlides: newSlides});
-                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title (Auto-expanding text)</label>
+                            <textarea 
+                              value={slide.title} 
+                              onChange={e => {
+                                const newSlides = [...(homeSettings.heroSlides || [])];
+                                newSlides[idx] = { ...newSlides[idx], title: e.target.value };
+                                setHomeSettings({...homeSettings, heroSlides: newSlides});
+                              }} 
+                              onInput={(e: any) => {
+                                e.target.style.height = 'auto';
+                                e.target.style.height = `${e.target.scrollHeight}px`;
+                              }}
+                              className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt font-sans resize-none overflow-hidden" 
+                              rows={2} 
+                              placeholder="Slide title (use \n for breaks)"
+                            />
+                          </div>
                           
-                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Subtitle</label>
-                            <input value={slide.subtitle} onChange={e => {
-                              const newSlides = [...(homeSettings.heroSlides || [])];
-                              newSlides[idx] = { ...newSlides[idx], subtitle: e.target.value };
-                              setHomeSettings({...homeSettings, heroSlides: newSlides});
-                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Subtitle</label>
+                            <input 
+                              value={slide.subtitle} 
+                              onChange={e => {
+                                const newSlides = [...(homeSettings.heroSlides || [])];
+                                newSlides[idx] = { ...newSlides[idx], subtitle: e.target.value };
+                                setHomeSettings({...homeSettings, heroSlides: newSlides});
+                              }} 
+                              className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans" 
+                            />
+                          </div>
                           
                           <MediaUploadInput label="Slide Image/Video" value={slide.image} onChange={val => {
                             const newSlides = [...(homeSettings.heroSlides || [])];
@@ -2226,157 +2244,251 @@ export default function Admin() {
                     </div>
                   </div>
 
-                  {/* Category Intros */}
-                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
-                    <h3 className="font-bold text-xs uppercase text-cobalt mb-6">Category Banners</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {(['collection', 'space', 'journal'] as const).map(cat => (
-                        <div key={cat} className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4">
-                          <span className="text-[10px] font-black uppercase text-orange">{cat} Intro</span>
-                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
-                            <input value={homeSettings.intros?.[cat]?.title || ''} onChange={e => {
-                              const next = { ...(homeSettings.intros || {}) };
-                              next[cat] = { ...next[cat], title: e.target.value };
-                              setHomeSettings({...homeSettings, intros: next as any});
-                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
-                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
-                            <textarea value={homeSettings.intros?.[cat]?.description || ''} onChange={e => {
-                              const next = { ...(homeSettings.intros || {}) };
-                              next[cat] = { ...next[cat], description: e.target.value };
-                              setHomeSettings({...homeSettings, intros: next as any});
-                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
-                          <MediaUploadInput label="Banner Media" value={homeSettings.intros?.[cat]?.image || ''} onChange={val => {
-                            const next = { ...(homeSettings.intros || {}) };
-                            next[cat] = { ...next[cat], image: val };
-                            setHomeSettings({...homeSettings, intros: next as any});
-                          }} />
+                  {/* Featured Products (Selected Works Order & Selection Manager) */}
+                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm space-y-6">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-bold text-xs uppercase text-cobalt flex items-center gap-2">
+                        <span>Selected Works Order & Selection (홈 메인 추천 제품 순서 배치)</span>
+                      </h3>
+                      <span className="text-[10px] font-black text-cobalt bg-cobalt/10 px-2.5 py-1 rounded-full uppercase">
+                        {homeSettings.featuredProductIds.length} Selected
+                      </span>
+                    </div>
+
+                    {/* Active Order Manager (Chosen items with reordering buttons) */}
+                    {homeSettings.featuredProductIds.length > 0 && (
+                      <div className="space-y-3 bg-white p-4 border border-black/10 shadow-sm">
+                        <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">
+                          Current Display Order (순서 배치 목록)
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                          {homeSettings.featuredProductIds.map((id, index) => {
+                            const prod = products.find(p => p.id === id);
+                            if (!prod) return null;
+                            return (
+                              <div key={id} className="border border-black/10 p-3 flex items-center justify-between bg-off-white/40 shadow-xs gap-2">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                  <span className="w-5 h-5 rounded-full bg-cobalt text-white text-[9px] font-black flex items-center justify-center shrink-0">
+                                    {index + 1}
+                                  </span>
+                                  <img src={prod.images[0]} className="w-9 h-9 rounded-none object-cover mix-blend-multiply flex-shrink-0 border border-black/10" nopin="nopin" data-pin-no-hover="true" />
+                                  <div className="min-w-0 flex-1">
+                                    <span className="block text-xs font-bold uppercase text-ink truncate" title={prod.name}>{prod.name}</span>
+                                    <span className="block text-[9px] text-ink/40 uppercase">{prod.category}</span>
+                                  </div>
+                                </div>
+
+                                {/* Order buttons (Up/Down) & Remove */}
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button 
+                                    type="button"
+                                    disabled={index === 0} 
+                                    onClick={() => {
+                                      const next = [...homeSettings.featuredProductIds];
+                                      [next[index], next[index - 1]] = [next[index - 1], next[index]];
+                                      setHomeSettings({...homeSettings, featuredProductIds: next});
+                                    }}
+                                    className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5"
+                                    title="Move Up"
+                                  >
+                                    <ChevronUp size={14}/>
+                                  </button>
+                                  <button 
+                                    type="button"
+                                    disabled={index === homeSettings.featuredProductIds.length - 1} 
+                                    onClick={() => {
+                                      const next = [...homeSettings.featuredProductIds];
+                                      [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                                      setHomeSettings({...homeSettings, featuredProductIds: next});
+                                    }}
+                                    className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5"
+                                    title="Move Down"
+                                  >
+                                    <ChevronDown size={14}/>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const next = homeSettings.featuredProductIds.filter(fId => fId !== id);
+                                      setHomeSettings({...homeSettings, featuredProductIds: next});
+                                    }}
+                                    className="text-ink/30 hover:text-orange text-xs font-black p-1 ml-1 cursor-pointer"
+                                    title="Remove from Selected Works"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      ))}
+                      </div>
+                    )}
+
+                    {/* Checkbox grid for adding/removing items */}
+                    <div>
+                      <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider mb-3">
+                        Toggle Products to Add/Remove
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[350px] overflow-y-auto p-4 bg-white rounded-none border border-black/10 shadow-inner">
+                        {products.map(p => {
+                          const isSelected = homeSettings.featuredProductIds.includes(p.id);
+                          return (
+                            <label key={p.id} className={`flex items-center gap-3 p-3 rounded-none border transition-all cursor-pointer ${isSelected ? 'bg-cobalt/5 border-cobalt shadow-xs' : 'bg-transparent border-black/10 hover:border-black/30'}`}>
+                              <input 
+                                type="checkbox" 
+                                checked={isSelected} 
+                                onChange={(e) => {
+                                  const current = homeSettings.featuredProductIds || [];
+                                  const next = e.target.checked ? [...current, p.id] : current.filter(id => id !== p.id);
+                                  setHomeSettings({...homeSettings, featuredProductIds: next});
+                                }}
+                                className="w-4 h-4 rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                              />
+                              <div className="flex items-center gap-2.5 overflow-hidden">
+                                <img src={p.images[0]} className="w-8 h-8 rounded-none object-cover mix-blend-multiply flex-shrink-0 border border-black/5" nopin="nopin" data-pin-no-hover="true" />
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-[10px] font-black uppercase truncate">{p.name}</span>
+                                  <span className="text-[9px] text-ink/40 uppercase truncate">{p.category}</span>
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
+                  {/* Unlimited Magazine Cards Manager */}
+                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-xs uppercase text-cobalt flex items-center gap-2">
+                          <span>Magazine Cards (Home Grid Interleaving)</span>
+                        </h3>
+                        <p className="text-[10px] text-ink/50 mt-1 font-sans">
+                          매거진 카드를 제한 없이 추가하고, Selected Works 제품 몇 번째 뒤에 끼워 노출할지 배치 위치를 자유롭게 지정합니다.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentCards = homeSettings.magazineCards || [];
+                          const newCard: MagazineCard = {
+                            id: `mag-${Date.now()}`,
+                            title: 'Design Philosophy',
+                            quote: 'Good design is as little design as possible.',
+                            author: 'AMPH STUDIO',
+                            insertAfterIndex: (currentCards.length + 1) * 2,
+                            image: ''
+                          };
+                          setHomeSettings({ ...homeSettings, magazineCards: [...currentCards, newCard] });
+                        }}
+                        className="bg-ink text-white px-4 py-2 font-black uppercase text-[10px] tracking-wider hover:bg-cobalt transition-colors cursor-pointer rounded-none"
+                      >
+                        + Add Magazine Card
+                      </button>
+                    </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {(homeSettings.magazineCards || []).map((card, idx) => (
+                        <div key={card.id || idx} className="p-5 bg-white rounded-none border border-black/10 shadow-sm space-y-4 relative group">
+                          <div className="flex items-center justify-between border-b border-black/5 pb-2">
+                            <span className="text-[10px] font-black uppercase text-orange">
+                              Magazine Card #{idx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = homeSettings.magazineCards || [];
+                                const updated = current.filter((_, i) => i !== idx);
+                                setHomeSettings({ ...homeSettings, magazineCards: updated });
+                              }}
+                              className="text-ink/20 hover:text-orange transition-colors p-1 cursor-pointer"
+                              title="Delete Card"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
 
-                  {/* Featured Products (Selected Works) */}
-                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
-                    <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center justify-between">
-                      <span>Selected Works (Home Featured)</span>
-                      <span className="text-[10px] font-bold text-ink/30 uppercase">{homeSettings.featuredProductIds.length} Selected</span>
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[500px] overflow-y-auto p-4 bg-white rounded-none border border-black/5 shadow-inner">
-                      {products.map(p => (
-                        <label key={p.id} className={`flex items-center gap-3 p-3 rounded-none border transition-all cursor-pointer ${homeSettings.featuredProductIds.includes(p.id) ? 'bg-cobalt/5 border-cobalt shadow-sm' : 'bg-transparent border-black/5 hover:border-black/20'}`}>
-                          <input 
-                            type="checkbox" 
-                            checked={homeSettings.featuredProductIds.includes(p.id)} 
-                            onChange={(e) => {
-                              const current = homeSettings.featuredProductIds || [];
-                              const next = e.target.checked ? [...current, p.id] : current.filter(id => id !== p.id);
-                              setHomeSettings({...homeSettings, featuredProductIds: next});
-                            }}
-                            className="w-4 h-4 rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                          />
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <img src={p.images[0]} className="w-8 h-8 rounded-none object-cover mix-blend-multiply flex-shrink-0" nopin="nopin" data-pin-no-hover="true" />
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-[10px] font-black uppercase truncate">{p.name}</span>
-                              <span className="text-[9px] text-ink/30 uppercase truncate">{p.category}</span>
+                          {/* Insertion Position Setting */}
+                          <div className="bg-cobalt/5 p-3 border border-cobalt/20 space-y-1">
+                            <label className="block text-[10px] font-black uppercase text-cobalt">
+                              Insert Position (배치 위치 지정)
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] uppercase text-ink/60 font-bold">Selected Work 제품</span>
+                              <input
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={card.insertAfterIndex || (idx + 1) * 2}
+                                onChange={e => {
+                                  const val = Number(e.target.value);
+                                  const current = [...(homeSettings.magazineCards || [])];
+                                  current[idx] = { ...current[idx], insertAfterIndex: val };
+                                  setHomeSettings({ ...homeSettings, magazineCards: current });
+                                }}
+                                className="w-16 border border-black/20 p-1.5 text-xs text-center font-bold bg-white outline-none focus:border-cobalt rounded-none text-ink"
+                              />
+                              <span className="text-[9px] uppercase text-ink/60 font-bold">번째 뒤에 노출</span>
                             </div>
                           </div>
-                        </label>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
+                            <input
+                              value={card.title || ''}
+                              onChange={e => {
+                                const current = [...(homeSettings.magazineCards || [])];
+                                current[idx] = { ...current[idx], title: e.target.value };
+                                setHomeSettings({ ...homeSettings, magazineCards: current });
+                              }}
+                              className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans text-ink"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Quote / Content</label>
+                            <textarea
+                              value={card.quote || ''}
+                              onChange={e => {
+                                const current = [...(homeSettings.magazineCards || [])];
+                                current[idx] = { ...current[idx], quote: e.target.value };
+                                setHomeSettings({ ...homeSettings, magazineCards: current });
+                              }}
+                              onInput={(e: any) => {
+                                e.target.style.height = 'auto';
+                                e.target.style.height = `${e.target.scrollHeight}px`;
+                              }}
+                              className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans resize-none overflow-hidden text-ink"
+                              rows={3}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Author / Subtitle</label>
+                            <input
+                              value={card.author || ''}
+                              onChange={e => {
+                                const current = [...(homeSettings.magazineCards || [])];
+                                current[idx] = { ...current[idx], author: e.target.value };
+                                setHomeSettings({ ...homeSettings, magazineCards: current });
+                              }}
+                              className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans text-ink"
+                            />
+                          </div>
+
+                          <MediaUploadInput
+                            label="Optional Cover Media Image"
+                            value={card.image || ''}
+                            onChange={val => {
+                              const current = [...(homeSettings.magazineCards || [])];
+                              current[idx] = { ...current[idx], image: val };
+                              setHomeSettings({ ...homeSettings, magazineCards: current });
+                            }}
+                          />
+                        </div>
                       ))}
-                    </div>
-                  </div>
-
-                  {/* Magazine Grid Cards */}
-                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm space-y-6">
-                    <h3 className="font-bold text-xs uppercase text-cobalt flex items-center justify-between">
-                      <span>Magazine Cards (Home Grid)</span>
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Philosophy 1 Card */}
-                      <div className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4">
-                        <span className="text-[10px] font-black uppercase text-orange">Magazine Card 1 (Design Philosophy)</span>
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
-                          <input 
-                            value={homeSettings.philosophy1?.title || ''} 
-                            onChange={e => {
-                              const phil1 = { ...(homeSettings.philosophy1 || defaultHomeSettings.philosophy1 || { title: '', quote: '', author: '' }) };
-                              phil1.title = e.target.value;
-                              setHomeSettings({ ...homeSettings, philosophy1: phil1 });
-                            }} 
-                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Quote</label>
-                          <textarea 
-                            value={homeSettings.philosophy1?.quote || ''} 
-                            onChange={e => {
-                              const phil1 = { ...(homeSettings.philosophy1 || defaultHomeSettings.philosophy1 || { title: '', quote: '', author: '' }) };
-                              phil1.quote = e.target.value;
-                              setHomeSettings({ ...homeSettings, philosophy1: phil1 });
-                            }} 
-                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
-                            rows={3}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Author / Subtitle</label>
-                          <input 
-                            value={homeSettings.philosophy1?.author || ''} 
-                            onChange={e => {
-                              const phil1 = { ...(homeSettings.philosophy1 || defaultHomeSettings.philosophy1 || { title: '', quote: '', author: '' }) };
-                              phil1.author = e.target.value;
-                              setHomeSettings({ ...homeSettings, philosophy1: phil1 });
-                            }} 
-                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
-                          />
-                        </div>
-                      </div>
-
-                      {/* Philosophy 2 Card */}
-                      <div className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4">
-                        <span className="text-[10px] font-black uppercase text-orange">Magazine Card 2 (Materiality)</span>
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
-                          <input 
-                            value={homeSettings.philosophy2?.title || ''} 
-                            onChange={e => {
-                              const phil2 = { ...(homeSettings.philosophy2 || defaultHomeSettings.philosophy2 || { title: '', quote: '', author: '' }) };
-                              phil2.title = e.target.value;
-                              setHomeSettings({ ...homeSettings, philosophy2: phil2 });
-                            }} 
-                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Quote</label>
-                          <textarea 
-                            value={homeSettings.philosophy2?.quote || ''} 
-                            onChange={e => {
-                              const phil2 = { ...(homeSettings.philosophy2 || defaultHomeSettings.philosophy2 || { title: '', quote: '', author: '' }) };
-                              phil2.quote = e.target.value;
-                              setHomeSettings({ ...homeSettings, philosophy2: phil2 });
-                            }} 
-                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
-                            rows={3}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Author / Subtitle</label>
-                          <input 
-                            value={homeSettings.philosophy2?.author || ''} 
-                            onChange={e => {
-                              const phil2 = { ...(homeSettings.philosophy2 || defaultHomeSettings.philosophy2 || { title: '', quote: '', author: '' }) };
-                              phil2.author = e.target.value;
-                              setHomeSettings({ ...homeSettings, philosophy2: phil2 });
-                            }} 
-                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white" 
-                          />
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
