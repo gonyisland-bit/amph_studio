@@ -2624,50 +2624,55 @@ export default function Admin() {
                           {colorOptions.length === 0 ? (
                             <p className="text-[10px] uppercase tracking-wider text-ink/40">No colors added yet.</p>
                           ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-2">
                               {colorOptions.map((c, index) => (
-                                <div key={`${c.name}-${index}`} className="border border-black/10 p-3 flex items-center justify-between bg-white shadow-xs gap-2 rounded-none">
-                                  {/* Color swatch & details */}
-                                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                    <div 
-                                      className="w-4 h-4 rounded-full border border-black/20 flex-shrink-0 shadow-inner" 
-                                      style={{ backgroundColor: c.hex }} 
-                                    />
-                                    <div className="min-w-0 flex-1">
-                                      <span className="block text-xs font-bold uppercase text-ink truncate" title={c.name}>{c.name}</span>
-                                      <span className="block text-[9px] font-mono text-ink/40 uppercase">{c.hex}</span>
-                                    </div>
+                                <div 
+                                  key={`${c.name}-${index}`} 
+                                  className="relative border border-black/15 p-2.5 pr-7 bg-white shadow-xs flex items-center gap-2 rounded-none group hover:border-cobalt transition-all"
+                                >
+                                  {/* Delete Mini Floating Badge Button (✕) */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveColorOption(c.name)}
+                                    className="absolute -top-2 -right-2 bg-white hover:bg-orange hover:text-white text-ink/40 border border-black/20 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm transition-all cursor-pointer z-10"
+                                    title="Remove Option"
+                                  >
+                                    ✕
+                                  </button>
+
+                                  {/* Color swatch */}
+                                  <div 
+                                    className="w-4 h-4 rounded-full border border-black/20 shrink-0 shadow-inner" 
+                                    style={{ backgroundColor: c.hex }} 
+                                  />
+
+                                  {/* Name & Hex Code (Full width, no truncation) */}
+                                  <div className="min-w-0 flex-1">
+                                    <span className="block text-xs font-bold uppercase text-ink leading-tight break-words" title={c.name}>
+                                      {c.name}
+                                    </span>
+                                    <span className="block text-[8px] font-mono text-ink/40 uppercase mt-0.5">{c.hex}</span>
                                   </div>
 
-                                  {/* Controls: Reorder Up/Down & Remove Mini Cross (✕) */}
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <div className="flex items-center gap-0.5 border-r border-black/10 pr-1.5">
-                                      <button 
-                                        type="button"
-                                        disabled={index === 0} 
-                                        onClick={() => handleReorderColorOption(index, 'up')}
-                                        className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5"
-                                        title="Move Up"
-                                      >
-                                        <ChevronUp size={14}/>
-                                      </button>
-                                      <button 
-                                        type="button"
-                                        disabled={index === colorOptions.length - 1} 
-                                        onClick={() => handleReorderColorOption(index, 'down')}
-                                        className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5"
-                                        title="Move Down"
-                                      >
-                                        <ChevronDown size={14}/>
-                                      </button>
-                                    </div>
-                                    <button
+                                  {/* Vertical Stack Reorder Buttons */}
+                                  <div className="absolute right-1 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center">
+                                    <button 
                                       type="button"
-                                      onClick={() => handleRemoveColorOption(c.name)}
-                                      className="text-ink/30 hover:text-orange transition-colors text-xs font-black px-1.5 py-0.5 cursor-pointer"
-                                      title="Remove Option"
+                                      disabled={index === 0} 
+                                      onClick={() => handleReorderColorOption(index, 'up')}
+                                      className="text-ink/30 hover:text-cobalt disabled:opacity-0 cursor-pointer p-0.5 leading-none"
+                                      title="Move Left/Up"
                                     >
-                                      ✕
+                                      <ChevronUp size={12}/>
+                                    </button>
+                                    <button 
+                                      type="button"
+                                      disabled={index === colorOptions.length - 1} 
+                                      onClick={() => handleReorderColorOption(index, 'down')}
+                                      className="text-ink/30 hover:text-cobalt disabled:opacity-0 cursor-pointer p-0.5 leading-none"
+                                      title="Move Right/Down"
+                                    >
+                                      <ChevronDown size={12}/>
                                     </button>
                                   </div>
                                 </div>
