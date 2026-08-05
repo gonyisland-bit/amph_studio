@@ -57,30 +57,62 @@ const EditorInput = ({ label, required, value, onChange, placeholder, type = "te
   );
 };
 
-const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onChange: (val: string) => void, label?: string }) => {
+const MediaUploadInput = ({ 
+  value = '', 
+  onChange, 
+  onBatchUpload,
+  label 
+}: { 
+  value?: string, 
+  onChange: (val: string) => void, 
+  onBatchUpload?: (urls: string[]) => void,
+  label?: string 
+}) => {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const inputIdRef = useRef(`file-input-${Math.random().toString(36).substring(2, 9)}`);
 
-  const handleUpload = async (file: File) => {
+  const handleUploadFiles = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
     setUploading(true);
     try {
-      const uniqueName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-      const newBlob = await upload(uniqueName, file, {
-        access: 'public',
-        handleUploadUrl: '/api/upload',
+      const uploadPromises = fileArray.map(async (file, idx) => {
+        const uniqueName = `${Date.now()}-${idx}-${file.name.replace(/\s+/g, '_')}`;
+        const newBlob = await upload(uniqueName, file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+        });
+        return newBlob.url;
       });
-      onChange(newBlob.url);
+
+      const urls = await Promise.all(uploadPromises);
+      if (urls.length === 1) {
+        onChange(urls[0]);
+      } else if (urls.length > 1) {
+        if (onBatchUpload) {
+          onBatchUpload(urls);
+        } else {
+          onChange(urls[0]);
+        }
+      }
     } catch (err) {
       console.error(err);
-      alert('Error uploading file');
+      alert('Error uploading files');
     } finally {
       setUploading(false);
     }
   };
 
   const onDrag = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.type === "dragenter" || e.type === "dragover") setDragActive(true); else if (e.type === "dragleave") setDragActive(false); };
-  const onDrop = async (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) await handleUpload(e.dataTransfer.files[0]); };
+  const onDrop = async (e: React.DragEvent) => { 
+    e.preventDefault(); 
+    e.stopPropagation(); 
+    setDragActive(false); 
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await handleUploadFiles(e.dataTransfer.files); 
+    }
+  };
 
   const isVideo = (value || '').toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || (value || '').includes('video');
 
@@ -108,10 +140,11 @@ const MediaUploadInput = ({ value = '', onChange, label }: { value?: string, onC
           id={inputIdRef.current} 
           type="file" 
           accept="image/*,video/*" 
+          multiple
           className="hidden" 
           onChange={async (e) => { 
-            if (e.target.files?.[0]) {
-              await handleUpload(e.target.files[0]);
+            if (e.target.files && e.target.files.length > 0) {
+              await handleUploadFiles(e.target.files);
               e.target.value = '';
             }
           }} 
@@ -2383,14 +2416,68 @@ export default function Admin() {
                                       label={i === 0 ? "Primary" : `Image ${i+1}`} 
                                       value={img} 
                                       onChange={val => { 
-                                        let newImg = [...displayImages]; 
-                                        newImg[i] = val; 
-                                        if (val === '') {
-                                          newImg = newImg.filter((_, idx) => idx !== i);
-                                        }
-                                        const compacted = newImg.filter(Boolean);
-                                        setForm({...form, images: compacted}); 
+                                        setForm((prev: any) => {
+                                          const currentImages = (prev.images || []).filter(Boolean);
+                                          const oldUrl = currentImages[i] || '';
+                                          let newImages = [...currentImages];
+                                          if (val === '') {
+                                            newImages = newImages.filter((_, idx) => idx !== i);
+                                          } else {
+                                            if (i < newImages.length) {
+                                              newImages[i] = val;
+                                            } else {
+                                              newImages.push(val);
+                                            }
+                                          }
+                                          const compacted = newImages.filter(Boolean);
+
+                                          let nextHover = prev.hoverImages || [];
+                                          let nextPortrait = prev.portraitImages || [];
+                                          if (oldUrl && val && oldUrl !== val) {
+                                            nextHover = nextHover.map((url: string) => url === oldUrl ? val : url);
+                                            nextPortrait = nextPortrait.map((url: string) => url === oldUrl ? val : url);
+                                          }
+
+                                          return {
+                                            ...prev,
+                                            images: compacted,
+                                            hoverImages: nextHover,
+                                            portraitImages: nextPortrait
+                                          };
+                                        }); 
                                       }} 
+                                      onBatchUpload={urls => {
+                                        setForm((prev: any) => {
+                                          const currentImages = (prev.images || []).filter(Boolean);
+                                          const oldUrl = currentImages[i] || '';
+                                          let newImages = [...currentImages];
+                                          
+                                          const firstUrl = urls[0];
+                                          if (i < newImages.length) {
+                                            newImages[i] = firstUrl;
+                                          } else {
+                                            newImages.push(firstUrl);
+                                          }
+
+                                          const extraUrls = urls.slice(1);
+                                          newImages = [...newImages, ...extraUrls];
+                                          const compacted = newImages.filter(Boolean);
+
+                                          let nextHover = prev.hoverImages || [];
+                                          let nextPortrait = prev.portraitImages || [];
+                                          if (oldUrl && firstUrl && oldUrl !== firstUrl) {
+                                            nextHover = nextHover.map((url: string) => url === oldUrl ? firstUrl : url);
+                                            nextPortrait = nextPortrait.map((url: string) => url === oldUrl ? firstUrl : url);
+                                          }
+
+                                          return {
+                                            ...prev,
+                                            images: compacted,
+                                            hoverImages: nextHover,
+                                            portraitImages: nextPortrait
+                                          };
+                                        });
+                                      }}
                                     />
                                     {img && (
                                       <div className="mt-2 flex flex-col gap-2 border-t border-black/5 pt-2">
