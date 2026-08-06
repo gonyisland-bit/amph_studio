@@ -3560,13 +3560,13 @@ export default function Admin() {
                           onClick={() => handleEdit(p)}
                           className={`flex flex-col md:table-row p-3.5 md:p-0 border-b border-black/10 md:border-b-0 hover:bg-cobalt/5 group transition-all duration-200 cursor-pointer ${selectedIds.includes(p.id) ? 'bg-cobalt/5' : ''} ${editingId === p.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
                         >
-                          <td className="p-1 md:p-4 flex items-center justify-between md:table-cell" onClick={e => e.stopPropagation()}>
+                          <td className="p-1 md:p-4 flex items-center justify-between md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center gap-2">
                               <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => toggleSelect(p.id)} />
                               <span className="text-[10px] font-bold text-ink/40 md:hidden uppercase">Select Item</span>
                             </div>
                           </td>
-                          <td className="py-1 md:py-4 block md:table-cell" onClick={e => e.stopPropagation()}>
+                          <td className="py-1 md:py-4 block md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                             {sortBy === 'user' ? (
                               <div className="flex flex-row md:flex-col items-center gap-1 md:gap-0.5">
                                 <button onClick={() => handleReorder('collection', p.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
@@ -3587,7 +3587,7 @@ export default function Admin() {
                                 return <img src={mainImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
                               })()}
                             </td>
-                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1">
+                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1 overflow-hidden">
                               <div className="flex items-center gap-2 min-w-0">
                                 <button 
                                   type="button"
@@ -3601,16 +3601,16 @@ export default function Admin() {
                                   />
                                 </button>
                                 <div className="min-w-0 flex-1 overflow-hidden">
-                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm">{p.name}</div>
-                                  {p.subTitle && <div className="text-[10px] text-ink/40 truncate">{p.subTitle}</div>}
+                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm max-w-full" title={p.name}>{p.name}</div>
+                                  {p.subTitle && <div className="text-[10px] text-ink/40 truncate max-w-[150px] sm:max-w-[220px] md:max-w-[260px] block" title={p.subTitle}>{p.subTitle}</div>}
                                 </div>
                               </div>
                             </td>
                           </div>
-                          <td className="py-1 md:py-4 block md:table-cell">
+                          <td className="py-1 md:py-4 block md:table-cell shrink-0">
                             <span className="caption-nano text-orange px-2.5 py-0.5 border border-orange/30 rounded-full font-bold inline-block">{p.category}</span>
                           </td>
-                          <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
+                          <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
                             <div className="flex justify-start md:justify-end gap-3 items-center">
                               <button 
                                 type="button"
@@ -3649,13 +3649,13 @@ export default function Admin() {
                         onClick={() => handleEdit(s)}
                         className={`flex flex-col md:table-row p-3.5 md:p-0 border-b border-black/10 md:border-b-0 hover:bg-cobalt/5 group transition-all duration-200 cursor-pointer ${selectedIds.includes(s.id) ? 'bg-cobalt/5' : ''} ${editingId === s.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
                       >
-                        <td className="p-1 md:p-4 flex items-center justify-between md:table-cell" onClick={e => e.stopPropagation()}>
+                        <td className="p-1 md:p-4 flex items-center justify-between md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
                             <span className="text-[10px] font-bold text-ink/40 md:hidden uppercase">Select Item</span>
                           </div>
                         </td>
-                        <td className="py-1 md:py-4 block md:table-cell" onClick={e => e.stopPropagation()}>
+                        <td className="py-1 md:py-4 block md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                           <div className="flex flex-row md:flex-col items-center gap-1 md:gap-0.5">
                             <button onClick={() => handleReorder('space', s.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
                             <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
@@ -3670,7 +3670,7 @@ export default function Admin() {
                                 <img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />
                               )}
                             </td>
-                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1">
+                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1 overflow-hidden">
                               <div className="flex items-center gap-2 min-w-0">
                                 <button 
                                   type="button"
@@ -3688,20 +3688,20 @@ export default function Admin() {
                                   />
                                 </button>
                                 <div className="min-w-0 flex-1 overflow-hidden">
-                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm">{s.title}</div>
-                                  <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{s.description}</div>
+                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm max-w-full" title={s.title}>{s.title}</div>
+                                  <div className="text-[10px] text-ink/50 truncate max-w-[150px] sm:max-w-[220px] md:max-w-[260px] block" title={s.description}>{s.description}</div>
                                 </div>
                               </div>
                             </td>
                           </div>
-                        <td className="py-1 md:py-4 block md:table-cell">
+                        <td className="py-1 md:py-4 block md:table-cell shrink-0">
                           <span className="text-[10px] font-sans font-bold text-ink/40">
                             {s.appliedProductIds && s.appliedProductIds.length > 0 
                               ? `${s.appliedProductIds.length} Products` 
                               : 'None'}
                           </span>
                         </td>
-                        <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
+                        <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
                           <div className="flex justify-start md:justify-end gap-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity items-center">
                             <Link to={`/space/${s.id}`} target="_blank" className="text-ink/20 hover:text-cobalt"><ExternalLink size={14} /></Link>
                             <button onClick={() => handleEdit(s)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer">Edit</button>
@@ -3724,13 +3724,13 @@ export default function Admin() {
                         onClick={() => handleEdit(j)}
                         className={`flex flex-col md:table-row p-3.5 md:p-0 border-b border-black/10 md:border-b-0 hover:bg-cobalt/5 group transition-all duration-200 cursor-pointer ${selectedIds.includes(j.id) ? 'bg-cobalt/5' : ''} ${editingId === j.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
                       >
-                        <td className="p-1 md:p-4 flex items-center justify-between md:table-cell" onClick={e => e.stopPropagation()}>
+                        <td className="p-1 md:p-4 flex items-center justify-between md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input type="checkbox" checked={selectedIds.includes(j.id)} onChange={() => toggleSelect(j.id)} />
                             <span className="text-[10px] font-bold text-ink/40 md:hidden uppercase">Select Item</span>
                           </div>
                         </td>
-                        <td className="py-1 md:py-4 block md:table-cell" onClick={e => e.stopPropagation()}>
+                        <td className="py-1 md:py-4 block md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                           <div className="flex flex-row md:flex-col items-center gap-1 md:gap-0.5">
                             <button onClick={() => handleReorder('journal', j.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
                             <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
@@ -3745,7 +3745,7 @@ export default function Admin() {
                                 <img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />
                               )}
                             </td>
-                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1">
+                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1 overflow-hidden">
                               <div className="flex items-center gap-2 min-w-0">
                                 <button 
                                   type="button"
@@ -3763,13 +3763,13 @@ export default function Admin() {
                                   />
                                 </button>
                                 <div className="min-w-0 flex-1 overflow-hidden">
-                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm">{j.title}</div>
-                                  <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{j.description}</div>
+                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm max-w-full" title={j.title}>{j.title}</div>
+                                  <div className="text-[10px] text-ink/50 truncate max-w-[150px] sm:max-w-[220px] md:max-w-[260px] block" title={j.description}>{j.description}</div>
                                 </div>
                               </div>
                             </td>
                           </div>
-                        <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
+                        <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
                           <div className="flex justify-start md:justify-end gap-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity items-center">
                             <Link to={`/journal/${j.id}`} target="_blank" className="text-ink/20 hover:text-cobalt"><ExternalLink size={14} /></Link>
                             <button onClick={() => handleEdit(j)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer">Edit</button>

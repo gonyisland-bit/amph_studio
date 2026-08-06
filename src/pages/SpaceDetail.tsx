@@ -158,7 +158,7 @@ export default function SpaceDetail() {
           setLightboxIndex(idx !== -1 ? idx : 0);
           setZoomScale(1);
         }}
-        className="relative w-full h-[85vh] md:h-[95vh] bg-black overflow-hidden cursor-zoom-in group"
+        className="relative w-full h-[50vh] min-h-[350px] sm:h-[70vh] md:h-[95vh] bg-black overflow-hidden cursor-zoom-in group"
       >
         <MediaRenderer 
           src={displayImages[0] || space.image} 
@@ -171,7 +171,7 @@ export default function SpaceDetail() {
         
         <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-24 pointer-events-none">
           <div className="max-w-7xl mx-auto w-full">
-            <Link to="/space" className="text-[10px] font-black uppercase tracking-[0.3em] mb-6 block text-white/60 hover:text-white transition-colors pointer-events-auto w-fit">
+            <Link to="/space" className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 md:mb-6 block text-white/60 hover:text-white transition-colors pointer-events-auto w-fit">
               <span className="inline-block mr-2">←</span> Back to Spaces
             </Link>
             <h1 className="text-[8.5vw] md:text-[7vw] font-medium uppercase tracking-tighter leading-[0.85] text-white mix-blend-lighten">
@@ -182,16 +182,16 @@ export default function SpaceDetail() {
       </div>
 
       {/* Intro Text Container */}
-      <div className="w-full px-4 md:px-8 lg:px-12 pt-12 md:pt-16 pb-8">
-        <div className="max-w-4xl mb-12">
-          <p className="text-xl md:text-3xl leading-relaxed font-serif italic text-ink/80 whitespace-pre-wrap">{space.description}</p>
+      <div className="w-full px-4 md:px-8 lg:px-12 pt-6 md:pt-16 pb-4 md:pb-8">
+        <div className="max-w-4xl mb-6 md:mb-12">
+          <p className="text-lg sm:text-xl md:text-3xl leading-relaxed font-serif italic text-ink/80 whitespace-pre-wrap">{space.description}</p>
         </div>
       </div>
 
       {/* Content Blocks (Editorial Section - Full-Bleed 2-Column Grid) */}
       {space.contentBlocks && space.contentBlocks.length > 0 && (
-        <div className="w-full px-4 md:px-8 lg:px-12 py-12 border-t border-black/10">
-          <div className="flex justify-between items-center mb-8 border-b border-black/10 pb-4">
+        <div className="w-full px-4 md:px-8 lg:px-12 py-6 md:py-12 border-t border-black/10">
+          <div className="flex justify-between items-center mb-6 md:mb-8 border-b border-black/10 pb-4">
             <h3 className="text-xs uppercase font-black tracking-[0.2em] text-cobalt font-mono">
               EDITORIAL STORY
             </h3>
@@ -213,7 +213,7 @@ export default function SpaceDetail() {
                         setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
                         setZoomScale(1);
                       }}
-                      className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none cursor-zoom-in"
+                      className="w-full aspect-[4/3] bg-transparent overflow-hidden border border-black/5 relative rounded-none cursor-zoom-in"
                     >
                       <MediaRenderer 
                         src={imageUrl} 

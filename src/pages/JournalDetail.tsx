@@ -153,7 +153,7 @@ export default function JournalDetail() {
           setLightboxIndex(idx !== -1 ? idx : 0);
           setZoomScale(1);
         }}
-        className="relative w-full h-[85vh] md:h-[95vh] bg-black overflow-hidden cursor-zoom-in group"
+        className="relative w-full h-[50vh] min-h-[350px] sm:h-[70vh] md:h-[95vh] bg-black overflow-hidden cursor-zoom-in group"
       >
         <MediaRenderer 
           src={article.image} 
@@ -166,7 +166,7 @@ export default function JournalDetail() {
         
         <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-24 pointer-events-none">
           <div className="max-w-7xl mx-auto w-full">
-            <Link to="/journal" className="text-[10px] font-black uppercase tracking-[0.3em] mb-6 block text-white/60 hover:text-white transition-colors pointer-events-auto w-fit">
+            <Link to="/journal" className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 md:mb-6 block text-white/60 hover:text-white transition-colors pointer-events-auto w-fit">
               <span className="inline-block mr-2">←</span> Back to Journal
             </Link>
             <h1 className="text-[8.5vw] md:text-[7vw] font-medium uppercase tracking-tighter leading-[0.85] text-white mix-blend-lighten">
@@ -178,15 +178,15 @@ export default function JournalDetail() {
 
       {/* Intro Text Container */}
       {article.description && (
-        <div className="w-full px-4 md:px-8 lg:px-12 pt-12 md:pt-16 pb-4">
-          <div className="max-w-4xl mb-8">
-            <p className="text-xl md:text-3xl leading-relaxed font-serif italic text-ink/80 whitespace-pre-wrap">{article.description}</p>
+        <div className="w-full px-4 md:px-8 lg:px-12 pt-6 md:pt-16 pb-4 md:pb-8">
+          <div className="max-w-4xl mb-4 md:mb-8">
+            <p className="text-lg sm:text-xl md:text-3xl leading-relaxed font-serif italic text-ink/80 whitespace-pre-wrap">{article.description}</p>
           </div>
         </div>
       )}
 
       {/* Article Body Elements (Editorial 2-Column Grid Layout) */}
-      <div className="w-full px-4 md:px-8 lg:px-12 py-12">
+      <div className="w-full px-4 md:px-8 lg:px-12 py-6 md:py-12">
         {!article.contentBlocks || article.contentBlocks.length === 0 ? (
           <p className="italic text-ink/50 text-center font-serif text-xl">No additional body content available.</p>
         ) : (
