@@ -2616,6 +2616,43 @@ export default function Admin() {
                                     setHomeSettings({ ...homeSettings, magazineCards: current });
                                   }}
                                 />
+
+                                {/* Media Overlay Dimming Selector */}
+                                <div className="bg-black/5 p-3 border border-black/10 space-y-1.5">
+                                  <label className="block text-[10px] font-black uppercase text-ink/70">
+                                    Cover Media Dimming (이미지 배경 오버레이 색상 선택)
+                                  </label>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                      { mode: 'dark', label: '🌙 Dark Dim', desc: '어두운 딤 + 흰글씨' },
+                                      { mode: 'light', label: '☀️ Light Dim', desc: '밝은 딤 + 검은글씨' },
+                                      { mode: 'soft', label: '👁️ Soft Blend', desc: '은은한 소프트 블렌드' }
+                                    ].map(opt => {
+                                      const isSelected = (card.overlayMode || 'soft') === opt.mode;
+                                      return (
+                                        <button
+                                          key={opt.mode}
+                                          type="button"
+                                          onClick={() => {
+                                            const current = [...effectiveMagCards];
+                                            current[idx] = { ...current[idx], overlayMode: opt.mode as any };
+                                            setHomeSettings({ ...homeSettings, magazineCards: current });
+                                          }}
+                                          className={`p-2 border text-center transition-all cursor-pointer rounded-none ${
+                                            isSelected 
+                                              ? 'bg-cobalt text-white border-cobalt font-black shadow-xs' 
+                                              : 'bg-white text-ink border-black/15 hover:border-black/30'
+                                          }`}
+                                        >
+                                          <span className="block text-[10px] font-bold uppercase">{opt.label}</span>
+                                          <span className={`block text-[8px] mt-0.5 truncate ${isSelected ? 'text-white/80' : 'text-ink/40'}`}>
+                                            {opt.desc}
+                                          </span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
                               </div>
                             ))}
                           </div>
