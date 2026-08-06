@@ -1790,24 +1790,30 @@ export default function Admin() {
                         {/* Order items */}
                         <div className="space-y-3 min-w-0 max-w-full">
                           {o.items && Array.isArray(o.items) && o.items.map((item: any, idx: number) => {
-                            const foundProd = products.find((p: any) => p.id === item.productId);
+                            const foundProd = products.find((p: any) => 
+                              p.id === item.productId || 
+                              p.id === item.id || 
+                              (p.name && item.name && p.name.trim().toLowerCase() === item.name.trim().toLowerCase())
+                            );
+                            const currentName = foundProd?.name || item.name || 'Product Item';
+                            const currentCategory = foundProd?.category || item.category || 'Category';
+                            const currentImage = (foundProd?.images && foundProd.images[0]) || foundProd?.image || item.image || (item.images && item.images[0]) || '';
                             const shippingVal = getFormattedShipping(item.shipping || foundProd?.shipping);
+
                             return (
                               <Link 
                                 key={idx} 
-                                to={`/product/${item.productId}`} 
+                                to={`/product/${item.productId || foundProd?.id}`} 
                                 target="_blank" 
                                 className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center border-b border-black/[0.05] pb-3 last:border-0 last:pb-0 hover:bg-black/[0.02] p-2 transition-colors group cursor-pointer rounded-none min-w-0 max-w-full"
                               >
                                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                                  <div className="w-14 h-14 bg-silver/10 border border-black/10 shrink-0 overflow-hidden">
-                                    {item.image ? (
-                                      <img 
-                                        src={item.image} 
-                                        alt={item.name} 
+                                  <div className="w-14 h-14 bg-silver/10 border border-black/10 shrink-0 overflow-hidden relative">
+                                    {currentImage ? (
+                                      <MediaRenderer 
+                                        src={currentImage} 
+                                        alt={currentName} 
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                                        nopin="nopin" 
-                                        data-pin-no-hover="true" 
                                       />
                                     ) : (
                                       <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[9px] text-ink/30 uppercase">No Img</div>
@@ -1815,18 +1821,18 @@ export default function Admin() {
                                   </div>
                                   <div className="min-w-0 flex-grow sm:hidden">
                                     <h4 className="text-xs font-bold text-ink uppercase tracking-tight truncate group-hover:text-cobalt transition-colors flex items-center gap-1">
-                                      {item.name} <ExternalLink size={10} className="opacity-70 text-cobalt shrink-0" />
+                                      {currentName} <ExternalLink size={10} className="opacity-70 text-cobalt shrink-0" />
                                     </h4>
-                                    <p className="text-[10px] uppercase tracking-wider text-ink/50 font-medium truncate">{item.category}</p>
+                                    <p className="text-[10px] uppercase tracking-wider text-ink/50 font-medium truncate">{currentCategory}</p>
                                   </div>
                                 </div>
                                 
                                 <div className="flex-grow flex flex-col sm:flex-row justify-between sm:items-center min-w-0 w-full gap-2">
                                   <div className="min-w-0 hidden sm:block pr-3">
                                     <h4 className="text-xs md:text-sm font-bold text-ink uppercase tracking-tight truncate group-hover:text-cobalt transition-colors flex items-center gap-1.5">
-                                      {item.name} <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity text-cobalt shrink-0" />
+                                      {currentName} <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity text-cobalt shrink-0" />
                                     </h4>
-                                    <p className="text-xs uppercase tracking-wider text-ink/50 font-medium truncate mb-1">{item.category}</p>
+                                    <p className="text-xs uppercase tracking-wider text-ink/50 font-medium truncate mb-1">{currentCategory}</p>
                                   </div>
 
                                   <div className="flex flex-wrap gap-1.5 text-[10px] uppercase font-bold min-w-0">
@@ -2058,24 +2064,24 @@ export default function Admin() {
                   {activeTab === 'home' && (
                     <div className="max-w-5xl mx-auto space-y-12 pb-20">
                       {/* General Copy */}
-                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
+                  <div className="bg-black/5 p-3.5 sm:p-8 rounded-none border border-black/5 shadow-sm min-w-0 w-full max-w-full overflow-hidden">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center gap-2">
                       <ExternalLink size={14} /> Global Settings & Brand Logo
                     </h3>
-                    <div className="space-y-6">
+                    <div className="space-y-6 min-w-0 w-full max-w-full">
                       {/* Security & Members-Only Access Settings */}
-                      <div className="bg-white p-6 rounded-none border border-black/10 shadow-sm space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="text-[11px] font-black uppercase text-ink tracking-wider flex items-center gap-1.5">
-                              <Lock size={14} className="text-cobalt" />
+                      <div className="bg-white p-3.5 sm:p-6 rounded-none border border-black/10 shadow-sm space-y-3 min-w-0 w-full max-w-full overflow-hidden">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                          <div className="min-w-0">
+                            <h4 className="text-[11px] font-black uppercase text-ink tracking-wider flex items-center gap-1.5 break-words">
+                              <Lock size={14} className="text-cobalt shrink-0" />
                               Site Security & Members-Only Access (홈페이지 회원전용 공개 설정)
                             </h4>
-                            <p className="text-[10px] text-ink/50 mt-0.5">
+                            <p className="text-[10px] text-ink/50 mt-0.5 font-sans">
                               ON 설정 시 비로그인 일반 사용자의 접근이 차단되며 로그인/회원가입 게이트 모달이 표기됩니다.
                             </p>
                           </div>
-                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                          <label className="relative inline-flex items-center cursor-pointer select-none shrink-0 self-end sm:self-center">
                             <input 
                               type="checkbox" 
                               checked={!!homeSettings.membersOnly} 
@@ -2088,11 +2094,11 @@ export default function Admin() {
                       </div>
 
                       {/* Brand Logo Settings */}
-                      <div className="bg-white p-6 rounded-none border border-black/10 shadow-sm space-y-4">
+                      <div className="bg-white p-3.5 sm:p-6 rounded-none border border-black/10 shadow-sm space-y-4 min-w-0 w-full max-w-full overflow-hidden">
                         <h4 className="text-[11px] font-black uppercase text-ink tracking-wider">Brand Logo & Favicon Display</h4>
-                        <div>
+                        <div className="min-w-0">
                           <label className="block text-[10px] font-bold uppercase text-ink/50 mb-2">Logo Display Type</label>
-                          <div className="flex items-center gap-6 text-xs font-bold uppercase">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 text-xs font-bold uppercase min-w-0">
                             <label className="flex items-center gap-2 cursor-pointer select-none">
                               <input 
                                 type="radio" 
@@ -2151,7 +2157,7 @@ export default function Admin() {
                   </div>
 
                   {/* Hero Slides */}
-                  <div className="bg-black/5 p-6 rounded-none border border-black/5">
+                  <div className="bg-black/5 p-3.5 sm:p-6 rounded-none border border-black/5 min-w-0 w-full max-w-full overflow-hidden">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center justify-between">
                       <span>Hero Slides</span>
                       <button type="button" onClick={() => {
@@ -3476,8 +3482,6 @@ export default function Admin() {
                         value={sortBy} 
                         onChange={e => setSortBy(e.target.value as any)}
                         className="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer text-cobalt"
-                      >
-                        <option value="user">User Order</option>
                         <option value="name">Name</option>
                         <option value="category">Category</option>
                         <option value="newest">Newest</option>
