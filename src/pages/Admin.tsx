@@ -8,6 +8,7 @@ import {
 } from "../lib/data";
 import { upload } from '@vercel/blob/client';
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock } from "lucide-react";
+import { MediaRenderer } from "../components/MediaRenderer";
 
 const emptyProduct: Omit<Product, 'id'> = {
   name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []

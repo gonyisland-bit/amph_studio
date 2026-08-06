@@ -53,15 +53,15 @@ export default function Journal() {
               });
             }}
           >
-            <div className={`flex-1 p-8 md:p-16 lg:p-24 flex flex-col justify-center ${i % 2 === 0 ? "md:border-r" : "md:order-last md:border-l"} border-black/10`}>
-              <span className="text-[10px] uppercase tracking-widest font-bold text-cobalt font-sans block mb-6">Journal 0{i + 1}</span>
-              <h2 className="text-3xl md:text-5xl font-medium tracking-tighter uppercase font-sans mb-8 leading-[0.9] group-hover:text-cobalt transition-colors">{article.title}</h2>
+            <div className={`flex-1 p-6 sm:p-8 md:p-16 lg:p-24 flex flex-col justify-center ${i % 2 === 0 ? "md:border-r" : "md:order-last md:border-l"} border-black/10`}>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-cobalt font-sans block mb-3 md:mb-6">Journal 0{i + 1}</span>
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-medium tracking-tighter uppercase font-sans mb-4 md:mb-8 leading-[0.95] md:leading-[0.9] group-hover:text-cobalt transition-colors">{article.title}</h2>
               {article.description && (
-                <p className="text-lg font-serif italic text-ink/80 leading-relaxed max-w-sm mb-12 line-clamp-3">
+                <p className="text-base sm:text-lg font-serif italic text-ink/80 leading-relaxed max-w-sm mb-6 md:mb-12 line-clamp-3">
                   {article.description}
                 </p>
               )}
-              <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest group-hover:gap-6 transition-all">
+              <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest group-hover:gap-6 transition-all mb-2 md:mb-0">
                 <span>Read Story</span>
                 <MoveRight size={16} />
               </div>
