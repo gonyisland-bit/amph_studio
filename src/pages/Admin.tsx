@@ -3577,36 +3577,38 @@ export default function Admin() {
                               <div className="text-left md:text-center text-ink/20 text-xs">—</div>
                             )}
                           </td>
-                          <td className="py-1 md:py-4 block md:table-cell">
-                            {(() => {
-                              const mainImg = p.images?.[0] || '';
-                              if (mainImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mainImg.includes('video')) {
-                                return <video src={mainImg} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />;
-                              }
-                              return <img src={mainImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />;
-                            })()}
-                          </td>
-                          <td className="py-1 md:py-4 block md:table-cell">
-                            <div className="flex items-center gap-2">
-                              <button 
-                                type="button"
-                                onClick={e => { e.stopPropagation(); toggleFeatured(p.id); }}
-                                className="p-2 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
-                                title="Toggle Home Selected Works (★ Featured)"
-                              >
-                                <Star 
-                                  size={18} 
-                                  className={(homeSettings.featuredProductIds || []).includes(p.id) ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
-                                />
-                              </button>
-                              <div>
-                                <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{p.name}</div>
-                                {p.subTitle && <div className="text-[10px] text-ink/40">{p.subTitle}</div>}
+                          <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
+                            <td className="py-1 md:py-4 block md:table-cell shrink-0">
+                              {(() => {
+                                const mainImg = p.images?.[0] || '';
+                                if (mainImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mainImg.includes('video')) {
+                                  return <video src={mainImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted />;
+                                }
+                                return <img src={mainImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
+                              })()}
+                            </td>
+                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <button 
+                                  type="button"
+                                  onClick={e => { e.stopPropagation(); toggleFeatured(p.id); }}
+                                  className="p-1.5 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
+                                  title="Toggle Home Selected Works (★ Featured)"
+                                >
+                                  <Star 
+                                    size={16} 
+                                    className={(homeSettings.featuredProductIds || []).includes(p.id) ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
+                                  />
+                                </button>
+                                <div className="min-w-0 flex-1 overflow-hidden">
+                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm">{p.name}</div>
+                                  {p.subTitle && <div className="text-[10px] text-ink/40 truncate">{p.subTitle}</div>}
+                                </div>
                               </div>
-                            </div>
-                          </td>
+                            </td>
+                          </div>
                           <td className="py-1 md:py-4 block md:table-cell">
-                            <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold inline-block">{p.category}</span>
+                            <span className="caption-nano text-orange px-2.5 py-0.5 border border-orange/30 rounded-full font-bold inline-block">{p.category}</span>
                           </td>
                           <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
                             <div className="flex justify-start md:justify-end gap-3 items-center">
@@ -3660,36 +3662,38 @@ export default function Admin() {
                             <button onClick={() => handleReorder('space', s.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === spaces.length - 1}><ChevronDown size={14}/></button>
                           </div>
                         </td>
-                        <td className="py-1 md:py-4 block md:table-cell">
-                          {s.images?.[0]?.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || s.images?.[0]?.includes('video') ? (
-                            <video src={s.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />
-                          ) : (
-                            <img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />
-                          )}
-                        </td>
-                        <td className="py-1 md:py-4 block md:table-cell">
-                          <div className="flex items-center gap-2">
-                            <button 
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation();
-                                const updated = { ...s, featured: !s.featured };
-                                updateSpace(s.id, updated).then(loadData);
-                              }}
-                              className="p-2 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
-                              title="Toggle Featured Star (★ Featured)"
-                            >
-                              <Star 
-                                size={18} 
-                                className={s.featured ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
-                              />
-                            </button>
-                            <div>
-                              <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{s.title}</div>
-                              <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{s.description}</div>
-                            </div>
+                          <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
+                            <td className="py-1 md:py-4 block md:table-cell shrink-0">
+                              {s.images?.[0]?.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || s.images?.[0]?.includes('video') ? (
+                                <video src={s.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted />
+                              ) : (
+                                <img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />
+                              )}
+                            </td>
+                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <button 
+                                  type="button"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    const updated = { ...s, featured: !s.featured };
+                                    updateSpace(s.id, updated).then(loadData);
+                                  }}
+                                  className="p-1.5 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
+                                  title="Toggle Featured Star (★ Featured)"
+                                >
+                                  <Star 
+                                    size={16} 
+                                    className={s.featured ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
+                                  />
+                                </button>
+                                <div className="min-w-0 flex-1 overflow-hidden">
+                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm">{s.title}</div>
+                                  <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{s.description}</div>
+                                </div>
+                              </div>
+                            </td>
                           </div>
-                        </td>
                         <td className="py-1 md:py-4 block md:table-cell">
                           <span className="text-[10px] font-sans font-bold text-ink/40">
                             {s.appliedProductIds && s.appliedProductIds.length > 0 
@@ -3733,36 +3737,38 @@ export default function Admin() {
                             <button onClick={() => handleReorder('journal', j.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === journals.length - 1}><ChevronDown size={14}/></button>
                           </div>
                         </td>
-                        <td className="py-1 md:py-4 block md:table-cell">
-                          {j.image.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || j.image.includes('video') ? (
-                            <video src={j.image} className="w-12 h-12 rounded-lg object-cover bg-black/5" muted />
-                          ) : (
-                            <img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />
-                          )}
-                        </td>
-                        <td className="py-1 md:py-4 block md:table-cell">
-                          <div className="flex items-center gap-2">
-                            <button 
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation();
-                                const updated = { ...j, featured: !j.featured };
-                                updateJournal(j.id, updated).then(loadData);
-                              }}
-                              className="p-2 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
-                              title="Toggle Featured Star (★ Featured)"
-                            >
-                              <Star 
-                                size={18} 
-                                className={j.featured ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
-                              />
-                            </button>
-                            <div>
-                              <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{j.title}</div>
-                              <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{j.description}</div>
-                            </div>
+                          <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
+                            <td className="py-1 md:py-4 block md:table-cell shrink-0">
+                              {j.image.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || j.image.includes('video') ? (
+                                <video src={j.image} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted />
+                              ) : (
+                                <img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />
+                              )}
+                            </td>
+                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <button 
+                                  type="button"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    const updated = { ...j, featured: !j.featured };
+                                    updateJournal(j.id, updated).then(loadData);
+                                  }}
+                                  className="p-1.5 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
+                                  title="Toggle Featured Star (★ Featured)"
+                                >
+                                  <Star 
+                                    size={16} 
+                                    className={j.featured ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
+                                  />
+                                </button>
+                                <div className="min-w-0 flex-1 overflow-hidden">
+                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm">{j.title}</div>
+                                  <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{j.description}</div>
+                                </div>
+                              </div>
+                            </td>
                           </div>
-                        </td>
                         <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
                           <div className="flex justify-start md:justify-end gap-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity items-center">
                             <Link to={`/journal/${j.id}`} target="_blank" className="text-ink/20 hover:text-cobalt"><ExternalLink size={14} /></Link>
