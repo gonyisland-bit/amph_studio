@@ -2389,11 +2389,12 @@ export default function Admin() {
                                     // Interleave magazine cards after this product position
                                     const matchedMags = effectiveMagCards.filter(m => Number(m.insertAfterIndex) === productPos);
                                     matchedMags.forEach((mag, mIdx) => {
+                                      const magCardIndex = effectiveMagCards.indexOf(mag);
                                       displayList.push(
                                         <div key={`mag-preview-${mag.id || mIdx}-${index}`} className="border-2 border-orange/40 p-3 flex items-center justify-between bg-orange/5 shadow-xs gap-2 relative">
                                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                             <span className="px-2 py-0.5 rounded-full bg-orange text-white text-[8px] font-black uppercase shrink-0">
-                                              📰 Mag Card #{effectiveMagCards.indexOf(mag) + 1}
+                                              📰 Mag Card #{magCardIndex + 1}
                                             </span>
                                             <div className="min-w-0 flex-1">
                                               <span className="block text-xs font-black uppercase text-orange truncate" title={mag.title}>
@@ -2404,9 +2405,41 @@ export default function Admin() {
                                               </span>
                                             </div>
                                           </div>
-                                          <span className="text-[8px] font-bold text-orange uppercase tracking-wider shrink-0 bg-white border border-orange/20 px-1.5 py-0.5">
-                                            #{productPos} 뒤 배치
-                                          </span>
+
+                                          {/* Up/Down buttons for interactive position reordering */}
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            <button 
+                                              type="button"
+                                              disabled={mag.insertAfterIndex <= 1} 
+                                              onClick={() => {
+                                                const current = [...effectiveMagCards];
+                                                const targetPos = Math.max(1, mag.insertAfterIndex - 1);
+                                                current[magCardIndex] = { ...current[magCardIndex], insertAfterIndex: targetPos };
+                                                setHomeSettings({ ...homeSettings, magazineCards: current });
+                                              }}
+                                              className="text-orange/60 hover:text-orange disabled:opacity-20 cursor-pointer p-0.5"
+                                              title="Move Up (제품 1개 앞으로 이동)"
+                                            >
+                                              <ChevronUp size={14}/>
+                                            </button>
+                                            <button 
+                                              type="button"
+                                              disabled={mag.insertAfterIndex >= homeSettings.featuredProductIds.length} 
+                                              onClick={() => {
+                                                const current = [...effectiveMagCards];
+                                                const targetPos = Math.min(homeSettings.featuredProductIds.length, mag.insertAfterIndex + 1);
+                                                current[magCardIndex] = { ...current[magCardIndex], insertAfterIndex: targetPos };
+                                                setHomeSettings({ ...homeSettings, magazineCards: current });
+                                              }}
+                                              className="text-orange/60 hover:text-orange disabled:opacity-20 cursor-pointer p-0.5"
+                                              title="Move Down (제품 1개 뒤로 이동)"
+                                            >
+                                              <ChevronDown size={14}/>
+                                            </button>
+                                            <span className="text-[8px] font-bold text-orange uppercase tracking-wider bg-white border border-orange/20 px-1.5 py-0.5 ml-1">
+                                              #{productPos} 뒤
+                                            </span>
+                                          </div>
                                         </div>
                                       );
                                     });
@@ -2460,19 +2493,20 @@ export default function Admin() {
                                 <span>Magazine Cards (Home Grid Interleaving)</span>
                               </h3>
                               <p className="text-[10px] text-ink/50 mt-1 font-sans">
-                                매거진 카드를 제한 없이 추가하고, Selected Works 제품 몇 번째 뒤에 끼워 노출할지 배치 위치를 자유롭게 지정합니다.
+                                매거진 카드를 제한 없이 추가하고, Selected Works 제품 몇 번째 뒤에 끼워 노출할지 배치 위치를 자유롭게 지정합니다. (선택된 제품 수: {homeSettings.featuredProductIds.length}개)
                               </p>
                             </div>
                             <button
                               type="button"
                               onClick={() => {
                                 const currentCards = effectiveMagCards;
+                                const maxAllowed = Math.max(1, homeSettings.featuredProductIds.length);
                                 const newCard: MagazineCard = {
                                   id: `mag-${Date.now()}`,
                                   title: 'Design Philosophy',
                                   quote: 'Good design is as little design as possible.',
                                   author: 'AMPH STUDIO',
-                                  insertAfterIndex: (currentCards.length + 1) * 2,
+                                  insertAfterIndex: Math.min(maxAllowed, (currentCards.length + 1) * 2),
                                   image: ''
                                 };
                                 setHomeSettings({ ...homeSettings, magazineCards: [...currentCards, newCard] });
@@ -2507,17 +2541,18 @@ export default function Admin() {
                                 {/* Insertion Position Setting */}
                                 <div className="bg-cobalt/5 p-3 border border-cobalt/20 space-y-1">
                                   <label className="block text-[10px] font-black uppercase text-cobalt">
-                                    Insert Position (배치 위치 지정)
+                                    Insert Position (배치 위치 지정: Max {Math.max(1, homeSettings.featuredProductIds.length)})
                                   </label>
                                   <div className="flex items-center gap-2">
                                     <span className="text-[9px] uppercase text-ink/60 font-bold">Selected Work 제품</span>
                                     <input
                                       type="number"
                                       min={1}
-                                      max={100}
-                                      value={card.insertAfterIndex || (idx + 1) * 2}
+                                      max={Math.max(1, homeSettings.featuredProductIds.length)}
+                                      value={Math.min(card.insertAfterIndex || (idx + 1) * 2, Math.max(1, homeSettings.featuredProductIds.length))}
                                       onChange={e => {
-                                        const val = Number(e.target.value);
+                                        const maxVal = Math.max(1, homeSettings.featuredProductIds.length);
+                                        const val = Math.min(maxVal, Math.max(1, Number(e.target.value)));
                                         const current = [...effectiveMagCards];
                                         current[idx] = { ...current[idx], insertAfterIndex: val };
                                         setHomeSettings({ ...homeSettings, magazineCards: current });
@@ -2841,9 +2876,9 @@ export default function Admin() {
                               {colorOptions.map((c, index) => (
                                 <div 
                                   key={`${c.name}-${index}`} 
-                                  className="relative border border-black/15 px-3.5 py-2 pr-7 bg-white shadow-xs flex items-center gap-2.5 rounded-none group hover:border-cobalt transition-all min-w-[140px]"
+                                  className="relative border border-black/15 p-2 px-3 bg-white shadow-xs flex items-center gap-2.5 rounded-none group hover:border-cobalt transition-all min-w-[150px]"
                                 >
-                                  {/* Delete Mini Floating Badge Button (✕) */}
+                                  {/* Delete Mini Floating Badge Button (✕) on Top-Right */}
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveColorOption(c.name)}
@@ -2853,27 +2888,13 @@ export default function Admin() {
                                     ✕
                                   </button>
 
-                                  {/* Color swatch */}
-                                  <div 
-                                    className="w-4 h-4 rounded-full border border-black/20 shrink-0 shadow-inner" 
-                                    style={{ backgroundColor: c.hex }} 
-                                  />
-
-                                  {/* Name & Hex Code (Always on one line, never breaking) */}
-                                  <div className="min-w-0 flex-1">
-                                    <span className="block text-[11px] sm:text-xs font-bold uppercase text-ink whitespace-nowrap leading-none" title={c.name}>
-                                      {c.name}
-                                    </span>
-                                    <span className="block text-[8px] font-mono text-ink/40 uppercase mt-1 leading-none">{c.hex}</span>
-                                  </div>
-
-                                  {/* Vertical Stack Reorder Buttons */}
-                                  <div className="absolute right-1 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center">
+                                  {/* Reorder Buttons (ChevronUp/Down) on Left side for zero misclick */}
+                                  <div className="flex flex-col items-center justify-center shrink-0 border-r border-black/10 pr-1.5 py-0.5">
                                     <button 
                                       type="button"
                                       disabled={index === 0} 
                                       onClick={() => handleReorderColorOption(index, 'up')}
-                                      className="text-ink/30 hover:text-cobalt disabled:opacity-0 cursor-pointer p-0.5 leading-none"
+                                      className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5 leading-none"
                                       title="Move Left/Up"
                                     >
                                       <ChevronUp size={12}/>
@@ -2882,11 +2903,25 @@ export default function Admin() {
                                       type="button"
                                       disabled={index === colorOptions.length - 1} 
                                       onClick={() => handleReorderColorOption(index, 'down')}
-                                      className="text-ink/30 hover:text-cobalt disabled:opacity-0 cursor-pointer p-0.5 leading-none"
+                                      className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5 leading-none"
                                       title="Move Right/Down"
                                     >
                                       <ChevronDown size={12}/>
                                     </button>
+                                  </div>
+
+                                  {/* Color swatch */}
+                                  <div 
+                                    className="w-4 h-4 rounded-full border border-black/20 shrink-0 shadow-inner" 
+                                    style={{ backgroundColor: c.hex }} 
+                                  />
+
+                                  {/* Name & Hex Code (Always on one line) */}
+                                  <div className="min-w-0 flex-1">
+                                    <span className="block text-[11px] sm:text-xs font-bold uppercase text-ink whitespace-nowrap leading-none" title={c.name}>
+                                      {c.name}
+                                    </span>
+                                    <span className="block text-[8px] font-mono text-ink/40 uppercase mt-1 leading-none">{c.hex}</span>
                                   </div>
                                 </div>
                               ))}

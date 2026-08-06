@@ -256,7 +256,7 @@ export default function Home() {
                       <span className={`text-[9px] uppercase tracking-[0.3em] font-bold block mb-8 ${isEven ? 'text-white/40' : 'text-ink/40'}`}>
                         {card.title}
                       </span>
-                      <blockquote className={`text-lg md:text-xl lg:text-2xl font-serif italic font-light leading-relaxed my-auto pr-4 ${isEven ? 'text-white/90' : 'text-ink/80'}`}>
+                      <blockquote className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-serif italic font-light leading-tight md:leading-tight tracking-tight my-auto pr-2 md:pr-6 break-words ${isEven ? 'text-white/95' : 'text-ink/90'}`}>
                         "{card.quote}"
                       </blockquote>
                       <span className={`text-[9px] uppercase tracking-widest block mt-8 ${isEven ? 'text-white/30' : 'text-ink/30'}`}>
