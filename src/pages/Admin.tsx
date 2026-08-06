@@ -1997,9 +1997,9 @@ export default function Admin() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 min-w-0 w-full max-w-full overflow-x-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 min-w-0 w-full max-w-full overflow-x-hidden">
           <div className={activeTab === 'home' ? 'col-span-12 min-w-0 w-full max-w-full overflow-x-hidden' : 'col-span-1 lg:col-span-5 min-w-0 w-full max-w-full'}>
-            <div className="sticky top-24 min-w-0 w-full max-w-full overflow-x-hidden">
+            <div className="lg:sticky lg:top-24 min-w-0 w-full max-w-full overflow-x-hidden">
               <h2 className="text-xl font-semibold mb-6 flex items-center justify-between border-b border-black/10 pb-4">
                 <span>{editingId ? 'Edit Content' : 'Add Content'}</span>
                 {activeTab !== 'home' && (
@@ -2251,7 +2251,7 @@ export default function Admin() {
                   </div>
 
                   {/* Category Intros */}
-                  <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm">
+                  <div className="bg-black/5 p-3.5 sm:p-6 md:p-8 rounded-none border border-black/5 shadow-sm min-w-0 w-full max-w-full overflow-hidden">
                     <h3 className="font-bold text-xs uppercase text-cobalt mb-6">Category Banners</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {(['collection', 'space', 'journal'] as const).map(cat => (
@@ -2305,7 +2305,7 @@ export default function Admin() {
                     return (
                       <>
                         {/* Featured Products (Selected Works Order & Selection Manager with Interleaved Magazine Cards) */}
-                        <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm space-y-6">
+                        <div className="bg-black/5 p-3.5 sm:p-6 md:p-8 rounded-none border border-black/5 shadow-sm space-y-6 min-w-0 w-full max-w-full overflow-hidden">
                           <div className="flex justify-between items-center">
                             <h3 className="font-bold text-xs uppercase text-cobalt flex items-center gap-2">
                               <span>Selected Works Order & Selection (홈 추천 제품 및 매거진 카드 배치 미리보기)</span>
@@ -2492,7 +2492,7 @@ export default function Admin() {
                         </div>
 
                         {/* Unlimited Magazine Cards Manager */}
-                        <div className="bg-black/5 p-8 rounded-none border border-black/5 shadow-sm space-y-6">
+                        <div className="bg-black/5 p-3.5 sm:p-6 md:p-8 rounded-none border border-black/5 shadow-sm space-y-6 min-w-0 w-full max-w-full overflow-hidden">
                           <div className="flex items-center justify-between">
                             <div>
                               <h3 className="font-bold text-xs uppercase text-cobalt flex items-center gap-2">
@@ -3491,6 +3491,98 @@ export default function Admin() {
                   )}
                </div>
                
+             {/* Mobile Card List View (Visible on mobile screens < 768px, zero horizontal scroll!) */}
+             <div className="block md:hidden space-y-3 w-full min-w-0 max-w-full">
+               {(activeTab === 'collection' || activeTab === 'home') && (() => {
+                 const list = [...products];
+                 return list.map((p) => {
+                   const mainImg = p.images?.[0] || '';
+                   return (
+                     <div 
+                       key={p.id} 
+                       onClick={() => handleEdit(p)}
+                       className={`p-3 bg-white border border-black/10 flex flex-col gap-2.5 transition-all cursor-pointer rounded-none shadow-xs min-w-0 w-full max-w-full overflow-hidden ${editingId === p.id ? 'border-l-4 border-l-cobalt bg-cobalt/5 font-semibold' : ''}`}
+                     >
+                       <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+                         <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
+                           <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={e => { e.stopPropagation(); toggleSelect(p.id); }} className="shrink-0 cursor-pointer" />
+                           <div className="w-10 h-10 rounded-none overflow-hidden bg-black/5 shrink-0 relative border border-black/10">
+                             <img src={mainImg} alt={p.name} className="w-full h-full object-cover" />
+                           </div>
+                           <div className="min-w-0 flex-1 overflow-hidden">
+                             <div className="font-bold text-xs text-ink truncate">{p.name}</div>
+                             <span className="text-[9px] text-orange border border-orange/30 px-1.5 py-0.2 rounded-full font-bold uppercase inline-block truncate max-w-full">{p.category}</span>
+                           </div>
+                         </div>
+                         <button 
+                           type="button"
+                           onClick={e => { e.stopPropagation(); toggleFeatured(p.id); }}
+                           className="p-1 text-ink/20 hover:text-orange shrink-0 cursor-pointer"
+                         >
+                           <Star size={16} className={(homeSettings.featuredProductIds || []).includes(p.id) ? "fill-orange text-orange" : ""} />
+                         </button>
+                       </div>
+                       <div className="flex justify-end items-center gap-4 pt-2 border-t border-black/5 text-[10px] uppercase font-bold min-w-0 w-full">
+                         <button onClick={() => handleEdit(p)} className="text-cobalt tracking-wider cursor-pointer">Edit</button>
+                         <Link to={`/product/${p.id}`} target="_blank" onClick={e => e.stopPropagation()} className="text-ink/40 hover:text-ink"><ExternalLink size={12} /></Link>
+                         <button onClick={e => { e.stopPropagation(); handleDelete(p.id); }} className="text-orange/60 hover:text-orange cursor-pointer"><Trash2 size={12} /></button>
+                       </div>
+                     </div>
+                   );
+                 });
+               })()}
+
+               {activeTab === 'space' && spaces.map(s => (
+                 <div 
+                   key={s.id} 
+                   onClick={() => handleEdit(s)}
+                   className={`p-3 bg-white border border-black/10 flex flex-col gap-2.5 transition-all cursor-pointer rounded-none shadow-xs min-w-0 w-full max-w-full overflow-hidden ${editingId === s.id ? 'border-l-4 border-l-cobalt bg-cobalt/5 font-semibold' : ''}`}
+                 >
+                   <div className="flex items-center gap-2.5 min-w-0 w-full">
+                     <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={e => { e.stopPropagation(); toggleSelect(s.id); }} className="shrink-0 cursor-pointer" />
+                     <div className="w-10 h-10 rounded-none overflow-hidden bg-black/5 shrink-0 relative border border-black/10">
+                       <img src={s.images?.[0] || ''} alt={s.title} className="w-full h-full object-cover" />
+                     </div>
+                     <div className="min-w-0 flex-1 overflow-hidden">
+                       <div className="font-bold text-xs text-ink truncate">{s.title}</div>
+                       <p className="text-[9px] text-ink/50 truncate">{s.description}</p>
+                     </div>
+                   </div>
+                   <div className="flex justify-end items-center gap-4 pt-2 border-t border-black/5 text-[10px] uppercase font-bold min-w-0 w-full">
+                     <button onClick={() => handleEdit(s)} className="text-cobalt tracking-wider cursor-pointer">Edit</button>
+                     <Link to={`/space/${s.id}`} target="_blank" onClick={e => e.stopPropagation()} className="text-ink/40 hover:text-ink"><ExternalLink size={12} /></Link>
+                     <button onClick={e => { e.stopPropagation(); handleDelete(s.id); }} className="text-orange/60 hover:text-orange cursor-pointer"><Trash2 size={12} /></button>
+                   </div>
+                 </div>
+               ))}
+
+               {activeTab === 'journal' && journals.map(j => (
+                 <div 
+                   key={j.id} 
+                   onClick={() => handleEdit(j)}
+                   className={`p-3 bg-white border border-black/10 flex flex-col gap-2.5 transition-all cursor-pointer rounded-none shadow-xs min-w-0 w-full max-w-full overflow-hidden ${editingId === j.id ? 'border-l-4 border-l-cobalt bg-cobalt/5 font-semibold' : ''}`}
+                 >
+                   <div className="flex items-center gap-2.5 min-w-0 w-full">
+                     <input type="checkbox" checked={selectedIds.includes(j.id)} onChange={e => { e.stopPropagation(); toggleSelect(j.id); }} className="shrink-0 cursor-pointer" />
+                     <div className="w-10 h-10 rounded-none overflow-hidden bg-black/5 shrink-0 relative border border-black/10">
+                       <img src={j.image || ''} alt={j.title} className="w-full h-full object-cover" />
+                     </div>
+                     <div className="min-w-0 flex-1 overflow-hidden">
+                       <div className="font-bold text-xs text-ink truncate">{j.title}</div>
+                       <span className="text-[9px] text-ink/40 uppercase truncate block">{j.category}</span>
+                     </div>
+                   </div>
+                   <div className="flex justify-end items-center gap-4 pt-2 border-t border-black/5 text-[10px] uppercase font-bold min-w-0 w-full">
+                     <button onClick={() => handleEdit(j)} className="text-cobalt tracking-wider cursor-pointer">Edit</button>
+                     <Link to={`/journal/${j.id}`} target="_blank" onClick={e => e.stopPropagation()} className="text-ink/40 hover:text-ink"><ExternalLink size={12} /></Link>
+                     <button onClick={e => { e.stopPropagation(); handleDelete(j.id); }} className="text-orange/60 hover:text-orange cursor-pointer"><Trash2 size={12} /></button>
+                   </div>
+                 </div>
+               ))}
+             </div>
+
+             {/* Desktop Table View (Visible on md screens and above) */}
+             <div className="hidden md:block overflow-x-auto bg-white rounded-none border border-black/5 shadow-sm">      
                {selectedIds.length > 0 && (
                  <div className="flex items-center gap-2 bg-black/5 p-2 rounded-none border border-black/10 animate-in fade-in slide-in-from-right-4">
                    <span className="text-[10px] font-bold px-3 border-r border-black/10">{selectedIds.length} Selected</span>
