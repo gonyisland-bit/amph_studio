@@ -92,7 +92,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
       }}
     >
       {!isLoaded && !error && (
-        <div className="absolute inset-0 shimmer bg-silver/10 z-0" />
+        <div className="absolute inset-0 shimmer bg-black/5 z-0" />
       )}
       
       {isVideo ? (
