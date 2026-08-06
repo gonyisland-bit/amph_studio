@@ -2864,7 +2864,7 @@ export default function Admin() {
                           </div>
                         </div>
 
-                        {/* Colors List */}
+                        {/* Colors List (Guaranteed 3 items per row on desktop grid) */}
                         <div className="space-y-3">
                           <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">
                             Registered Color Options ({colorOptions.length})
@@ -2872,56 +2872,56 @@ export default function Admin() {
                           {colorOptions.length === 0 ? (
                             <p className="text-[10px] uppercase tracking-wider text-ink/40">No colors added yet.</p>
                           ) : (
-                            <div className="flex flex-wrap gap-3 pt-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-2">
                               {colorOptions.map((c, index) => (
                                 <div 
                                   key={`${c.name}-${index}`} 
-                                  className="relative border border-black/15 p-2 px-3 bg-white shadow-xs flex items-center gap-2.5 rounded-none group hover:border-cobalt transition-all min-w-[150px]"
+                                  className="relative border border-black/15 p-1.5 px-2.5 bg-white shadow-xs flex items-center gap-1.5 rounded-none group hover:border-cobalt transition-all min-w-0"
                                 >
                                   {/* Delete Mini Floating Badge Button (✕) on Top-Right */}
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveColorOption(c.name)}
-                                    className="absolute -top-2 -right-2 bg-white hover:bg-orange hover:text-white text-ink/40 border border-black/20 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm transition-all cursor-pointer z-10"
+                                    className="absolute -top-1.5 -right-1.5 bg-white hover:bg-orange hover:text-white text-ink/40 border border-black/20 w-4.5 h-4.5 rounded-full flex items-center justify-center text-[9px] font-black shadow-xs transition-all cursor-pointer z-10"
                                     title="Remove Option"
                                   >
                                     ✕
                                   </button>
 
-                                  {/* Reorder Buttons (ChevronUp/Down) on Left side for zero misclick */}
-                                  <div className="flex flex-col items-center justify-center shrink-0 border-r border-black/10 pr-1.5 py-0.5">
+                                  {/* Compact Reorder Buttons (ChevronUp/Down) on Left side */}
+                                  <div className="flex flex-col items-center justify-center shrink-0 border-r border-black/10 pr-1 py-0.2">
                                     <button 
                                       type="button"
                                       disabled={index === 0} 
                                       onClick={() => handleReorderColorOption(index, 'up')}
-                                      className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5 leading-none"
+                                      className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0 leading-none"
                                       title="Move Left/Up"
                                     >
-                                      <ChevronUp size={12}/>
+                                      <ChevronUp size={10}/>
                                     </button>
                                     <button 
                                       type="button"
                                       disabled={index === colorOptions.length - 1} 
                                       onClick={() => handleReorderColorOption(index, 'down')}
-                                      className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5 leading-none"
+                                      className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0 leading-none"
                                       title="Move Right/Down"
                                     >
-                                      <ChevronDown size={12}/>
+                                      <ChevronDown size={10}/>
                                     </button>
                                   </div>
 
                                   {/* Color swatch */}
                                   <div 
-                                    className="w-4 h-4 rounded-full border border-black/20 shrink-0 shadow-inner" 
+                                    className="w-3.5 h-3.5 rounded-full border border-black/20 shrink-0 shadow-inner" 
                                     style={{ backgroundColor: c.hex }} 
                                   />
 
-                                  {/* Name & Hex Code (Always on one line) */}
-                                  <div className="min-w-0 flex-1">
-                                    <span className="block text-[11px] sm:text-xs font-bold uppercase text-ink whitespace-nowrap leading-none" title={c.name}>
+                                  {/* Name & Hex Code */}
+                                  <div className="min-w-0 flex-1 overflow-hidden">
+                                    <span className="block text-[10px] sm:text-[11px] font-bold uppercase text-ink whitespace-nowrap truncate leading-tight" title={c.name}>
                                       {c.name}
                                     </span>
-                                    <span className="block text-[8px] font-mono text-ink/40 uppercase mt-1 leading-none">{c.hex}</span>
+                                    <span className="block text-[7.5px] font-mono text-ink/40 uppercase leading-none">{c.hex}</span>
                                   </div>
                                 </div>
                               ))}
