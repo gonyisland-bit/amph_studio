@@ -3465,7 +3465,7 @@ export default function Admin() {
 
         {!(activeTab === 'home' || activeTab === 'orders' || activeTab === 'users') && (
           <div className="col-span-1 lg:col-span-7">
-            {/* Inventory Controls */}
+            {/* Inventory Controls Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                <div className="flex items-center gap-4 flex-wrap">
                   <h2 className="text-xl font-bold font-sans uppercase tracking-tight">
@@ -3490,107 +3490,107 @@ export default function Admin() {
                     </div>
                   )}
                </div>
-               
-             {/* Mobile Card List View (Visible on mobile screens < 768px, zero horizontal scroll!) */}
-             <div className="block md:hidden space-y-3 w-full min-w-0 max-w-full">
-               {(activeTab === 'collection' || activeTab === 'home') && (() => {
-                 const list = [...products];
-                 return list.map((p) => {
-                   const mainImg = p.images?.[0] || '';
-                   return (
-                     <div 
-                       key={p.id} 
-                       onClick={() => handleEdit(p)}
-                       className={`p-3 bg-white border border-black/10 flex flex-col gap-2.5 transition-all cursor-pointer rounded-none shadow-xs min-w-0 w-full max-w-full overflow-hidden ${editingId === p.id ? 'border-l-4 border-l-cobalt bg-cobalt/5 font-semibold' : ''}`}
-                     >
-                       <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-                         <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
-                           <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={e => { e.stopPropagation(); toggleSelect(p.id); }} className="shrink-0 cursor-pointer" />
-                           <div className="w-10 h-10 rounded-none overflow-hidden bg-black/5 shrink-0 relative border border-black/10">
-                             <img src={mainImg} alt={p.name} className="w-full h-full object-cover" />
-                           </div>
-                           <div className="min-w-0 flex-1 overflow-hidden">
-                             <div className="font-bold text-xs text-ink truncate">{p.name}</div>
-                             <span className="text-[9px] text-orange border border-orange/30 px-1.5 py-0.2 rounded-full font-bold uppercase inline-block truncate max-w-full">{p.category}</span>
-                           </div>
-                         </div>
-                         <button 
-                           type="button"
-                           onClick={e => { e.stopPropagation(); toggleFeatured(p.id); }}
-                           className="p-1 text-ink/20 hover:text-orange shrink-0 cursor-pointer"
-                         >
-                           <Star size={16} className={(homeSettings.featuredProductIds || []).includes(p.id) ? "fill-orange text-orange" : ""} />
-                         </button>
-                       </div>
-                       <div className="flex justify-end items-center gap-4 pt-2 border-t border-black/5 text-[10px] uppercase font-bold min-w-0 w-full">
-                         <button onClick={() => handleEdit(p)} className="text-cobalt tracking-wider cursor-pointer">Edit</button>
-                         <Link to={`/product/${p.id}`} target="_blank" onClick={e => e.stopPropagation()} className="text-ink/40 hover:text-ink"><ExternalLink size={12} /></Link>
-                         <button onClick={e => { e.stopPropagation(); handleDelete(p.id); }} className="text-orange/60 hover:text-orange cursor-pointer"><Trash2 size={12} /></button>
-                       </div>
-                     </div>
-                   );
-                 });
-               })()}
+            </div>
 
-               {activeTab === 'space' && spaces.map(s => (
-                 <div 
-                   key={s.id} 
-                   onClick={() => handleEdit(s)}
-                   className={`p-3 bg-white border border-black/10 flex flex-col gap-2.5 transition-all cursor-pointer rounded-none shadow-xs min-w-0 w-full max-w-full overflow-hidden ${editingId === s.id ? 'border-l-4 border-l-cobalt bg-cobalt/5 font-semibold' : ''}`}
-                 >
-                   <div className="flex items-center gap-2.5 min-w-0 w-full">
-                     <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={e => { e.stopPropagation(); toggleSelect(s.id); }} className="shrink-0 cursor-pointer" />
-                     <div className="w-10 h-10 rounded-none overflow-hidden bg-black/5 shrink-0 relative border border-black/10">
-                       <img src={s.images?.[0] || ''} alt={s.title} className="w-full h-full object-cover" />
-                     </div>
-                     <div className="min-w-0 flex-1 overflow-hidden">
-                       <div className="font-bold text-xs text-ink truncate">{s.title}</div>
-                       <p className="text-[9px] text-ink/50 truncate">{s.description}</p>
-                     </div>
-                   </div>
-                   <div className="flex justify-end items-center gap-4 pt-2 border-t border-black/5 text-[10px] uppercase font-bold min-w-0 w-full">
-                     <button onClick={() => handleEdit(s)} className="text-cobalt tracking-wider cursor-pointer">Edit</button>
-                     <Link to={`/space/${s.id}`} target="_blank" onClick={e => e.stopPropagation()} className="text-ink/40 hover:text-ink"><ExternalLink size={12} /></Link>
-                     <button onClick={e => { e.stopPropagation(); handleDelete(s.id); }} className="text-orange/60 hover:text-orange cursor-pointer"><Trash2 size={12} /></button>
-                   </div>
-                 </div>
-               ))}
+            {/* Mobile Card List View (< 768px) */}
+            <div className="block md:hidden space-y-3 w-full min-w-0 max-w-full">
+              {(activeTab === 'collection' || activeTab === 'home') && (() => {
+                const list = [...products];
+                return list.map((p) => {
+                  const mainImg = p.images?.[0] || '';
+                  return (
+                    <div 
+                      key={p.id} 
+                      onClick={() => handleEdit(p)}
+                      className={`p-3 bg-white border border-black/10 flex flex-col gap-2.5 transition-all cursor-pointer rounded-none shadow-xs min-w-0 w-full max-w-full overflow-hidden ${editingId === p.id ? 'border-l-4 border-l-cobalt bg-cobalt/5 font-semibold' : ''}`}
+                    >
+                      <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
+                          <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={e => { e.stopPropagation(); toggleSelect(p.id); }} className="shrink-0 cursor-pointer" />
+                          <div className="w-10 h-10 rounded-none overflow-hidden bg-black/5 shrink-0 relative border border-black/10">
+                            <img src={mainImg} alt={p.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <div className="font-bold text-xs text-ink truncate">{p.name}</div>
+                            <span className="text-[9px] text-orange border border-orange/30 px-1.5 py-0.2 rounded-full font-bold uppercase inline-block truncate max-w-full">{p.category}</span>
+                          </div>
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={e => { e.stopPropagation(); toggleFeatured(p.id); }}
+                          className="p-1 text-ink/20 hover:text-orange shrink-0 cursor-pointer"
+                        >
+                          <Star size={16} className={(homeSettings.featuredProductIds || []).includes(p.id) ? "fill-orange text-orange" : ""} />
+                        </button>
+                      </div>
+                      <div className="flex justify-end items-center gap-4 pt-2 border-t border-black/5 text-[10px] uppercase font-bold min-w-0 w-full">
+                        <button onClick={() => handleEdit(p)} className="text-cobalt tracking-wider cursor-pointer">Edit</button>
+                        <Link to={`/product/${p.id}`} target="_blank" onClick={e => e.stopPropagation()} className="text-ink/40 hover:text-ink"><ExternalLink size={12} /></Link>
+                        <button onClick={e => { e.stopPropagation(); handleDelete(p.id); }} className="text-orange/60 hover:text-orange cursor-pointer"><Trash2 size={12} /></button>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
 
-               {activeTab === 'journal' && journals.map(j => (
-                 <div 
-                   key={j.id} 
-                   onClick={() => handleEdit(j)}
-                   className={`p-3 bg-white border border-black/10 flex flex-col gap-2.5 transition-all cursor-pointer rounded-none shadow-xs min-w-0 w-full max-w-full overflow-hidden ${editingId === j.id ? 'border-l-4 border-l-cobalt bg-cobalt/5 font-semibold' : ''}`}
-                 >
-                   <div className="flex items-center gap-2.5 min-w-0 w-full">
-                     <input type="checkbox" checked={selectedIds.includes(j.id)} onChange={e => { e.stopPropagation(); toggleSelect(j.id); }} className="shrink-0 cursor-pointer" />
-                     <div className="w-10 h-10 rounded-none overflow-hidden bg-black/5 shrink-0 relative border border-black/10">
-                       <img src={j.image || ''} alt={j.title} className="w-full h-full object-cover" />
-                     </div>
-                     <div className="min-w-0 flex-1 overflow-hidden">
-                       <div className="font-bold text-xs text-ink truncate">{j.title}</div>
-                       <span className="text-[9px] text-ink/40 uppercase truncate block">{j.category}</span>
-                     </div>
-                   </div>
-                   <div className="flex justify-end items-center gap-4 pt-2 border-t border-black/5 text-[10px] uppercase font-bold min-w-0 w-full">
-                     <button onClick={() => handleEdit(j)} className="text-cobalt tracking-wider cursor-pointer">Edit</button>
-                     <Link to={`/journal/${j.id}`} target="_blank" onClick={e => e.stopPropagation()} className="text-ink/40 hover:text-ink"><ExternalLink size={12} /></Link>
-                     <button onClick={e => { e.stopPropagation(); handleDelete(j.id); }} className="text-orange/60 hover:text-orange cursor-pointer"><Trash2 size={12} /></button>
-                   </div>
-                 </div>
-               ))}
-             </div>
+              {activeTab === 'space' && spaces.map(s => (
+                <div 
+                  key={s.id} 
+                  onClick={() => handleEdit(s)}
+                  className={`p-3 bg-white border border-black/10 flex flex-col gap-2.5 transition-all cursor-pointer rounded-none shadow-xs min-w-0 w-full max-w-full overflow-hidden ${editingId === s.id ? 'border-l-4 border-l-cobalt bg-cobalt/5 font-semibold' : ''}`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 w-full">
+                    <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={e => { e.stopPropagation(); toggleSelect(s.id); }} className="shrink-0 cursor-pointer" />
+                    <div className="w-10 h-10 rounded-none overflow-hidden bg-black/5 shrink-0 relative border border-black/10">
+                      <img src={s.images?.[0] || ''} alt={s.title} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <div className="font-bold text-xs text-ink truncate">{s.title}</div>
+                      <p className="text-[9px] text-ink/50 truncate">{s.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end items-center gap-4 pt-2 border-t border-black/5 text-[10px] uppercase font-bold min-w-0 w-full">
+                    <button onClick={() => handleEdit(s)} className="text-cobalt tracking-wider cursor-pointer">Edit</button>
+                    <Link to={`/space/${s.id}`} target="_blank" onClick={e => e.stopPropagation()} className="text-ink/40 hover:text-ink"><ExternalLink size={12} /></Link>
+                    <button onClick={e => { e.stopPropagation(); handleDelete(s.id); }} className="text-orange/60 hover:text-orange cursor-pointer"><Trash2 size={12} /></button>
+                  </div>
+                </div>
+              ))}
 
-             {/* Desktop Table View (Visible on md screens and above) */}
-             <div className="hidden md:block overflow-x-auto bg-white rounded-none border border-black/5 shadow-sm">
-               {selectedIds.length > 0 && (
-                 <div className="flex items-center gap-2 bg-black/5 p-2 rounded-none border border-black/10 animate-in fade-in slide-in-from-right-4 mb-4">
-                   <span className="text-[10px] font-bold px-3 border-r border-black/10">{selectedIds.length} Selected</span>
-                   <button onClick={handleBulkDuplicate} className="flex items-center gap-2 hover:text-cobalt px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Copy size={12}/> Duplicate</button>
-                   <button onClick={handleBulkDelete} className="flex items-center gap-2 hover:text-orange px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Trash2 size={12}/> Delete</button>
-                 </div>
-               )}
-   
+              {activeTab === 'journal' && journals.map(j => (
+                <div 
+                  key={j.id} 
+                  onClick={() => handleEdit(j)}
+                  className={`p-3 bg-white border border-black/10 flex flex-col gap-2.5 transition-all cursor-pointer rounded-none shadow-xs min-w-0 w-full max-w-full overflow-hidden ${editingId === j.id ? 'border-l-4 border-l-cobalt bg-cobalt/5 font-semibold' : ''}`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 w-full">
+                    <input type="checkbox" checked={selectedIds.includes(j.id)} onChange={e => { e.stopPropagation(); toggleSelect(j.id); }} className="shrink-0 cursor-pointer" />
+                    <div className="w-10 h-10 rounded-none overflow-hidden bg-black/5 shrink-0 relative border border-black/10">
+                      <img src={j.image || ''} alt={j.title} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <div className="font-bold text-xs text-ink truncate">{j.title}</div>
+                      <span className="text-[9px] text-ink/40 uppercase truncate block">{j.category}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-end items-center gap-4 pt-2 border-t border-black/5 text-[10px] uppercase font-bold min-w-0 w-full">
+                    <button onClick={() => handleEdit(j)} className="text-cobalt tracking-wider cursor-pointer">Edit</button>
+                    <Link to={`/journal/${j.id}`} target="_blank" onClick={e => e.stopPropagation()} className="text-ink/40 hover:text-ink"><ExternalLink size={12} /></Link>
+                    <button onClick={e => { e.stopPropagation(); handleDelete(j.id); }} className="text-orange/60 hover:text-orange cursor-pointer"><Trash2 size={12} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View (>= 768px) */}
+            <div className="hidden md:block overflow-x-auto bg-white rounded-none border border-black/5 shadow-sm">
+              {selectedIds.length > 0 && (
+                <div className="flex items-center gap-2 bg-black/5 p-2 rounded-none border border-black/10 animate-in fade-in slide-in-from-right-4">
+                  <span className="text-[10px] font-bold px-3 border-r border-black/10">{selectedIds.length} Selected</span>
+                  <button onClick={handleBulkDuplicate} className="flex items-center gap-2 hover:text-cobalt px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Copy size={12}/> Duplicate</button>
+                  <button onClick={handleBulkDelete} className="flex items-center gap-2 hover:text-orange px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Trash2 size={12}/> Delete</button>
+                </div>
+              )}
               <table className="w-full text-sm text-left">
                 <thead className="text-[10px] uppercase font-black tracking-widest text-ink/40 border-b border-black/5">
                   <tr>
@@ -3603,32 +3603,8 @@ export default function Admin() {
                       }} checked={selectedIds.length > 0 && selectedIds.length === ((activeTab === 'collection' || activeTab === 'home') ? products.length : activeTab === 'space' ? spaces.length : journals.length)} />
                     </th>
                     <th className="py-4">Order</th>
-                    {((activeTab === 'collection' || activeTab === 'home') ? products : activeTab === 'space' ? spaces : journals).some(item => {
-                      const src = (item as any).images?.[0] || (item as any).image || '';
-                      return src.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || src.includes('video');
-                    }) ? (
-                      <th className="py-4">Media</th>
-                    ) : (
-                      <th className="py-4">Image</th>
-                    )}
-                    {activeTab === 'collection' && (
-                      <>
-                        <th className="py-4">Title / Subtitle</th>
-                        <th className="py-4">Category</th>
-                      </>
-                    )}
-                    {activeTab === 'journal' && (
-                      <>
-                        <th className="py-4">Title</th>
-                        <th className="py-4">Category</th>
-                      </>
-                    )}
-                    {activeTab === 'space' && (
-                      <>
-                        <th className="py-4">Title / Description</th>
-                        <th className="py-4">Linked Products</th>
-                      </>
-                    )}
+                    <th className="py-4">Image/Media</th>
+                    <th className="py-4">Details</th>
                     <th className="py-4 text-right pr-6">Actions</th>
                   </tr>
                 </thead>
@@ -3659,15 +3635,11 @@ export default function Admin() {
                             <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => toggleSelect(p.id)} />
                           </td>
                           <td className="py-4" onClick={e => e.stopPropagation()}>
-                            {sortBy === 'user' ? (
-                              <div className="flex flex-col items-center gap-0.5">
-                                <button onClick={() => handleReorder('collection', p.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
-                                <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
-                                <button onClick={() => handleReorder('collection', p.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === products.length - 1}><ChevronDown size={14}/></button>
-                              </div>
-                            ) : (
-                              <div className="text-center text-ink/20 text-xs">—</div>
-                            )}
+                            <div className="flex flex-col items-center gap-0.5">
+                              <button onClick={() => handleReorder('collection', p.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
+                              <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
+                              <button onClick={() => handleReorder('collection', p.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === products.length - 1}><ChevronDown size={14}/></button>
+                            </div>
                           </td>
                           <td className="py-4">
                             {(() => {
@@ -3694,11 +3666,9 @@ export default function Admin() {
                               <div>
                                 <div className="font-bold text-ink group-hover:text-cobalt transition-colors">{p.name}</div>
                                 {p.subTitle && <div className="text-[10px] text-ink/40">{p.subTitle}</div>}
+                                <span className="caption-nano text-orange px-2 py-0.5 mt-1 border border-orange/30 rounded-full font-bold inline-block">{p.category}</span>
                               </div>
                             </div>
-                          </td>
-                          <td className="py-4">
-                            <span className="caption-nano text-orange px-3 py-1 border border-orange/30 rounded-full font-bold">{p.category}</span>
                           </td>
                           <td className="py-4 text-right pr-6" onClick={e => e.stopPropagation()}>
                             <div className="flex justify-end gap-3 items-center">
@@ -3713,7 +3683,6 @@ export default function Admin() {
                                 to={`/product/${p.id}`} 
                                 target="_blank"
                                 className="text-ink/30 text-[10px] font-bold uppercase tracking-widest hover:text-ink transition-colors"
-                                title="View product page"
                               >
                                 <ExternalLink size={13} />
                               </Link>
@@ -3766,7 +3735,6 @@ export default function Admin() {
                                 updateSpace(s.id, updated).then(loadData);
                               }}
                               className="p-2 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
-                              title="Toggle Featured Star (★ Featured)"
                             >
                               <Star 
                                 size={18} 
@@ -3778,13 +3746,6 @@ export default function Admin() {
                               <div className="text-[10px] text-ink/50 truncate max-w-[200px]">{s.description}</div>
                             </div>
                           </div>
-                        </td>
-                        <td className="py-4">
-                          <span className="text-[10px] font-sans font-bold text-ink/40">
-                            {s.appliedProductIds && s.appliedProductIds.length > 0 
-                              ? `${s.appliedProductIds.length} Products` 
-                              : 'None'}
-                          </span>
                         </td>
                         <td className="py-4 text-right pr-6" onClick={e => e.stopPropagation()}>
                           <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-opacity items-center">
@@ -3836,7 +3797,6 @@ export default function Admin() {
                                 updateJournal(j.id, updated).then(loadData);
                               }}
                               className="p-2 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
-                              title="Toggle Featured Star (★ Featured)"
                             >
                               <Star 
                                 size={18} 
