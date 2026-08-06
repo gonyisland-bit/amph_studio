@@ -3778,6 +3778,7 @@ export default function Admin() {
           </div>
         )}
       </div>
+      )}
       {/* Unsaved Changes Confirmation Modal */}
       {pendingNavigation && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-200">
