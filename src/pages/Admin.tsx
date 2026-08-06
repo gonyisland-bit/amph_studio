@@ -3582,17 +3582,15 @@ export default function Admin() {
              </div>
 
              {/* Desktop Table View (Visible on md screens and above) */}
-             <div className="hidden md:block overflow-x-auto bg-white rounded-none border border-black/5 shadow-sm">      
+             <div className="hidden md:block overflow-x-auto bg-white rounded-none border border-black/5 shadow-sm">
                {selectedIds.length > 0 && (
-                 <div className="flex items-center gap-2 bg-black/5 p-2 rounded-none border border-black/10 animate-in fade-in slide-in-from-right-4">
+                 <div className="flex items-center gap-2 bg-black/5 p-2 rounded-none border border-black/10 animate-in fade-in slide-in-from-right-4 mb-4">
                    <span className="text-[10px] font-bold px-3 border-r border-black/10">{selectedIds.length} Selected</span>
                    <button onClick={handleBulkDuplicate} className="flex items-center gap-2 hover:text-cobalt px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Copy size={12}/> Duplicate</button>
                    <button onClick={handleBulkDelete} className="flex items-center gap-2 hover:text-orange px-3 py-1 transition-colors text-[9px] font-bold uppercase"><Trash2 size={12}/> Delete</button>
                  </div>
                )}
-            </div>
    
-            <div className="overflow-x-auto bg-white rounded-none border border-black/5 shadow-sm">
               <table className="w-full text-sm text-left">
                 <thead className="text-[10px] uppercase font-black tracking-widest text-ink/40 border-b border-black/5">
                   <tr>
