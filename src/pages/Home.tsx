@@ -242,61 +242,62 @@ export default function Home() {
               const matchedCards = magazineCardsList.filter(mag => Number(mag.insertAfterIndex) === productPosition);
               matchedCards.forEach((card, mIdx) => {
                 const isEven = (index + mIdx) % 2 === 0;
-                const overlayMode = card.overlayMode || 'soft';
+                const mode = (card.overlayMode || 'DARK').toUpperCase();
                 
-                // Color & Theme calculations based on overlayMode
+                // Color & Theme calculations based on overlayMode (DARK, LIGHT, OFF)
                 let bgContainerClass = isEven ? 'bg-ink text-white' : 'bg-silver/10 text-ink';
-                let titleClass = isEven ? 'text-white/40' : 'text-ink/40';
-                let quoteClass = isEven ? 'text-white/95' : 'text-ink/90';
-                let authorClass = isEven ? 'text-white/30' : 'text-ink/30';
+                let titleClass = isEven ? 'text-white/50' : 'text-ink/50';
+                let quoteClass = isEven ? 'text-white' : 'text-ink';
+                let authorClass = isEven ? 'text-white/40' : 'text-ink/40';
                 
-                if (card.image) {
-                  if (overlayMode === 'dark') {
-                    bgContainerClass = 'bg-black text-white';
-                    titleClass = 'text-white/60';
-                    quoteClass = 'text-white';
-                    authorClass = 'text-white/50';
-                  } else if (overlayMode === 'light') {
-                    bgContainerClass = 'bg-white text-ink';
-                    titleClass = 'text-ink/60';
-                    quoteClass = 'text-ink';
-                    authorClass = 'text-ink/50';
-                  }
+                if (mode === 'LIGHT') {
+                  bgContainerClass = 'bg-white text-ink';
+                  titleClass = 'text-ink/60';
+                  quoteClass = 'text-ink';
+                  authorClass = 'text-ink/50';
+                } else if (mode === 'DARK' || card.image) {
+                  bgContainerClass = 'bg-black text-white';
+                  titleClass = 'text-white/60';
+                  quoteClass = 'text-white';
+                  authorClass = 'text-white/50';
                 }
+
+                const customStyle: React.CSSProperties = card.bgColor ? { backgroundColor: card.bgColor } : {};
 
                 items.push(
                   <div 
                     key={`mag-card-${card.id || mIdx}-${index}`} 
-                    className={`border-b border-r border-black/10 aspect-[4/5] p-5 sm:p-6 lg:p-8 ${bgContainerClass} flex flex-col justify-between reveal w-full h-full relative overflow-hidden`}
+                    className={`border-b border-r border-black/10 aspect-[4/5] p-6 sm:p-8 lg:p-10 ${bgContainerClass} flex flex-col justify-between reveal w-full h-full relative overflow-hidden`}
+                    style={customStyle}
                   >
-                    {/* Media & Dimming Overlay */}
+                    {/* Cover Media & Overlay Dimming (DARK, LIGHT, OFF) */}
                     {card.image && (
                       <div className="absolute inset-0 w-full h-full z-0">
                         <MediaRenderer 
                           src={card.image} 
                           alt={card.title} 
-                          className={`w-full h-full object-cover ${overlayMode === 'soft' ? 'opacity-25' : 'opacity-100'}`} 
+                          className="w-full h-full object-cover" 
                         />
-                        {overlayMode === 'dark' && (
-                          <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]" />
+                        {mode === 'DARK' && (
+                          <div className="absolute inset-0 bg-black/60 backdrop-blur-[0.5px]" />
                         )}
-                        {overlayMode === 'light' && (
-                          <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px]" />
+                        {mode === 'LIGHT' && (
+                          <div className="absolute inset-0 bg-white/80 backdrop-blur-[0.5px]" />
                         )}
                       </div>
                     )}
                     
-                    {/* Text Container with Fluid Responsive Clamping */}
+                    {/* Content Layer (Main Bold Title Typography filled inside grid) */}
                     <div className="relative z-10 flex flex-col justify-between h-full min-h-0">
-                      <span className={`text-[9px] uppercase tracking-[0.25em] font-bold block mb-4 sm:mb-6 shrink-0 ${titleClass}`}>
+                      <span className={`text-[9px] sm:text-[10px] uppercase tracking-[0.25em] font-black block mb-4 shrink-0 ${titleClass}`}>
                         {card.title}
                       </span>
-                      <div className="my-auto overflow-hidden py-2">
-                        <blockquote className={`text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-serif italic font-light leading-snug sm:leading-normal tracking-tight pr-1 sm:pr-3 break-words ${quoteClass}`}>
+                      <div className="my-auto overflow-hidden py-1">
+                        <blockquote className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-sans font-black uppercase tracking-tighter leading-[1.05] pr-1 sm:pr-2 break-words ${quoteClass}`}>
                           "{card.quote}"
                         </blockquote>
                       </div>
-                      <span className={`text-[9px] uppercase tracking-widest block mt-4 sm:mt-6 shrink-0 ${authorClass}`}>
+                      <span className={`text-[9px] sm:text-[10px] uppercase tracking-widest font-bold block mt-4 shrink-0 ${authorClass}`}>
                         {card.author}
                       </span>
                     </div>

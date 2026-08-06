@@ -308,7 +308,8 @@ export interface MagazineCard {
   author: string;
   insertAfterIndex: number;
   image?: string;
-  overlayMode?: 'dark' | 'light' | 'soft';
+  bgColor?: string;
+  overlayMode?: 'DARK' | 'LIGHT' | 'OFF';
 }
 
 export const defaultColorAssets: ColorOption[] = [

@@ -2032,10 +2032,10 @@ export default function Admin() {
                       type="submit"
                       form="editor-form"
                       disabled={saveStatus === 'saving'}
-                      className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-none ${
+                      className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-none cursor-pointer ${
                         saveStatus === 'saving' ? 'bg-black/10 text-ink/30 cursor-not-allowed' :
                         saveStatus === 'saved' ? 'bg-[#ff0000] text-white hover:bg-[#d60000]' :
-                        'bg-ink text-white hover:bg-cobalt'
+                        'bg-cobalt text-white hover:bg-ink'
                       }`}
                     >
                       {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save'}
@@ -2617,18 +2617,49 @@ export default function Admin() {
                                   }}
                                 />
 
-                                {/* Media Overlay Dimming Selector */}
+                                {/* Card Background Color Picker (단색 배경 컬러 설정) */}
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">
+                                    Card Background Color (단색 배경 색상 선택)
+                                  </label>
+                                  <div className="flex gap-2 items-center">
+                                    <input 
+                                      type="color"
+                                      value={card.bgColor || '#1c1c1c'}
+                                      onChange={e => {
+                                        const current = [...effectiveMagCards];
+                                        current[idx] = { ...current[idx], bgColor: e.target.value };
+                                        setHomeSettings({ ...homeSettings, magazineCards: current });
+                                      }}
+                                      className="w-7 h-7 border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
+                                    />
+                                    <input 
+                                      type="text"
+                                      value={card.bgColor || ''}
+                                      onChange={e => {
+                                        const current = [...effectiveMagCards];
+                                        current[idx] = { ...current[idx], bgColor: e.target.value };
+                                        setHomeSettings({ ...homeSettings, magazineCards: current });
+                                      }}
+                                      placeholder="#1C1C1C (Default)"
+                                      className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white font-mono text-ink"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Media Overlay Dimming Selector (DARK / LIGHT / OFF) */}
                                 <div className="bg-black/5 p-3 border border-black/10 space-y-1.5">
                                   <label className="block text-[10px] font-black uppercase text-ink/70">
-                                    Cover Media Dimming (이미지 배경 오버레이 색상 선택)
+                                    Overlay Dimming (이미지 딤 오버레이 선택)
                                   </label>
                                   <div className="grid grid-cols-3 gap-2">
                                     {[
-                                      { mode: 'dark', label: '🌙 Dark Dim', desc: '어두운 딤 + 흰글씨' },
-                                      { mode: 'light', label: '☀️ Light Dim', desc: '밝은 딤 + 검은글씨' },
-                                      { mode: 'soft', label: '👁️ Soft Blend', desc: '은은한 소프트 블렌드' }
+                                      { mode: 'DARK', label: 'DARK', desc: '어두운 딤 + 흰글씨' },
+                                      { mode: 'LIGHT', label: 'LIGHT', desc: '밝은 딤 + 검은글씨' },
+                                      { mode: 'OFF', label: 'OFF', desc: '오버레이 끄기 (원본)' }
                                     ].map(opt => {
-                                      const isSelected = (card.overlayMode || 'soft') === opt.mode;
+                                      const currentMode = (card.overlayMode || 'DARK').toUpperCase();
+                                      const isSelected = currentMode === opt.mode;
                                       return (
                                         <button
                                           key={opt.mode}
@@ -2644,13 +2675,53 @@ export default function Admin() {
                                               : 'bg-white text-ink border-black/15 hover:border-black/30'
                                           }`}
                                         >
-                                          <span className="block text-[10px] font-bold uppercase">{opt.label}</span>
+                                          <span className="block text-[10px] font-black uppercase tracking-wider">{opt.label}</span>
                                           <span className={`block text-[8px] mt-0.5 truncate ${isSelected ? 'text-white/80' : 'text-ink/40'}`}>
                                             {opt.desc}
                                           </span>
                                         </button>
                                       );
                                     })}
+                                  </div>
+                                </div>
+
+                                {/* Live Preview Box inside Admin Dashboard (어드민 내 실시간 라이브 미리보기) */}
+                                <div className="space-y-1 pt-1">
+                                  <span className="block text-[9px] font-black uppercase text-cobalt tracking-wider">
+                                    Live Card Preview (실시간 디밍 적용 미리보기)
+                                  </span>
+                                  <div 
+                                    className="aspect-[4/5] p-4 relative overflow-hidden border border-black/20 flex flex-col justify-between"
+                                    style={{ backgroundColor: card.bgColor || '#1c1c1c' }}
+                                  >
+                                    {card.image && (
+                                      <div className="absolute inset-0 w-full h-full z-0">
+                                        <img src={card.image} alt="Preview" className="w-full h-full object-cover" nopin="nopin" data-pin-no-hover="true" />
+                                        {(card.overlayMode || 'DARK').toUpperCase() === 'DARK' && (
+                                          <div className="absolute inset-0 bg-black/60" />
+                                        )}
+                                        {(card.overlayMode || 'DARK').toUpperCase() === 'LIGHT' && (
+                                          <div className="absolute inset-0 bg-white/80" />
+                                        )}
+                                      </div>
+                                    )}
+                                    <div className="relative z-10 flex flex-col justify-between h-full">
+                                      <span className={`text-[8px] uppercase tracking-widest font-black block truncate ${
+                                        (card.overlayMode || 'DARK').toUpperCase() === 'LIGHT' ? 'text-ink/60' : 'text-white/60'
+                                      }`}>
+                                        {card.title || 'TITLE PREVIEW'}
+                                      </span>
+                                      <p className={`text-xs font-black uppercase tracking-tight leading-tight my-auto line-clamp-3 ${
+                                        (card.overlayMode || 'DARK').toUpperCase() === 'LIGHT' ? 'text-ink' : 'text-white'
+                                      }`}>
+                                        "{card.quote || 'QUOTE CONTENT PREVIEW'}"
+                                      </p>
+                                      <span className={`text-[7.5px] uppercase font-bold block truncate ${
+                                        (card.overlayMode || 'DARK').toUpperCase() === 'LIGHT' ? 'text-ink/40' : 'text-white/40'
+                                      }`}>
+                                        {card.author || 'AUTHOR'}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
