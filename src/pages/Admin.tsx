@@ -3482,6 +3482,7 @@ export default function Admin() {
                         value={sortBy} 
                         onChange={e => setSortBy(e.target.value as any)}
                         className="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer text-cobalt"
+                      >
                         <option value="name">Name</option>
                         <option value="category">Category</option>
                         <option value="newest">Newest</option>
