@@ -46,25 +46,20 @@ export default function Journal() {
           <Link 
             to={`/journal/${article.id}`} 
             key={article.id} 
-            className="group flex flex-col md:flex-row min-h-[60vh] border-b-8 border-black/10 md:border-b-0 md:border-b border-black/10 transition-colors hover:bg-black/[0.01] reveal pb-8 md:pb-0 mb-4 md:mb-0"
+            className="group flex flex-col md:flex-row min-h-[60vh] border-b border-black/10 transition-colors hover:bg-black/[0.01] reveal mb-16 md:mb-0"
             onMouseEnter={() => {
               import("../lib/data").then(module => {
                 module.getJournalById(article.id);
               });
             }}
           >
-            <div className={`flex-1 p-6 sm:p-8 md:p-16 lg:p-24 flex flex-col justify-center ${i % 2 === 0 ? "md:border-r" : "md:order-last md:border-l"} border-black/10 pt-8 border-t-2 border-cobalt/30 md:border-t-0`}>
-              <div className="flex items-center justify-between mb-4 md:mb-6">
-                <span className="text-[11px] sm:text-xs uppercase tracking-[0.25em] font-black text-cobalt font-mono block">
-                  Journal 0{i + 1}
-                </span>
-                <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-ink/30 md:hidden bg-black/5 px-2 py-0.5">
-                  Story #{i + 1}
-                </span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl md:text-5xl font-medium tracking-tighter uppercase font-sans mb-4 md:mb-8 leading-[0.95] md:leading-[0.9] group-hover:text-cobalt transition-colors">{article.title}</h2>
+            <div className={`flex-1 p-6 sm:p-8 md:p-16 lg:p-24 flex flex-col justify-center ${i % 2 === 0 ? "md:border-r" : "md:order-last md:border-l"} border-black/10`}>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-cobalt font-sans block mb-3 md:mb-6">
+                Journal 0{i + 1}
+              </span>
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-medium tracking-tighter uppercase font-sans mb-3 md:mb-8 leading-[0.95] md:leading-[0.9] group-hover:text-cobalt transition-colors">{article.title}</h2>
               {article.description && (
-                <p className="text-base sm:text-lg font-serif italic text-ink/80 leading-relaxed max-w-sm mb-6 md:mb-12 line-clamp-3">
+                <p className="text-base sm:text-lg font-serif italic text-ink/80 leading-relaxed max-w-sm mb-4 md:mb-12 line-clamp-3">
                   {article.description}
                 </p>
               )}

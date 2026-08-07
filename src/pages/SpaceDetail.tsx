@@ -207,7 +207,7 @@ export default function SpaceDetail() {
               if (block.type === 'image' && imageUrl) {
                 const targetIdx = allImages.indexOf(imageUrl);
                 return (
-                  <div key={idx} className="flex flex-col reveal group w-full mb-10 md:mb-0 pb-6 md:pb-0 border-b border-black/5 md:border-b-0">
+                  <div key={idx} className="flex flex-col reveal group w-full">
                     <div 
                       onClick={() => {
                         setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
@@ -224,7 +224,7 @@ export default function SpaceDetail() {
                       />
                     </div>
                     {textContent && (
-                      <div className="mt-2.5 sm:mt-4">
+                      <div className="mt-3 sm:mt-4">
                         <p className="text-xs sm:text-sm md:text-base font-sans leading-relaxed text-ink/80 text-center break-words max-w-full px-2">{textContent}</p>
                       </div>
                     )}
@@ -241,7 +241,7 @@ export default function SpaceDetail() {
                     : "text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium leading-relaxed";
 
                 return (
-                  <div key={idx} className="flex flex-col reveal py-6 md:py-16 w-full h-full min-h-[150px] md:min-h-[300px] justify-center items-center text-center my-auto px-4 sm:px-6 overflow-hidden max-w-full mb-10 md:mb-0 pb-6 md:pb-0 border-b border-black/5 md:border-b-0">
+                  <div key={idx} className="flex flex-col reveal py-8 md:py-16 w-full h-full min-h-[180px] md:min-h-[300px] justify-center items-center text-center my-auto px-4 sm:px-6 overflow-hidden max-w-full">
                     <p className={`w-full max-w-full [word-break:break-all] sm:[word-break:break-word] [overflow-wrap:anywhere] break-words whitespace-pre-wrap font-sans text-ink uppercase text-center mx-auto ${textStyleClass}`}>
                       {block.value}
                     </p>
