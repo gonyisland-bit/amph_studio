@@ -930,19 +930,20 @@ export default function ProductDetail() {
           </div>
 
           {/* Main Image Viewport */}
-          <div className="flex-grow flex items-center justify-center relative overflow-hidden w-full">
-            {/* Previous Image Button (Desktop) */}
+          <div className="flex-grow flex items-center justify-center relative overflow-hidden w-full px-0 md:px-16 py-1 md:py-2">
+            {/* Previous Image Button */}
             <button 
               onClick={() => navigateLightbox(-1)}
-              className="absolute left-5 z-20 text-white/50 hover:text-white transition-colors hidden md:flex cursor-pointer bg-white/5 p-3 rounded-full hover:bg-white/10 focus:outline-none items-center justify-center"
+              className="absolute left-2 md:left-5 z-30 text-white/80 hover:text-white p-2.5 md:p-3 transition-all hover:scale-110 cursor-pointer flex items-center justify-center bg-black/40 backdrop-blur-md border border-white/20 rounded-full shadow-lg"
+              title="Previous"
             >
-              <ChevronLeft size={24} />
+              <ChevronLeft size={22} className="md:w-7 md:h-7" />
             </button>
 
             {/* Image with zoom & pan transform */}
             <div 
               ref={stageRef}
-              className="flex items-center justify-center select-none"
+              className="w-full h-full flex items-center justify-center select-none"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -960,8 +961,8 @@ export default function ProductDetail() {
                   src={allDetailImages[lightboxIndex]}
                   alt={`${product.name} fullscreen view`}
                   style={{
-                    maxWidth: 'calc(100vw - 80px)',
-                    maxHeight: 'calc(100vh - 150px)',
+                    maxWidth: '100vw',
+                    maxHeight: 'calc(100vh - 100px)',
                     width: 'auto',
                     height: 'auto',
                     objectFit: 'contain',
@@ -974,12 +975,13 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Next Image Button (Desktop) */}
+            {/* Next Image Button */}
             <button 
               onClick={() => navigateLightbox(1)}
-              className="absolute right-5 z-20 text-white/50 hover:text-white transition-colors hidden md:flex cursor-pointer bg-white/5 p-3 rounded-full hover:bg-white/10 focus:outline-none items-center justify-center"
+              className="absolute right-2 md:right-5 z-30 text-white/80 hover:text-white p-2.5 md:p-3 transition-all hover:scale-110 cursor-pointer flex items-center justify-center bg-black/40 backdrop-blur-md border border-white/20 rounded-full shadow-lg"
+              title="Next"
             >
-              <ChevronRight size={24} />
+              <ChevronRight size={22} className="md:w-7 md:h-7" />
             </button>
           </div>
 

@@ -535,7 +535,7 @@ export default function JournalDetail() {
           </div>
 
           {/* Lightbox Main Stage */}
-          <div className="flex-1 relative flex items-center justify-center overflow-hidden px-4 md:px-16 py-2">
+          <div className="flex-1 relative flex items-center justify-center overflow-hidden px-0 md:px-16 py-1 md:py-2">
             <button 
               onClick={() => {
                 setLightboxIndex((prev) => (prev !== null ? (prev - 1 + allImages.length) % allImages.length : 0));
@@ -543,10 +543,10 @@ export default function JournalDetail() {
                 setPanOffset({ x: 0, y: 0 });
                 setIsDragging(false);
               }}
-              className="absolute left-4 z-30 text-white/40 hover:text-white p-3 transition-all hover:scale-110 cursor-pointer hidden sm:block"
+              className="absolute left-2 md:left-5 z-30 text-white/80 hover:text-white p-2.5 md:p-3 transition-all hover:scale-110 cursor-pointer flex items-center justify-center bg-black/40 backdrop-blur-md border border-white/20 rounded-full shadow-lg"
               title="Previous"
             >
-              <ChevronLeft size={36} />
+              <ChevronLeft size={22} className="md:w-7 md:h-7" />
             </button>
 
             <div 
@@ -569,8 +569,8 @@ export default function JournalDetail() {
                   src={allImages[lightboxIndex]}
                   alt={`${article.title} view ${lightboxIndex + 1}`}
                   style={{
-                    maxWidth: 'calc(100vw - 80px)',
-                    maxHeight: 'calc(100vh - 150px)',
+                    maxWidth: '100vw',
+                    maxHeight: 'calc(100vh - 100px)',
                     width: 'auto',
                     height: 'auto',
                     objectFit: 'contain',
@@ -590,10 +590,10 @@ export default function JournalDetail() {
                 setPanOffset({ x: 0, y: 0 });
                 setIsDragging(false);
               }}
-              className="absolute right-4 z-30 text-white/40 hover:text-white p-3 transition-all hover:scale-110 cursor-pointer hidden sm:block"
+              className="absolute right-2 md:right-5 z-30 text-white/80 hover:text-white p-2.5 md:p-3 transition-all hover:scale-110 cursor-pointer flex items-center justify-center bg-black/40 backdrop-blur-md border border-white/20 rounded-full shadow-lg"
               title="Next"
             >
-              <ChevronRight size={36} />
+              <ChevronRight size={22} className="md:w-7 md:h-7" />
             </button>
           </div>
 
