@@ -17,13 +17,15 @@ export default function JournalDetail() {
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
-  const [touchPanStart, setTouchPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [touchDelta, setTouchDelta] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   
   const stageRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
-  const lastTapRef = useRef<number>(0);
+  const lastTouchTimeRef = useRef<number>(0);
+  const lastTouchTapTimeRef = useRef<number>(0);
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const touchPanStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const pinchStartDistRef = useRef<number>(0);
+  const pinchStartScaleRef = useRef<number>(1);
   const dragDistanceRef = useRef<number>(0);
 
   // Clamps panOffset so zoomed image boundary never leaves the stage viewport
@@ -48,24 +50,19 @@ export default function JournalDetail() {
     };
   };
 
-  // Double tap / double click zoom toggle
-  const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent) => {
-    const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      e.stopPropagation();
-      setZoomScale(prev => {
-        const next = prev > 1 ? 1 : 2.5;
-        if (next === 1) setPanOffset({ x: 0, y: 0 });
-        return next;
-      });
-      lastTapRef.current = 0;
-    } else {
-      lastTapRef.current = now;
-    }
+  // Toggle zoom between 1x and 2.5x with smooth transition
+  const toggleZoom = () => {
+    setIsDragging(false);
+    setZoomScale(prev => {
+      const next = prev > 1 ? 1 : 2.5;
+      if (next === 1) setPanOffset({ x: 0, y: 0 });
+      return next;
+    });
   };
 
+  // Desktop Mouse Handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    handleDoubleTap(e);
+    if (Date.now() - lastTouchTimeRef.current < 500) return;
     if (zoomScale > 1) {
       setIsDragging(true);
       setDragStartPos({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
@@ -74,6 +71,7 @@ export default function JournalDetail() {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (Date.now() - lastTouchTimeRef.current < 500) return;
     if (isDragging && zoomScale > 1) {
       e.preventDefault();
       dragDistanceRef.current += Math.abs(e.movementX) + Math.abs(e.movementY);
@@ -85,6 +83,12 @@ export default function JournalDetail() {
 
   const handleMouseUp = () => {
     setIsDragging(false);
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (Date.now() - lastTouchTimeRef.current < 500) return;
+    e.stopPropagation();
+    toggleZoom();
   };
 
   useScrollReveal([article, appliedProducts]);
@@ -114,12 +118,14 @@ export default function JournalDetail() {
         setLightboxIndex(null);
         setZoomScale(1);
         setPanOffset({ x: 0, y: 0 });
+        setIsDragging(false);
       } else if (e.key === 'ArrowRight') {
         const allImgs = getAllImages();
         if (allImgs.length > 0) {
           setLightboxIndex((prev) => (prev !== null ? (prev + 1) % allImgs.length : 0));
           setZoomScale(1);
           setPanOffset({ x: 0, y: 0 });
+          setIsDragging(false);
         }
       } else if (e.key === 'ArrowLeft') {
         const allImgs = getAllImages();
@@ -127,6 +133,7 @@ export default function JournalDetail() {
           setLightboxIndex((prev) => (prev !== null ? (prev - 1 + allImgs.length) % allImgs.length : 0));
           setZoomScale(1);
           setPanOffset({ x: 0, y: 0 });
+          setIsDragging(false);
         }
       }
     };
@@ -154,54 +161,102 @@ export default function JournalDetail() {
 
   const allImages = getAllImages();
 
-  // Touch gesture handlers for Lightbox
+  // Mobile / Tablet Touch Handlers (1-finger pan, 2-finger pinch, double-tap zoom)
   const handleTouchStart = (e: React.TouchEvent) => {
-    handleDoubleTap(e);
+    lastTouchTimeRef.current = Date.now();
+    setIsDragging(false);
+
     if (e.touches.length === 1) {
-      setTouchStartPos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-      setTouchPanStart({ ...panOffset });
-      setTouchDelta({ x: 0, y: 0 });
+      touchStartPosRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      touchPanStartRef.current = { ...panOffset };
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      pinchStartDistRef.current = dist;
+      pinchStartScaleRef.current = zoomScale;
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStartPos || e.touches.length !== 1) return;
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const dx = currentX - touchStartPos.x;
-    const dy = currentY - touchStartPos.y;
+    lastTouchTimeRef.current = Date.now();
 
-    if (zoomScale > 1) {
+    if (e.touches.length === 2 && pinchStartDistRef.current > 0) {
       e.preventDefault();
-      const nextX = touchPanStart.x + dx;
-      const nextY = touchPanStart.y + dy;
-      setPanOffset(clampPan(nextX, nextY, zoomScale));
-    } else {
-      setTouchDelta({ x: dx, y: dy });
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const ratio = currentDist / pinchStartDistRef.current;
+      const nextScale = Math.min(Math.max(pinchStartScaleRef.current * ratio, 1), 3.5);
+      setZoomScale(nextScale);
+      setPanOffset(prev => clampPan(prev.x, prev.y, nextScale));
+      return;
+    }
+
+    if (e.touches.length === 1 && touchStartPosRef.current) {
+      const dx = e.touches[0].clientX - touchStartPosRef.current.x;
+      const dy = e.touches[0].clientY - touchStartPosRef.current.y;
+
+      if (zoomScale > 1) {
+        e.preventDefault();
+        const nextX = touchPanStartRef.current.x + dx;
+        const nextY = touchPanStartRef.current.y + dy;
+        setPanOffset(clampPan(nextX, nextY, zoomScale));
+      }
     }
   };
 
-  const handleTouchEnd = () => {
-    if (zoomScale > 1) {
-      setTouchStartPos(null);
-      setTouchDelta({ x: 0, y: 0 });
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    lastTouchTimeRef.current = Date.now();
+
+    if (pinchStartDistRef.current > 0 && e.touches.length < 2) {
+      pinchStartDistRef.current = 0;
+      if (zoomScale <= 1.05) {
+        setZoomScale(1);
+        setPanOffset({ x: 0, y: 0 });
+      }
       return;
     }
-    if (touchDelta.x < -60) {
-      setLightboxIndex((prev) => (prev !== null ? (prev + 1) % allImages.length : 0));
-      setZoomScale(1);
-      setPanOffset({ x: 0, y: 0 });
-    } else if (touchDelta.x > 60) {
-      setLightboxIndex((prev) => (prev !== null ? (prev - 1 + allImages.length) % allImages.length : 0));
-      setZoomScale(1);
-      setPanOffset({ x: 0, y: 0 });
-    } else if (Math.abs(touchDelta.y) > 100) {
-      setLightboxIndex(null);
-      setZoomScale(1);
-      setPanOffset({ x: 0, y: 0 });
+
+    if (e.changedTouches.length === 1 && touchStartPosRef.current) {
+      const dx = e.changedTouches[0].clientX - touchStartPosRef.current.x;
+      const dy = e.changedTouches[0].clientY - touchStartPosRef.current.y;
+      const distMoved = Math.hypot(dx, dy);
+
+      if (distMoved < 10) {
+        const now = Date.now();
+        if (now - lastTouchTapTimeRef.current < 280) {
+          e.preventDefault();
+          toggleZoom();
+          lastTouchTapTimeRef.current = 0;
+          touchStartPosRef.current = null;
+          return;
+        } else {
+          lastTouchTapTimeRef.current = now;
+        }
+      }
+
+      if (zoomScale === 1) {
+        if (Math.abs(dx) > 60 && Math.abs(dy) < 100) {
+          if (dx > 0) {
+            setLightboxIndex((prev) => (prev !== null ? (prev - 1 + allImages.length) % allImages.length : 0));
+          } else {
+            setLightboxIndex((prev) => (prev !== null ? (prev + 1) % allImages.length : 0));
+          }
+          setZoomScale(1);
+          setPanOffset({ x: 0, y: 0 });
+          setIsDragging(false);
+        } else if (Math.abs(dy) > 100) {
+          setLightboxIndex(null);
+          setZoomScale(1);
+          setPanOffset({ x: 0, y: 0 });
+          setIsDragging(false);
+        }
+      }
     }
-    setTouchStartPos(null);
-    setTouchDelta({ x: 0, y: 0 });
+    touchStartPosRef.current = null;
   };
 
   return (
@@ -501,11 +556,12 @@ export default function JournalDetail() {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onDoubleClick={handleDoubleClick}
               style={{
                 transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
                 transformOrigin: 'center center',
                 cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
-                transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)'
+                transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
               }}
             >
               <div ref={mediaRef} className="flex items-center justify-center max-w-full max-h-full">
