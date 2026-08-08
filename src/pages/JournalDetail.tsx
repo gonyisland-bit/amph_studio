@@ -22,6 +22,7 @@ export default function JournalDetail() {
   const [touchDelta, setTouchDelta] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   
   const stageRef = useRef<HTMLDivElement>(null);
+  const mediaRef = useRef<HTMLDivElement>(null);
   const lastTapRef = useRef<number>(0);
   const dragDistanceRef = useRef<number>(0);
 
@@ -29,9 +30,18 @@ export default function JournalDetail() {
   const clampPan = (px: number, py: number, scale: number) => {
     if (scale <= 1) return { x: 0, y: 0 };
     const stage = stageRef.current;
+    const media = mediaRef.current;
     if (!stage) return { x: px, y: py };
-    const maxPanX = Math.max(0, (stage.clientWidth * scale - stage.clientWidth) / 2);
-    const maxPanY = Math.max(0, (stage.clientHeight * scale - stage.clientHeight) / 2);
+    const stageW = stage.clientWidth;
+    const stageH = stage.clientHeight;
+    const mediaW = media ? media.clientWidth : stageW;
+    const mediaH = media ? media.clientHeight : stageH;
+
+    const scaledW = mediaW * scale;
+    const scaledH = mediaH * scale;
+
+    const maxPanX = Math.max(0, (scaledW - stageW) / 2);
+    const maxPanY = Math.max(0, (scaledH - stageH) / 2);
     return {
       x: Math.min(maxPanX, Math.max(-maxPanX, px)),
       y: Math.min(maxPanY, Math.max(-maxPanY, py))
@@ -416,6 +426,23 @@ export default function JournalDetail() {
             </span>
             <div className="flex items-center gap-4 text-white/70 text-xs font-mono">
               <div className="flex items-center gap-2 border-l border-white/20 pl-4">
+                <button
+                  type="button"
+                  disabled={zoomScale === 1}
+                  onClick={() => {
+                    setZoomScale(1);
+                    setPanOffset({ x: 0, y: 0 });
+                    setIsDragging(false);
+                  }}
+                  className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border rounded-none transition-all ${
+                    zoomScale > 1
+                      ? 'border-white/40 text-white hover:bg-white/20 opacity-100 cursor-pointer'
+                      : 'border-white/10 text-white/30 opacity-40 pointer-events-none'
+                  }`}
+                  title="Fit to Screen (1x)"
+                >
+                  Fit
+                </button>
                 <button 
                   onClick={() => setZoomScale(prev => Math.min(prev + 0.5, 3))}
                   className="hover:text-white transition-colors p-1 cursor-pointer"
@@ -442,6 +469,7 @@ export default function JournalDetail() {
                   setLightboxIndex(null);
                   setZoomScale(1);
                   setPanOffset({ x: 0, y: 0 });
+                  setIsDragging(false);
                 }}
                 className="hover:text-white transition-colors p-1.5 cursor-pointer ml-2"
                 title="Close (Esc)"
@@ -457,6 +485,8 @@ export default function JournalDetail() {
               onClick={() => {
                 setLightboxIndex((prev) => (prev !== null ? (prev - 1 + allImages.length) % allImages.length : 0));
                 setZoomScale(1);
+                setPanOffset({ x: 0, y: 0 });
+                setIsDragging(false);
               }}
               className="absolute left-4 z-30 text-white/40 hover:text-white p-3 transition-all hover:scale-110 cursor-pointer hidden sm:block"
               title="Previous"
@@ -475,30 +505,34 @@ export default function JournalDetail() {
                 transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
                 transformOrigin: 'center center',
                 cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
-                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+                transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)'
               }}
             >
-              <MediaRenderer
-                src={allImages[lightboxIndex]}
-                alt={`${article.title} view ${lightboxIndex + 1}`}
-                style={{
-                  maxWidth: 'calc(100vw - 80px)',
-                  maxHeight: 'calc(100vh - 150px)',
-                  width: 'auto',
-                  height: 'auto',
-                  objectFit: 'contain',
-                  display: 'block',
-                  pointerEvents: zoomScale > 1 ? 'none' : 'auto',
-                  userSelect: 'none',
-                }}
-                loading="eager"
-              />
+              <div ref={mediaRef} className="flex items-center justify-center max-w-full max-h-full">
+                <MediaRenderer
+                  src={allImages[lightboxIndex]}
+                  alt={`${article.title} view ${lightboxIndex + 1}`}
+                  style={{
+                    maxWidth: 'calc(100vw - 80px)',
+                    maxHeight: 'calc(100vh - 150px)',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    display: 'block',
+                    pointerEvents: zoomScale > 1 ? 'none' : 'auto',
+                    userSelect: 'none',
+                  }}
+                  loading="eager"
+                />
+              </div>
             </div>
 
             <button 
               onClick={() => {
                 setLightboxIndex((prev) => (prev !== null ? (prev + 1) % allImages.length : 0));
                 setZoomScale(1);
+                setPanOffset({ x: 0, y: 0 });
+                setIsDragging(false);
               }}
               className="absolute right-4 z-30 text-white/40 hover:text-white p-3 transition-all hover:scale-110 cursor-pointer hidden sm:block"
               title="Next"
@@ -515,6 +549,8 @@ export default function JournalDetail() {
                 onClick={() => {
                   setLightboxIndex(i);
                   setZoomScale(1);
+                  setPanOffset({ x: 0, y: 0 });
+                  setIsDragging(false);
                 }}
                 className={`w-12 h-12 flex-shrink-0 border transition-all duration-300 overflow-hidden rounded-none cursor-pointer ${
                   lightboxIndex === i ? 'border-cobalt scale-105 opacity-100' : 'border-white/20 opacity-40 hover:opacity-80'

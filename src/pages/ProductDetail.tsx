@@ -78,6 +78,7 @@ export default function ProductDetail() {
   const touchStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
   const thumbnailStripRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const mediaRef = useRef<HTMLDivElement>(null);
   const lastTapRef = useRef<number>(0);
   const dragDistanceRef = useRef<number>(0);
 
@@ -85,9 +86,18 @@ export default function ProductDetail() {
   const clampPan = (px: number, py: number, scale: number) => {
     if (scale <= 1) return { x: 0, y: 0 };
     const stage = stageRef.current;
+    const media = mediaRef.current;
     if (!stage) return { x: px, y: py };
-    const maxPanX = Math.max(0, (stage.clientWidth * scale - stage.clientWidth) / 2);
-    const maxPanY = Math.max(0, (stage.clientHeight * scale - stage.clientHeight) / 2);
+    const stageW = stage.clientWidth;
+    const stageH = stage.clientHeight;
+    const mediaW = media ? media.clientWidth : stageW;
+    const mediaH = media ? media.clientHeight : stageH;
+
+    const scaledW = mediaW * scale;
+    const scaledH = mediaH * scale;
+
+    const maxPanX = Math.max(0, (scaledW - stageW) / 2);
+    const maxPanY = Math.max(0, (scaledH - stageH) / 2);
     return {
       x: Math.min(maxPanX, Math.max(-maxPanX, px)),
       y: Math.min(maxPanY, Math.max(-maxPanY, py))
@@ -808,14 +818,20 @@ export default function ProductDetail() {
             </span>
             <div className="flex items-center gap-4">
               {/* FIT button — always visible, left of ZoomIn */}
+              {/* FIT button — always visible, left of ZoomIn */}
               <button
-                onClick={() => setZoomScale(1)}
-                className={`transition-colors cursor-pointer focus:outline-none text-[9px] font-bold tracking-widest uppercase border px-2 py-0.5 rounded-sm ${
+                type="button"
+                onClick={() => {
+                  setZoomScale(1);
+                  setPanOffset({ x: 0, y: 0 });
+                  setIsDragging(false);
+                }}
+                className={`transition-colors cursor-pointer focus:outline-none text-[9px] font-bold tracking-widest uppercase border px-2 py-0.5 rounded-none ${
                   zoomScale === 1
-                    ? 'text-white/20 border-white/10 cursor-default'
-                    : 'text-white/70 border-white/30 hover:text-white hover:border-white'
+                    ? 'text-white/30 border-white/10 opacity-40 pointer-events-none'
+                    : 'text-white border-white/40 hover:bg-white/20 opacity-100'
                 }`}
-                title="Reset to Fit"
+                title="Fit to Screen (1x)"
                 disabled={zoomScale === 1}
               >
                 FIT
@@ -830,7 +846,13 @@ export default function ProductDetail() {
               </button>
               {/* Zoom Out */}
               <button 
-                onClick={() => setZoomScale(prev => Math.max(prev - 0.5, 1))}
+                onClick={() => {
+                  setZoomScale(prev => {
+                    const next = Math.max(prev - 0.5, 1);
+                    if (next === 1) setPanOffset({ x: 0, y: 0 });
+                    return next;
+                  });
+                }}
                 className="hover:text-white transition-colors cursor-pointer focus:outline-none"
                 title="Zoom Out"
               >
@@ -841,6 +863,8 @@ export default function ProductDetail() {
                 onClick={() => {
                   setLightboxIndex(null);
                   setZoomScale(1);
+                  setPanOffset({ x: 0, y: 0 });
+                  setIsDragging(false);
                 }} 
                 className="hover:text-orange transition-colors cursor-pointer focus:outline-none"
                 title="Close Lightbox"
@@ -872,24 +896,26 @@ export default function ProductDetail() {
                 transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
                 transformOrigin: 'center center',
                 cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
-                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+                transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)'
               }}
             >
-              <MediaRenderer
-                src={allDetailImages[lightboxIndex]}
-                alt={`${product.name} fullscreen view`}
-                style={{
-                  maxWidth: 'calc(100vw - 80px)',
-                  maxHeight: 'calc(100vh - 150px)',
-                  width: 'auto',
-                  height: 'auto',
-                  objectFit: 'contain',
-                  display: 'block',
-                  pointerEvents: zoomScale > 1 ? 'none' : 'auto',
-                  userSelect: 'none',
-                }}
-                loading="eager"
-              />
+              <div ref={mediaRef} className="flex items-center justify-center max-w-full max-h-full">
+                <MediaRenderer
+                  src={allDetailImages[lightboxIndex]}
+                  alt={`${product.name} fullscreen view`}
+                  style={{
+                    maxWidth: 'calc(100vw - 80px)',
+                    maxHeight: 'calc(100vh - 150px)',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    display: 'block',
+                    pointerEvents: zoomScale > 1 ? 'none' : 'auto',
+                    userSelect: 'none',
+                  }}
+                  loading="eager"
+                />
+              </div>
             </div>
 
             {/* Next Image Button (Desktop) */}
@@ -911,7 +937,7 @@ export default function ProductDetail() {
               {allDetailImages.map((img, idx) => (
                 <button
                   key={idx}
-                  onClick={() => { setLightboxIndex(idx); setZoomScale(1); }}
+                  onClick={() => { setLightboxIndex(idx); setZoomScale(1); setPanOffset({ x: 0, y: 0 }); setIsDragging(false); }}
                   className={`flex-shrink-0 w-10 h-10 md:w-11 md:h-11 overflow-hidden focus:outline-none transition-all duration-300 ${
                     idx === lightboxIndex
                       ? 'opacity-100 ring-2 ring-white scale-105'

@@ -11,13 +11,23 @@ import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, Chevr
 import { MediaRenderer } from "../components/MediaRenderer";
 
 const emptyProduct: Omit<Product, 'id'> = {
-  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: [''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []
+  name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: ['', '', ''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []
 };
 const emptyJournal: Omit<JournalArticle, 'id'> = {
-  title: '', category: '', date: '', image: '', appliedProductIds: [], contentBlocks: []
+  title: '', category: '', date: '', image: '', appliedProductIds: [], contentBlocks: [
+    { id: 'block-0', type: 'image', value: '' },
+    { id: 'block-1', type: 'image', value: '' },
+    { id: 'block-2', type: 'image', value: '' },
+    { id: 'block-3', type: 'text', value: '' }
+  ]
 };
 const emptySpace: Omit<SpaceModel, 'id'> = {
-  title: '', description: '', images: [''], appliedProductIds: [], contentBlocks: []
+  title: '', description: '', images: [''], appliedProductIds: [], contentBlocks: [
+    { id: 'block-0', type: 'image', value: '' },
+    { id: 'block-1', type: 'image', value: '' },
+    { id: 'block-2', type: 'image', value: '' },
+    { id: 'block-3', type: 'text', value: '' }
+  ]
 };
 
 // Premium form input helper
@@ -3087,7 +3097,10 @@ export default function Admin() {
                               {(() => {
                                 const currentImages = form.images || [];
                                 const displayImages = [...currentImages];
-                                if (displayImages.length === 0 || displayImages[displayImages.length - 1] !== '') {
+                                while (displayImages.length < 3) {
+                                  displayImages.push('');
+                                }
+                                if (displayImages[displayImages.length - 1] !== '') {
                                   displayImages.push('');
                                 }
                                 return displayImages.map((img: string, i: number) => (
