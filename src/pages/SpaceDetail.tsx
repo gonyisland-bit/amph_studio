@@ -18,12 +18,45 @@ export default function SpaceDetail() {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [touchPanStart, setTouchPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [touchDelta, setTouchDelta] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  
+  const stageRef = useRef<HTMLDivElement>(null);
+  const lastTapRef = useRef<number>(0);
   const dragDistanceRef = useRef<number>(0);
 
+  // Clamps panOffset so zoomed image boundary never leaves the stage viewport
+  const clampPan = (px: number, py: number, scale: number) => {
+    if (scale <= 1) return { x: 0, y: 0 };
+    const stage = stageRef.current;
+    if (!stage) return { x: px, y: py };
+    const maxPanX = Math.max(0, (stage.clientWidth * scale - stage.clientWidth) / 2);
+    const maxPanY = Math.max(0, (stage.clientHeight * scale - stage.clientHeight) / 2);
+    return {
+      x: Math.min(maxPanX, Math.max(-maxPanX, px)),
+      y: Math.min(maxPanY, Math.max(-maxPanY, py))
+    };
+  };
+
+  // Double tap / double click zoom toggle
+  const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent) => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      e.stopPropagation();
+      setZoomScale(prev => {
+        const next = prev > 1 ? 1 : 2.5;
+        if (next === 1) setPanOffset({ x: 0, y: 0 });
+        return next;
+      });
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
+    handleDoubleTap(e);
     if (zoomScale > 1) {
-      e.preventDefault();
       setIsDragging(true);
       setDragStartPos({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
       dragDistanceRef.current = 0;
@@ -34,10 +67,9 @@ export default function SpaceDetail() {
     if (isDragging && zoomScale > 1) {
       e.preventDefault();
       dragDistanceRef.current += Math.abs(e.movementX) + Math.abs(e.movementY);
-      setPanOffset({
-        x: e.clientX - dragStartPos.x,
-        y: e.clientY - dragStartPos.y
-      });
+      const nextX = e.clientX - dragStartPos.x;
+      const nextY = e.clientY - dragStartPos.y;
+      setPanOffset(clampPan(nextX, nextY, zoomScale));
     }
   };
 
@@ -71,17 +103,20 @@ export default function SpaceDetail() {
       if (e.key === 'Escape') {
         setLightboxIndex(null);
         setZoomScale(1);
+        setPanOffset({ x: 0, y: 0 });
       } else if (e.key === 'ArrowRight') {
         const allImgs = getAllImages();
         if (allImgs.length > 0) {
           setLightboxIndex((prev) => (prev !== null ? (prev + 1) % allImgs.length : 0));
           setZoomScale(1);
+          setPanOffset({ x: 0, y: 0 });
         }
       } else if (e.key === 'ArrowLeft') {
         const allImgs = getAllImages();
         if (allImgs.length > 0) {
           setLightboxIndex((prev) => (prev !== null ? (prev - 1 + allImgs.length) % allImgs.length : 0));
           setZoomScale(1);
+          setPanOffset({ x: 0, y: 0 });
         }
       }
     };
@@ -115,8 +150,10 @@ export default function SpaceDetail() {
 
   // Touch gesture handlers for Lightbox
   const handleTouchStart = (e: React.TouchEvent) => {
+    handleDoubleTap(e);
     if (e.touches.length === 1) {
       setTouchStartPos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+      setTouchPanStart({ ...panOffset });
       setTouchDelta({ x: 0, y: 0 });
     }
   };
@@ -125,7 +162,17 @@ export default function SpaceDetail() {
     if (!touchStartPos || e.touches.length !== 1) return;
     const currentX = e.touches[0].clientX;
     const currentY = e.touches[0].clientY;
-    setTouchDelta({ x: currentX - touchStartPos.x, y: currentY - touchStartPos.y });
+    const dx = currentX - touchStartPos.x;
+    const dy = currentY - touchStartPos.y;
+
+    if (zoomScale > 1) {
+      e.preventDefault();
+      const nextX = touchPanStart.x + dx;
+      const nextY = touchPanStart.y + dy;
+      setPanOffset(clampPan(nextX, nextY, zoomScale));
+    } else {
+      setTouchDelta({ x: dx, y: dy });
+    }
   };
 
   const handleTouchEnd = () => {
@@ -137,12 +184,15 @@ export default function SpaceDetail() {
     if (touchDelta.x < -60) {
       setLightboxIndex((prev) => (prev !== null ? (prev + 1) % allImages.length : 0));
       setZoomScale(1);
+      setPanOffset({ x: 0, y: 0 });
     } else if (touchDelta.x > 60) {
       setLightboxIndex((prev) => (prev !== null ? (prev - 1 + allImages.length) % allImages.length : 0));
       setZoomScale(1);
+      setPanOffset({ x: 0, y: 0 });
     } else if (Math.abs(touchDelta.y) > 100) {
       setLightboxIndex(null);
       setZoomScale(1);
+      setPanOffset({ x: 0, y: 0 });
     }
     setTouchStartPos(null);
     setTouchDelta({ x: 0, y: 0 });
@@ -429,6 +479,7 @@ export default function SpaceDetail() {
             </button>
 
             <div 
+              ref={stageRef}
               className="w-full h-full flex items-center justify-center select-none"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
@@ -438,18 +489,7 @@ export default function SpaceDetail() {
                 transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
                 transformOrigin: 'center center',
                 cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
-                transition: isDragging ? 'none' : 'transform 0.3s ease-out'
-              }}
-              onClick={() => {
-                if (dragDistanceRef.current > 5) {
-                  dragDistanceRef.current = 0;
-                  return;
-                }
-                setZoomScale(prev => {
-                  const next = prev > 1 ? 1 : 2.5;
-                  if (next === 1) setPanOffset({ x: 0, y: 0 });
-                  return next;
-                });
+                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
               }}
             >
               <MediaRenderer

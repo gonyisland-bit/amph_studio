@@ -1263,6 +1263,7 @@ export default function Admin() {
                 value={cb.value} 
                 onChange={val => {
                   const blockId = cb.id;
+                  const oldUrl = cb.value;
                   setForm(prev => {
                     const currentBlocks = [...(prev.contentBlocks || [])];
                     const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
@@ -1273,14 +1274,21 @@ export default function Admin() {
                     }
                     
                     const newForm: any = { ...prev, contentBlocks: currentBlocks };
-                    // For Space and Journal: If hero is not selected yet or first image uploaded, auto-select as hero
+                    // For Space and Journal: Preserve Hero Cover designation property if replaced image was Hero Cover
                     if (activeTab !== 'collection') {
-                      const mediaBlocks = currentBlocks.filter(b => (b.type === 'image' || !b.type) && b.value);
-                      if (mediaBlocks.length > 0 && (!prev.image || !mediaBlocks.some(b => b.value === prev.image))) {
-                        const firstMedia = mediaBlocks[0].value;
-                        const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
-                        newForm.image = firstMedia;
-                        newForm.images = [firstMedia, ...currentImages];
+                      const wasHero = prev.image === oldUrl || (oldUrl && prev.image && prev.image === oldUrl);
+                      if (wasHero || !prev.image) {
+                        const currentImages = (prev.images || []).map((x: string) => x === oldUrl ? val : x).filter(Boolean);
+                        newForm.image = val;
+                        newForm.images = [val, ...currentImages.filter((x: string) => x !== val)];
+                      } else {
+                        const mediaBlocks = currentBlocks.filter(b => (b.type === 'image' || !b.type) && b.value);
+                        if (mediaBlocks.length > 0 && (!prev.image || !mediaBlocks.some(b => b.value === prev.image))) {
+                          const firstMedia = mediaBlocks[0].value;
+                          const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
+                          newForm.image = firstMedia;
+                          newForm.images = [firstMedia, ...currentImages];
+                        }
                       }
                     }
                     return newForm;

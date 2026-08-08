@@ -75,13 +75,44 @@ export default function ProductDetail() {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  const touchStartRef = useRef<{ x: number; y: number; dist: number } | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
   const thumbnailStripRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const lastTapRef = useRef<number>(0);
   const dragDistanceRef = useRef<number>(0);
 
+  // Clamps panOffset so zoomed image boundary never leaves the stage viewport
+  const clampPan = (px: number, py: number, scale: number) => {
+    if (scale <= 1) return { x: 0, y: 0 };
+    const stage = stageRef.current;
+    if (!stage) return { x: px, y: py };
+    const maxPanX = Math.max(0, (stage.clientWidth * scale - stage.clientWidth) / 2);
+    const maxPanY = Math.max(0, (stage.clientHeight * scale - stage.clientHeight) / 2);
+    return {
+      x: Math.min(maxPanX, Math.max(-maxPanX, px)),
+      y: Math.min(maxPanY, Math.max(-maxPanY, py))
+    };
+  };
+
+  // Double tap / double click zoom toggle
+  const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent) => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      e.stopPropagation();
+      setZoomScale(prev => {
+        const next = prev > 1 ? 1 : 2.5;
+        if (next === 1) setPanOffset({ x: 0, y: 0 });
+        return next;
+      });
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
+    handleDoubleTap(e);
     if (zoomScale > 1) {
-      e.preventDefault();
       setIsDragging(true);
       setDragStartPos({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
       dragDistanceRef.current = 0;
@@ -92,10 +123,9 @@ export default function ProductDetail() {
     if (isDragging && zoomScale > 1) {
       e.preventDefault();
       dragDistanceRef.current += Math.abs(e.movementX) + Math.abs(e.movementY);
-      setPanOffset({
-        x: e.clientX - dragStartPos.x,
-        y: e.clientY - dragStartPos.y
-      });
+      const nextX = e.clientX - dragStartPos.x;
+      const nextY = e.clientY - dragStartPos.y;
+      setPanOffset(clampPan(nextX, nextY, zoomScale));
     }
   };
 
@@ -263,38 +293,29 @@ export default function ProductDetail() {
 
   const { frame, eta } = getMockedSpecs();
 
-  // Gesture handling for Lightbox (Swipe & Pinch to zoom)
+  // Gesture handling for Lightbox (Swipe, Double Tap & Touch Pan)
   const handleTouchStart = (e: React.TouchEvent) => {
+    handleDoubleTap(e);
     if (e.touches.length === 1) {
       touchStartRef.current = {
         x: e.touches[0].clientX,
         y: e.touches[0].clientY,
-        dist: 0
-      };
-    } else if (e.touches.length === 2) {
-      const t1 = e.touches[0];
-      const t2 = e.touches[1];
-      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-      touchStartRef.current = {
-        x: (t1.clientX + t2.clientX) / 2,
-        y: (t1.clientY + t2.clientY) / 2,
-        dist
+        panX: panOffset.x,
+        panY: panOffset.y
       };
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStartRef.current) return;
-    if (e.touches.length === 2) {
+    if (!touchStartRef.current || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - touchStartRef.current.x;
+    const dy = e.touches[0].clientY - touchStartRef.current.y;
+
+    if (zoomScale > 1) {
       e.preventDefault();
-      const t1 = e.touches[0];
-      const t2 = e.touches[1];
-      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-      const startDist = touchStartRef.current.dist;
-      if (startDist > 0) {
-        const factor = dist / startDist;
-        setZoomScale(prev => Math.min(Math.max(prev * factor, 1), 3.5));
-      }
+      const nextX = touchStartRef.current.panX + dx;
+      const nextY = touchStartRef.current.panY + dy;
+      setPanOffset(clampPan(nextX, nextY, zoomScale));
     }
   };
 
@@ -309,6 +330,10 @@ export default function ProductDetail() {
         } else {
           navigateLightbox(1);
         }
+      } else if (Math.abs(diffY) > 100) {
+        setLightboxIndex(null);
+        setZoomScale(1);
+        setPanOffset({ x: 0, y: 0 });
       }
     }
     touchStartRef.current = null;
@@ -321,6 +346,7 @@ export default function ProductDetail() {
     if (nextIdx >= allDetailImages.length) nextIdx = 0;
     setLightboxIndex(nextIdx);
     setZoomScale(1);
+    setPanOffset({ x: 0, y: 0 });
   };
 
   return (
@@ -836,6 +862,7 @@ export default function ProductDetail() {
 
             {/* Image with zoom & pan transform */}
             <div 
+              ref={stageRef}
               className="flex items-center justify-center select-none"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
@@ -845,18 +872,7 @@ export default function ProductDetail() {
                 transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
                 transformOrigin: 'center center',
                 cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
-                transition: isDragging ? 'none' : 'transform 0.3s ease-out'
-              }}
-              onClick={() => {
-                if (dragDistanceRef.current > 5) {
-                  dragDistanceRef.current = 0;
-                  return;
-                }
-                setZoomScale(prev => {
-                  const next = prev > 1 ? 1 : 2.5;
-                  if (next === 1) setPanOffset({ x: 0, y: 0 });
-                  return next;
-                });
+                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
               }}
             >
               <MediaRenderer
