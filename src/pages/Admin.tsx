@@ -7,7 +7,7 @@ import {
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets, MagazineCard
 } from "../lib/data";
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock } from "lucide-react";
-import { MediaRenderer } from "../components/MediaRenderer";
+import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 
 const emptyProduct: Omit<Product, 'id'> = {
   name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: ['', '', ''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []
@@ -185,9 +185,9 @@ const MediaUploadInput = ({
         ) : value ? (
            <div className="relative group/preview w-full flex justify-center">
              {isVideo ? (
-               <video src={value} className="h-24 w-auto object-contain rounded-none" muted preload="metadata" />
+               <video src={normalizeMediaUrl(value)} className="h-24 w-auto object-contain rounded-none" muted preload="metadata" />
              ) : (
-               <img src={value} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />
+               <img src={normalizeMediaUrl(value)} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />
              )}
              <button 
               type="button"

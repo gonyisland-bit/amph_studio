@@ -17,6 +17,26 @@ interface MediaRendererProps {
   nopin?: string;
 }
 
+export function normalizeMediaUrl(url: string): string {
+  if (!url || typeof url !== 'string') return url;
+  const publicDomain = 'https://pub-94c593a632bd4cc28bc78fa5240e509b.r2.dev';
+
+  if (url.includes('.r2.cloudflarestorage.com') || (url.includes('.r2.dev') && !url.includes('pub-94c593a632bd4cc28bc78fa5240e509b.r2.dev'))) {
+    try {
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname.replace(/^\//, '');
+      const cleanKey = pathname.replace(/^amphstudio\//, '');
+      if (cleanKey) {
+        return `${publicDomain}/${cleanKey}`;
+      }
+    } catch (e) {
+      return url;
+    }
+  }
+
+  return url;
+}
+
 export const MediaRenderer: React.FC<MediaRendererProps> = ({
   src,
   className = '',
@@ -33,12 +53,13 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   style,
   nopin
 }) => {
+  const normalizedSrc = normalizeMediaUrl(src);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const imgRef = React.useRef<HTMLImageElement>(null);
 
-  const isVideo = src ? (src.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || src.includes('video')) : false;
+  const isVideo = normalizedSrc ? (normalizedSrc.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || normalizedSrc.includes('video')) : false;
 
   useEffect(() => {
     // Reset states when src changes
@@ -52,7 +73,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
     if (isVideo && videoRef.current && videoRef.current.readyState >= 2) {
       setIsLoaded(true);
     }
-  }, [src, isVideo]);
+  }, [normalizedSrc, isVideo]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -68,7 +89,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
     }
   }, [playing]);
 
-  if (!src) return <div className={`${className} bg-silver/10`} />;
+  if (!normalizedSrc) return <div className={`${className} bg-silver/10`} />;
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -100,7 +121,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
       {isVideo ? (
         <video
           ref={videoRef}
-          src={src}
+          src={normalizedSrc}
           className={`w-full h-full object-cover pointer-events-none transform-gpu backface-hidden transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           style={gpuStyle}
           autoPlay={autoPlay}
@@ -116,7 +137,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
       ) : (
         <img
           ref={imgRef}
-          src={src}
+          src={normalizedSrc}
           className={`w-full h-full object-cover pointer-events-none transform-gpu backface-hidden transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           style={gpuStyle}
           alt={alt}
