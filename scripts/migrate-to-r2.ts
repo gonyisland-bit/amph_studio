@@ -25,9 +25,22 @@ async function uploadToR2(vercelUrl: string): Promise<string> {
   }
 
   console.log(`[Migrating] Downloading: ${vercelUrl}`);
-  const res = await fetch(vercelUrl);
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN || '';
+  const headers: Record<string, string> = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
+  };
+  if (blobToken) {
+    headers['Authorization'] = `Bearer ${blobToken}`;
+  }
+
+  let res = await fetch(vercelUrl, { headers });
+  if (!res.ok && blobToken) {
+    // Retry without auth header if Vercel Blob token fails on public url
+    res = await fetch(vercelUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+  }
+
   if (!res.ok) {
-    console.error(`[Error] Failed to download ${vercelUrl}: ${res.statusText}`);
+    console.error(`[Error] Failed to download ${vercelUrl}: ${res.status} ${res.statusText}`);
     return vercelUrl;
   }
 
