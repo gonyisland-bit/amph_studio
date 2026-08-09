@@ -379,13 +379,15 @@ export default function Admin() {
     if (!form) return;
     const images = (form.images || []).filter(Boolean);
     images.forEach((img: string) => {
-      if (!img || previewAspects[img]) return;
+      const normKey = normalizeMediaUrl(img);
+      if (!normKey || previewAspects[normKey]) return;
       const i = new window.Image();
-      i.src = img;
+      i.src = normKey;
       i.onload = () => {
         const aspect = i.naturalWidth / i.naturalHeight;
         setPreviewAspects(prev => ({
           ...prev,
+          [normKey]: aspect < 1.0 ? 'portrait' : 'landscape',
           [img]: aspect < 1.0 ? 'portrait' : 'landscape'
         }));
       };
@@ -2805,8 +2807,10 @@ export default function Admin() {
                           let col = 0;
                           
                           originalImages.forEach(img => {
-                            const isForcedPortrait = portraitList.includes(img);
-                            const physicalAspect = previewAspects[img] || 'portrait';
+                            const normImg = normalizeMediaUrl(img);
+                            const normalizedPortraitList = portraitList.map(normalizeMediaUrl);
+                            const isForcedPortrait = normalizedPortraitList.includes(normImg) || portraitList.includes(img);
+                            const physicalAspect = previewAspects[normImg] || previewAspects[img] || (isForcedPortrait ? 'portrait' : 'landscape');
                             const isLandscape = !isForcedPortrait && physicalAspect === 'landscape';
                             
                             if (isLandscape) {

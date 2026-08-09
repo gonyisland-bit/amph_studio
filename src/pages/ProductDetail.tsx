@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getProductById, getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, ColorOption, generateProductCode } from "../lib/data";
 import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
-import { MediaRenderer } from "../components/MediaRenderer";
+import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 
 export default function ProductDetail() {
@@ -232,12 +232,15 @@ export default function ProductDetail() {
       // Pre-evaluate image aspects for landscape/portrait grid alignment
       allDetailImages.forEach(img => {
         if (!img) return;
+        const normKey = normalizeMediaUrl(img);
+        if (imageAspects[normKey]) return;
         const i = new window.Image();
-        i.src = img;
+        i.src = normKey;
         i.onload = () => {
           const aspect = i.naturalWidth / i.naturalHeight;
           setImageAspects(prev => ({
             ...prev,
+            [normKey]: aspect < 1.0 ? 'portrait' : 'landscape',
             [img]: aspect < 1.0 ? 'portrait' : 'landscape'
           }));
         };
@@ -452,8 +455,10 @@ export default function ProductDetail() {
             let col = 0;
             
             displayImages.forEach((img, idx) => {
-              const isForcedPortrait = portraitList.includes(img);
-              const physicalAspect = imageAspects[img] || 'portrait';
+              const normImg = normalizeMediaUrl(img);
+              const normalizedPortraitList = portraitList.map(normalizeMediaUrl);
+              const isForcedPortrait = normalizedPortraitList.includes(normImg) || portraitList.includes(img);
+              const physicalAspect = imageAspects[normImg] || imageAspects[img] || (isForcedPortrait ? 'portrait' : 'landscape');
               const isLandscape = !isForcedPortrait && physicalAspect === 'landscape';
               
               if (isLandscape) {
