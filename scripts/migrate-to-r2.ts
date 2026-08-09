@@ -60,7 +60,9 @@ async function uploadToR2(vercelUrl: string): Promise<string> {
     ContentType: contentType,
   }));
 
-  const newUrl = `${publicDomain}/${key}`;
+  const newUrl = process.env.R2_PUBLIC_DOMAIN 
+    ? `${publicDomain}/${key}`
+    : `/api/media?key=${encodeURIComponent(key)}`;
   console.log(`[Success] Migrated: ${newUrl}`);
   return newUrl;
 }

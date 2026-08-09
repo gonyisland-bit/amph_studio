@@ -53,7 +53,9 @@ export default async function handler(req: any, res: any) {
     });
 
     const uploadUrl = await getSignedUrl(r2, command, { expiresIn: 3600 });
-    const publicUrl = `${publicDomain}/${key}`;
+    const publicUrl = process.env.R2_PUBLIC_DOMAIN 
+      ? `${process.env.R2_PUBLIC_DOMAIN.replace(/\/$/, '')}/${key}`
+      : `/api/media?key=${encodeURIComponent(key)}`;
 
     return res.status(200).json({
       uploadUrl,
