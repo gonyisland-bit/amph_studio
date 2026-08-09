@@ -97,8 +97,14 @@ const MediaUploadInput = ({
           }),
         });
         if (!initRes.ok) {
-          const errJson = await initRes.json().catch(() => ({}));
-          throw new Error(errJson.error || 'Failed to prepare upload URL');
+          const errText = await initRes.text().catch(() => '');
+          console.error('R2 init error:', initRes.status, errText);
+          let errMsg = 'Failed to prepare upload URL';
+          try {
+            const errJson = JSON.parse(errText);
+            if (errJson.error) errMsg = errJson.error;
+          } catch (e) {}
+          throw new Error(`[${initRes.status}] ${errMsg}`);
         }
         const { uploadUrl, url } = await initRes.json();
 
@@ -107,7 +113,7 @@ const MediaUploadInput = ({
           headers: { 'Content-Type': file.type || 'application/octet-stream' },
           body: file,
         });
-        if (!putRes.ok) throw new Error('Failed to upload file to Cloudflare R2');
+        if (!putRes.ok) throw new Error(`[${putRes.status}] Failed to upload file to Cloudflare R2`);
         return url;
       });
 

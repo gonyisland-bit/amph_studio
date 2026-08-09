@@ -2,7 +2,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 export const accountId = process.env.R2_ACCOUNT_ID || 'bd0c90c36c628664f396ac294fa0e863';
 export const accessKeyId = process.env.R2_ACCESS_KEY_ID || 'bd3036bba21c44bb0a777a530a045598';
-export const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || '';
+export const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || 'f95e72f45df1014a6da96dbbb8cdc2e21c1f91532aef789aa079d94d0e2be76a';
 export const bucketName = process.env.R2_BUCKET_NAME || 'amphstudio';
 export const publicDomain = (process.env.R2_PUBLIC_DOMAIN || `https://pub-${accountId}.r2.dev`).replace(/\/$/, '');
 
