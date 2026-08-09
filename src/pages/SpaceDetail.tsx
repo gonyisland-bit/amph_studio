@@ -381,7 +381,7 @@ export default function SpaceDetail() {
             {appliedProducts.map(p => (
               <Link key={p.id} to={`/product/${p.id}`} className="group block">
                 <div className="aspect-[4/5] bg-silver/20 rounded-none overflow-hidden mb-4 border border-black/5">
-                  <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <MediaRenderer src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 </div>
                 <h4 className="text-sm font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors">{p.name}</h4>
                 <p className="text-[10px] font-bold text-ink/30 uppercase tracking-widest">{p.category}</p>

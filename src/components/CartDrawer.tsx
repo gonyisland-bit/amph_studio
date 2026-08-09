@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { X, Plus, Minus, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { MediaRenderer } from "./MediaRenderer";
 
 interface CartItem {
   productId: string;
@@ -138,7 +139,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 {/* Product Image */}
                 <div className="w-20 h-20 bg-silver/10 overflow-hidden flex-shrink-0 border border-black/5">
                   {item.image ? (
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <MediaRenderer src={item.image} alt={item.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[10px] text-ink/30 uppercase">No Image</div>
                   )}

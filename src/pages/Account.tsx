@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { MediaRenderer } from "../components/MediaRenderer";
 import { Package, Calendar, Tag, User, LogOut, ArrowRight, Settings, ShieldCheck } from "lucide-react";
 
 interface OrderItem {
@@ -391,7 +392,7 @@ export default function Account() {
                         <div key={`${item.productId}-${itemIdx}`} className="py-4 first:pt-0 last:pb-0 flex gap-4">
                           <div className="w-14 h-14 bg-silver/10 overflow-hidden flex-shrink-0 border border-black/5">
                             {item.image ? (
-                              <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                              <MediaRenderer src={item.image} alt={item.name} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[8px] text-ink/30 uppercase">No Image</div>
                             )}

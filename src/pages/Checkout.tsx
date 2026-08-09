@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { MediaRenderer } from "../components/MediaRenderer";
 import { ShoppingBag, ArrowLeft, Check } from "lucide-react";
 
 interface CartItem {
@@ -248,7 +249,7 @@ export default function Checkout() {
                 <div key={idx} className="py-3 flex gap-3 first:pt-0 last:pb-0">
                   <div className="w-12 h-12 bg-silver/10 overflow-hidden flex-shrink-0 border border-black/5">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <MediaRenderer src={item.image} alt={item.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-silver/20 flex items-center justify-center text-[8px] text-ink/30 uppercase">No Img</div>
                     )}

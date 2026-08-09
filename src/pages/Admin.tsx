@@ -2596,7 +2596,7 @@ export default function Admin() {
                                       {/* Background Image & Dimming Overlay (DARK, LIGHT, OFF) */}
                                       {card.image && (
                                         <div className="absolute inset-0 w-full h-full z-0">
-                                          <img src={card.image} alt="Cover Preview" className="w-full h-full object-cover" nopin="nopin" data-pin-no-hover="true" />
+                                          <MediaRenderer src={card.image} alt="Cover Preview" className="w-full h-full object-cover" />
                                           {dimMode === 'DARK' && <div className="absolute inset-0 bg-black/60" />}
                                           {dimMode === 'LIGHT' && <div className="absolute inset-0 bg-white/80" />}
                                         </div>
@@ -3622,7 +3622,7 @@ export default function Admin() {
                           <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
                             <td className="py-1 md:py-4 block md:table-cell shrink-0">
                               {(() => {
-                                const mainImg = p.images?.[0] || '';
+                                const mainImg = normalizeMediaUrl(p.images?.[0] || '');
                                 if (mainImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mainImg.includes('video')) {
                                   return <video src={mainImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />;
                                 }
@@ -3706,11 +3706,13 @@ export default function Admin() {
                         </td>
                           <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
                             <td className="py-1 md:py-4 block md:table-cell shrink-0">
-                              {s.images?.[0]?.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || s.images?.[0]?.includes('video') ? (
-                                <video src={s.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />
-                              ) : (
-                                <img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />
-                              )}
+                              {(() => {
+                                const spaceImg = normalizeMediaUrl(s.images?.[0] || '');
+                                if (spaceImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || spaceImg.includes('video')) {
+                                  return <video src={spaceImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />;
+                                }
+                                return <img src={spaceImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
+                              })()}
                             </td>
                             <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1 overflow-hidden">
                               <div className="flex items-center gap-2 min-w-0">
@@ -3781,11 +3783,13 @@ export default function Admin() {
                         </td>
                           <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
                             <td className="py-1 md:py-4 block md:table-cell shrink-0">
-                              {j.image.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || j.image.includes('video') ? (
-                                <video src={j.image} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />
-                              ) : (
-                                <img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />
-                              )}
+                              {(() => {
+                                const journalImg = normalizeMediaUrl(j.image || '');
+                                if (journalImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || journalImg.includes('video')) {
+                                  return <video src={journalImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />;
+                                }
+                                return <img src={journalImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
+                              })()}
                             </td>
                             <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1 overflow-hidden">
                               <div className="flex items-center gap-2 min-w-0">
