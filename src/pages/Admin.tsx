@@ -2374,7 +2374,7 @@ export default function Admin() {
                                             <span className="w-5 h-5 rounded-full bg-cobalt text-white text-[9px] font-black flex items-center justify-center shrink-0">
                                               {productPos}
                                             </span>
-                                            <img src={prod.images[0]} className="w-9 h-9 rounded-none object-cover mix-blend-multiply flex-shrink-0 border border-black/10" nopin="nopin" data-pin-no-hover="true" />
+                                            <MediaRenderer src={prod.images[0]} className="w-9 h-9 rounded-none object-cover mix-blend-multiply flex-shrink-0 border border-black/10" />
                                             <div className="min-w-0 flex-1">
                                               <span className="block text-xs font-bold uppercase text-ink truncate" title={prod.name}>{prod.name}</span>
                                               <span className="block text-[9px] text-ink/40 uppercase">{prod.category}</span>
@@ -2511,7 +2511,7 @@ export default function Admin() {
                                       className="w-4 h-4 rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
                                     />
                                     <div className="flex items-center gap-2.5 overflow-hidden">
-                                      <img src={p.images[0]} className="w-8 h-8 rounded-none object-cover mix-blend-multiply flex-shrink-0 border border-black/5" nopin="nopin" data-pin-no-hover="true" />
+                                      <MediaRenderer src={p.images[0]} className="w-8 h-8 rounded-none object-cover mix-blend-multiply flex-shrink-0 border border-black/5" />
                                       <div className="flex flex-col min-w-0">
                                         <span className="text-[10px] font-black uppercase truncate">{p.name}</span>
                                         <span className="text-[9px] text-ink/40 uppercase truncate">{p.category}</span>
@@ -2834,7 +2834,7 @@ export default function Admin() {
                             const spanClass = item.isLandscape ? "col-span-2 aspect-[16/10]" : "col-span-1 aspect-[4/5]";
                             return (
                               <div key={`img-${idx}`} className={`${spanClass} overflow-hidden bg-silver/5 relative`}>
-                                <img src={item.src} alt={`Preview ${idx+1}`} className="absolute inset-0 w-full h-full object-cover" nopin="nopin" data-pin-no-hover="true" />
+                                <MediaRenderer src={item.src} alt={`Preview ${idx+1}`} className="absolute inset-0 w-full h-full object-cover" />
                               </div>
                             );
                           });
