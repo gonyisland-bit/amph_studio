@@ -33,8 +33,14 @@ export default async function handler(req: any, res: any) {
       await del(url);
     } else {
       try {
-        const urlObj = new URL(url);
-        const key = urlObj.pathname.replace(/^\//, '');
+        let key = '';
+        if (url.includes('?key=')) {
+          key = decodeURIComponent(url.split('?key=')[1]);
+        } else {
+          const fullUrl = url.startsWith('http') ? url : `https://dummy.com${url.startsWith('/') ? '' : '/'}${url}`;
+          const urlObj = new URL(fullUrl);
+          key = decodeURIComponent(urlObj.pathname.replace(/^\//, ''));
+        }
         if (key) {
           const accountId = process.env.R2_ACCOUNT_ID || defaultAccountId;
           const accessKeyId = process.env.R2_ACCESS_KEY_ID || defaultAccessKeyId;

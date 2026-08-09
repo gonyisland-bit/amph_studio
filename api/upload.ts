@@ -4,6 +4,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 const defaultAccountId = 'bd0c90c36c628664f396ac294fa0e863';
 const defaultAccessKeyId = 'bd3036bba21c44bb0a777a530a045598';
 const defaultSecretAccessKey = 'f95e72f45df1014a6da96dbbb8cdc2e21c1f91532aef789aa079d94d0e2be76a';
+const defaultBucketName = 'amphstudio';
 const defaultPublicDomain = 'https://pub-94c593a632bd4cc28bc78fa5240e509b.r2.dev';
 
 export default async function handler(req: any, res: any) {

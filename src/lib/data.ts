@@ -159,6 +159,12 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
 };
 
 export const deleteProduct = async (id: string): Promise<void> => {
+  const item = cachedProducts?.find(p => p.id === id);
+  if (item) {
+    if (Array.isArray(item.images)) item.images.forEach(deleteBlob);
+    if (Array.isArray(item.hoverImages)) item.hoverImages.forEach(deleteBlob);
+    if (Array.isArray(item.contentBlocks)) item.contentBlocks.forEach(b => b.value && deleteBlob(b.value));
+  }
   const res = await fetch(`/api/products?id=${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete product');
   if (cachedProducts) cachedProducts = cachedProducts.filter(p => p.id !== id);
@@ -218,6 +224,11 @@ export const getSpaceById = async (id: string): Promise<SpaceModel | null> => {
 };
 
 export const deleteSpace = async (id: string): Promise<void> => {
+  const item = cachedSpaces?.find(s => s.id === id);
+  if (item) {
+    if (Array.isArray(item.images)) item.images.forEach(deleteBlob);
+    if (Array.isArray(item.contentBlocks)) item.contentBlocks.forEach(b => b.value && deleteBlob(b.value));
+  }
   const res = await fetch(`/api/spaces?id=${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete space');
   if (cachedSpaces) cachedSpaces = cachedSpaces.filter(s => s.id !== id);
@@ -441,7 +452,8 @@ export const updateHomeSettings = async (settings: HomeSettings): Promise<void> 
 };
 
 export const deleteBlob = async (url: string): Promise<void> => {
-  if (!url || !url.includes('public.blob.vercel-storage.com')) return;
+  if (!url || typeof url !== 'string') return;
+  if (url.startsWith('/assets') || url.startsWith('data:') || url.startsWith('blob:')) return;
   try {
     await fetch('/api/delete-blob', {
       method: 'POST',
@@ -449,6 +461,6 @@ export const deleteBlob = async (url: string): Promise<void> => {
       body: JSON.stringify({ url })
     });
   } catch (error) {
-    console.error("Failed to delete blob:", error);
+    console.error("Failed to delete media:", error);
   }
 };
