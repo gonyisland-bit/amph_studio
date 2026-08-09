@@ -4,7 +4,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 const defaultAccountId = 'bd0c90c36c628664f396ac294fa0e863';
 const defaultAccessKeyId = 'bd3036bba21c44bb0a777a530a045598';
 const defaultSecretAccessKey = 'f95e72f45df1014a6da96dbbb8cdc2e21c1f91532aef789aa079d94d0e2be76a';
-const defaultBucketName = 'amphstudio';
+const defaultPublicDomain = 'https://pub-94c593a632bd4cc28bc78fa5240e509b.r2.dev';
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -28,7 +28,7 @@ export default async function handler(req: any, res: any) {
     const accessKeyId = process.env.R2_ACCESS_KEY_ID || defaultAccessKeyId;
     const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || defaultSecretAccessKey;
     const bucketName = process.env.R2_BUCKET_NAME || defaultBucketName;
-    const publicDomain = (process.env.R2_PUBLIC_DOMAIN || `https://pub-${accountId}.r2.dev`).replace(/\/$/, '');
+    const publicDomain = (process.env.R2_PUBLIC_DOMAIN || defaultPublicDomain).replace(/\/$/, '');
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const filename = body.filename || `file-${Date.now()}`;
@@ -53,9 +53,7 @@ export default async function handler(req: any, res: any) {
     });
 
     const uploadUrl = await getSignedUrl(r2, command, { expiresIn: 3600 });
-    const publicUrl = process.env.R2_PUBLIC_DOMAIN 
-      ? `${process.env.R2_PUBLIC_DOMAIN.replace(/\/$/, '')}/${key}`
-      : `/api/media?key=${encodeURIComponent(key)}`;
+    const publicUrl = `${publicDomain}/${key}`;
 
     return res.status(200).json({
       uploadUrl,

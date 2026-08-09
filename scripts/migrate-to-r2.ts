@@ -8,7 +8,7 @@ const accountId = process.env.R2_ACCOUNT_ID || 'bd0c90c36c628664f396ac294fa0e863
 const accessKeyId = process.env.R2_ACCESS_KEY_ID || 'bd3036bba21c44bb0a777a530a045598';
 const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || '';
 const bucketName = process.env.R2_BUCKET_NAME || 'amphstudio';
-const publicDomain = (process.env.R2_PUBLIC_DOMAIN || `https://pub-${accountId}.r2.dev`).replace(/\/$/, '');
+const publicDomain = (process.env.R2_PUBLIC_DOMAIN || 'https://pub-94c593a632bd4cc28bc78fa5240e509b.r2.dev').replace(/\/$/, '');
 
 const r2 = new S3Client({
   region: 'auto',
