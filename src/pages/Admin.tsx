@@ -6,7 +6,6 @@ import {
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets, MagazineCard
 } from "../lib/data";
-import { upload } from '@vercel/blob/client';
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 
@@ -88,13 +87,28 @@ const MediaUploadInput = ({
     if (fileArray.length === 0) return;
     setUploading(true);
     try {
-      const uploadPromises = fileArray.map(async (file, idx) => {
-        const uniqueName = `${Date.now()}-${idx}-${file.name.replace(/\s+/g, '_')}`;
-        const newBlob = await upload(uniqueName, file, {
-          access: 'public',
-          handleUploadUrl: '/api/upload',
+      const uploadPromises = fileArray.map(async (file) => {
+        const initRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type || 'application/octet-stream'
+          }),
         });
-        return newBlob.url;
+        if (!initRes.ok) {
+          const errJson = await initRes.json().catch(() => ({}));
+          throw new Error(errJson.error || 'Failed to prepare upload URL');
+        }
+        const { uploadUrl, url } = await initRes.json();
+
+        const putRes = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type || 'application/octet-stream' },
+          body: file,
+        });
+        if (!putRes.ok) throw new Error('Failed to upload file to Cloudflare R2');
+        return url;
       });
 
       const urls = await Promise.all(uploadPromises);
@@ -107,9 +121,9 @@ const MediaUploadInput = ({
           onChange(urls[0]);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error uploading files');
+      alert(err.message || 'Error uploading files to Cloudflare R2');
     } finally {
       setUploading(false);
     }
@@ -165,7 +179,7 @@ const MediaUploadInput = ({
         ) : value ? (
            <div className="relative group/preview w-full flex justify-center">
              {isVideo ? (
-               <video src={value} className="h-24 w-auto object-contain rounded-none" muted />
+               <video src={value} className="h-24 w-auto object-contain rounded-none" muted preload="metadata" />
              ) : (
                <img src={value} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />
              )}
@@ -3604,7 +3618,7 @@ export default function Admin() {
                               {(() => {
                                 const mainImg = p.images?.[0] || '';
                                 if (mainImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mainImg.includes('video')) {
-                                  return <video src={mainImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted />;
+                                  return <video src={mainImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />;
                                 }
                                 return <img src={mainImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
                               })()}
@@ -3687,7 +3701,7 @@ export default function Admin() {
                           <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
                             <td className="py-1 md:py-4 block md:table-cell shrink-0">
                               {s.images?.[0]?.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || s.images?.[0]?.includes('video') ? (
-                                <video src={s.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted />
+                                <video src={s.images[0]} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />
                               ) : (
                                 <img src={s.images?.[0]} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />
                               )}
@@ -3762,7 +3776,7 @@ export default function Admin() {
                           <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
                             <td className="py-1 md:py-4 block md:table-cell shrink-0">
                               {j.image.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || j.image.includes('video') ? (
-                                <video src={j.image} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted />
+                                <video src={j.image} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />
                               ) : (
                                 <img src={j.image} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />
                               )}

@@ -10,6 +10,7 @@ interface MediaRendererProps {
   loop?: boolean;
   muted?: boolean;
   playsInline?: boolean;
+  preload?: 'none' | 'metadata' | 'auto';
   onLoad?: () => void;
   playing?: boolean;
   style?: React.CSSProperties;
@@ -26,6 +27,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   loop = true,
   muted = true,
   playsInline = true,
+  preload = 'metadata',
   onLoad,
   playing = true,
   style,
@@ -105,6 +107,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           loop={loop}
           muted={muted}
           playsInline={playsInline}
+          preload={preload}
           onLoadedData={handleLoad}
           onCanPlay={handleLoad}
           onPlay={() => setIsLoaded(true)}
