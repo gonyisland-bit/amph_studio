@@ -10,7 +10,7 @@ export interface ContentBlock {
 export interface ColorOption {
   name: string;
   hex: string;
-  group?: 'body' | 'fabric' | 'upholstery';
+  group?: 'body' | 'fabric';
 }
 
 export interface Product {
@@ -23,15 +23,14 @@ export interface Product {
   subTitle?: string;
   images: string[];
   hoverImages?: string[];
+  featured?: boolean;
   contentBlocks?: ContentBlock[];
-  isFeatured?: boolean;
-  dimensions?: string;
-  shipping?: string;
+  dimensions: string;
+  shipping: string;
   sku?: string; // Product Code (제품코드)
   color?: string | ColorOption[];
   bodyColors?: ColorOption[] | string[];
   fabricColors?: ColorOption[] | string[];
-  upholsteryColors?: ColorOption[] | string[];
   cartEnabled?: boolean;
   portraitImages?: string[];
   relatedProductIds?: string[];

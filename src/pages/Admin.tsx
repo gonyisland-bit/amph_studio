@@ -779,7 +779,7 @@ export default function Admin() {
   // Toggle Swatch for currently Active Target Slot (Body vs Fabric)
   const handleToggleColorForTarget = (asset: { name: string; hex: string }) => {
     const currentBodyList: ColorOption[] = Array.isArray(form?.bodyColors) ? [...form.bodyColors] : [];
-    const currentFabricList: ColorOption[] = Array.isArray(form?.fabricColors || form?.upholsteryColors) ? [...(form.fabricColors || form.upholsteryColors)] : [];
+    const currentFabricList: ColorOption[] = Array.isArray(form?.fabricColors) ? [...form.fabricColors] : [];
 
     const isBody = activeColorTarget === 'body';
     const targetList = isBody ? currentBodyList : currentFabricList;
@@ -794,17 +794,14 @@ export default function Admin() {
 
     const nextBodyColors = isBody ? updatedTargetList : currentBodyList;
     const nextFabricColors = !isBody ? updatedTargetList : currentFabricList;
-    const combinedAll = [...nextBodyColors, ...nextFabricColors];
 
     setForm((prev: any) => ({
       ...prev,
-      color: combinedAll,
       bodyColors: nextBodyColors,
-      fabricColors: nextFabricColors,
-      upholsteryColors: nextFabricColors
+      fabricColors: nextFabricColors
     }));
 
-    setColorOptions(combinedAll);
+    setColorOptions([...nextBodyColors, ...nextFabricColors]);
   };
 
   // Add a new global swatch asset and attach to current active target slot
@@ -3129,7 +3126,7 @@ export default function Admin() {
                               </div>
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {(() => {
-                                  const fabricList = form.fabricColors || form.upholsteryColors;
+                                  const fabricList = form.fabricColors;
                                   if (!fabricList || !Array.isArray(fabricList) || fabricList.length === 0) return <span className="text-[9px] text-ink/40 uppercase font-mono">No colors selected</span>;
                                   return fabricList.map((c: any, i: number) => (
                                     <span key={i} className="text-[8px] bg-white border border-black/15 px-1.5 py-0.5 uppercase font-bold text-ink/80 flex items-center gap-1">
@@ -3162,7 +3159,7 @@ export default function Admin() {
                             {(homeSettings.colorAssets || defaultColorAssets).map((asset, aIdx) => {
                               const currentList = activeColorTarget === 'body' 
                                 ? (Array.isArray(form.bodyColors) ? form.bodyColors : [])
-                                : (Array.isArray(form.fabricColors || form.upholsteryColors) ? (form.fabricColors || form.upholsteryColors) : []);
+                                : (Array.isArray(form.fabricColors) ? form.fabricColors : []);
 
                               const isAttached = currentList.some((c: any) => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
 

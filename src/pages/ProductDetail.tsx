@@ -167,9 +167,9 @@ export default function ProductDetail() {
             const related = otherProds.filter(prod => 
               explicitRelatedIds.includes(prod.id) || (prod.relatedProductIds || []).includes(p.id)
             );
-            // 2등: 별표 선택 메인 상품 (isFeatured)
+            // 2등: 별표 선택 메인 상품 (featured)
             const featured = otherProds.filter(prod =>
-              prod.isFeatured && !related.some(r => r.id === prod.id)
+              prod.featured && !related.some(r => r.id === prod.id)
             );
             // 3등: 같은 카테고리 상품
             const sameCategory = otherProds.filter(prod => 
@@ -554,10 +554,9 @@ export default function ProductDetail() {
                 });
               }
 
-              // Process Fabric Colors (support fabricColors and legacy upholsteryColors)
-              const rawFabricList = product.fabricColors || product.upholsteryColors;
-              if (rawFabricList && Array.isArray(rawFabricList)) {
-                rawFabricList.forEach(c => {
+              // Process Fabric Colors
+              if (product.fabricColors && Array.isArray(product.fabricColors)) {
+                product.fabricColors.forEach(c => {
                   const name = typeof c === 'string' ? c : c?.name;
                   const hex = typeof c === 'string' ? (colorMap[c] || '#888888') : (c?.hex || '#888888');
                   if (name && !fabricColorsList.some(f => f.name.toLowerCase() === name.toLowerCase())) {
@@ -570,14 +569,11 @@ export default function ProductDetail() {
               if (product.color) {
                 if (Array.isArray(product.color)) {
                   product.color.forEach(c => {
-                    if (c.group === 'body') bodyColorsList.push(c);
-                    else if (c.group === 'fabric' || c.group === 'upholstery') fabricColorsList.push({ ...c, group: 'fabric' });
-                    else legacyColorsList.push(c);
-                  });
-                } else {
-                  product.color.split(',').forEach(c => {
-                    const name = c.trim();
-                    if (name) legacyColorsList.push({ name, hex: colorMap[name] || '#888888' });
+                    if (c.group === 'body' && !bodyColorsList.some(b => b.name.toLowerCase() === c.name.toLowerCase())) {
+                      bodyColorsList.push(c);
+                    } else if (c.group === 'fabric' && !fabricColorsList.some(f => f.name.toLowerCase() === c.name.toLowerCase())) {
+                      fabricColorsList.push({ ...c, group: 'fabric' });
+                    }
                   });
                 }
               }
