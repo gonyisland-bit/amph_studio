@@ -822,7 +822,7 @@ export default function ProductDetail() {
         <div className="flex justify-between items-end mb-8 border-b border-black/10 pb-4">
           <div>
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-1 font-mono">
-              AMPLIFY WITH
+              SELECTED COLLECTION
             </span>
             <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter uppercase font-sans leading-none">
               Amplify With
@@ -834,34 +834,19 @@ export default function ProductDetail() {
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border border-black/10 auto-rows-fr">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {recommendations.slice(0, 4).map(rec => (
             <Link 
               to={`/product/${rec.id}`}
               key={rec.id}
-              className="group aspect-[4/5] relative overflow-hidden flex flex-col border-r border-b border-black/10 last:border-r-0"
+              className="group block"
             >
-              {/* Category tag overlap on top-left */}
-              <div className="absolute top-6 left-6 z-20 pointer-events-none">
-                <span className="text-[9px] uppercase font-bold tracking-widest text-white/90 px-3 py-1 bg-black/30 backdrop-blur-md rounded-full border border-white/10">
-                  {rec.category}
-                </span>
-              </div>
-
-              {/* Product Name overlap on bottom-left */}
-              <div className="absolute bottom-6 left-6 z-20 pointer-events-none">
-                <h4 className="text-sm md:text-base font-bold font-sans tracking-tight leading-tight text-white drop-shadow-md group-hover:text-cobalt transition-colors">
-                  {rec.name}
-                </h4>
-              </div>
-              
-              {/* Full-bleed Image Container */}
-              <div className="absolute inset-0 w-full h-full bg-silver/5 overflow-hidden rounded-none">
+              <div className="aspect-[4/5] bg-silver/20 rounded-none overflow-hidden mb-4 border border-black/5 relative">
                 {/* Primary Image */}
                 <MediaRenderer 
                   src={rec.images[0]} 
                   alt={rec.name}
-                  className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out scale-100 ${rec.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'}`}
+                  className={`w-full h-full object-cover transition-all duration-700 ease-in-out scale-100 ${rec.hoverImages?.[0] ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'}`}
                   loading="lazy"
                   nopin="nopin"
                 />
@@ -870,14 +855,14 @@ export default function ProductDetail() {
                   <MediaRenderer 
                     src={rec.hoverImages[0]} 
                     alt={`${rec.name} alternative view`}
-                    className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-1000 ease-in-out scale-100 group-hover:opacity-100 group-hover:scale-105"
+                    className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-700 ease-in-out scale-100 group-hover:opacity-100 group-hover:scale-105"
                     loading="lazy"
                     nopin="nopin"
                   />
                 )}
-                {/* Subtle bottom gradient for text contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none" />
               </div>
+              <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{rec.name}</h4>
+              <p className="text-[10px] font-bold text-ink/30 uppercase tracking-widest">{rec.category}</p>
             </Link>
           ))}
         </div>

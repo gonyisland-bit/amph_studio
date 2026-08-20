@@ -365,7 +365,7 @@ export default function JournalDetail() {
           <div className="flex justify-between items-end mb-8 border-b border-black/10 pb-4">
             <div>
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-1 font-mono">
-                AMPLIFY WITH
+                SELECTED COLLECTION
               </span>
               <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter uppercase font-sans leading-none">
                 Amplify With
@@ -382,8 +382,8 @@ export default function JournalDetail() {
                 <div className="aspect-[4/5] bg-silver/20 rounded-none overflow-hidden mb-4 border border-black/5">
                   <MediaRenderer src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 </div>
-                <h4 className="text-sm font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors">{p.name}</h4>
-                <p className="text-[10px] font-bold text-ink/30 uppercase tracking-widest">${p.price} — {p.category}</p>
+                <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{p.name}</h4>
+                <p className="text-[10px] font-bold text-ink/30 uppercase tracking-widest">{p.category}</p>
               </Link>
             ))}
           </div>
