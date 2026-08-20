@@ -527,10 +527,10 @@ export default function ProductDetail() {
             <span className="caption-nano text-cobalt mb-3 block font-black">Product Overview</span>
             <p className="text-sm md:text-base leading-relaxed mb-10 text-ink/80 font-sans font-normal reveal">{product.description}</p>
             
-            {/* Color Option Selector (Separated Body & Upholstery Color Options) */}
+            {/* Color Option Selector (Separated Body & Fabric Color Options) */}
             {(() => {
               const bodyColorsList: ColorOption[] = [];
-              const upholsteryColorsList: ColorOption[] = [];
+              const fabricColorsList: ColorOption[] = [];
               const legacyColorsList: ColorOption[] = [];
 
               const colorMap: Record<string, string> = {
@@ -551,13 +551,14 @@ export default function ProductDetail() {
                 });
               }
 
-              // Process Upholstery Colors
-              if (product.upholsteryColors && Array.isArray(product.upholsteryColors)) {
-                product.upholsteryColors.forEach(c => {
+              // Process Fabric Colors (support fabricColors and legacy upholsteryColors)
+              const rawFabricList = product.fabricColors || product.upholsteryColors;
+              if (rawFabricList && Array.isArray(rawFabricList)) {
+                rawFabricList.forEach(c => {
                   if (typeof c === 'string') {
-                    upholsteryColorsList.push({ name: c, hex: colorMap[c] || '#888888', group: 'upholstery' });
+                    fabricColorsList.push({ name: c, hex: colorMap[c] || '#888888', group: 'fabric' });
                   } else if (c && c.name) {
-                    upholsteryColorsList.push({ ...c, group: 'upholstery' });
+                    fabricColorsList.push({ ...c, group: 'fabric' });
                   }
                 });
               }
@@ -567,7 +568,7 @@ export default function ProductDetail() {
                 if (Array.isArray(product.color)) {
                   product.color.forEach(c => {
                     if (c.group === 'body') bodyColorsList.push(c);
-                    else if (c.group === 'upholstery') upholsteryColorsList.push(c);
+                    else if (c.group === 'fabric' || c.group === 'upholstery') fabricColorsList.push({ ...c, group: 'fabric' });
                     else legacyColorsList.push(c);
                   });
                 } else {
@@ -578,15 +579,17 @@ export default function ProductDetail() {
                 }
               }
 
-              const hasSeparate = bodyColorsList.length > 0 || upholsteryColorsList.length > 0;
-              const hasLegacy = legacyColorsList.length > 0 && !hasSeparate;
+              const hasBody = bodyColorsList.length > 0;
+              const hasFabric = fabricColorsList.length > 0;
+              const hasLegacy = legacyColorsList.length > 0 && !hasBody && !hasFabric;
 
-              if (!hasSeparate && !hasLegacy) return null;
+              // If no colors are selected or defined for both body and fabric, do not display (표기 X)
+              if (!hasBody && !hasFabric && !hasLegacy) return null;
 
               return (
                 <div className="mb-8 border-t border-black/5 pt-6 animate-in fade-in duration-300 space-y-6">
-                  {/* Body Color Swatches */}
-                  {bodyColorsList.length > 0 && (
+                  {/* Body Color Swatches (Only rendered when colors exist) */}
+                  {hasBody && (
                     <div>
                       <span className="caption-nano text-cobalt block mb-3 font-black uppercase tracking-wider">
                         Body Color (바디 선택)
@@ -617,18 +620,18 @@ export default function ProductDetail() {
                     </div>
                   )}
 
-                  {/* Upholstery Color Swatches */}
-                  {upholsteryColorsList.length > 0 && (
+                  {/* Fabric Color Swatches (Only rendered when colors exist) */}
+                  {hasFabric && (
                     <div>
                       <span className="caption-nano text-orange block mb-3 font-black uppercase tracking-wider">
-                        Upholstery Color (패브릭 / 가죽 선택)
+                        Fabric Color (패브릭 / 가죽 선택)
                       </span>
                       <div className="flex flex-wrap gap-2">
-                        {upholsteryColorsList.map((c) => {
+                        {fabricColorsList.map((c) => {
                           const isSelected = selectedColor === c.name;
                           return (
                             <button
-                              key={`upholstery-${c.name}`}
+                              key={`fabric-${c.name}`}
                               type="button"
                               onClick={() => setSelectedColor(c.name)}
                               className={`px-3.5 py-1.5 border text-[10px] font-sans font-bold uppercase transition-all tracking-wider flex items-center gap-2 ${

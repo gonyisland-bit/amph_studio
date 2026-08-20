@@ -10,7 +10,7 @@ export interface ContentBlock {
 export interface ColorOption {
   name: string;
   hex: string;
-  group?: 'body' | 'upholstery';
+  group?: 'body' | 'fabric' | 'upholstery';
 }
 
 export interface Product {
@@ -30,6 +30,7 @@ export interface Product {
   sku?: string; // Product Code (제품코드)
   color?: string | ColorOption[];
   bodyColors?: ColorOption[] | string[];
+  fabricColors?: ColorOption[] | string[];
   upholsteryColors?: ColorOption[] | string[];
   cartEnabled?: boolean;
   portraitImages?: string[];
