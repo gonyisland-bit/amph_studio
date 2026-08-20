@@ -543,10 +543,10 @@ export default function ProductDetail() {
               // Process Body Colors
               if (product.bodyColors && Array.isArray(product.bodyColors)) {
                 product.bodyColors.forEach(c => {
-                  if (typeof c === 'string') {
-                    bodyColorsList.push({ name: c, hex: colorMap[c] || '#888888', group: 'body' });
-                  } else if (c && c.name) {
-                    bodyColorsList.push({ ...c, group: 'body' });
+                  const name = typeof c === 'string' ? c : c?.name;
+                  const hex = typeof c === 'string' ? (colorMap[c] || '#888888') : (c?.hex || '#888888');
+                  if (name && !bodyColorsList.some(b => b.name.toLowerCase() === name.toLowerCase())) {
+                    bodyColorsList.push({ name, hex, group: 'body' });
                   }
                 });
               }
@@ -555,10 +555,10 @@ export default function ProductDetail() {
               const rawFabricList = product.fabricColors || product.upholsteryColors;
               if (rawFabricList && Array.isArray(rawFabricList)) {
                 rawFabricList.forEach(c => {
-                  if (typeof c === 'string') {
-                    fabricColorsList.push({ name: c, hex: colorMap[c] || '#888888', group: 'fabric' });
-                  } else if (c && c.name) {
-                    fabricColorsList.push({ ...c, group: 'fabric' });
+                  const name = typeof c === 'string' ? c : c?.name;
+                  const hex = typeof c === 'string' ? (colorMap[c] || '#888888') : (c?.hex || '#888888');
+                  if (name && !fabricColorsList.some(f => f.name.toLowerCase() === name.toLowerCase())) {
+                    fabricColorsList.push({ name, hex, group: 'fabric' });
                   }
                 });
               }

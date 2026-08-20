@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
-  getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock,
+  getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock, ColorOption,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets, MagazineCard
@@ -653,159 +653,119 @@ export default function Admin() {
     }
   };
 
-  const [newBodyName, setNewBodyName] = useState("");
-  const [newBodyHex, setNewBodyHex] = useState("#1C1C1C");
-  const [newFabricName, setNewFabricName] = useState("");
-  const [newFabricHex, setNewFabricHex] = useState("#888888");
+  const [activeColorTarget, setActiveColorTarget] = useState<'body' | 'fabric'>('body');
+  const [newCustomColorName, setNewCustomColorName] = useState("");
+  const [newCustomColorHex, setNewCustomColorHex] = useState("#0047AB");
 
   useEffect(() => {
     if (activeTab === 'collection' && form) {
-      let parsedColors: any[] = [];
-      if (form.color) {
-        if (Array.isArray(form.color)) {
-          parsedColors = form.color;
-        } else if (typeof form.color === 'string') {
-          if (form.color.trim().startsWith('[')) {
-            try {
-              parsedColors = JSON.parse(form.color);
-            } catch (e) {
-              parsedColors = form.color.split(',').map(c => ({ name: c.trim(), hex: '#888888' }));
-            }
-          } else {
-            parsedColors = form.color.split(',').map(c => ({ name: c.trim(), hex: '#888888' }));
-          }
-        }
-      }
-      // Combine bodyColors, fabricColors & legacy upholsteryColors if available
+      const bodyList: ColorOption[] = [];
+      const fabricList: ColorOption[] = [];
+
+      const colorMap: Record<string, string> = {
+        'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
+        'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
+        'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
+        'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
+      };
+
       if (form.bodyColors && Array.isArray(form.bodyColors)) {
         form.bodyColors.forEach((b: any) => {
-          const name = typeof b === 'string' ? b : b.name;
-          const hex = typeof b === 'string' ? '#888888' : b.hex;
-          if (!parsedColors.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-            parsedColors.push({ name, hex, group: 'body' });
+          const name = typeof b === 'string' ? b : b?.name;
+          const hex = typeof b === 'string' ? (colorMap[b] || '#888888') : (b?.hex || '#888888');
+          if (name && !bodyList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+            bodyList.push({ name, hex, group: 'body' });
           }
         });
       }
+
       const rawFabric = form.fabricColors || form.upholsteryColors;
       if (rawFabric && Array.isArray(rawFabric)) {
-        rawFabric.forEach((u: any) => {
-          const name = typeof u === 'string' ? u : u.name;
-          const hex = typeof u === 'string' ? '#888888' : u.hex;
-          if (!parsedColors.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-            parsedColors.push({ name, hex, group: 'fabric' });
+        rawFabric.forEach((f: any) => {
+          const name = typeof f === 'string' ? f : f?.name;
+          const hex = typeof f === 'string' ? (colorMap[f] || '#888888') : (f?.hex || '#888888');
+          if (name && !fabricList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+            fabricList.push({ name, hex, group: 'fabric' });
           }
         });
       }
-      setColorOptions(parsedColors);
+
+      // Legacy fallback parsing into colorOptions list
+      if (form.color && Array.isArray(form.color)) {
+        form.color.forEach((c: any) => {
+          if (c && c.name) {
+            if (c.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === c.name.toLowerCase())) {
+              bodyList.push({ ...c, group: 'body' });
+            } else if ((c.group === 'fabric' || c.group === 'upholstery') && !fabricList.some(f => f.name.toLowerCase() === c.name.toLowerCase())) {
+              fabricList.push({ ...c, group: 'fabric' });
+            }
+          }
+        });
+      }
+
+      setColorOptions([...bodyList, ...fabricList]);
     } else {
       setColorOptions([]);
     }
-  }, [form?.id, form?.color, form?.bodyColors, form?.fabricColors, form?.upholsteryColors, activeTab]);
+  }, [form?.id, form?.bodyColors, form?.fabricColors, form?.upholsteryColors, activeTab]);
 
-  const handleAddBodyColor = () => {
-    if (!newBodyName.trim()) {
-      showToast("Please enter a Body color name.", "error");
-      return;
-    }
-    const colorNameTrimmed = newBodyName.trim();
-    const exists = colorOptions.some(c => c.name.toLowerCase() === colorNameTrimmed.toLowerCase());
-    if (exists) {
-      showToast("Color name already added to this product.", "error");
-      return;
-    }
-    const newColorItem = { name: colorNameTrimmed, hex: newBodyHex, group: 'body' as const };
-    const updated = [...colorOptions, newColorItem];
-    setColorOptions(updated);
+  // Toggle Swatch for currently Active Target Slot (Body vs Fabric)
+  const handleToggleColorForTarget = (asset: { name: string; hex: string }) => {
+    const currentBodyList: ColorOption[] = Array.isArray(form?.bodyColors) ? [...form.bodyColors] : [];
+    const currentFabricList: ColorOption[] = Array.isArray(form?.fabricColors || form?.upholsteryColors) ? [...(form.fabricColors || form.upholsteryColors)] : [];
 
-    const bodyColors = updated.filter(c => c.group === 'body');
-    const fabricColors = updated.filter(c => c.group === 'fabric' || c.group === 'upholstery');
+    const isBody = activeColorTarget === 'body';
+    const targetList = isBody ? currentBodyList : currentFabricList;
+    const existsIndex = targetList.findIndex((c: any) => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
+
+    let updatedTargetList: ColorOption[];
+    if (existsIndex > -1) {
+      updatedTargetList = targetList.filter((_, idx) => idx !== existsIndex);
+      showToast(`Removed '${asset.name}' from ${activeColorTarget.toUpperCase()} Color!`, "info");
+    } else {
+      updatedTargetList = [...targetList, { name: asset.name, hex: asset.hex, group: activeColorTarget }];
+      showToast(`Added '${asset.name}' to ${activeColorTarget.toUpperCase()} Color!`, "success");
+    }
+
+    const nextBodyColors = isBody ? updatedTargetList : currentBodyList;
+    const nextFabricColors = !isBody ? updatedTargetList : currentFabricList;
+    const combinedAll = [...nextBodyColors, ...nextFabricColors];
 
     setForm((prev: any) => ({
       ...prev,
-      color: updated,
-      bodyColors,
-      fabricColors,
-      upholsteryColors: fabricColors
+      color: combinedAll,
+      bodyColors: nextBodyColors,
+      fabricColors: nextFabricColors,
+      upholsteryColors: nextFabricColors
     }));
 
-    // Global Asset auto-registration
+    setColorOptions(combinedAll);
+  };
+
+  // Add a new global swatch asset and attach to current active target slot
+  const handleAddGlobalSwatch = () => {
+    if (!newCustomColorName.trim()) {
+      showToast("Please enter a color name.", "error");
+      return;
+    }
+    const colorNameTrimmed = newCustomColorName.trim();
+    const newSwatchItem = { name: colorNameTrimmed, hex: newCustomColorHex };
+
+    // Register to Global Assets Library
     const currentAssets = homeSettings.colorAssets || defaultColorAssets;
     const globalExists = currentAssets.some(c => c.name.toLowerCase() === colorNameTrimmed.toLowerCase());
     if (!globalExists) {
-      const updatedAssets = [...currentAssets, newColorItem];
+      const updatedAssets = [...currentAssets, newSwatchItem];
       const nextSettings = { ...homeSettings, colorAssets: updatedAssets };
       setHomeSettings(nextSettings);
       updateHomeSettings(nextSettings)
         .then(() => setOriginalHomeSettings(JSON.parse(JSON.stringify(nextSettings))))
         .catch(console.error);
-      showToast(`Added '${colorNameTrimmed}' (BODY) to Product & Global Assets!`, "success");
-    } else {
-      showToast(`Added '${colorNameTrimmed}' (BODY) to Product option!`, "success");
     }
-    setNewBodyName("");
-  };
 
-  const handleAddFabricColor = () => {
-    if (!newFabricName.trim()) {
-      showToast("Please enter a Fabric color name.", "error");
-      return;
-    }
-    const colorNameTrimmed = newFabricName.trim();
-    const exists = colorOptions.some(c => c.name.toLowerCase() === colorNameTrimmed.toLowerCase());
-    if (exists) {
-      showToast("Color name already added to this product.", "error");
-      return;
-    }
-    const newColorItem = { name: colorNameTrimmed, hex: newFabricHex, group: 'fabric' as const };
-    const updated = [...colorOptions, newColorItem];
-    setColorOptions(updated);
-
-    const bodyColors = updated.filter(c => c.group === 'body');
-    const fabricColors = updated.filter(c => c.group === 'fabric' || c.group === 'upholstery');
-
-    setForm((prev: any) => ({
-      ...prev,
-      color: updated,
-      bodyColors,
-      fabricColors,
-      upholsteryColors: fabricColors
-    }));
-
-    // Global Asset auto-registration
-    const currentAssets = homeSettings.colorAssets || defaultColorAssets;
-    const globalExists = currentAssets.some(c => c.name.toLowerCase() === colorNameTrimmed.toLowerCase());
-    if (!globalExists) {
-      const updatedAssets = [...currentAssets, newColorItem];
-      const nextSettings = { ...homeSettings, colorAssets: updatedAssets };
-      setHomeSettings(nextSettings);
-      updateHomeSettings(nextSettings)
-        .then(() => setOriginalHomeSettings(JSON.parse(JSON.stringify(nextSettings))))
-        .catch(console.error);
-      showToast(`Added '${colorNameTrimmed}' (FABRIC) to Product & Global Assets!`, "success");
-    } else {
-      showToast(`Added '${colorNameTrimmed}' (FABRIC) to Product option!`, "success");
-    }
-    setNewFabricName("");
-  };
-
-  const handleSelectGlobalAsset = (asset: { name: string, hex: string, group?: 'body' | 'fabric' | 'upholstery' }) => {
-    const exists = colorOptions.some(c => c.name.toLowerCase() === asset.name.toLowerCase());
-    if (exists) return;
-    const assetGroup = asset.group === 'upholstery' ? 'fabric' : (asset.group || 'body');
-    const newAssetItem = { ...asset, group: assetGroup };
-    const updated = [...colorOptions, newAssetItem];
-    setColorOptions(updated);
-
-    const bodyColors = updated.filter(c => c.group === 'body');
-    const fabricColors = updated.filter(c => c.group === 'fabric' || c.group === 'upholstery');
-
-    setForm((prev: any) => ({
-      ...prev,
-      color: updated,
-      bodyColors,
-      fabricColors,
-      upholsteryColors: fabricColors
-    }));
+    // Attach to active target slot
+    handleToggleColorForTarget(newSwatchItem);
+    setNewCustomColorName("");
   };
 
   const handleReorderColorOption = (index: number, direction: 'up' | 'down') => {
@@ -3034,16 +2994,92 @@ export default function Admin() {
                       onClick={() => toggleSection('options')}
                       className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
                     >
-                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Product Options (Body & Fabric Colors)</span>
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Product Options (Body & Fabric Color Slots)</span>
                       <span className="text-ink/30">{activeSections.options ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
                     </button>
                     {activeSections.options && (
                       <div className="p-6 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300 text-ink">
-                        {/* Global Assets Quick Picker */}
-                        <div className="bg-white p-4 border border-black/10 space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-black uppercase text-cobalt tracking-wider flex items-center gap-1">
-                              ★ Global Color Assets Quick Selector
+                        {/* Target Slot Activation Tabs Header */}
+                        <div className="bg-black/5 p-4 border border-black/10 space-y-3">
+                          <span className="text-[10px] font-black uppercase text-ink/60 tracking-wider block">
+                            1. Select Edit Target Slot (수정할 창을 선택하여 활성화하세요)
+                          </span>
+                          <div className="grid grid-cols-2 gap-3">
+                            {/* Body Slot Selection Box */}
+                            <button
+                              type="button"
+                              onClick={() => setActiveColorTarget('body')}
+                              className={`p-3 border text-left transition-all relative rounded-none cursor-pointer ${
+                                activeColorTarget === 'body'
+                                  ? 'bg-cobalt/10 border-cobalt shadow-sm ring-1 ring-cobalt'
+                                  : 'bg-white border-black/15 hover:border-black/30'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <span className={`text-xs font-black uppercase tracking-wider ${activeColorTarget === 'body' ? 'text-cobalt' : 'text-ink/70'}`}>
+                                  🔵 Body Color (바디 창)
+                                </span>
+                                {activeColorTarget === 'body' && (
+                                  <span className="text-[9px] bg-cobalt text-white px-2 py-0.5 font-bold uppercase tracking-wider">
+                                    Active Now
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {(() => {
+                                  const bodyList = form.bodyColors && Array.isArray(form.bodyColors) ? form.bodyColors : [];
+                                  if (bodyList.length === 0) return <span className="text-[9px] text-ink/40 uppercase">No colors selected</span>;
+                                  return bodyList.map((c: any, i: number) => (
+                                    <span key={i} className="text-[8px] bg-white border border-black/15 px-1.5 py-0.5 uppercase font-bold text-ink/80 flex items-center gap-1">
+                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c.hex || '#888') }} />
+                                      {typeof c === 'string' ? c : c.name}
+                                    </span>
+                                  ));
+                                })()}
+                              </div>
+                            </button>
+
+                            {/* Fabric Slot Selection Box */}
+                            <button
+                              type="button"
+                              onClick={() => setActiveColorTarget('fabric')}
+                              className={`p-3 border text-left transition-all relative rounded-none cursor-pointer ${
+                                activeColorTarget === 'fabric'
+                                  ? 'bg-orange/10 border-orange shadow-sm ring-1 ring-orange'
+                                  : 'bg-white border-black/15 hover:border-black/30'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <span className={`text-xs font-black uppercase tracking-wider ${activeColorTarget === 'fabric' ? 'text-orange' : 'text-ink/70'}`}>
+                                  🟠 Fabric Color (패브릭/가죽 창)
+                                </span>
+                                {activeColorTarget === 'fabric' && (
+                                  <span className="text-[9px] bg-orange text-white px-2 py-0.5 font-bold uppercase tracking-wider">
+                                    Active Now
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {(() => {
+                                  const fabricList = form.fabricColors || form.upholsteryColors;
+                                  if (!fabricList || !Array.isArray(fabricList) || fabricList.length === 0) return <span className="text-[9px] text-ink/40 uppercase">No colors selected</span>;
+                                  return fabricList.map((c: any, i: number) => (
+                                    <span key={i} className="text-[8px] bg-white border border-black/15 px-1.5 py-0.5 uppercase font-bold text-ink/80 flex items-center gap-1">
+                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c.hex || '#888') }} />
+                                      {typeof c === 'string' ? c : c.name}
+                                    </span>
+                                  ));
+                                })()}
+                              </div>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Global Swatches Selector (2. Tap Swatch to Attach to Active Target) */}
+                        <div className="bg-white p-5 border border-black/10 space-y-4 shadow-2xs">
+                          <div className="flex justify-between items-center border-b border-black/5 pb-2">
+                            <span className="text-[11px] font-black uppercase text-ink tracking-wider">
+                              2. Tap Swatches below to attach to [{activeColorTarget.toUpperCase()} COLOR]
                             </span>
                             <button
                               type="button"
@@ -3053,178 +3089,84 @@ export default function Admin() {
                               Manage Assets Dashboard →
                             </button>
                           </div>
-                          <p className="text-[9px] text-ink/50 uppercase font-sans">Click any global asset below to instantly attach it to this product:</p>
+
                           <div className="flex flex-wrap gap-2 pt-1">
                             {(homeSettings.colorAssets || defaultColorAssets).map((asset, aIdx) => {
-                              const isAlreadyAdded = colorOptions.some(c => c.name.toLowerCase() === asset.name.toLowerCase());
-                              const displayGroup = asset.group === 'upholstery' ? 'fabric' : asset.group;
+                              const currentList = activeColorTarget === 'body' 
+                                ? (Array.isArray(form.bodyColors) ? form.bodyColors : [])
+                                : (Array.isArray(form.fabricColors || form.upholsteryColors) ? (form.fabricColors || form.upholsteryColors) : []);
+
+                              const isAttached = currentList.some((c: any) => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
+
                               return (
                                 <button
                                   key={`${asset.name}-${aIdx}`}
                                   type="button"
-                                  disabled={isAlreadyAdded}
-                                  onClick={() => handleSelectGlobalAsset({ ...asset, group: displayGroup as any })}
-                                  className={`px-3 py-1.5 border text-[10px] font-bold uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer ${
-                                    isAlreadyAdded 
-                                      ? 'bg-black/5 text-ink/30 border-black/10 cursor-not-allowed opacity-50' 
-                                      : 'bg-white text-ink border-black/15 hover:border-cobalt hover:text-cobalt hover:bg-cobalt/5 shadow-xs'
+                                  onClick={() => handleToggleColorForTarget(asset)}
+                                  className={`px-3 py-2 border text-[10px] font-bold uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer ${
+                                    isAttached 
+                                      ? (activeColorTarget === 'body' ? 'bg-cobalt text-white border-cobalt shadow-xs' : 'bg-orange text-white border-orange shadow-xs')
+                                      : 'bg-white text-ink border-black/15 hover:border-black/40 hover:bg-black/5'
                                   }`}
-                                  title={isAlreadyAdded ? 'Already added' : `Add ${asset.name}`}
                                 >
                                   <span 
-                                    className="w-3 h-3 rounded-full border border-black/20 flex-shrink-0" 
+                                    className="w-3.5 h-3.5 rounded-full border border-black/20 flex-shrink-0" 
                                     style={{ backgroundColor: asset.hex || '#000000' }} 
                                   />
                                   <span>{asset.name}</span>
-                                  {displayGroup && (
-                                    <span className={`text-[7.5px] px-1 py-0.2 uppercase font-mono font-black ${
-                                      displayGroup === 'body' ? 'bg-cobalt/10 text-cobalt' : 'bg-orange/10 text-orange'
-                                    }`}>
-                                      {displayGroup}
-                                    </span>
+                                  {isAttached ? (
+                                    <span className="text-[9px] font-black">✓</span>
+                                  ) : (
+                                    <span className="text-[8px] opacity-40">+</span>
                                   )}
-                                  {isAlreadyAdded && <span className="text-[8px] text-cobalt font-black">✓</span>}
                                 </button>
                               );
                             })}
                           </div>
                         </div>
 
-                        {/* SECTION 1: Body Color Options (독립 전용 카드) */}
-                        <div className="bg-white p-5 border border-black/10 space-y-4 shadow-2xs">
-                          <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                            <h4 className="text-[11px] font-black uppercase text-cobalt tracking-wider flex items-center gap-2">
-                              ■ Body Color Options (바디 컬러 선택)
-                            </h4>
-                            <span className="text-[10px] font-bold text-ink/40">
-                              Registered: {colorOptions.filter(c => c.group === 'body').length}
-                            </span>
-                          </div>
-
-                          {/* Add Body Color Input Row */}
-                          <div className="bg-off-white/60 p-3.5 border border-black/5">
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                              <div className="sm:col-span-5">
-                                <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Body Color Name</label>
+                        {/* Add New Custom Swatch to Library & Auto-Attach */}
+                        <div className="bg-off-white/70 p-4 border border-black/10 space-y-3">
+                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">
+                            + Add New Swatch (신규 컬러 생성 &amp; [{activeColorTarget.toUpperCase()}]에 즉시 장착)
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                            <div className="sm:col-span-5">
+                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Color Name</label>
+                              <input 
+                                type="text"
+                                value={newCustomColorName}
+                                onChange={e => setNewCustomColorName(e.target.value)}
+                                placeholder="e.g. Oak, Walnut, Leather Black"
+                                className="w-full border border-black/10 p-2 text-xs bg-white text-ink outline-none focus:border-cobalt rounded-none h-[34px]"
+                              />
+                            </div>
+                            <div className="sm:col-span-4">
+                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Hex Swatch</label>
+                              <div className="flex gap-2 items-center">
+                                <input 
+                                  type="color"
+                                  value={newCustomColorHex}
+                                  onChange={e => setNewCustomColorHex(e.target.value)}
+                                  className="w-7 h-[34px] border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
+                                />
                                 <input 
                                   type="text"
-                                  value={newBodyName}
-                                  onChange={e => setNewBodyName(e.target.value)}
-                                  placeholder="e.g. Oak, Walnut, Steel"
-                                  className="w-full border border-black/10 p-2 text-xs bg-white text-ink outline-none focus:border-cobalt rounded-none h-[34px]"
+                                  value={newCustomColorHex}
+                                  onChange={e => setNewCustomColorHex(e.target.value)}
+                                  className="w-full border border-black/10 p-2 text-xs font-mono uppercase bg-white text-ink outline-none focus:border-cobalt rounded-none h-[34px]"
                                 />
                               </div>
-                              <div className="sm:col-span-4">
-                                <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Hex Swatch</label>
-                                <div className="flex gap-2 items-center">
-                                  <input 
-                                    type="color"
-                                    value={newBodyHex}
-                                    onChange={e => setNewBodyHex(e.target.value)}
-                                    className="w-7 h-[34px] border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
-                                  />
-                                  <input 
-                                    type="text"
-                                    value={newBodyHex}
-                                    onChange={e => setNewBodyHex(e.target.value)}
-                                    className="w-full border border-black/10 p-2 text-xs font-mono uppercase bg-white text-ink outline-none focus:border-cobalt rounded-none h-[34px]"
-                                  />
-                                </div>
-                              </div>
-                              <div className="sm:col-span-3">
-                                <button
-                                  type="button"
-                                  onClick={handleAddBodyColor}
-                                  className="w-full bg-cobalt hover:bg-ink text-white px-2 py-2 text-[10px] font-black uppercase tracking-wider transition-colors rounded-none cursor-pointer h-[34px] flex items-center justify-center whitespace-nowrap shadow-xs"
-                                >
-                                  + Add Color
-                                </button>
-                              </div>
                             </div>
-                          </div>
-
-                          {/* Body Color Badges */}
-                          <div className="flex flex-wrap gap-2 pt-1">
-                            {colorOptions.filter(c => c.group === 'body').length === 0 ? (
-                              <p className="text-[10px] uppercase text-ink/40 font-bold py-1">No Body colors added.</p>
-                            ) : (
-                              colorOptions.filter(c => c.group === 'body').map((c, idx) => (
-                                <div key={`body-item-${idx}`} className="px-3 py-1.5 border border-black/15 bg-white text-ink text-[10px] font-bold uppercase flex items-center gap-2 rounded-none">
-                                  <div className="w-3 h-3 rounded-full border border-black/20" style={{ backgroundColor: c.hex }} />
-                                  <span>{c.name}</span>
-                                  <button type="button" onClick={() => handleRemoveColorOption(c.name)} className="text-orange hover:text-red-600 font-bold ml-1">✕</button>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </div>
-
-                        {/* SECTION 2: Fabric Color Options (독립 전용 카드) */}
-                        <div className="bg-white p-5 border border-black/10 space-y-4 shadow-2xs">
-                          <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                            <h4 className="text-[11px] font-black uppercase text-orange tracking-wider flex items-center gap-2">
-                              ■ Fabric Color Options (패브릭 / 가죽 컬러 선택)
-                            </h4>
-                            <span className="text-[10px] font-bold text-ink/40">
-                              Registered: {colorOptions.filter(c => c.group === 'fabric' || c.group === 'upholstery').length}
-                            </span>
-                          </div>
-
-                          {/* Add Fabric Color Input Row */}
-                          <div className="bg-off-white/60 p-3.5 border border-black/5">
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                              <div className="sm:col-span-5">
-                                <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Fabric Color Name</label>
-                                <input 
-                                  type="text"
-                                  value={newFabricName}
-                                  onChange={e => setNewFabricName(e.target.value)}
-                                  placeholder="e.g. Leather Black, Linen Beige"
-                                  className="w-full border border-black/10 p-2 text-xs bg-white text-ink outline-none focus:border-cobalt rounded-none h-[34px]"
-                                />
-                              </div>
-                              <div className="sm:col-span-4">
-                                <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Hex Swatch</label>
-                                <div className="flex gap-2 items-center">
-                                  <input 
-                                    type="color"
-                                    value={newFabricHex}
-                                    onChange={e => setNewFabricHex(e.target.value)}
-                                    className="w-7 h-[34px] border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
-                                  />
-                                  <input 
-                                    type="text"
-                                    value={newFabricHex}
-                                    onChange={e => setNewFabricHex(e.target.value)}
-                                    className="w-full border border-black/10 p-2 text-xs font-mono uppercase bg-white text-ink outline-none focus:border-cobalt rounded-none h-[34px]"
-                                  />
-                                </div>
-                              </div>
-                              <div className="sm:col-span-3">
-                                <button
-                                  type="button"
-                                  onClick={handleAddFabricColor}
-                                  className="w-full bg-cobalt hover:bg-ink text-white px-2 py-2 text-[10px] font-black uppercase tracking-wider transition-colors rounded-none cursor-pointer h-[34px] flex items-center justify-center whitespace-nowrap shadow-xs"
-                                >
-                                  + Add Color
-                                </button>
-                              </div>
+                            <div className="sm:col-span-3">
+                              <button
+                                type="button"
+                                onClick={handleAddGlobalSwatch}
+                                className="w-full bg-cobalt hover:bg-ink text-white px-2 py-2 text-[10px] font-black uppercase tracking-wider transition-colors rounded-none cursor-pointer h-[34px] flex items-center justify-center whitespace-nowrap shadow-xs"
+                              >
+                                + Add Color
+                              </button>
                             </div>
-                          </div>
-
-                          {/* Fabric Color Badges */}
-                          <div className="flex flex-wrap gap-2 pt-1">
-                            {colorOptions.filter(c => c.group === 'fabric' || c.group === 'upholstery').length === 0 ? (
-                              <p className="text-[10px] uppercase text-ink/40 font-bold py-1">No Fabric colors added.</p>
-                            ) : (
-                              colorOptions.filter(c => c.group === 'fabric' || c.group === 'upholstery').map((c, idx) => (
-                                <div key={`fabric-item-${idx}`} className="px-3 py-1.5 border border-black/15 bg-white text-ink text-[10px] font-bold uppercase flex items-center gap-2 rounded-none">
-                                  <div className="w-3 h-3 rounded-full border border-black/20" style={{ backgroundColor: c.hex }} />
-                                  <span>{c.name}</span>
-                                  <button type="button" onClick={() => handleRemoveColorOption(c.name)} className="text-orange hover:text-red-600 font-bold ml-1">✕</button>
-                                </div>
-                              ))
-                            )}
                           </div>
                         </div>
 
