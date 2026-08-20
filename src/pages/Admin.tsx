@@ -3758,13 +3758,13 @@ export default function Admin() {
                           onClick={() => handleEdit(p)}
                           className={`flex flex-col md:table-row p-3.5 md:p-0 border-b border-black/10 md:border-b-0 hover:bg-cobalt/5 group transition-all duration-200 cursor-pointer ${selectedIds.includes(p.id) ? 'bg-cobalt/5' : ''} ${editingId === p.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
                         >
-                          <td className="p-1 md:p-4 flex items-center justify-between md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
+                          <td className="p-1 md:p-3 align-middle flex items-center justify-between md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center gap-2">
                               <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => toggleSelect(p.id)} />
                               <span className="text-[10px] font-bold text-ink/40 md:hidden uppercase">Select Item</span>
                             </div>
                           </td>
-                          <td className="py-1 md:py-4 block md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
+                          <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                             {sortBy === 'user' ? (
                               <div className="flex flex-row md:flex-col items-center gap-1 md:gap-0.5">
                                 <button onClick={() => handleReorder('collection', p.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
@@ -3775,58 +3775,46 @@ export default function Admin() {
                               <div className="text-left md:text-center text-ink/20 text-xs">—</div>
                             )}
                           </td>
-                          <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
-                            <td className="py-1 md:py-4 block md:table-cell shrink-0">
-                              {(() => {
-                                const mainImg = normalizeMediaUrl(p.images?.[0] || '');
-                                if (mainImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mainImg.includes('video')) {
-                                  return <video src={mainImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />;
-                                }
-                                return <img src={mainImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
-                              })()}
-                            </td>
-                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1 overflow-hidden">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <button 
-                                  type="button"
-                                  onClick={e => { e.stopPropagation(); toggleFeatured(p.id); }}
-                                  className="p-1.5 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
-                                  title="Toggle Home Selected Works (★ Featured)"
-                                >
-                                  <Star 
-                                    size={16} 
-                                    className={(homeSettings.featuredProductIds || []).includes(p.id) ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
-                                  />
-                                </button>
-                                <div className="min-w-0 flex-1 overflow-hidden">
-                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm max-w-full" title={p.name}>{p.name}</div>
-                                  {p.subTitle && <div className="text-[10px] text-ink/40 truncate max-w-[150px] sm:max-w-[220px] md:max-w-[260px] block" title={p.subTitle}>{p.subTitle}</div>}
-                                </div>
-                              </div>
-                            </td>
-                          </div>
-                          <td className="py-1 md:py-4 block md:table-cell shrink-0 overflow-hidden">
-                            <span className="caption-nano text-orange px-2 py-0.5 border border-orange/30 rounded-full font-bold inline-block truncate max-w-full">{p.category}</span>
+                          <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0">
+                            {(() => {
+                              const mainImg = normalizeMediaUrl(p.images?.[0] || '');
+                              if (mainImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || mainImg.includes('video')) {
+                                return <video src={mainImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />;
+                              }
+                              return <img src={mainImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
+                            })()}
                           </td>
-                          <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-2 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-start md:justify-end gap-3 items-center">
+                          <td className="py-1 md:py-3 align-middle block md:table-cell min-w-0 overflow-hidden">
+                            <div className="flex items-center gap-2 min-w-0">
                               <button 
                                 type="button"
-                                onClick={() => handleEdit(p)} 
-                                className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer"
+                                onClick={e => { e.stopPropagation(); toggleFeatured(p.id); }}
+                                className="p-1.5 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
+                                title="Toggle Home Selected Works (★ Featured)"
                               >
-                                Edit
+                                <Star 
+                                  size={16} 
+                                  className={(homeSettings.featuredProductIds || []).includes(p.id) ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
+                                />
                               </button>
-                              <Link 
-                                to={`/product/${p.id}`} 
-                                target="_blank"
-                                className="text-ink/30 text-[10px] font-bold uppercase tracking-widest hover:text-ink transition-colors"
-                                title="View product page"
+                              <div className="min-w-0 flex-1 overflow-hidden">
+                                <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm max-w-full" title={p.name}>{p.name}</div>
+                                {p.subTitle && <div className="text-[10px] text-ink/40 truncate max-w-full block" title={p.subTitle}>{p.subTitle}</div>}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0 overflow-hidden">
+                            <span className="caption-nano text-orange px-2 py-0.5 border border-orange/30 rounded-full font-bold inline-block truncate max-w-full">{p.category}</span>
+                          </td>
+                          <td className="py-2 md:py-3 align-middle text-left md:text-right pr-0 md:pr-2 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
+                            <div className="flex justify-start md:justify-end gap-1 items-center">
+                              <button 
+                                type="button" 
+                                onClick={e => { e.stopPropagation(); handleDelete(p.id); }} 
+                                className="p-1.5 hover:bg-orange/10 text-ink/30 hover:text-orange transition-colors rounded-none cursor-pointer" 
+                                title="Delete"
                               >
-                                <ExternalLink size={13} />
-                              </Link>
-                              <button onClick={e => { e.stopPropagation(); handleDelete(p.id); }} className="text-orange/40 text-[10px] font-bold uppercase tracking-widest hover:text-orange transition-colors cursor-pointer">
-                                <Trash2 size={13} />
+                                <Trash2 size={14} />
                               </button>
                             </div>
                           </td>
@@ -3847,65 +3835,68 @@ export default function Admin() {
                         onClick={() => handleEdit(s)}
                         className={`flex flex-col md:table-row p-3.5 md:p-0 border-b border-black/10 md:border-b-0 hover:bg-cobalt/5 group transition-all duration-200 cursor-pointer ${selectedIds.includes(s.id) ? 'bg-cobalt/5' : ''} ${editingId === s.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
                       >
-                        <td className="p-1 md:p-4 flex items-center justify-between md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
+                        <td className="p-1 md:p-3 align-middle flex items-center justify-between md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
                             <span className="text-[10px] font-bold text-ink/40 md:hidden uppercase">Select Item</span>
                           </div>
                         </td>
-                        <td className="py-1 md:py-4 block md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
+                        <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                           <div className="flex flex-row md:flex-col items-center gap-1 md:gap-0.5">
                             <button onClick={() => handleReorder('space', s.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
                             <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
                             <button onClick={() => handleReorder('space', s.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === spaces.length - 1}><ChevronDown size={14}/></button>
                           </div>
                         </td>
-                          <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
-                            <td className="py-1 md:py-4 block md:table-cell shrink-0">
-                              {(() => {
-                                const spaceImg = normalizeMediaUrl(s.images?.[0] || '');
-                                if (spaceImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || spaceImg.includes('video')) {
-                                  return <video src={spaceImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />;
-                                }
-                                return <img src={spaceImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
-                              })()}
-                            </td>
-                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1 overflow-hidden">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <button 
-                                  type="button"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    const updated = { ...s, featured: !s.featured };
-                                    updateSpace(s.id, updated).then(loadData);
-                                  }}
-                                  className="p-1.5 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
-                                  title="Toggle Featured Star (★ Featured)"
-                                >
-                                  <Star 
-                                    size={16} 
-                                    className={s.featured ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
-                                  />
-                                </button>
-                                <div className="min-w-0 flex-1 overflow-hidden">
-                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm max-w-full" title={s.title}>{s.title}</div>
-                                  <div className="text-[10px] text-ink/50 truncate max-w-[150px] sm:max-w-[220px] md:max-w-[260px] block" title={s.description}>{s.description}</div>
-                                </div>
-                              </div>
-                            </td>
+                        <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0">
+                          {(() => {
+                            const spaceImg = normalizeMediaUrl(s.images?.[0] || '');
+                            if (spaceImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || spaceImg.includes('video')) {
+                              return <video src={spaceImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />;
+                            }
+                            return <img src={spaceImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
+                          })()}
+                        </td>
+                        <td className="py-1 md:py-3 align-middle block md:table-cell min-w-0 overflow-hidden">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <button 
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                const updated = { ...s, featured: !s.featured };
+                                updateSpace(s.id, updated).then(loadData);
+                              }}
+                              className="p-1.5 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
+                              title="Toggle Featured Star (★ Featured)"
+                            >
+                              <Star 
+                                size={16} 
+                                className={s.featured ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
+                              />
+                            </button>
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm max-w-full" title={s.title}>{s.title}</div>
+                              <div className="text-[10px] text-ink/50 truncate max-w-full block" title={s.description}>{s.description}</div>
+                            </div>
                           </div>
-                        <td className="py-1 md:py-4 block md:table-cell shrink-0">
+                        </td>
+                        <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0">
                           <span className="text-[10px] font-sans font-bold text-ink/40">
                             {s.appliedProductIds && s.appliedProductIds.length > 0 
                               ? `${s.appliedProductIds.length} Products` 
                               : 'None'}
                           </span>
                         </td>
-                        <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
-                          <div className="flex justify-start md:justify-end gap-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity items-center">
-                            <Link to={`/space/${s.id}`} target="_blank" className="text-ink/20 hover:text-cobalt"><ExternalLink size={14} /></Link>
-                            <button onClick={() => handleEdit(s)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer">Edit</button>
-                            <button onClick={e => { e.stopPropagation(); handleDelete(s.id); }} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer">Delete</button>
+                        <td className="py-2 md:py-3 align-middle text-left md:text-right pr-0 md:pr-2 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
+                          <div className="flex justify-start md:justify-end gap-1 items-center">
+                            <button 
+                              type="button" 
+                              onClick={e => { e.stopPropagation(); handleDelete(s.id); }} 
+                              className="p-1.5 hover:bg-orange/10 text-ink/30 hover:text-orange transition-colors rounded-none cursor-pointer" 
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -3924,58 +3915,61 @@ export default function Admin() {
                         onClick={() => handleEdit(j)}
                         className={`flex flex-col md:table-row p-3.5 md:p-0 border-b border-black/10 md:border-b-0 hover:bg-cobalt/5 group transition-all duration-200 cursor-pointer ${selectedIds.includes(j.id) ? 'bg-cobalt/5' : ''} ${editingId === j.id ? 'bg-cobalt/10 border-l-4 border-cobalt font-semibold' : ''}`}
                       >
-                        <td className="p-1 md:p-4 flex items-center justify-between md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
+                        <td className="p-1 md:p-3 align-middle flex items-center justify-between md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
                             <input type="checkbox" checked={selectedIds.includes(j.id)} onChange={() => toggleSelect(j.id)} />
                             <span className="text-[10px] font-bold text-ink/40 md:hidden uppercase">Select Item</span>
                           </div>
                         </td>
-                        <td className="py-1 md:py-4 block md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
+                        <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0" onClick={e => e.stopPropagation()}>
                           <div className="flex flex-row md:flex-col items-center gap-1 md:gap-0.5">
                             <button onClick={() => handleReorder('journal', j.id, 'up')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === 0}><ChevronUp size={14}/></button>
                             <span className="text-[9px] font-black text-ink/20">{index + 1}</span>
                             <button onClick={() => handleReorder('journal', j.id, 'down')} className="text-ink/10 hover:text-cobalt disabled:opacity-0" disabled={index === journals.length - 1}><ChevronDown size={14}/></button>
                           </div>
                         </td>
-                          <div className="flex items-center gap-3 my-1.5 md:contents min-w-0 flex-1">
-                            <td className="py-1 md:py-4 block md:table-cell shrink-0">
-                              {(() => {
-                                const journalImg = normalizeMediaUrl(j.image || '');
-                                if (journalImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || journalImg.includes('video')) {
-                                  return <video src={journalImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />;
-                                }
-                                return <img src={journalImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
-                              })()}
-                            </td>
-                            <td className="py-1 md:py-4 block md:table-cell min-w-0 flex-1 overflow-hidden">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <button 
-                                  type="button"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    const updated = { ...j, featured: !j.featured };
-                                    updateJournal(j.id, updated).then(loadData);
-                                  }}
-                                  className="p-1.5 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
-                                  title="Toggle Featured Star (★ Featured)"
-                                >
-                                  <Star 
-                                    size={16} 
-                                    className={j.featured ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
-                                  />
-                                </button>
-                                <div className="min-w-0 flex-1 overflow-hidden">
-                                  <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm max-w-full" title={j.title}>{j.title}</div>
-                                  <div className="text-[10px] text-ink/50 truncate max-w-[150px] sm:max-w-[220px] md:max-w-[260px] block" title={j.description}>{j.description}</div>
-                                </div>
-                              </div>
-                            </td>
+                        <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0">
+                          {(() => {
+                            const journalImg = normalizeMediaUrl(j.image || '');
+                            if (journalImg.toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || journalImg.includes('video')) {
+                              return <video src={journalImg} className="w-12 h-12 rounded-lg object-cover bg-black/5 shrink-0" muted preload="metadata" />;
+                            }
+                            return <img src={journalImg} className="w-12 h-12 rounded-lg object-cover mix-blend-multiply shrink-0" nopin="nopin" data-pin-no-hover="true" />;
+                          })()}
+                        </td>
+                        <td className="py-1 md:py-3 align-middle block md:table-cell min-w-0 overflow-hidden">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <button 
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                const updated = { ...j, featured: !j.featured };
+                                updateJournal(j.id, updated).then(loadData);
+                              }}
+                              className="p-1.5 rounded-full hover:bg-black/10 transition-all cursor-pointer group/star flex items-center justify-center shrink-0"
+                              title="Toggle Featured Star (★ Featured)"
+                            >
+                              <Star 
+                                size={16} 
+                                className={j.featured ? "fill-orange text-orange drop-shadow-sm" : "text-ink/20 group-hover/star:text-orange/60 transition-colors"} 
+                              />
+                            </button>
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <div className="font-bold text-ink group-hover:text-cobalt transition-colors truncate text-xs sm:text-sm max-w-full" title={j.title}>{j.title}</div>
+                              <div className="text-[10px] text-ink/50 truncate max-w-full block" title={j.description}>{j.description}</div>
+                            </div>
                           </div>
-                        <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
-                          <div className="flex justify-start md:justify-end gap-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity items-center">
-                            <Link to={`/journal/${j.id}`} target="_blank" className="text-ink/20 hover:text-cobalt"><ExternalLink size={14} /></Link>
-                            <button onClick={() => handleEdit(j)} className="text-cobalt text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer">Edit</button>
-                            <button onClick={e => { e.stopPropagation(); handleDelete(j.id); }} className="text-orange text-[10px] font-bold uppercase tracking-widest hover:underline cursor-pointer">Delete</button>
+                        </td>
+                        <td className="py-2 md:py-3 align-middle text-left md:text-right pr-0 md:pr-2 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
+                          <div className="flex justify-start md:justify-end gap-1 items-center">
+                            <button 
+                              type="button" 
+                              onClick={e => { e.stopPropagation(); handleDelete(j.id); }} 
+                              className="p-1.5 hover:bg-orange/10 text-ink/30 hover:text-orange transition-colors rounded-none cursor-pointer" 
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         </td>
                       </tr>
