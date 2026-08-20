@@ -3717,22 +3717,22 @@ export default function Admin() {
                     {activeTab === 'collection' && (
                       <>
                         <th className="py-3 px-2">TITLE</th>
-                        <th className="py-3 px-2 w-24">CATEGORY</th>
+                        <th className="py-3 px-2 w-20 sm:w-24">CATEGORY</th>
                       </>
                     )}
                     {activeTab === 'journal' && (
                       <>
                         <th className="py-3 px-2">TITLE</th>
-                        <th className="py-3 px-2 w-24">CATEGORY</th>
+                        <th className="py-3 px-2 w-20 sm:w-24">CATEGORY</th>
                       </>
                     )}
                     {activeTab === 'space' && (
                       <>
                         <th className="py-3 px-2">TITLE</th>
-                        <th className="py-3 px-2 w-24">LINKED</th>
+                        <th className="py-3 px-2 w-20 sm:w-24">LINKED</th>
                       </>
                     )}
-                    <th className="py-3 px-4 text-right w-20">ACTIONS</th>
+                    <th className="py-3 px-2 text-right w-28">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody className="block md:table-row-group divide-y divide-black/5">
@@ -3805,10 +3805,10 @@ export default function Admin() {
                               </div>
                             </td>
                           </div>
-                          <td className="py-1 md:py-4 block md:table-cell shrink-0">
-                            <span className="caption-nano text-orange px-2.5 py-0.5 border border-orange/30 rounded-full font-bold inline-block">{p.category}</span>
+                          <td className="py-1 md:py-4 block md:table-cell shrink-0 overflow-hidden">
+                            <span className="caption-nano text-orange px-2 py-0.5 border border-orange/30 rounded-full font-bold inline-block truncate max-w-full">{p.category}</span>
                           </td>
-                          <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-6 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
+                          <td className="py-2 md:py-4 text-left md:text-right pr-0 md:pr-2 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
                             <div className="flex justify-start md:justify-end gap-3 items-center">
                               <button 
                                 type="button"
