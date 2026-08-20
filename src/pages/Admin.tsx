@@ -914,7 +914,12 @@ export default function Admin() {
     const tabParam = params.get('tab');
 
     if (editId) {
-      if ((!tabParam || tabParam === 'collection') && products.length > 0) {
+      const targetTab = tabParam || 'collection';
+      if (activeTab !== targetTab) {
+        setActiveTab(targetTab as any);
+      }
+
+      if ((targetTab === 'collection') && products.length > 0) {
         const found = products.find(p => p.id === editId);
         if (found) {
           setEditingId(found.id);
@@ -928,25 +933,27 @@ export default function Admin() {
           setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
           setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
         }
-      } else if (tabParam === 'space' && spaces.length > 0) {
+      } else if (targetTab === 'space' && spaces.length > 0) {
         const found = spaces.find(s => s.id === editId);
         if (found) {
           setEditingId(found.id);
           const cloned = JSON.parse(JSON.stringify(found));
           setForm(cloned);
           setOriginalForm(JSON.parse(JSON.stringify(cloned)));
+          setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
         }
-      } else if (tabParam === 'journal' && journals.length > 0) {
+      } else if (targetTab === 'journal' && journals.length > 0) {
         const found = journals.find(j => j.id === editId);
         if (found) {
           setEditingId(found.id);
           const cloned = JSON.parse(JSON.stringify(found));
           setForm(cloned);
           setOriginalForm(JSON.parse(JSON.stringify(cloned)));
+          setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
         }
       }
     }
-  }, [isAuthenticated, products, spaces, journals, location.search]);
+  }, [isAuthenticated, products, spaces, journals, location.search, activeTab]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
