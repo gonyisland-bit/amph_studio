@@ -16,6 +16,9 @@ export default function ProductDetail() {
   const [selectedMaterial, setSelectedMaterial] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [spacesSliderPos, setSpacesSliderPos] = useState({ canLeft: false, canRight: true });
+  const [journalsSliderPos, setJournalsSliderPos] = useState({ canLeft: false, canRight: true });
+
   const handleAddToCart = () => {
     if (!product || product.cartEnabled === false) return;
 
@@ -884,8 +887,6 @@ export default function ProductDetail() {
       {linkedSpaces.length > 0 && (
         <div className="w-full px-4 md:px-8 lg:px-12 py-20 border-t border-black/10 reveal bg-off-white/40">
           {(() => {
-            const [spacesSliderPos, setSpacesSliderPos] = useState({ canLeft: false, canRight: true });
-
             const checkScrollPos = (el: HTMLElement) => {
               const canLeft = el.scrollLeft > 5;
               const canRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 5;
@@ -970,8 +971,6 @@ export default function ProductDetail() {
       {linkedJournals.length > 0 && (
         <div className="w-full px-4 md:px-8 lg:px-12 py-20 border-t border-black/10 reveal bg-off-white/40">
           {(() => {
-            const [journalsSliderPos, setJournalsSliderPos] = useState({ canLeft: false, canRight: true });
-
             const checkScrollPos = (el: HTMLElement) => {
               const canLeft = el.scrollLeft > 5;
               const canRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 5;

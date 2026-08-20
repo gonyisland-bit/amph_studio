@@ -28,6 +28,8 @@ export default function JournalDetail() {
   const pinchStartScaleRef = useRef<number>(1);
   const dragDistanceRef = useRef<number>(0);
 
+  const [sliderPos, setSliderPos] = useState({ canLeft: false, canRight: true });
+
   // Clamps panOffset so zoomed image boundary never leaves the stage viewport
   const clampPan = (px: number, py: number, scale: number) => {
     if (scale <= 1) return { x: 0, y: 0 };
@@ -402,8 +404,6 @@ export default function JournalDetail() {
 
         const relatedArticles = getRelatedArticles();
         if (relatedArticles.length === 0) return null;
-
-        const [sliderPos, setSliderPos] = useState({ canLeft: false, canRight: true });
 
         const checkScrollPos = (el: HTMLElement) => {
           const canLeft = el.scrollLeft > 5;
