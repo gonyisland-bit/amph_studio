@@ -686,7 +686,7 @@ export default function Admin() {
     if (prod.bodyColors && Array.isArray(prod.bodyColors)) {
       prod.bodyColors.forEach((b: any) => {
         const parsed = parseItem(b, 'body');
-        if (parsed && !bodyList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
+        if (parsed && parsed.name && !bodyList.some(x => (x?.name || '').toLowerCase() === (parsed.name || '').toLowerCase())) {
           bodyList.push(parsed);
         }
       });
@@ -696,7 +696,7 @@ export default function Admin() {
     if (rawFabric && Array.isArray(rawFabric)) {
       rawFabric.forEach((f: any) => {
         const parsed = parseItem(f, 'fabric');
-        if (parsed && !fabricList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
+        if (parsed && parsed.name && !fabricList.some(x => (x?.name || '').toLowerCase() === (parsed.name || '').toLowerCase())) {
           fabricList.push(parsed);
         }
       });
@@ -705,10 +705,10 @@ export default function Admin() {
     if (prod.color && Array.isArray(prod.color)) {
       prod.color.forEach((c: any) => {
         const parsed = parseItem(c, 'body');
-        if (parsed) {
-          if (parsed.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === parsed.name.toLowerCase())) {
+        if (parsed && parsed.name) {
+          if (parsed.group === 'body' && !bodyList.some(b => (b?.name || '').toLowerCase() === (parsed.name || '').toLowerCase())) {
             bodyList.push(parsed);
-          } else if (parsed.group === 'fabric' && !fabricList.some(f => f.name.toLowerCase() === parsed.name.toLowerCase())) {
+          } else if (parsed.group === 'fabric' && !fabricList.some(f => (f?.name || '').toLowerCase() === (parsed.name || '').toLowerCase())) {
             fabricList.push(parsed);
           }
         }
@@ -740,7 +740,7 @@ export default function Admin() {
         form.bodyColors.forEach((b: any) => {
           const name = typeof b === 'string' ? b : b?.name;
           const hex = typeof b === 'string' ? (colorMap[b] || '#888888') : (b?.hex || '#888888');
-          if (name && !bodyList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+          if (name && !bodyList.some(c => (c?.name || '').toLowerCase() === (name || '').toLowerCase())) {
             bodyList.push({ name, hex, group: 'body' });
           }
         });
@@ -751,7 +751,7 @@ export default function Admin() {
         rawFabric.forEach((f: any) => {
           const name = typeof f === 'string' ? f : f?.name;
           const hex = typeof f === 'string' ? (colorMap[f] || '#888888') : (f?.hex || '#888888');
-          if (name && !fabricList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+          if (name && !fabricList.some(c => (c?.name || '').toLowerCase() === (name || '').toLowerCase())) {
             fabricList.push({ name, hex, group: 'fabric' });
           }
         });
@@ -761,9 +761,9 @@ export default function Admin() {
       if (form.color && Array.isArray(form.color)) {
         form.color.forEach((c: any) => {
           if (c && c.name) {
-            if (c.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === c.name.toLowerCase())) {
+            if (c.group === 'body' && !bodyList.some(b => (b?.name || '').toLowerCase() === (c.name || '').toLowerCase())) {
               bodyList.push({ ...c, group: 'body' });
-            } else if ((c.group === 'fabric' || c.group === 'upholstery') && !fabricList.some(f => f.name.toLowerCase() === c.name.toLowerCase())) {
+            } else if ((c.group === 'fabric' || c.group === 'upholstery') && !fabricList.some(f => (f?.name || '').toLowerCase() === (c.name || '').toLowerCase())) {
               fabricList.push({ ...c, group: 'fabric' });
             }
           }
