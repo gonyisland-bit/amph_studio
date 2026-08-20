@@ -41,7 +41,7 @@ export default function Catalogue() {
       {/* Catalogue Intro Header — Aligned with Collection & Space Header layout */}
       <div className="px-6 md:px-12 pt-12 md:pt-24 pb-8 md:pb-12 border-b border-black/10 bg-off-white">
         <div className="max-w-4xl mb-8 md:mb-12">
-          <h1 className="text-4xl md:text-6xl font-light tracking-tighter uppercase leading-[0.9] mb-4 md:mb-6 font-sans">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] mb-4 md:mb-6 font-sans">
             Catalogue
           </h1>
           <p className="text-lg md:text-xl font-serif italic text-ink/60 max-w-2xl">

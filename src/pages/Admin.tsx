@@ -3723,7 +3723,7 @@ export default function Admin() {
                     {activeTab === 'journal' && (
                       <>
                         <th className="py-3 px-2">TITLE</th>
-                        <th className="py-3 px-2 w-20 sm:w-24">CATEGORY</th>
+                        <th className="py-3 px-2 w-20 sm:w-24">LINKED</th>
                       </>
                     )}
                     {activeTab === 'space' && (
@@ -3959,6 +3959,13 @@ export default function Admin() {
                               <div className="text-[10px] text-ink/50 truncate max-w-full block" title={j.description}>{j.description}</div>
                             </div>
                           </div>
+                        </td>
+                        <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0">
+                          <span className="text-[10px] font-sans font-bold text-ink/40">
+                            {j.appliedProductIds && j.appliedProductIds.length > 0 
+                              ? `${j.appliedProductIds.length} Products` 
+                              : 'None'}
+                          </span>
                         </td>
                         <td className="py-2 md:py-3 align-middle text-left md:text-right pr-0 md:pr-2 block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
                           <div className="flex justify-start md:justify-end gap-1 items-center">

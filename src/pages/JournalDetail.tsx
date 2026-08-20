@@ -372,7 +372,7 @@ export default function JournalDetail() {
               </h3>
             </div>
             <Link to="/collection" className="flex items-center gap-1.5 text-[10px] md:text-xs font-black uppercase text-ink hover:text-cobalt transition-colors tracking-widest group">
-              <span>SEE ALL COLLECTION</span>
+              <span>SEE ALL</span>
               <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -454,7 +454,7 @@ export default function JournalDetail() {
                   </button>
                 </div>
                 <Link to="/journal" className="flex items-center gap-1.5 text-[10px] md:text-xs font-black uppercase text-ink hover:text-cobalt transition-colors tracking-widest group">
-                  <span>SEE ALL JOURNALS</span>
+                  <span>SEE ALL</span>
                   <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
