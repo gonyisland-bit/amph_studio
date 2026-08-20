@@ -721,10 +721,8 @@ export default function Admin() {
     let updatedTargetList: ColorOption[];
     if (existsIndex > -1) {
       updatedTargetList = targetList.filter((_, idx) => idx !== existsIndex);
-      showToast(`Removed '${asset.name}' from ${activeColorTarget.toUpperCase()} Color!`, "info");
     } else {
       updatedTargetList = [...targetList, { name: asset.name, hex: asset.hex, group: activeColorTarget }];
-      showToast(`Added '${asset.name}' to ${activeColorTarget.toUpperCase()} Color!`, "success");
     }
 
     const nextBodyColors = isBody ? updatedTargetList : currentBodyList;
@@ -2098,7 +2096,6 @@ export default function Admin() {
                         return (
                           <Link 
                             to={pageUrl} 
-                            target="_blank"
                             className="bg-cobalt text-white px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-ink transition-all flex items-center gap-1.5 rounded-none"
                           >
                             <ExternalLink size={10} /> View Page
@@ -2994,7 +2991,7 @@ export default function Admin() {
                       onClick={() => toggleSection('options')}
                       className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
                     >
-                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Product Options (Body & Fabric Color Slots)</span>
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Color Options</span>
                       <span className="text-ink/30">{activeSections.options ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
                     </button>
                     {activeSections.options && (

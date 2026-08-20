@@ -592,7 +592,7 @@ export default function ProductDetail() {
                   {hasBody && (
                     <div>
                       <span className="caption-nano text-cobalt block mb-3 font-black uppercase tracking-wider">
-                        Body Color (바디 선택)
+                        Body Color
                       </span>
                       <div className="flex flex-wrap gap-2">
                         {bodyColorsList.map((c) => {
@@ -624,7 +624,7 @@ export default function ProductDetail() {
                   {hasFabric && (
                     <div>
                       <span className="caption-nano text-orange block mb-3 font-black uppercase tracking-wider">
-                        Fabric Color (패브릭 / 가죽 선택)
+                        Fabric Color
                       </span>
                       <div className="flex flex-wrap gap-2">
                         {fabricColorsList.map((c) => {
