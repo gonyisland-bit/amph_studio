@@ -3717,19 +3717,19 @@ export default function Admin() {
                     {activeTab === 'collection' && (
                       <>
                         <th className="py-3 px-2">TITLE</th>
-                        <th className="py-3 pr-4 text-right w-28">CATEGORY</th>
+                        <th className="py-3 px-1 text-center w-24">CATEGORY</th>
                       </>
                     )}
                     {activeTab === 'journal' && (
                       <>
                         <th className="py-3 px-2">TITLE</th>
-                        <th className="py-3 pr-4 text-right w-28">LINKED</th>
+                        <th className="py-3 px-1 text-center w-24">LINKED</th>
                       </>
                     )}
                     {activeTab === 'space' && (
                       <>
                         <th className="py-3 px-2">TITLE</th>
-                        <th className="py-3 pr-4 text-right w-28">LINKED</th>
+                        <th className="py-3 px-1 text-center w-24">LINKED</th>
                       </>
                     )}
                     <th className="py-3 px-2 text-center w-14">ACTIONS</th>
@@ -3803,7 +3803,7 @@ export default function Admin() {
                               </div>
                             </div>
                           </td>
-                          <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0 overflow-hidden text-right pr-4">
+                          <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0 overflow-hidden text-center px-1">
                             <span className="caption-nano text-orange px-2 py-0.5 border border-orange/30 rounded-full font-bold inline-block truncate max-w-full">{p.category}</span>
                           </td>
                           <td className="py-2 md:py-3 align-middle text-center block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
@@ -3880,7 +3880,7 @@ export default function Admin() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0 text-right pr-4">
+                        <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0 text-center px-1">
                           <span className="text-[10px] font-sans font-bold text-ink/40">
                             {s.appliedProductIds && s.appliedProductIds.length > 0 
                               ? `${s.appliedProductIds.length} Products` 
@@ -3960,7 +3960,7 @@ export default function Admin() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0 text-right pr-4">
+                        <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0 text-center px-1">
                           <span className="text-[10px] font-sans font-bold text-ink/40">
                             {j.appliedProductIds && j.appliedProductIds.length > 0 
                               ? `${j.appliedProductIds.length} Products` 
