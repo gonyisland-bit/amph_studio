@@ -6,7 +6,7 @@ import {
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets, MagazineCard
 } from "../lib/data";
-import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock } from "lucide-react";
+import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock, Save } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 
 const emptyProduct: Omit<Product, 'id'> = {
@@ -1179,18 +1179,20 @@ export default function Admin() {
           savedData = newJournal;
         }
 
-        // Bi-directional cross-save to Products
+        // Bi-directional cross-save to Products with Promise.all (병렬 최적화)
         const journalId = savedData.id;
         const currentAppliedProds: string[] = form.appliedProductIds || [];
+        const journalSyncPromises: Promise<any>[] = [];
         for (const p of products) {
           const hasJournal = p.relatedJournalIds?.includes(journalId);
           const shouldHaveJournal = currentAppliedProds.includes(p.id);
           if (shouldHaveJournal && !hasJournal) {
-            await updateProduct(p.id, { ...p, relatedJournalIds: [...(p.relatedJournalIds || []), journalId] });
+            journalSyncPromises.push(updateProduct(p.id, { ...p, relatedJournalIds: [...(p.relatedJournalIds || []), journalId] }));
           } else if (!shouldHaveJournal && hasJournal) {
-            await updateProduct(p.id, { ...p, relatedJournalIds: (p.relatedJournalIds || []).filter(id => id !== journalId) });
+            journalSyncPromises.push(updateProduct(p.id, { ...p, relatedJournalIds: (p.relatedJournalIds || []).filter(id => id !== journalId) }));
           }
         }
+        if (journalSyncPromises.length > 0) await Promise.all(journalSyncPromises);
       } else if (activeTab === 'space') {
         let cleanedImages = (form.images || []).filter(Boolean);
         if (form.image) {
@@ -1209,18 +1211,20 @@ export default function Admin() {
           savedData = newSpace;
         }
 
-        // Bi-directional cross-save to Products
+        // Bi-directional cross-save to Products with Promise.all (병렬 최적화)
         const spaceId = savedData.id;
         const currentAppliedProds: string[] = cleanedForm.appliedProductIds || [];
+        const spaceSyncPromises: Promise<any>[] = [];
         for (const p of products) {
           const hasSpace = p.relatedSpaceIds?.includes(spaceId);
           const shouldHaveSpace = currentAppliedProds.includes(p.id);
           if (shouldHaveSpace && !hasSpace) {
-            await updateProduct(p.id, { ...p, relatedSpaceIds: [...(p.relatedSpaceIds || []), spaceId] });
+            spaceSyncPromises.push(updateProduct(p.id, { ...p, relatedSpaceIds: [...(p.relatedSpaceIds || []), spaceId] }));
           } else if (!shouldHaveSpace && hasSpace) {
-            await updateProduct(p.id, { ...p, relatedSpaceIds: (p.relatedSpaceIds || []).filter(id => id !== spaceId) });
+            spaceSyncPromises.push(updateProduct(p.id, { ...p, relatedSpaceIds: (p.relatedSpaceIds || []).filter(id => id !== spaceId) }));
           }
         }
+        if (spaceSyncPromises.length > 0) await Promise.all(spaceSyncPromises);
       }
       
       if (savedData) {
@@ -2192,13 +2196,25 @@ export default function Admin() {
                       type="submit"
                       form="editor-form"
                       disabled={saveStatus === 'saving'}
-                      className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-none cursor-pointer ${
-                        saveStatus === 'saving' ? 'bg-black/10 text-ink/30 cursor-not-allowed' :
-                        saveStatus === 'saved' ? 'bg-[#ff0000] text-white hover:bg-[#d60000]' :
+                      className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-none flex items-center gap-1.5 shadow-xs cursor-pointer ${
+                        saveStatus === 'saving' ? 'bg-cobalt text-white opacity-80 cursor-wait pointer-events-none' :
+                        saveStatus === 'saved' ? 'bg-emerald-600 text-white hover:bg-emerald-700' :
                         'bg-cobalt text-white hover:bg-ink'
                       }`}
                     >
-                      {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save'}
+                      {saveStatus === 'saving' ? (
+                        <>
+                          <span className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                          <span>SAVING...</span>
+                        </>
+                      ) : saveStatus === 'saved' ? (
+                        <>
+                          <CheckCircle2 size={10} />
+                          <span>SAVED</span>
+                        </>
+                      ) : (
+                        <span>SAVE</span>
+                      )}
                     </button>
 
                     {editingId && (
@@ -4074,6 +4090,35 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/* Floating Save Circle Button (Left-Bottom Fixed) */}
+      <button
+        type="button"
+        onClick={(e) => handleSave(e)}
+        disabled={saveStatus === 'saving'}
+        className={`fixed bottom-6 left-6 z-[150] w-14 h-14 rounded-full shadow-2xl flex flex-col items-center justify-center transition-all duration-300 cursor-pointer ${
+          saveStatus === 'saving'
+            ? 'bg-cobalt text-white opacity-90 scale-95 pointer-events-none'
+            : saveStatus === 'saved'
+            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+            : 'bg-ink hover:bg-cobalt text-white hover:scale-105 active:scale-95'
+        }`}
+        title="Quick Save Content"
+      >
+        {saveStatus === 'saving' ? (
+          <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+        ) : saveStatus === 'saved' ? (
+          <>
+            <CheckCircle2 size={16} />
+            <span className="text-[7.5px] font-black uppercase tracking-wider mt-0.5">SAVED</span>
+          </>
+        ) : (
+          <>
+            <Save size={16} />
+            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">SAVE</span>
+          </>
+        )}
+      </button>
     </div>
   );
 }
