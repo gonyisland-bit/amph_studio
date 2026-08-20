@@ -821,12 +821,12 @@ export default function ProductDetail() {
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-1 font-mono">
               AMPLIFY WITH
             </span>
-            <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tighter font-sans">
-              Explore Related Products
+            <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter uppercase font-sans leading-none">
+              Amplify With
             </h3>
           </div>
           <Link to="/collection" className="flex items-center gap-1.5 text-[10px] md:text-xs font-black uppercase text-ink hover:text-cobalt transition-colors tracking-widest group">
-            <span>SEE ALL PRODUCTS</span>
+            <span>SEE ALL COLLECTION</span>
             <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -883,118 +883,172 @@ export default function ProductDetail() {
       {/* Linked Spaces Carousel Slider Section (Bidirectional Auto-Link) */}
       {linkedSpaces.length > 0 && (
         <div className="w-full px-4 md:px-8 lg:px-12 py-20 border-t border-black/10 reveal bg-off-white/40">
-          <div className="flex justify-between items-end mb-8 border-b border-black/10 pb-4">
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-1 font-mono">
-                LINKED SPACES ({linkedSpaces.length})
-              </span>
-              <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tighter font-sans">
-                Spaces to Explore
-              </h3>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => {
-                    const el = document.getElementById('linked-spaces-slider');
-                    if (el) el.scrollBy({ left: -350, behavior: 'smooth' });
-                  }} 
-                  className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
-                  title="Scroll Left"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button 
-                  onClick={() => {
-                    const el = document.getElementById('linked-spaces-slider');
-                    if (el) el.scrollBy({ left: 350, behavior: 'smooth' });
-                  }} 
-                  className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
-                  title="Scroll Right"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-              <Link to="/space" className="flex items-center gap-1.5 text-[10px] md:text-xs font-black uppercase text-ink hover:text-cobalt transition-colors tracking-widest group">
-                <span>SEE ALL SPACES</span>
-                <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-          </div>
+          {(() => {
+            const [spacesSliderPos, setSpacesSliderPos] = useState({ canLeft: false, canRight: true });
 
-          <div 
-            id="linked-spaces-slider"
-            className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth snap-x pb-4"
-          >
-            {linkedSpaces.map(s => (
-              <Link key={s.id} to={`/space/${s.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
-                <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden mb-3 border border-black/5 relative">
-                  <MediaRenderer src={s.images?.[0] || ''} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+            const checkScrollPos = (el: HTMLElement) => {
+              const canLeft = el.scrollLeft > 5;
+              const canRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 5;
+              setSpacesSliderPos({ canLeft, canRight });
+            };
+
+            const scrollSpacesSlider = (dir: 'left' | 'right') => {
+              const el = document.getElementById('linked-spaces-slider');
+              if (el) {
+                el.scrollBy({ left: dir === 'left' ? -350 : 350, behavior: 'smooth' });
+                setTimeout(() => checkScrollPos(el), 350);
+              }
+            };
+
+            return (
+              <>
+                <div className="flex justify-between items-end mb-8 border-b border-black/10 pb-4">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-1 font-mono">
+                      LINKED SPACES ({linkedSpaces.length})
+                    </span>
+                    <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tighter font-sans">
+                      Spaces to Explore
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        disabled={!spacesSliderPos.canLeft}
+                        onClick={() => scrollSpacesSlider('left')} 
+                        className={`p-2 border transition-all rounded-none ${
+                          spacesSliderPos.canLeft 
+                            ? 'border-black/10 hover:bg-black/5 text-ink cursor-pointer opacity-100' 
+                            : 'border-black/5 text-ink/20 opacity-30 cursor-not-allowed pointer-events-none'
+                        }`}
+                        title="Scroll Left"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button 
+                        disabled={!spacesSliderPos.canRight}
+                        onClick={() => scrollSpacesSlider('right')} 
+                        className={`p-2 border transition-all rounded-none ${
+                          spacesSliderPos.canRight 
+                            ? 'border-black/10 hover:bg-black/5 text-ink cursor-pointer opacity-100' 
+                            : 'border-black/5 text-ink/20 opacity-30 cursor-not-allowed pointer-events-none'
+                        }`}
+                        title="Scroll Right"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                    <Link to="/space" className="flex items-center gap-1.5 text-[10px] md:text-xs font-black uppercase text-ink hover:text-cobalt transition-colors tracking-widest group">
+                      <span>SEE ALL SPACES</span>
+                      <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
                 </div>
-                <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{s.title}</h4>
-                {s.description && <p className="text-xs font-serif text-ink/60 italic line-clamp-2">{s.description}</p>}
-              </Link>
-            ))}
-          </div>
+
+                <div 
+                  id="linked-spaces-slider"
+                  className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth snap-x pb-4"
+                  onScroll={(e) => checkScrollPos(e.currentTarget)}
+                >
+                  {linkedSpaces.map(s => (
+                    <Link key={s.id} to={`/space/${s.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
+                      <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden mb-3 border border-black/5 relative">
+                        <MediaRenderer src={s.images?.[0] || ''} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                      </div>
+                      <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{s.title}</h4>
+                      {s.description && <p className="text-xs font-serif text-ink/60 italic line-clamp-2">{s.description}</p>}
+                    </Link>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
       {/* Linked Journals Carousel Slider Section (Bidirectional Auto-Link) */}
       {linkedJournals.length > 0 && (
         <div className="w-full px-4 md:px-8 lg:px-12 py-20 border-t border-black/10 reveal bg-off-white/40">
-          <div className="flex justify-between items-end mb-8 border-b border-black/10 pb-4">
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-orange block mb-1 font-mono">
-                LINKED JOURNAL STORIES ({linkedJournals.length})
-              </span>
-              <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tighter font-sans">
-                Stories to Explore
-              </h3>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => {
-                    const el = document.getElementById('linked-journals-slider');
-                    if (el) el.scrollBy({ left: -350, behavior: 'smooth' });
-                  }} 
-                  className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
-                  title="Scroll Left"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button 
-                  onClick={() => {
-                    const el = document.getElementById('linked-journals-slider');
-                    if (el) el.scrollBy({ left: 350, behavior: 'smooth' });
-                  }} 
-                  className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
-                  title="Scroll Right"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-              <Link to="/journal" className="flex items-center gap-1.5 text-[10px] md:text-xs font-black uppercase text-ink hover:text-cobalt transition-colors tracking-widest group">
-                <span>SEE ALL JOURNALS</span>
-                <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-          </div>
+          {(() => {
+            const [journalsSliderPos, setJournalsSliderPos] = useState({ canLeft: false, canRight: true });
 
-          <div 
-            id="linked-journals-slider"
-            className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth snap-x pb-4"
-          >
-            {linkedJournals.map(j => (
-              <Link key={j.id} to={`/journal/${j.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
-                <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden mb-3 border border-black/5 relative">
-                  <MediaRenderer src={j.image} alt={j.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+            const checkScrollPos = (el: HTMLElement) => {
+              const canLeft = el.scrollLeft > 5;
+              const canRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 5;
+              setJournalsSliderPos({ canLeft, canRight });
+            };
+
+            const scrollJournalsSlider = (dir: 'left' | 'right') => {
+              const el = document.getElementById('linked-journals-slider');
+              if (el) {
+                el.scrollBy({ left: dir === 'left' ? -350 : 350, behavior: 'smooth' });
+                setTimeout(() => checkScrollPos(el), 350);
+              }
+            };
+
+            return (
+              <>
+                <div className="flex justify-between items-end mb-8 border-b border-black/10 pb-4">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-orange block mb-1 font-mono">
+                      LINKED JOURNAL STORIES ({linkedJournals.length})
+                    </span>
+                    <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tighter font-sans">
+                      Stories to Explore
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        disabled={!journalsSliderPos.canLeft}
+                        onClick={() => scrollJournalsSlider('left')} 
+                        className={`p-2 border transition-all rounded-none ${
+                          journalsSliderPos.canLeft 
+                            ? 'border-black/10 hover:bg-black/5 text-ink cursor-pointer opacity-100' 
+                            : 'border-black/5 text-ink/20 opacity-30 cursor-not-allowed pointer-events-none'
+                        }`}
+                        title="Scroll Left"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button 
+                        disabled={!journalsSliderPos.canRight}
+                        onClick={() => scrollJournalsSlider('right')} 
+                        className={`p-2 border transition-all rounded-none ${
+                          journalsSliderPos.canRight 
+                            ? 'border-black/10 hover:bg-black/5 text-ink cursor-pointer opacity-100' 
+                            : 'border-black/5 text-ink/20 opacity-30 cursor-not-allowed pointer-events-none'
+                        }`}
+                        title="Scroll Right"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                    <Link to="/journal" className="flex items-center gap-1.5 text-[10px] md:text-xs font-black uppercase text-ink hover:text-cobalt transition-colors tracking-widest group">
+                      <span>SEE ALL JOURNALS</span>
+                      <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
                 </div>
-                <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{j.title}</h4>
-                {j.description && <p className="text-xs font-serif text-ink/60 italic line-clamp-2">{j.description}</p>}
-              </Link>
-            ))}
-          </div>
+
+                <div 
+                  id="linked-journals-slider"
+                  className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth snap-x pb-4"
+                  onScroll={(e) => checkScrollPos(e.currentTarget)}
+                >
+                  {linkedJournals.map(j => (
+                    <Link key={j.id} to={`/journal/${j.id}`} className="group block w-[280px] md:w-[350px] flex-shrink-0 snap-start">
+                      <div className="aspect-[4/3] bg-silver/20 rounded-none overflow-hidden mb-3 border border-black/5 relative">
+                        <MediaRenderer src={j.image} alt={j.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                      </div>
+                      <h4 className="text-base font-bold tracking-tight mb-1 group-hover:text-cobalt transition-colors uppercase truncate">{j.title}</h4>
+                      {j.description && <p className="text-xs font-serif text-ink/60 italic line-clamp-2">{j.description}</p>}
+                    </Link>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 

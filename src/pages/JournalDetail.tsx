@@ -359,10 +359,20 @@ export default function JournalDetail() {
 
       {/* Applied Products (Amplify With) */}
       {appliedProducts.length > 0 && (
-        <div className="w-full px-4 md:px-8 lg:px-12 py-24 border-t border-black/10 reveal">
-          <div className="flex flex-col md:flex-row justify-between items-baseline mb-16 gap-4">
-            <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">Amplify With</h3>
-            <p className="text-sm font-serif italic text-ink/40">Curated objects featured in this story.</p>
+        <div className="w-full px-4 md:px-8 lg:px-12 py-20 border-t border-black/10 reveal bg-white">
+          <div className="flex justify-between items-end mb-8 border-b border-black/10 pb-4">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-1 font-mono">
+                AMPLIFY WITH
+              </span>
+              <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter uppercase font-sans leading-none">
+                Amplify With
+              </h3>
+            </div>
+            <Link to="/collection" className="flex items-center gap-1.5 text-[10px] md:text-xs font-black uppercase text-ink hover:text-cobalt transition-colors tracking-widest group">
+              <span>SEE ALL COLLECTION</span>
+              <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {appliedProducts.map(p => (
@@ -393,10 +403,19 @@ export default function JournalDetail() {
         const relatedArticles = getRelatedArticles();
         if (relatedArticles.length === 0) return null;
 
+        const [sliderPos, setSliderPos] = useState({ canLeft: false, canRight: true });
+
+        const checkScrollPos = (el: HTMLElement) => {
+          const canLeft = el.scrollLeft > 5;
+          const canRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 5;
+          setSliderPos({ canLeft, canRight });
+        };
+
         const scrollSlider = (dir: 'left' | 'right') => {
           const el = document.getElementById('related-journals-slider');
           if (el) {
             el.scrollBy({ left: dir === 'left' ? -350 : 350, behavior: 'smooth' });
+            setTimeout(() => checkScrollPos(el), 350);
           }
         };
 
@@ -410,15 +429,25 @@ export default function JournalDetail() {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <button 
+                    disabled={!sliderPos.canLeft}
                     onClick={() => scrollSlider('left')} 
-                    className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                    className={`p-2 border transition-all rounded-none ${
+                      sliderPos.canLeft 
+                        ? 'border-black/10 hover:bg-black/5 text-ink cursor-pointer opacity-100' 
+                        : 'border-black/5 text-ink/20 opacity-30 cursor-not-allowed pointer-events-none'
+                    }`}
                     title="Scroll Left"
                   >
                     <ChevronLeft size={16} />
                   </button>
                   <button 
+                    disabled={!sliderPos.canRight}
                     onClick={() => scrollSlider('right')} 
-                    className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                    className={`p-2 border transition-all rounded-none ${
+                      sliderPos.canRight 
+                        ? 'border-black/10 hover:bg-black/5 text-ink cursor-pointer opacity-100' 
+                        : 'border-black/5 text-ink/20 opacity-30 cursor-not-allowed pointer-events-none'
+                    }`}
                     title="Scroll Right"
                   >
                     <ChevronRight size={16} />
@@ -434,6 +463,7 @@ export default function JournalDetail() {
             <div 
               id="related-journals-slider"
               className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth snap-x pb-4"
+              onScroll={(e) => checkScrollPos(e.currentTarget)}
             >
               {relatedArticles.map(a => {
                 const mediaUrl = a.image || '';
