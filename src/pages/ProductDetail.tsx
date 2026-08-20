@@ -164,16 +164,24 @@ export default function ProductDetail() {
             const related = otherProds.filter(prod => 
               explicitRelatedIds.includes(prod.id) || (prod.relatedProductIds || []).includes(p.id)
             );
-            // 2등: 같은 카테고리 상품
-            const sameCategory = otherProds.filter(prod => 
-              prod.category === p.category && !related.some(r => r.id === prod.id)
+            // 2등: 별표 선택 메인 상품 (isFeatured)
+            const featured = otherProds.filter(prod =>
+              prod.isFeatured && !related.some(r => r.id === prod.id)
             );
-            // 3등: 나머지 상품
+            // 3등: 같은 카테고리 상품
+            const sameCategory = otherProds.filter(prod => 
+              prod.category === p.category && 
+              !related.some(r => r.id === prod.id) && 
+              !featured.some(f => f.id === prod.id)
+            );
+            // 4등: 나머지 상품
             const others = otherProds.filter(prod => 
-              !related.some(r => r.id === prod.id) && !sameCategory.some(c => c.id === prod.id)
+              !related.some(r => r.id === prod.id) && 
+              !featured.some(f => f.id === prod.id) && 
+              !sameCategory.some(c => c.id === prod.id)
             );
 
-            setRecommendations([...related, ...sameCategory, ...others]);
+            setRecommendations([...related, ...featured, ...sameCategory, ...others]);
           });
 
           // Bidirectional auto-linking for Spaces
@@ -519,55 +527,159 @@ export default function ProductDetail() {
             <span className="caption-nano text-cobalt mb-3 block font-black">Product Overview</span>
             <p className="text-sm md:text-base leading-relaxed mb-10 text-ink/80 font-sans font-normal reveal">{product.description}</p>
             
-            {/* Color Option Selector */}
+            {/* Color Option Selector (Separated Body & Upholstery Color Options) */}
             {(() => {
-              const colors: ColorOption[] = [];
+              const bodyColorsList: ColorOption[] = [];
+              const upholsteryColorsList: ColorOption[] = [];
+              const legacyColorsList: ColorOption[] = [];
+
+              const colorMap: Record<string, string> = {
+                'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
+                'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
+                'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
+                'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
+              };
+
+              // Process Body Colors
+              if (product.bodyColors && Array.isArray(product.bodyColors)) {
+                product.bodyColors.forEach(c => {
+                  if (typeof c === 'string') {
+                    bodyColorsList.push({ name: c, hex: colorMap[c] || '#888888', group: 'body' });
+                  } else if (c && c.name) {
+                    bodyColorsList.push({ ...c, group: 'body' });
+                  }
+                });
+              }
+
+              // Process Upholstery Colors
+              if (product.upholsteryColors && Array.isArray(product.upholsteryColors)) {
+                product.upholsteryColors.forEach(c => {
+                  if (typeof c === 'string') {
+                    upholsteryColorsList.push({ name: c, hex: colorMap[c] || '#888888', group: 'upholstery' });
+                  } else if (c && c.name) {
+                    upholsteryColorsList.push({ ...c, group: 'upholstery' });
+                  }
+                });
+              }
+
+              // Legacy Color fallback
               if (product.color) {
                 if (Array.isArray(product.color)) {
-                  colors.push(...product.color);
+                  product.color.forEach(c => {
+                    if (c.group === 'body') bodyColorsList.push(c);
+                    else if (c.group === 'upholstery') upholsteryColorsList.push(c);
+                    else legacyColorsList.push(c);
+                  });
                 } else {
-                  const colorMap: Record<string, string> = {
-                    'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
-                    'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
-                    'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
-                    'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
-                  };
                   product.color.split(',').forEach(c => {
                     const name = c.trim();
-                    if (name) {
-                      colors.push({ name, hex: colorMap[name] || '#888888' });
-                    }
+                    if (name) legacyColorsList.push({ name, hex: colorMap[name] || '#888888' });
                   });
                 }
               }
 
-              if (colors.length === 0) return null;
+              const hasSeparate = bodyColorsList.length > 0 || upholsteryColorsList.length > 0;
+              const hasLegacy = legacyColorsList.length > 0 && !hasSeparate;
+
+              if (!hasSeparate && !hasLegacy) return null;
 
               return (
-                <div className="mb-8 border-t border-black/5 pt-6 animate-in fade-in duration-300">
-                  <span className="caption-nano text-ink/50 block mb-3 font-bold">Select Color</span>
-                  <div className="flex flex-wrap gap-2">
-                    {colors.map((c) => {
-                      const isSelected = selectedColor === c.name;
-                      return (
-                        <button
-                          key={c.name}
-                          onClick={() => setSelectedColor(c.name)}
-                          className={`px-4 py-2 border text-[10px] font-sans font-bold uppercase transition-all tracking-wider flex items-center gap-2 ${
-                            isSelected 
-                              ? 'bg-ink text-white border-ink scale-102 shadow-sm' 
-                              : 'bg-transparent text-ink/60 border-black/10 hover:border-black/30'
-                          }`}
-                        >
-                          <div 
-                            className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0" 
-                            style={{ backgroundColor: c.hex }} 
-                          />
-                          {c.name}
-                        </button>
-                      );
-                    })}
-                  </div>
+                <div className="mb-8 border-t border-black/5 pt-6 animate-in fade-in duration-300 space-y-6">
+                  {/* Body Color Swatches */}
+                  {bodyColorsList.length > 0 && (
+                    <div>
+                      <span className="caption-nano text-cobalt block mb-3 font-black uppercase tracking-wider">
+                        Body Color (바디 선택)
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {bodyColorsList.map((c) => {
+                          const isSelected = selectedColor === c.name;
+                          return (
+                            <button
+                              key={`body-${c.name}`}
+                              type="button"
+                              onClick={() => setSelectedColor(c.name)}
+                              className={`px-3.5 py-1.5 border text-[10px] font-sans font-bold uppercase transition-all tracking-wider flex items-center gap-2 ${
+                                isSelected 
+                                  ? 'bg-cobalt text-white border-cobalt shadow-xs' 
+                                  : 'bg-white text-ink/70 border-black/15 hover:border-black/30'
+                              }`}
+                            >
+                              <div 
+                                className="w-3 h-3 rounded-full border border-black/20 flex-shrink-0" 
+                                style={{ backgroundColor: c.hex }} 
+                              />
+                              <span>{c.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Upholstery Color Swatches */}
+                  {upholsteryColorsList.length > 0 && (
+                    <div>
+                      <span className="caption-nano text-orange block mb-3 font-black uppercase tracking-wider">
+                        Upholstery Color (패브릭 / 가죽 선택)
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {upholsteryColorsList.map((c) => {
+                          const isSelected = selectedColor === c.name;
+                          return (
+                            <button
+                              key={`upholstery-${c.name}`}
+                              type="button"
+                              onClick={() => setSelectedColor(c.name)}
+                              className={`px-3.5 py-1.5 border text-[10px] font-sans font-bold uppercase transition-all tracking-wider flex items-center gap-2 ${
+                                isSelected 
+                                  ? 'bg-ink text-white border-ink shadow-xs' 
+                                  : 'bg-white text-ink/70 border-black/15 hover:border-black/30'
+                              }`}
+                            >
+                              <div 
+                                className="w-3 h-3 rounded-full border border-black/20 flex-shrink-0" 
+                                style={{ backgroundColor: c.hex }} 
+                              />
+                              <span>{c.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Legacy General Swatches */}
+                  {hasLegacy && (
+                    <div>
+                      <span className="caption-nano text-ink/50 block mb-3 font-bold uppercase tracking-wider">
+                        Select Color
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {legacyColorsList.map((c) => {
+                          const isSelected = selectedColor === c.name;
+                          return (
+                            <button
+                              key={`legacy-${c.name}`}
+                              type="button"
+                              onClick={() => setSelectedColor(c.name)}
+                              className={`px-3.5 py-1.5 border text-[10px] font-sans font-bold uppercase transition-all tracking-wider flex items-center gap-2 ${
+                                isSelected 
+                                  ? 'bg-ink text-white border-ink shadow-xs' 
+                                  : 'bg-white text-ink/70 border-black/15 hover:border-black/30'
+                              }`}
+                            >
+                              <div 
+                                className="w-3 h-3 rounded-full border border-black/20 flex-shrink-0" 
+                                style={{ backgroundColor: c.hex }} 
+                              />
+                              <span>{c.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })()}

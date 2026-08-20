@@ -653,6 +653,8 @@ export default function Admin() {
     }
   };
 
+  const [newColorGroup, setNewColorGroup] = useState<'body' | 'upholstery'>('body');
+
   useEffect(() => {
     if (activeTab === 'collection' && form) {
       let parsedColors: any[] = [];
@@ -671,11 +673,30 @@ export default function Admin() {
           }
         }
       }
+      // Combine bodyColors and upholsteryColors if available
+      if (form.bodyColors && Array.isArray(form.bodyColors)) {
+        form.bodyColors.forEach((b: any) => {
+          const name = typeof b === 'string' ? b : b.name;
+          const hex = typeof b === 'string' ? '#888888' : b.hex;
+          if (!parsedColors.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+            parsedColors.push({ name, hex, group: 'body' });
+          }
+        });
+      }
+      if (form.upholsteryColors && Array.isArray(form.upholsteryColors)) {
+        form.upholsteryColors.forEach((u: any) => {
+          const name = typeof u === 'string' ? u : u.name;
+          const hex = typeof u === 'string' ? '#888888' : u.hex;
+          if (!parsedColors.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+            parsedColors.push({ name, hex, group: 'upholstery' });
+          }
+        });
+      }
       setColorOptions(parsedColors);
     } else {
       setColorOptions([]);
     }
-  }, [form?.id, form?.color, activeTab]);
+  }, [form?.id, form?.color, form?.bodyColors, form?.upholsteryColors, activeTab]);
 
   const handleAddColorOption = () => {
     if (!newColorName.trim()) {
@@ -688,10 +709,19 @@ export default function Admin() {
       showToast("Color name already added to this product.", "error");
       return;
     }
-    const newColorItem = { name: colorNameTrimmed, hex: newColorHex };
+    const newColorItem = { name: colorNameTrimmed, hex: newColorHex, group: newColorGroup };
     const updated = [...colorOptions, newColorItem];
     setColorOptions(updated);
-    setForm((prev: any) => ({ ...prev, color: updated }));
+
+    const bodyColors = updated.filter(c => c.group === 'body');
+    const upholsteryColors = updated.filter(c => c.group === 'upholstery');
+
+    setForm((prev: any) => ({
+      ...prev,
+      color: updated,
+      bodyColors,
+      upholsteryColors
+    }));
 
     // Global Asset auto-registration and instant backend save
     const currentAssets = homeSettings.colorAssets || defaultColorAssets;
@@ -703,20 +733,31 @@ export default function Admin() {
       updateHomeSettings(nextSettings)
         .then(() => setOriginalHomeSettings(JSON.parse(JSON.stringify(nextSettings))))
         .catch(console.error);
-      showToast(`Added '${colorNameTrimmed}' to Product & Global Assets Library!`, "success");
+      showToast(`Added '${colorNameTrimmed}' (${newColorGroup.toUpperCase()}) to Product & Global Assets!`, "success");
     } else {
-      showToast(`Added '${colorNameTrimmed}' to Product option!`, "success");
+      showToast(`Added '${colorNameTrimmed}' (${newColorGroup.toUpperCase()}) to Product option!`, "success");
     }
 
     setNewColorName("");
   };
 
-  const handleSelectGlobalAsset = (asset: { name: string, hex: string }) => {
+  const handleSelectGlobalAsset = (asset: { name: string, hex: string, group?: 'body' | 'upholstery' }) => {
     const exists = colorOptions.some(c => c.name.toLowerCase() === asset.name.toLowerCase());
     if (exists) return;
-    const updated = [...colorOptions, asset];
+    const assetGroup = asset.group || newColorGroup;
+    const newAssetItem = { ...asset, group: assetGroup };
+    const updated = [...colorOptions, newAssetItem];
     setColorOptions(updated);
-    setForm((prev: any) => ({ ...prev, color: updated }));
+
+    const bodyColors = updated.filter(c => c.group === 'body');
+    const upholsteryColors = updated.filter(c => c.group === 'upholstery');
+
+    setForm((prev: any) => ({
+      ...prev,
+      color: updated,
+      bodyColors,
+      upholsteryColors
+    }));
   };
 
   const handleReorderColorOption = (index: number, direction: 'up' | 'down') => {
@@ -2945,7 +2986,7 @@ export default function Admin() {
                       onClick={() => toggleSection('options')}
                       className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
                     >
-                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Product Options (Colors)</span>
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Product Options (Body & Upholstery Colors)</span>
                       <span className="text-ink/30">{activeSections.options ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
                     </button>
                     {activeSections.options && (
@@ -2986,28 +3027,46 @@ export default function Admin() {
                                     style={{ backgroundColor: asset.hex || '#000000' }} 
                                   />
                                   <span>{asset.name}</span>
+                                  {asset.group && (
+                                    <span className={`text-[7.5px] px-1 py-0.2 uppercase font-mono font-black ${
+                                      asset.group === 'body' ? 'bg-cobalt/10 text-cobalt' : 'bg-orange/10 text-orange'
+                                    }`}>
+                                      {asset.group}
+                                    </span>
+                                  )}
                                   {isAlreadyAdded && <span className="text-[8px] text-cobalt font-black">✓</span>}
                                 </button>
                               );
                             })}
                           </div>
                         </div>
-                        {/* Add Color Form */}
+                        {/* Add Color Form with Group Selection (Body vs Upholstery) */}
                         <div className="bg-off-white/50 p-4 border border-black/5 space-y-4">
-                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">Add Color Option</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">Add Color Option (Body / Upholstery)</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                            <div>
+                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1.5">Category Group</label>
+                              <select
+                                value={newColorGroup}
+                                onChange={(e: any) => setNewColorGroup(e.target.value as 'body' | 'upholstery')}
+                                className="w-full border border-black/10 p-2 text-xs font-bold bg-white text-ink outline-none focus:border-cobalt rounded-none"
+                              >
+                                <option value="body">Body (바디)</option>
+                                <option value="upholstery">Upholstery (패브릭/가죽)</option>
+                              </select>
+                            </div>
                             <div>
                               <label className="block text-[8px] font-black uppercase text-ink/40 mb-1.5">Color Name</label>
                               <input 
                                 type="text"
                                 value={newColorName}
                                 onChange={e => setNewColorName(e.target.value)}
-                                className="w-full border-b border-black/10 focus:border-cobalt outline-none py-1.5 text-xs bg-transparent rounded-none"
-                                placeholder="e.g. Cobalt Blue"
+                                placeholder="e.g. Oak, Walnut, Leather Black"
+                                className="w-full border border-black/10 p-2 text-xs bg-white text-ink outline-none focus:border-cobalt rounded-none"
                               />
                             </div>
                             <div>
-                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1.5">Hex Color Value</label>
+                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1.5">Hex Color</label>
                               <div className="flex gap-2 items-center">
                                 <input 
                                   type="color"
@@ -3019,17 +3078,16 @@ export default function Admin() {
                                   type="text"
                                   value={newColorHex}
                                   onChange={e => setNewColorHex(e.target.value)}
-                                  className="w-full border-b border-black/10 focus:border-cobalt outline-none py-1.5 text-xs bg-transparent rounded-none font-mono"
-                                  placeholder="#0047AB"
+                                  className="w-full border border-black/10 p-2 text-xs font-mono uppercase bg-white text-ink outline-none focus:border-cobalt rounded-none"
                                 />
                               </div>
                             </div>
                             <button
                               type="button"
                               onClick={handleAddColorOption}
-                              className="w-full bg-ink hover:bg-cobalt text-white py-2 font-bold uppercase tracking-widest text-[9px] transition-colors rounded-none cursor-pointer"
+                              className="bg-cobalt hover:bg-ink text-white p-2 text-xs font-bold uppercase tracking-wider transition-colors rounded-none cursor-pointer h-[34px]"
                             >
-                              + Add Color
+                              + Add Color Option
                             </button>
                           </div>
                         </div>
