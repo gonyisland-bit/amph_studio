@@ -657,6 +657,73 @@ export default function Admin() {
   const [newCustomColorName, setNewCustomColorName] = useState("");
   const [newCustomColorHex, setNewCustomColorHex] = useState("#0047AB");
 
+  const normalizeProductColors = (prod: any) => {
+    if (!prod) return prod;
+    const colorMap: Record<string, string> = {
+      'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
+      'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
+      'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
+      'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
+    };
+
+    const bodyList: ColorOption[] = [];
+    const fabricList: ColorOption[] = [];
+
+    const parseItem = (item: any, defaultGroup: 'body' | 'fabric'): ColorOption | null => {
+      if (!item) return null;
+      if (typeof item === 'string') {
+        const hex = colorMap[item] || '#888888';
+        return { name: item, hex, group: defaultGroup };
+      }
+      if (typeof item === 'object' && item.name) {
+        const hex = item.hex || colorMap[item.name] || '#888888';
+        const group = item.group === 'fabric' || item.group === 'upholstery' ? 'fabric' : (item.group || defaultGroup);
+        return { name: item.name, hex, group };
+      }
+      return null;
+    };
+
+    if (prod.bodyColors && Array.isArray(prod.bodyColors)) {
+      prod.bodyColors.forEach((b: any) => {
+        const parsed = parseItem(b, 'body');
+        if (parsed && !bodyList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
+          bodyList.push(parsed);
+        }
+      });
+    }
+
+    const rawFabric = prod.fabricColors || prod.upholsteryColors;
+    if (rawFabric && Array.isArray(rawFabric)) {
+      rawFabric.forEach((f: any) => {
+        const parsed = parseItem(f, 'fabric');
+        if (parsed && !fabricList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
+          fabricList.push(parsed);
+        }
+      });
+    }
+
+    if (prod.color && Array.isArray(prod.color)) {
+      prod.color.forEach((c: any) => {
+        const parsed = parseItem(c, 'body');
+        if (parsed) {
+          if (parsed.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === parsed.name.toLowerCase())) {
+            bodyList.push(parsed);
+          } else if (parsed.group === 'fabric' && !fabricList.some(f => f.name.toLowerCase() === parsed.name.toLowerCase())) {
+            fabricList.push(parsed);
+          }
+        }
+      });
+    }
+
+    return {
+      ...prod,
+      bodyColors: bodyList,
+      fabricColors: fabricList,
+      upholsteryColors: fabricList,
+      color: [...bodyList, ...fabricList]
+    };
+  };
+
   useEffect(() => {
     if (activeTab === 'collection' && form) {
       const bodyList: ColorOption[] = [];
@@ -859,8 +926,9 @@ export default function Admin() {
           const autoJournals = journals.filter(j => j.appliedProductIds?.includes(found.id)).map(j => j.id);
           cloned.relatedSpaceIds = Array.from(new Set([...(cloned.relatedSpaceIds || []), ...autoSpaces]));
           cloned.relatedJournalIds = Array.from(new Set([...(cloned.relatedJournalIds || []), ...autoJournals]));
-          setForm(cloned);
-          setOriginalForm(JSON.parse(JSON.stringify(cloned)));
+          const normalizedCloned = normalizeProductColors(cloned);
+          setForm(normalizedCloned);
+          setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
           setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
         }
       } else if (tabParam === 'space' && spaces.length > 0) {
@@ -1178,8 +1246,9 @@ export default function Admin() {
       cloned.relatedSpaceIds = Array.from(new Set([...(cloned.relatedSpaceIds || []), ...autoSpaces]));
       cloned.relatedJournalIds = Array.from(new Set([...(cloned.relatedJournalIds || []), ...autoJournals]));
     }
-    setForm(cloned);
-    setOriginalForm(JSON.parse(JSON.stringify(cloned)));
+    const normalizedCloned = activeTab === 'collection' ? normalizeProductColors(cloned) : cloned;
+    setForm(normalizedCloned);
+    setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
     setIsDirty(false);
     setSaveStatus('idle');
     setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
