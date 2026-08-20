@@ -2150,7 +2150,7 @@ export default function Admin() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 min-w-0 w-full max-w-full overflow-x-hidden">
           <div className={activeTab === 'home' ? 'col-span-12 min-w-0 w-full max-w-full overflow-x-hidden' : 'col-span-1 lg:col-span-5 min-w-0 w-full max-w-full'}>
             <div className="lg:sticky lg:top-24 min-w-0 w-full max-w-full overflow-x-hidden">
-              <div className="flex items-center justify-between border-b border-black/10 pb-3 mb-4 min-h-[41px]">
+              <div className="flex items-center justify-between h-10 mb-4 pb-3 border-b border-black/10">
                 <h2 className="text-xl font-semibold font-sans">
                   <span>{editingId ? 'Edit Content' : 'Add Content'}</span>
                 </h2>
@@ -3656,10 +3656,10 @@ export default function Admin() {
         </div>
 
         {!(activeTab === 'home' || activeTab === 'orders' || activeTab === 'users') && (
-          <div className="col-span-1 lg:col-span-7 lg:sticky lg:top-24 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto pr-1">
+          <div className="col-span-1 lg:col-span-7 lg:sticky lg:top-24">
             {/* Inventory Controls */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 pb-3 border-b border-black/10 gap-4 min-h-[41px]">
-               <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center justify-between h-10 mb-4 pb-3 border-b border-black/10">
+               <div className="flex items-center gap-3">
                   <h2 className="text-xl font-semibold font-sans uppercase tracking-tight">
                     {activeTab === 'collection' ? 'Collection' : activeTab === 'space' ? 'Space' : 'Journal'}
                   </h2>
@@ -3668,7 +3668,7 @@ export default function Admin() {
                   </button>
                   
                   {activeTab === 'collection' && (
-                    <div className="flex items-center gap-2 bg-white px-2.5 py-1 rounded-none border border-black/10 shadow-2xs ml-1">
+                    <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-none border border-black/10 shadow-2xs">
                       <span className="text-[8.5px] font-black uppercase text-ink/40 tracking-wider">Sort By</span>
                       <select 
                         value={sortBy} 
@@ -3685,15 +3685,15 @@ export default function Admin() {
                </div>
                
                {selectedIds.length > 0 && (
-                 <div className="flex items-center gap-2 bg-black/5 p-1.5 rounded-none border border-black/10 animate-in fade-in slide-in-from-right-4">
+                 <div className="flex items-center gap-2 bg-black/5 p-1 rounded-none border border-black/10 animate-in fade-in slide-in-from-right-4">
                    <span className="text-[9px] font-bold px-2 border-r border-black/10">{selectedIds.length} Selected</span>
-                   <button onClick={handleBulkDuplicate} className="flex items-center gap-1 hover:text-cobalt px-2 py-0.5 transition-colors text-[9px] font-bold uppercase cursor-pointer"><Copy size={11}/> Duplicate</button>
-                   <button onClick={handleBulkDelete} className="flex items-center gap-1 hover:text-orange px-2 py-0.5 transition-colors text-[9px] font-bold uppercase cursor-pointer"><Trash2 size={11}/> Delete</button>
+                   <button onClick={handleBulkDuplicate} className="flex items-center gap-1 hover:text-cobalt px-1.5 py-0.5 transition-colors text-[9px] font-bold uppercase cursor-pointer"><Copy size={11}/> Duplicate</button>
+                   <button onClick={handleBulkDelete} className="flex items-center gap-1 hover:text-orange px-1.5 py-0.5 transition-colors text-[9px] font-bold uppercase cursor-pointer"><Trash2 size={11}/> Delete</button>
                  </div>
                )}
             </div>
    
-            <div className="bg-white rounded-none border border-black/5 shadow-2xs w-full overflow-hidden">
+            <div className="bg-white rounded-none border border-black/5 shadow-2xs w-full overflow-hidden lg:max-h-[calc(100vh-170px)] lg:overflow-y-auto pr-1">
               <table className="w-full text-xs text-left table-fixed">
                 <thead className="hidden md:table-header-group text-[9.5px] uppercase font-black tracking-wider text-ink/40 border-b border-black/5 bg-off-white/50">
                   <tr>
