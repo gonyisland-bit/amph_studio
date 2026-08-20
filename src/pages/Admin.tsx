@@ -363,6 +363,11 @@ export default function Admin() {
 
   const [form, setForm] = useState<any>(emptyProduct);
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // Color Assets Dashboard: Drag & drop reorder and usage list expansion states
+  const [draggedColorIndex, setDraggedColorIndex] = useState<number | null>(null);
+  const [dragOverColorIndex, setDragOverColorIndex] = useState<number | null>(null);
+  const [expandedColorUsageId, setExpandedColorUsageId] = useState<string | null>(null);
   const [previewAspects, setPreviewAspects] = useState<Record<string, 'portrait' | 'landscape'>>({});
 
   // Unsaved changes tracking states
@@ -1744,26 +1749,82 @@ export default function Admin() {
             </div>
           </div>
 
-          {/* Color Assets Grid Manager */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {/* Color Assets Grid Manager with Drag & Drop & Usage List Expansion */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {(homeSettings.colorAssets || defaultColorAssets).map((asset, idx) => {
-              const usageCount = products.filter(p => {
-                if (!p.color) return false;
-                if (Array.isArray(p.color)) {
-                  return p.color.some(c => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
+              const matchedProducts = products.filter(p => {
+                const bList = Array.isArray(p.bodyColors) ? p.bodyColors : [];
+                const fList = Array.isArray(p.fabricColors) ? p.fabricColors : [];
+                const inBody = bList.some(c => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
+                const inFabric = fList.some(c => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
+                
+                let inLegacy = false;
+                if (p.color) {
+                  if (Array.isArray(p.color)) {
+                    inLegacy = p.color.some(c => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
+                  } else {
+                    inLegacy = p.color.toLowerCase().includes(asset.name.toLowerCase());
+                  }
                 }
-                return p.color.toLowerCase().includes(asset.name.toLowerCase());
-              }).length;
+                return inBody || inFabric || inLegacy;
+              });
+
+              const usageCount = matchedProducts.length;
+              const isExpanded = expandedColorUsageId === asset.name;
+              const isDragging = draggedColorIndex === idx;
+              const isDragOver = dragOverColorIndex === idx && draggedColorIndex !== idx;
 
               return (
-                <div key={`${asset.name}-${idx}`} className="bg-white border border-black/10 p-4 shadow-sm flex flex-col justify-between group hover:border-cobalt transition-all rounded-none">
+                <div 
+                  key={`${asset.name}-${idx}`} 
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', idx.toString());
+                    setDraggedColorIndex(idx);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverColorIndex(idx);
+                  }}
+                  onDragLeave={() => {
+                    if (dragOverColorIndex === idx) setDragOverColorIndex(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedColorIndex !== null && draggedColorIndex !== idx) {
+                      const current = [...(homeSettings.colorAssets || defaultColorAssets)];
+                      const [moved] = current.splice(draggedColorIndex, 1);
+                      current.splice(idx, 0, moved);
+                      setHomeSettings({ ...homeSettings, colorAssets: current });
+                      showToast(`Reordered '${moved.name}'`);
+                    }
+                    setDraggedColorIndex(null);
+                    setDragOverColorIndex(null);
+                  }}
+                  onDragEnd={() => {
+                    setDraggedColorIndex(null);
+                    setDragOverColorIndex(null);
+                  }}
+                  className={`bg-white border p-4 shadow-sm flex flex-col justify-between group transition-all rounded-none relative cursor-grab active:cursor-grabbing ${
+                    isDragging ? 'opacity-30 border-dashed border-cobalt' :
+                    isDragOver ? 'border-l-4 border-l-cobalt border-black/30 bg-cobalt/5 scale-[1.02]' :
+                    'border-black/10 hover:border-cobalt/60'
+                  }`}
+                >
+                  {/* Vertical Drag Handle Indicator Bar */}
+                  <div className="absolute top-2 left-2 flex items-center gap-0.5 text-ink/20 group-hover:text-cobalt/60 cursor-grab" title="Drag to reorder">
+                    <span className="text-[10px] font-mono font-bold tracking-tighter">⋮⋮</span>
+                  </div>
+
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div 
-                        className="w-8 h-8 rounded-full border border-black/20 shadow-inner flex-shrink-0"
-                        style={{ backgroundColor: asset.hex || '#000000' }}
-                        title={asset.name}
-                      />
+                    <div className="flex items-center justify-between mb-3 pl-4">
+                      <div className="flex items-center gap-2.5">
+                        <div 
+                          className="w-9 h-9 rounded-full border border-black/20 shadow-sm flex-shrink-0 ring-2 ring-black/5"
+                          style={{ backgroundColor: asset.hex || '#000000' }}
+                          title={asset.name}
+                        />
+                      </div>
                       <button
                         type="button"
                         onClick={() => {
@@ -1781,49 +1842,101 @@ export default function Admin() {
                       </button>
                     </div>
 
-                    <input
-                      type="text"
-                      value={asset.name}
-                      onChange={e => {
-                        const val = e.target.value;
-                        const current = [...(homeSettings.colorAssets || defaultColorAssets)];
-                        current[idx] = { ...current[idx], name: val };
-                        setHomeSettings({ ...homeSettings, colorAssets: current });
-                      }}
-                      className="w-full font-black text-xs uppercase text-ink border-b border-transparent focus:border-cobalt outline-none bg-transparent mb-1"
-                    />
-                    
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={asset.hex || '#000000'}
-                        onChange={e => {
-                          const val = e.target.value;
-                          const current = [...(homeSettings.colorAssets || defaultColorAssets)];
-                          current[idx] = { ...current[idx], hex: val };
-                          setHomeSettings({ ...homeSettings, colorAssets: current });
-                        }}
-                        className="w-4 h-4 rounded-full border-none cursor-pointer bg-transparent p-0"
-                      />
+                    {/* Color Swatch Name — High Visibility (font-black text-sm uppercase text-ink) */}
+                    <div className="mb-2">
+                      <label className="block text-[8px] font-black uppercase text-ink/40 tracking-wider mb-0.5">Color Name</label>
                       <input
                         type="text"
-                        value={asset.hex || '#000000'}
+                        value={asset.name}
                         onChange={e => {
                           const val = e.target.value;
                           const current = [...(homeSettings.colorAssets || defaultColorAssets)];
-                          current[idx] = { ...current[idx], hex: val };
+                          current[idx] = { ...current[idx], name: val };
                           setHomeSettings({ ...homeSettings, colorAssets: current });
                         }}
-                        className="font-mono text-[10px] text-ink/50 uppercase border-b border-transparent focus:border-cobalt outline-none bg-transparent w-full"
+                        className="w-full font-black text-sm uppercase text-ink border-b border-black/15 focus:border-cobalt outline-none bg-transparent py-0.5 font-sans tracking-tight"
+                        placeholder="Color Name"
                       />
+                    </div>
+                    
+                    {/* Hex Code Input — High Visibility (font-mono font-bold text-xs text-ink/80) */}
+                    <div>
+                      <label className="block text-[8px] font-black uppercase text-ink/40 tracking-wider mb-0.5">Hex Code</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={asset.hex || '#000000'}
+                          onChange={e => {
+                            const val = e.target.value;
+                            const current = [...(homeSettings.colorAssets || defaultColorAssets)];
+                            current[idx] = { ...current[idx], hex: val };
+                            setHomeSettings({ ...homeSettings, colorAssets: current });
+                          }}
+                          className="w-5 h-5 rounded-full border border-black/10 cursor-pointer bg-transparent p-0 flex-shrink-0"
+                        />
+                        <input
+                          type="text"
+                          value={asset.hex || '#000000'}
+                          onChange={e => {
+                            const val = e.target.value;
+                            const current = [...(homeSettings.colorAssets || defaultColorAssets)];
+                            current[idx] = { ...current[idx], hex: val };
+                            setHomeSettings({ ...homeSettings, colorAssets: current });
+                          }}
+                          className="font-mono font-bold text-xs text-ink/90 uppercase border-b border-black/15 focus:border-cobalt outline-none bg-transparent w-full tracking-wide"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-black/5 flex items-center justify-between text-[9px]">
-                    <span className="font-mono text-ink/40">USAGE</span>
-                    <span className="font-bold text-cobalt bg-cobalt/10 px-2 py-0.5 rounded-full">
-                      {usageCount} {usageCount === 1 ? 'Product' : 'Products'}
-                    </span>
+                  {/* Usage Pill Button with Expandable Applied Product List */}
+                  <div className="mt-4 pt-3 border-t border-black/10">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[9px] font-bold text-ink/40">USAGE</span>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedColorUsageId(isExpanded ? null : asset.name)}
+                        className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border transition-all cursor-pointer flex items-center gap-1.5 ${
+                          usageCount > 0 
+                            ? 'bg-cobalt/10 text-cobalt border-cobalt/30 hover:bg-cobalt hover:text-white' 
+                            : 'bg-black/5 text-ink/30 border-black/10 cursor-default'
+                        }`}
+                        title={usageCount > 0 ? "Click to toggle applied products list" : "No products using this color"}
+                        disabled={usageCount === 0}
+                      >
+                        <span>{usageCount} {usageCount === 1 ? 'Product' : 'Products'}</span>
+                        {usageCount > 0 && (
+                          <span>{isExpanded ? '▲' : '▼'}</span>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Expandable Applied Products Mini List */}
+                    {isExpanded && matchedProducts.length > 0 && (
+                      <div className="mt-3 space-y-1.5 pt-2 border-t border-black/5 max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
+                        <span className="block text-[8px] font-black uppercase text-ink/50 tracking-wider mb-1 font-mono">Applied Products ({matchedProducts.length})</span>
+                        {matchedProducts.map(p => (
+                          <div 
+                            key={p.id}
+                            onClick={() => {
+                              switchTab('collection');
+                              handleEdit(p);
+                            }}
+                            className="p-1.5 bg-black/5 hover:bg-cobalt/10 border border-black/5 rounded-none flex items-center gap-2 cursor-pointer transition-colors group/item"
+                            title="Click to edit product"
+                          >
+                            {(() => {
+                              const mainImg = normalizeMediaUrl(p.images?.[0] || '');
+                              return <img src={mainImg} className="w-6 h-6 rounded-none object-cover mix-blend-multiply flex-shrink-0 border border-black/10" />;
+                            })()}
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <span className="block text-[9px] font-bold text-ink group-hover/item:text-cobalt truncate">{p.name}</span>
+                              <span className="block text-[8px] text-ink/40 uppercase">{p.category}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
