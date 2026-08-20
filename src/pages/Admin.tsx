@@ -1091,7 +1091,14 @@ export default function Admin() {
       let savedData: any = null;
       if (activeTab === 'collection') {
         const cleanedImages = (form.images || []).filter(Boolean);
-        const cleanedForm = { ...form, images: cleanedImages, color: colorOptions };
+        const currentBody = Array.isArray(form.bodyColors) ? form.bodyColors : [];
+        const currentFabric = Array.isArray(form.fabricColors) ? form.fabricColors : [];
+        const cleanedForm = { 
+          ...form, 
+          images: cleanedImages, 
+          bodyColors: currentBody, 
+          fabricColors: currentFabric 
+        };
         if (editingId) {
           await updateProduct(editingId, cleanedForm);
           savedData = cleanedForm;
