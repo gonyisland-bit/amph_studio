@@ -2150,8 +2150,10 @@ export default function Admin() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 min-w-0 w-full max-w-full overflow-x-hidden">
           <div className={activeTab === 'home' ? 'col-span-12 min-w-0 w-full max-w-full overflow-x-hidden' : 'col-span-1 lg:col-span-5 min-w-0 w-full max-w-full'}>
             <div className="lg:sticky lg:top-24 min-w-0 w-full max-w-full overflow-x-hidden">
-              <h2 className="text-xl font-semibold mb-6 flex items-center justify-between border-b border-black/10 pb-4">
-                <span>{editingId ? 'Edit Content' : 'Add Content'}</span>
+              <div className="flex items-center justify-between border-b border-black/10 pb-3 mb-4 min-h-[41px]">
+                <h2 className="text-xl font-semibold font-sans">
+                  <span>{editingId ? 'Edit Content' : 'Add Content'}</span>
+                </h2>
                 {activeTab !== 'home' && (
                   <div className="flex items-center gap-2">
                     {/* 바로가기 (Go to Page) 버튼 */}
@@ -2219,7 +2221,7 @@ export default function Admin() {
                     )}
                   </div>
                 )}
-              </h2>
+              </div>
               <form id="editor-form" key={editingId || 'new'} onSubmit={handleSave} className="space-y-4 text-sm">
                 <fieldset disabled={saveStatus === 'saving'} className="space-y-4 w-full border-none p-0 m-0">
                   {activeTab === 'home' && (
