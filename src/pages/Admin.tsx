@@ -906,54 +906,51 @@ export default function Admin() {
     }
   }, [location.search, isAuthenticated]);
 
-  // Sync editing item with ?edit= query parameter (Initial load only)
+  // Sync editing item with ?edit= query parameter
   useEffect(() => {
-    if (!isAuthenticated || editingId) return;
+    if (!isAuthenticated) return;
     const params = new URLSearchParams(location.search);
     const editId = params.get('edit');
     const tabParam = params.get('tab');
 
-    if (editId) {
-      const targetTab = tabParam || 'collection';
-      if (activeTab !== targetTab) {
-        setActiveTab(targetTab as any);
-      }
+    if (!editId) return;
 
-      if ((targetTab === 'collection') && products.length > 0) {
-        const found = products.find(p => p.id === editId);
-        if (found) {
-          setEditingId(found.id);
-          const cloned = JSON.parse(JSON.stringify(found));
-          const autoSpaces = spaces.filter(s => s.appliedProductIds?.includes(found.id)).map(s => s.id);
-          const autoJournals = journals.filter(j => j.appliedProductIds?.includes(found.id)).map(j => j.id);
-          cloned.relatedSpaceIds = Array.from(new Set([...(cloned.relatedSpaceIds || []), ...autoSpaces]));
-          cloned.relatedJournalIds = Array.from(new Set([...(cloned.relatedJournalIds || []), ...autoJournals]));
-          const normalizedCloned = normalizeProductColors(cloned);
-          setForm(normalizedCloned);
-          setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
-          setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
-        }
-      } else if (targetTab === 'space' && spaces.length > 0) {
-        const found = spaces.find(s => s.id === editId);
-        if (found) {
-          setEditingId(found.id);
-          const cloned = JSON.parse(JSON.stringify(found));
-          setForm(cloned);
-          setOriginalForm(JSON.parse(JSON.stringify(cloned)));
-          setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
-        }
-      } else if (targetTab === 'journal' && journals.length > 0) {
-        const found = journals.find(j => j.id === editId);
-        if (found) {
-          setEditingId(found.id);
-          const cloned = JSON.parse(JSON.stringify(found));
-          setForm(cloned);
-          setOriginalForm(JSON.parse(JSON.stringify(cloned)));
-          setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
-        }
+    const targetTab = tabParam || 'collection';
+
+    if (targetTab === 'collection' && products.length > 0) {
+      const found = products.find(p => p.id === editId);
+      if (found) {
+        const cloned = JSON.parse(JSON.stringify(found));
+        const autoSpaces = spaces.filter(s => s.appliedProductIds?.includes(found.id)).map(s => s.id);
+        const autoJournals = journals.filter(j => j.appliedProductIds?.includes(found.id)).map(j => j.id);
+        cloned.relatedSpaceIds = Array.from(new Set([...(cloned.relatedSpaceIds || []), ...autoSpaces]));
+        cloned.relatedJournalIds = Array.from(new Set([...(cloned.relatedJournalIds || []), ...autoJournals]));
+        const normalizedCloned = normalizeProductColors(cloned);
+        setEditingId(found.id);
+        setForm(normalizedCloned);
+        setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
+        setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
+      }
+    } else if (targetTab === 'space' && spaces.length > 0) {
+      const found = spaces.find(s => s.id === editId);
+      if (found) {
+        const cloned = JSON.parse(JSON.stringify(found));
+        setEditingId(found.id);
+        setForm(cloned);
+        setOriginalForm(JSON.parse(JSON.stringify(cloned)));
+        setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
+      }
+    } else if (targetTab === 'journal' && journals.length > 0) {
+      const found = journals.find(j => j.id === editId);
+      if (found) {
+        const cloned = JSON.parse(JSON.stringify(found));
+        setEditingId(found.id);
+        setForm(cloned);
+        setOriginalForm(JSON.parse(JSON.stringify(cloned)));
+        setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
       }
     }
-  }, [isAuthenticated, products, spaces, journals, location.search, activeTab]);
+  }, [isAuthenticated, products, spaces, journals, location.search]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
