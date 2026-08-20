@@ -686,7 +686,7 @@ export default function Admin() {
     if (prod.bodyColors && Array.isArray(prod.bodyColors)) {
       prod.bodyColors.forEach((b: any) => {
         const parsed = parseItem(b, 'body');
-        if (parsed && parsed.name && !bodyList.some(x => (x?.name || '').toLowerCase() === (parsed.name || '').toLowerCase())) {
+        if (parsed && !bodyList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
           bodyList.push(parsed);
         }
       });
@@ -696,7 +696,7 @@ export default function Admin() {
     if (rawFabric && Array.isArray(rawFabric)) {
       rawFabric.forEach((f: any) => {
         const parsed = parseItem(f, 'fabric');
-        if (parsed && parsed.name && !fabricList.some(x => (x?.name || '').toLowerCase() === (parsed.name || '').toLowerCase())) {
+        if (parsed && !fabricList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
           fabricList.push(parsed);
         }
       });
@@ -705,10 +705,10 @@ export default function Admin() {
     if (prod.color && Array.isArray(prod.color)) {
       prod.color.forEach((c: any) => {
         const parsed = parseItem(c, 'body');
-        if (parsed && parsed.name) {
-          if (parsed.group === 'body' && !bodyList.some(b => (b?.name || '').toLowerCase() === (parsed.name || '').toLowerCase())) {
+        if (parsed) {
+          if (parsed.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === parsed.name.toLowerCase())) {
             bodyList.push(parsed);
-          } else if (parsed.group === 'fabric' && !fabricList.some(f => (f?.name || '').toLowerCase() === (parsed.name || '').toLowerCase())) {
+          } else if (parsed.group === 'fabric' && !fabricList.some(f => f.name.toLowerCase() === parsed.name.toLowerCase())) {
             fabricList.push(parsed);
           }
         }
@@ -740,7 +740,7 @@ export default function Admin() {
         form.bodyColors.forEach((b: any) => {
           const name = typeof b === 'string' ? b : b?.name;
           const hex = typeof b === 'string' ? (colorMap[b] || '#888888') : (b?.hex || '#888888');
-          if (name && !bodyList.some(c => (c?.name || '').toLowerCase() === (name || '').toLowerCase())) {
+          if (name && !bodyList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
             bodyList.push({ name, hex, group: 'body' });
           }
         });
@@ -751,7 +751,7 @@ export default function Admin() {
         rawFabric.forEach((f: any) => {
           const name = typeof f === 'string' ? f : f?.name;
           const hex = typeof f === 'string' ? (colorMap[f] || '#888888') : (f?.hex || '#888888');
-          if (name && !fabricList.some(c => (c?.name || '').toLowerCase() === (name || '').toLowerCase())) {
+          if (name && !fabricList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
             fabricList.push({ name, hex, group: 'fabric' });
           }
         });
@@ -761,9 +761,9 @@ export default function Admin() {
       if (form.color && Array.isArray(form.color)) {
         form.color.forEach((c: any) => {
           if (c && c.name) {
-            if (c.group === 'body' && !bodyList.some(b => (b?.name || '').toLowerCase() === (c.name || '').toLowerCase())) {
+            if (c.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === c.name.toLowerCase())) {
               bodyList.push({ ...c, group: 'body' });
-            } else if ((c.group === 'fabric' || c.group === 'upholstery') && !fabricList.some(f => (f?.name || '').toLowerCase() === (c.name || '').toLowerCase())) {
+            } else if ((c.group === 'fabric' || c.group === 'upholstery') && !fabricList.some(f => f.name.toLowerCase() === c.name.toLowerCase())) {
               fabricList.push({ ...c, group: 'fabric' });
             }
           }
@@ -1321,228 +1321,243 @@ export default function Admin() {
   };
 
   const renderContentBlocksEditor = () => {
-  const renderContentBlocksEditor = () => {
-    const isProduct = activeTab === 'collection';
-    const contentBlocksWithIds = (form.contentBlocks || []).map((cb: any, idx: number) => ({
+    const moveBlock = (fromIndex: number, toIndex: number) => {
+      setForm(prev => {
+        const blocks = [...(prev.contentBlocks || [])];
+        if (toIndex < 0 || toIndex >= blocks.length) return prev;
+        const [moved] = blocks.splice(fromIndex, 1);
+        blocks.splice(toIndex, 0, moved);
+        
+        // Auto sync hero cover for Space and Journal if first block changed
+        const newForm: any = { ...prev, contentBlocks: blocks };
+        if (activeTab !== 'collection') {
+          const mediaBlocks = blocks.filter(b => (b.type === 'image' || !b.type) && b.value);
+          if (mediaBlocks.length > 0 && (!prev.image || !mediaBlocks.some(b => b.value === prev.image))) {
+            const firstMedia = mediaBlocks[0].value;
+            const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
+            newForm.image = firstMedia;
+            newForm.images = [firstMedia, ...currentImages];
+          }
+        }
+        return newForm;
+      });
+    };
+
+    // Ensure all blocks have unique IDs
+    const contentBlocksWithIds = (form.contentBlocks || []).map((cb: ContentBlock, idx: number) => ({
       ...cb,
       id: cb.id || `block-${idx}-${Math.random().toString(36).substring(2, 9)}`
     }));
 
-    const moveBlock = (fromIndex: number, toIndex: number) => {
-      if (toIndex < 0 || toIndex >= contentBlocksWithIds.length) return;
-      const updated = [...contentBlocksWithIds];
-      const [moved] = updated.splice(fromIndex, 1);
-      updated.splice(toIndex, 0, moved);
-      setForm(prev => ({ ...prev, contentBlocks: updated }));
-    };
-
     return (
-      <div className="space-y-4">
-        <div className={isProduct ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-4"}>
-          {contentBlocksWithIds.map((cb: any, i: number) => (
-            <div key={cb.id} className="p-4 border border-black/10 bg-off-white/50 space-y-3 relative group rounded-none shadow-2xs">
-              <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase text-ink/40 font-mono">Block {i + 1}</span>
-                  <select 
-                    value={cb.type || 'image'} 
-                    onChange={e => {
-                      const newType = e.target.value as 'text' | 'image';
-                      const blockId = cb.id;
-                      setForm(prev => {
-                        const newCb = [...(prev.contentBlocks || [])];
-                        const targetIdx = newCb.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
-                        if (targetIdx !== -1) {
-                          newCb[targetIdx] = { ...newCb[targetIdx], type: newType };
-                        }
-                        return { ...prev, contentBlocks: newCb };
-                      });
-                    }} 
-                    className="border border-black/15 bg-white p-1 text-[9px] uppercase font-bold text-ink outline-none rounded-none"
-                  >
-                    <option value="image">Media / Image / Video</option>
-                    <option value="text">Text Only</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-0.5 border-r border-black/10 pr-2">
-                    <button 
-                      type="button" 
-                      disabled={i === 0} 
-                      onClick={() => moveBlock(i, i - 1)} 
-                      className="p-0.5 hover:bg-black/10 disabled:opacity-20 text-ink/60 hover:text-ink cursor-pointer rounded-none transition-colors" 
-                      title="Move Up/Left"
-                    >
-                      <ChevronUp size={12} />
-                    </button>
-                    <button 
-                      type="button" 
-                      disabled={i === contentBlocksWithIds.length - 1} 
-                      onClick={() => moveBlock(i, i + 1)} 
-                      className="p-0.5 hover:bg-black/10 disabled:opacity-20 text-ink/60 hover:text-ink cursor-pointer rounded-none transition-colors" 
-                      title="Move Down/Right"
-                    >
-                      <ChevronDown size={12} />
-                    </button>
-                  </div>
+      <div className="mb-4 space-y-4">
+        <div className="flex justify-between items-center border-b border-black/5 pb-2">
+          <label className="block text-[10px] font-bold uppercase text-ink/60 tracking-wider">Editorial Story Blocks</label>
+          <span className="text-[9px] text-ink/40 font-medium">Reorder, Image & Text Blocks</span>
+        </div>
+        {contentBlocksWithIds.map((cb: ContentBlock & { id: string }, i: number) => (
+          <div key={cb.id} className="flex flex-col gap-3 mb-3 bg-black/[0.02] border border-black/5 p-3 rounded-none">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-mono font-bold text-ink/40">#{i + 1}</span>
+                <select 
+                  value={cb.type || 'image'} 
+                  onChange={e => {
+                    const blockId = cb.id;
+                    const nextType = e.target.value as 'text'|'image';
+                    setForm(prev => {
+                      const newCb = [...(prev.contentBlocks || [])];
+                      const targetIdx = newCb.findIndex(b => (b.id || `block-${newCb.indexOf(b)}`) === blockId || newCb.indexOf(b) === i);
+                      if (targetIdx !== -1) {
+                        newCb[targetIdx] = { ...newCb[targetIdx], type: nextType };
+                      }
+                      return { ...prev, contentBlocks: newCb };
+                    });
+                  }} 
+                  className="border border-black/15 bg-white p-1 text-[10px] uppercase font-bold text-ink outline-none rounded-none"
+                >
+                  <option value="image">Media / Image / Video (이미지/영상)</option>
+                  <option value="text">Text Only (텍스트)</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 border-r border-black/10 pr-3">
                   <button 
                     type="button" 
-                    onClick={() => {
-                      const blockId = cb.id;
-                      setForm(prev => ({
-                        ...prev,
-                        contentBlocks: (prev.contentBlocks || []).filter((b: any, idx: number) => (b.id || `block-${idx}`) !== blockId && idx !== i)
-                      }));
-                    }} 
-                    className="text-orange text-[9px] font-bold uppercase tracking-wider hover:underline"
+                    disabled={i === 0} 
+                    onClick={() => moveBlock(i, i - 1)} 
+                    className="p-1 hover:bg-black/10 disabled:opacity-20 text-ink/60 hover:text-ink cursor-pointer rounded-none transition-colors" 
+                    title="Move Up"
                   >
-                    Remove
+                    <ChevronUp size={14} />
+                  </button>
+                  <button 
+                    type="button" 
+                    disabled={i === contentBlocksWithIds.length - 1} 
+                    onClick={() => moveBlock(i, i + 1)} 
+                    className="p-1 hover:bg-black/10 disabled:opacity-20 text-ink/60 hover:text-ink cursor-pointer rounded-none transition-colors" 
+                    title="Move Down"
+                  >
+                    <ChevronDown size={14} />
                   </button>
                 </div>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    const blockId = cb.id;
+                    setForm(prev => ({
+                      ...prev,
+                      contentBlocks: (prev.contentBlocks || []).filter((b: any, idx: number) => (b.id || `block-${idx}`) !== blockId && idx !== i)
+                    }));
+                  }} 
+                  className="text-orange text-[10px] font-bold uppercase tracking-wider hover:underline"
+                >
+                  Remove Block
+                </button>
               </div>
-
-              {(cb.type === 'image' || !cb.type) ? (
-                <div className="space-y-2">
-                  <MediaUploadInput 
-                    label="Editorial Media" 
-                    value={cb.value} 
-                    onChange={val => {
-                      const blockId = cb.id;
-                      const oldUrl = cb.value;
-                      setForm(prev => {
-                        const currentBlocks = [...(prev.contentBlocks || [])];
-                        const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
-                        if (targetIdx !== -1) {
-                          currentBlocks[targetIdx] = { ...currentBlocks[targetIdx], id: blockId, value: val };
-                        } else {
-                          currentBlocks.push({ id: blockId, type: 'image', value: val });
+            </div>
+          {(cb.type === 'image' || !cb.type) ? (
+            <div className="space-y-2">
+              <MediaUploadInput 
+                label="Editorial Media (Image or Video)" 
+                value={cb.value} 
+                onChange={val => {
+                  const blockId = cb.id;
+                  const oldUrl = cb.value;
+                  setForm(prev => {
+                    const currentBlocks = [...(prev.contentBlocks || [])];
+                    const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
+                    if (targetIdx !== -1) {
+                      currentBlocks[targetIdx] = { ...currentBlocks[targetIdx], id: blockId, value: val };
+                    } else {
+                      currentBlocks.push({ id: blockId, type: 'image', value: val });
+                    }
+                    
+                    const newForm: any = { ...prev, contentBlocks: currentBlocks };
+                    // For Space and Journal: Preserve Hero Cover designation property if replaced image was Hero Cover
+                    if (activeTab !== 'collection') {
+                      const wasHero = prev.image === oldUrl || (oldUrl && prev.image && prev.image === oldUrl);
+                      if (wasHero || !prev.image) {
+                        const currentImages = (prev.images || []).map((x: string) => x === oldUrl ? val : x).filter(Boolean);
+                        newForm.image = val;
+                        newForm.images = [val, ...currentImages.filter((x: string) => x !== val)];
+                      } else {
+                        const mediaBlocks = currentBlocks.filter(b => (b.type === 'image' || !b.type) && b.value);
+                        if (mediaBlocks.length > 0 && (!prev.image || !mediaBlocks.some(b => b.value === prev.image))) {
+                          const firstMedia = mediaBlocks[0].value;
+                          const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
+                          newForm.image = firstMedia;
+                          newForm.images = [firstMedia, ...currentImages];
                         }
-                        
-                        const newForm: any = { ...prev, contentBlocks: currentBlocks };
-                        if (!isProduct) {
-                          const wasHero = prev.image === oldUrl || (oldUrl && prev.image && prev.image === oldUrl);
-                          if (wasHero || !prev.image) {
-                            const currentImages = (prev.images || []).map((x: string) => x === oldUrl ? val : x).filter(Boolean);
-                            newForm.image = val;
-                            newForm.images = [val, ...currentImages.filter((x: string) => x !== val)];
-                          } else {
-                            const mediaBlocks = currentBlocks.filter(b => (b.type === 'image' || !b.type) && b.value);
-                            if (mediaBlocks.length > 0 && (!prev.image || !mediaBlocks.some(b => b.value === prev.image))) {
-                              const firstMedia = mediaBlocks[0].value;
-                              const currentImages = (prev.images || []).filter((x: string) => x !== firstMedia);
-                              newForm.image = firstMedia;
-                              newForm.images = [firstMedia, ...currentImages];
-                            }
-                          }
-                        }
-                        return newForm;
-                      });
-                    }} 
-                  />
-                  <div>
-                    <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Image Below Text / Caption</label>
+                      }
+                    }
+                    return newForm;
+                  });
+                }} 
+              />
+              <div>
+                <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Image Below Text / Caption (선택사항)</label>
+                <textarea 
+                  value={cb.caption || ''} 
+                  onChange={e => {
+                    const blockId = cb.id;
+                    const nextCaption = e.target.value;
+                    setForm(prev => {
+                      const currentBlocks = [...(prev.contentBlocks || [])];
+                      const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
+                      if (targetIdx !== -1) {
+                        currentBlocks[targetIdx] = { ...currentBlocks[targetIdx], caption: nextCaption };
+                      }
+                      return { ...prev, contentBlocks: currentBlocks };
+                    });
+                  }} 
+                  className="w-full border border-black/15 bg-white p-2 text-xs outline-none rounded-none font-sans" 
+                  placeholder="Enter text to display below this image (optional)..." 
+                  rows={2}
+                />
+              </div>
+              {cb.value && (
+                <div className="pt-2 border-t border-black/5 flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
                     <input 
-                      type="text"
-                      value={cb.caption || ''} 
+                      type="checkbox" 
+                      checked={form.image === cb.value}
                       onChange={e => {
-                        const blockId = cb.id;
-                        const nextCaption = e.target.value;
+                        const targetValue = cb.value;
                         setForm(prev => {
-                          const currentBlocks = [...(prev.contentBlocks || [])];
-                          const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
-                          if (targetIdx !== -1) {
-                            currentBlocks[targetIdx] = { ...currentBlocks[targetIdx], caption: nextCaption };
+                          if (e.target.checked) {
+                            const currentImages = (prev.images || []).filter((x: string) => x !== targetValue);
+                            return { ...prev, image: targetValue, images: [targetValue, ...currentImages] };
+                          } else {
+                            return { ...prev, image: '' };
                           }
-                          return { ...prev, contentBlocks: currentBlocks };
                         });
-                      }} 
-                      className="w-full border border-black/15 bg-white px-2 py-1.5 h-[34px] text-xs outline-none rounded-none font-sans" 
-                      placeholder="Caption text below image..." 
+                      }}
+                      className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
                     />
-                  </div>
-                  {!isProduct && cb.value && (
-                    <div className="pt-2 border-t border-black/5 flex items-center justify-between">
-                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                        <input 
-                          type="checkbox" 
-                          checked={form.image === cb.value}
-                          onChange={e => {
-                            const targetValue = cb.value;
-                            setForm(prev => {
-                              if (e.target.checked) {
-                                const currentImages = (prev.images || []).filter((x: string) => x !== targetValue);
-                                return { ...prev, image: targetValue, images: [targetValue, ...currentImages] };
-                              } else {
-                                return { ...prev, image: '' };
-                              }
-                            });
-                          }}
-                          className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
-                        />
-                        <span className="text-[9px] uppercase font-bold text-cobalt">
-                          {form.image === cb.value ? "✓ Hero Cover" : "Set as Hero Cover"}
-                        </span>
-                      </label>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Text Content</label>
-                  <input 
-                    type="text"
-                    value={cb.value} 
-                    onChange={e => {
-                      const blockId = cb.id;
-                      const nextText = e.target.value;
-                      setForm(prev => {
-                        const currentBlocks = [...(prev.contentBlocks || [])];
-                        const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
-                        if (targetIdx !== -1) {
-                          currentBlocks[targetIdx] = { ...currentBlocks[targetIdx], value: nextText };
-                        }
-                        return { ...prev, contentBlocks: currentBlocks };
-                      });
-                    }} 
-                    className="w-full border border-black/15 bg-white px-2 py-1.5 h-[34px] text-xs outline-none rounded-none font-sans" 
-                    placeholder="Text Content..." 
-                  />
+                    <span className="text-[9px] uppercase font-bold text-cobalt">
+                      {form.image === cb.value ? "✓ Hero Cover (히어로 커버 지정됨)" : "Set as Hero Cover (히어로 커버 지정)"}
+                    </span>
+                  </label>
                 </div>
               )}
             </div>
-          ))}
+          ) : (
+            <div>
+              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Text Content</label>
+              <textarea 
+                value={cb.value} 
+                onChange={e => {
+                  const blockId = cb.id;
+                  const nextText = e.target.value;
+                  setForm(prev => {
+                    const currentBlocks = [...(prev.contentBlocks || [])];
+                    const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
+                    if (targetIdx !== -1) {
+                      currentBlocks[targetIdx] = { ...currentBlocks[targetIdx], value: nextText };
+                    }
+                    return { ...prev, contentBlocks: currentBlocks };
+                  });
+                }} 
+                className="w-full border border-black/15 bg-white p-2 text-xs outline-none rounded-none font-sans" 
+                placeholder="Text Content" 
+                rows={3}
+              />
+            </div>
+          )}
         </div>
-        <div className="flex gap-2 pt-2">
-          <button 
-            type="button" 
-            onClick={() => {
-              const newBlockId = `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-              setForm(prev => ({
-                ...prev,
-                contentBlocks: [...(prev.contentBlocks || []), { id: newBlockId, type: 'image', value: '', caption: '' }]
-              }));
-            }} 
-            className="flex-1 py-2 bg-cobalt/5 hover:bg-cobalt text-cobalt hover:text-white text-[9px] font-black uppercase tracking-widest transition-colors border border-cobalt/20 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            <Plus size={12} /> + Media Block
-          </button>
-          <button 
-            type="button" 
-            onClick={() => {
-              const newBlockId = `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-              setForm(prev => ({
-                ...prev,
-                contentBlocks: [...(prev.contentBlocks || []), { id: newBlockId, type: 'text', value: '', caption: '' }]
-              }));
-            }} 
-            className="flex-1 py-2 bg-black/5 hover:bg-ink text-ink hover:text-white text-[9px] font-black uppercase tracking-widest transition-colors border border-black/10 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            <Plus size={12} /> + Text Block
-          </button>
-        </div>
+      ))}
+      <div className="flex gap-2">
+        <button 
+          type="button" 
+          onClick={() => {
+            const newBlockId = `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+            setForm(prev => ({
+              ...prev,
+              contentBlocks: [...(prev.contentBlocks || []), { id: newBlockId, type: 'image', value: '', caption: '' }]
+            }));
+          }} 
+          className="flex-1 py-2.5 bg-cobalt/5 hover:bg-cobalt text-cobalt hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors border border-cobalt/20 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
+        >
+          <Plus size={12} /> Add Media Block (미디어 추가)
+        </button>
+        <button 
+          type="button" 
+          onClick={() => {
+            const newBlockId = `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+            setForm(prev => ({
+              ...prev,
+              contentBlocks: [...(prev.contentBlocks || []), { id: newBlockId, type: 'text', value: '', caption: '' }]
+            }));
+          }} 
+          className="flex-1 py-2.5 bg-black/5 hover:bg-ink text-ink hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors border border-black/10 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
+        >
+          <Plus size={12} /> Add Text Block (텍스트 추가)
+        </button>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   return (
     <div className="flex flex-col flex-grow px-3 py-4 sm:px-6 md:px-12 md:py-12 max-w-[1400px] mx-auto w-full font-sans min-w-0 overflow-x-hidden">
@@ -2148,7 +2163,7 @@ export default function Admin() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 min-w-0 w-full max-w-full overflow-x-hidden">
           <div className={activeTab === 'home' ? 'col-span-12 min-w-0 w-full max-w-full overflow-x-hidden' : 'col-span-1 lg:col-span-5 min-w-0 w-full max-w-full'}>
             <div className="lg:sticky lg:top-24 min-w-0 w-full max-w-full overflow-x-hidden">
-              <h2 className="text-xl font-semibold mb-4 flex items-center justify-between border-b border-black/10 pb-3">
+              <h2 className="text-xl font-semibold mb-6 flex items-center justify-between border-b border-black/10 pb-4">
                 <span>{editingId ? 'Edit Content' : 'Add Content'}</span>
                 {activeTab !== 'home' && (
                   <div className="flex items-center gap-2">
@@ -3428,7 +3443,7 @@ export default function Admin() {
                       onClick={() => toggleSection('story')}
                       className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
                     >
-                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Editorial Story</span>
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Product Editorial Story</span>
                       <span className="text-ink/30">{activeSections.story ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
                     </button>
                     {activeSections.story && (
@@ -4110,5 +4125,4 @@ export default function Admin() {
       </button>
     </div>
   );
-}
 }
