@@ -2998,8 +2998,8 @@ export default function Admin() {
                       <div className="p-6 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300 text-ink">
                         {/* Target Slot Activation Tabs Header */}
                         <div className="bg-black/5 p-4 border border-black/10 space-y-3">
-                          <span className="text-[10px] font-black uppercase text-ink/60 tracking-wider block">
-                            1. Select Edit Target Slot (수정할 창을 선택하여 활성화하세요)
+                          <span className="text-[10px] font-black uppercase text-ink/60 tracking-wider block font-mono">
+                            1. Select Edit Target Slot
                           </span>
                           <div className="grid grid-cols-2 gap-3">
                             {/* Body Slot Selection Box */}
@@ -3008,24 +3008,25 @@ export default function Admin() {
                               onClick={() => setActiveColorTarget('body')}
                               className={`p-3 border text-left transition-all relative rounded-none cursor-pointer ${
                                 activeColorTarget === 'body'
-                                  ? 'bg-cobalt/10 border-cobalt shadow-sm ring-1 ring-cobalt'
+                                  ? 'bg-cobalt/10 border-cobalt ring-1 ring-cobalt'
                                   : 'bg-white border-black/15 hover:border-black/30'
                               }`}
                             >
                               <div className="flex justify-between items-center mb-1">
                                 <span className={`text-xs font-black uppercase tracking-wider ${activeColorTarget === 'body' ? 'text-cobalt' : 'text-ink/70'}`}>
-                                  🔵 Body Color (바디 창)
+                                  Body
                                 </span>
                                 {activeColorTarget === 'body' && (
-                                  <span className="text-[9px] bg-cobalt text-white px-2 py-0.5 font-bold uppercase tracking-wider">
-                                    Active Now
+                                  <span className="text-[9px] font-bold text-cobalt flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-cobalt inline-block animate-pulse" />
+                                    Active
                                   </span>
                                 )}
                               </div>
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {(() => {
                                   const bodyList = form.bodyColors && Array.isArray(form.bodyColors) ? form.bodyColors : [];
-                                  if (bodyList.length === 0) return <span className="text-[9px] text-ink/40 uppercase">No colors selected</span>;
+                                  if (bodyList.length === 0) return <span className="text-[9px] text-ink/40 uppercase font-mono">No colors selected</span>;
                                   return bodyList.map((c: any, i: number) => (
                                     <span key={i} className="text-[8px] bg-white border border-black/15 px-1.5 py-0.5 uppercase font-bold text-ink/80 flex items-center gap-1">
                                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c.hex || '#888') }} />
@@ -3042,24 +3043,25 @@ export default function Admin() {
                               onClick={() => setActiveColorTarget('fabric')}
                               className={`p-3 border text-left transition-all relative rounded-none cursor-pointer ${
                                 activeColorTarget === 'fabric'
-                                  ? 'bg-orange/10 border-orange shadow-sm ring-1 ring-orange'
+                                  ? 'bg-orange/10 border-orange ring-1 ring-orange'
                                   : 'bg-white border-black/15 hover:border-black/30'
                               }`}
                             >
                               <div className="flex justify-between items-center mb-1">
                                 <span className={`text-xs font-black uppercase tracking-wider ${activeColorTarget === 'fabric' ? 'text-orange' : 'text-ink/70'}`}>
-                                  🟠 Fabric Color (패브릭/가죽 창)
+                                  Fabric
                                 </span>
                                 {activeColorTarget === 'fabric' && (
-                                  <span className="text-[9px] bg-orange text-white px-2 py-0.5 font-bold uppercase tracking-wider">
-                                    Active Now
+                                  <span className="text-[9px] font-bold text-orange flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-orange inline-block animate-pulse" />
+                                    Active
                                   </span>
                                 )}
                               </div>
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {(() => {
                                   const fabricList = form.fabricColors || form.upholsteryColors;
-                                  if (!fabricList || !Array.isArray(fabricList) || fabricList.length === 0) return <span className="text-[9px] text-ink/40 uppercase">No colors selected</span>;
+                                  if (!fabricList || !Array.isArray(fabricList) || fabricList.length === 0) return <span className="text-[9px] text-ink/40 uppercase font-mono">No colors selected</span>;
                                   return fabricList.map((c: any, i: number) => (
                                     <span key={i} className="text-[8px] bg-white border border-black/15 px-1.5 py-0.5 uppercase font-bold text-ink/80 flex items-center gap-1">
                                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c.hex || '#888') }} />
@@ -3075,8 +3077,8 @@ export default function Admin() {
                         {/* Global Swatches Selector (2. Tap Swatch to Attach to Active Target) */}
                         <div className="bg-white p-5 border border-black/10 space-y-4 shadow-2xs">
                           <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                            <span className="text-[11px] font-black uppercase text-ink tracking-wider">
-                              2. Tap Swatches below to attach to [{activeColorTarget.toUpperCase()} COLOR]
+                            <span className="text-[11px] font-black uppercase text-ink tracking-wider font-mono">
+                              2. Tap Swatches below to attach to [{activeColorTarget.toUpperCase()}]
                             </span>
                             <button
                               type="button"
@@ -3124,8 +3126,8 @@ export default function Admin() {
 
                         {/* Add New Custom Swatch to Library & Auto-Attach */}
                         <div className="bg-off-white/70 p-4 border border-black/10 space-y-3">
-                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">
-                            + Add New Swatch (신규 컬러 생성 &amp; [{activeColorTarget.toUpperCase()}]에 즉시 장착)
+                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider font-mono">
+                            + Add New Swatch (New Swatch &amp; Attach to [{activeColorTarget.toUpperCase()}])
                           </h4>
                           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                             <div className="sm:col-span-5">
@@ -3165,71 +3167,6 @@ export default function Admin() {
                               </button>
                             </div>
                           </div>
-                        </div>
-
-                        {/* Colors List (Guaranteed 3 items per row on desktop grid) */}
-                        <div className="space-y-3">
-                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider">
-                            Registered Color Options ({colorOptions.length})
-                          </h4>
-                          {colorOptions.length === 0 ? (
-                            <p className="text-[10px] uppercase tracking-wider text-ink/40">No colors added yet.</p>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-2">
-                              {colorOptions.map((c, index) => (
-                                <div 
-                                  key={`${c.name}-${index}`} 
-                                  className="relative border border-black/15 p-1.5 px-2.5 bg-white shadow-xs flex items-center gap-1.5 rounded-none group hover:border-cobalt transition-all min-w-0"
-                                >
-                                  {/* Delete Mini Floating Badge Button (✕) on Top-Right */}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveColorOption(c.name)}
-                                    className="absolute -top-1.5 -right-1.5 bg-white hover:bg-orange hover:text-white text-ink/40 border border-black/20 w-4.5 h-4.5 rounded-full flex items-center justify-center text-[9px] font-black shadow-xs transition-all cursor-pointer z-10"
-                                    title="Remove Option"
-                                  >
-                                    ✕
-                                  </button>
-
-                                  {/* Compact Reorder Buttons (ChevronUp/Down) on Left side */}
-                                  <div className="flex flex-col items-center justify-center shrink-0 border-r border-black/10 pr-1 py-0.2">
-                                    <button 
-                                      type="button"
-                                      disabled={index === 0} 
-                                      onClick={() => handleReorderColorOption(index, 'up')}
-                                      className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0 leading-none"
-                                      title="Move Left/Up"
-                                    >
-                                      <ChevronUp size={10}/>
-                                    </button>
-                                    <button 
-                                      type="button"
-                                      disabled={index === colorOptions.length - 1} 
-                                      onClick={() => handleReorderColorOption(index, 'down')}
-                                      className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0 leading-none"
-                                      title="Move Right/Down"
-                                    >
-                                      <ChevronDown size={10}/>
-                                    </button>
-                                  </div>
-
-                                  {/* Color swatch */}
-                                  <div 
-                                    className="w-3.5 h-3.5 rounded-full border border-black/20 shrink-0 shadow-inner" 
-                                    style={{ backgroundColor: c.hex }} 
-                                  />
-
-                                  {/* Name & Hex Code */}
-                                  <div className="min-w-0 flex-1 overflow-hidden">
-                                    <span className="block text-[10px] sm:text-[11px] font-bold uppercase text-ink whitespace-nowrap truncate leading-tight" title={c.name}>
-                                      {c.name}
-                                    </span>
-                                    <span className="block text-[7.5px] font-mono text-ink/40 uppercase leading-none">{c.hex}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       </div>
                     )}
