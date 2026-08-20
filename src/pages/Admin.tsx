@@ -47,7 +47,7 @@ const EditorInput = ({ label, required, value, onChange, placeholder, type = "te
         <textarea
           ref={textareaRef}
           required={required}
-          value={value}
+          value={value ?? ''}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
@@ -57,7 +57,7 @@ const EditorInput = ({ label, required, value, onChange, placeholder, type = "te
         <input
           type={type}
           required={required}
-          value={value}
+          value={value ?? ''}
           onChange={e => onChange(type === "number" ? Number(e.target.value) : e.target.value)}
           placeholder={placeholder}
           className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt focus:ring-1 focus:ring-cobalt/20 text-xs transition-all duration-300 shadow-sm"
@@ -931,7 +931,7 @@ export default function Admin() {
           const normalizedCloned = normalizeProductColors(cloned);
           setForm(normalizedCloned);
           setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
-          setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
+          setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
         }
       } else if (targetTab === 'space' && spaces.length > 0) {
         const found = spaces.find(s => s.id === editId);
@@ -940,7 +940,7 @@ export default function Admin() {
           const cloned = JSON.parse(JSON.stringify(found));
           setForm(cloned);
           setOriginalForm(JSON.parse(JSON.stringify(cloned)));
-          setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
+          setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
         }
       } else if (targetTab === 'journal' && journals.length > 0) {
         const found = journals.find(j => j.id === editId);
@@ -949,7 +949,7 @@ export default function Admin() {
           const cloned = JSON.parse(JSON.stringify(found));
           setForm(cloned);
           setOriginalForm(JSON.parse(JSON.stringify(cloned)));
-          setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
+          setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
         }
       }
     }
@@ -1266,7 +1266,7 @@ export default function Admin() {
     setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
     setIsDirty(false);
     setSaveStatus('idle');
-    setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
+    setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
     const params = new URLSearchParams(window.location.search);
     params.set('tab', activeTab);
     params.set('edit', item.id);
