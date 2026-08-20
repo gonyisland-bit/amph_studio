@@ -420,21 +420,27 @@ export default function SpaceDetail() {
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-1">Spaces</span>
                 <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tighter">Explore Related Spaces</h3>
               </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => scrollSlider('left')} 
-                  className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
-                  title="Scroll Left"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button 
-                  onClick={() => scrollSlider('right')} 
-                  className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
-                  title="Scroll Right"
-                >
-                  <ChevronRight size={16} />
-                </button>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => scrollSlider('left')} 
+                    className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                    title="Scroll Left"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button 
+                    onClick={() => scrollSlider('right')} 
+                    className="p-2 border border-black/10 hover:bg-black/5 text-ink transition-colors cursor-pointer rounded-none"
+                    title="Scroll Right"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+                <Link to="/space" className="flex items-center gap-1.5 text-[10px] md:text-xs font-black uppercase text-ink hover:text-cobalt transition-colors tracking-widest group">
+                  <span>SEE ALL SPACES</span>
+                  <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
               </div>
             </div>
 
