@@ -35,6 +35,8 @@ export default async function handler(req: any, res: any) {
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "relatedProductIds" TEXT DEFAULT '[]'`; } catch(e) {}
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "relatedSpaceIds" TEXT DEFAULT '[]'`; } catch(e) {}
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "relatedJournalIds" TEXT DEFAULT '[]'`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "bodyColors" TEXT DEFAULT '[]'`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "fabricColors" TEXT DEFAULT '[]'`; } catch(e) {}
   } catch (e) {}
 
   if (req.method === 'GET') {
@@ -55,6 +57,8 @@ export default async function handler(req: any, res: any) {
           hoverImages: typeof r.hoverImages === 'string' ? JSON.parse(r.hoverImages) : (r.hoverImages || []),
           contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
           color: colorParsed,
+          bodyColors: typeof r.bodyColors === 'string' ? JSON.parse(r.bodyColors) : (r.bodyColors || []),
+          fabricColors: typeof r.fabricColors === 'string' ? JSON.parse(r.fabricColors) : (r.fabricColors || []),
           cartEnabled: r.cartEnabled !== false,
           portraitImages: typeof r.portraitImages === 'string' ? JSON.parse(r.portraitImages) : (r.portraitImages || []),
           relatedProductIds: typeof r.relatedProductIds === 'string' ? JSON.parse(r.relatedProductIds) : (r.relatedProductIds || []),
@@ -71,10 +75,10 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST') {
     try {
-      const { id: newId, name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, cartEnabled, portraitImages, relatedProductIds, relatedSpaceIds, relatedJournalIds } = req.body;
+      const { id: newId, name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, bodyColors, fabricColors, cartEnabled, portraitImages, relatedProductIds, relatedSpaceIds, relatedJournalIds } = req.body;
       await sql`
         INSERT INTO products (
-          id, name, category, description, "subTitle", material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color, "cartEnabled", "portraitImages", "relatedProductIds", "relatedSpaceIds", "relatedJournalIds"
+          id, name, category, description, "subTitle", material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color, "bodyColors", "fabricColors", "cartEnabled", "portraitImages", "relatedProductIds", "relatedSpaceIds", "relatedJournalIds"
         ) VALUES (
           ${newId}, ${name}, ${category}, ${description}, ${subTitle || ''}, ${material}, ${price}, 
           ${JSON.stringify(images || [])}, 
@@ -85,6 +89,8 @@ export default async function handler(req: any, res: any) {
           ${shipping || ''},
           ${sku || ''},
           ${typeof color === 'string' ? color : JSON.stringify(color || [])},
+          ${JSON.stringify(bodyColors || [])},
+          ${JSON.stringify(fabricColors || [])},
           ${cartEnabled !== false},
           ${JSON.stringify(portraitImages || [])},
           ${JSON.stringify(relatedProductIds || [])},
@@ -106,6 +112,8 @@ export default async function handler(req: any, res: any) {
           shipping = EXCLUDED.shipping,
           sku = EXCLUDED.sku,
           color = EXCLUDED.color,
+          "bodyColors" = EXCLUDED."bodyColors",
+          "fabricColors" = EXCLUDED."fabricColors",
           "cartEnabled" = EXCLUDED."cartEnabled",
           "portraitImages" = EXCLUDED."portraitImages",
           "relatedProductIds" = EXCLUDED."relatedProductIds",
@@ -122,7 +130,7 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'PUT') {
     if (!id) return res.status(400).json({ error: 'ID is required' });
     try {
-      const { name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, cartEnabled, portraitImages, relatedProductIds, relatedSpaceIds, relatedJournalIds } = req.body;
+      const { name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, bodyColors, fabricColors, cartEnabled, portraitImages, relatedProductIds, relatedSpaceIds, relatedJournalIds } = req.body;
       await sql`
         UPDATE products SET 
           name = ${name}, 
@@ -139,6 +147,8 @@ export default async function handler(req: any, res: any) {
           shipping = ${shipping},
           sku = ${sku},
           color = ${typeof color === 'string' ? color : JSON.stringify(color || [])},
+          "bodyColors" = ${JSON.stringify(bodyColors || [])},
+          "fabricColors" = ${JSON.stringify(fabricColors || [])},
           "cartEnabled" = ${cartEnabled !== false},
           "portraitImages" = ${JSON.stringify(portraitImages || [])},
           "relatedProductIds" = ${JSON.stringify(relatedProductIds || [])},

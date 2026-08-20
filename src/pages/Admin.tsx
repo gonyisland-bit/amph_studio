@@ -1443,8 +1443,8 @@ export default function Admin() {
                   />
                   <div>
                     <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">CAPTION</label>
-                    <input 
-                      type="text"
+                    <textarea 
+                      rows={1}
                       value={cb.caption || ''} 
                       onChange={e => {
                         const blockId = cb.id;
@@ -1458,7 +1458,7 @@ export default function Admin() {
                           return { ...prev, contentBlocks: currentBlocks };
                         });
                       }} 
-                      className="w-full border border-black/15 bg-white px-2 py-1.5 h-[34px] text-xs outline-none rounded-none font-sans" 
+                      className="w-full border border-black/15 bg-white p-2 min-h-[34px] text-xs outline-none rounded-none font-sans resize-y leading-relaxed" 
                       placeholder="Caption text below image..." 
                     />
                   </div>
@@ -1491,8 +1491,8 @@ export default function Admin() {
               ) : (
                 <div>
                   <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Text Content</label>
-                  <input 
-                    type="text"
+                  <textarea 
+                    rows={6}
                     value={cb.value} 
                     onChange={e => {
                       const blockId = cb.id;
@@ -1506,8 +1506,8 @@ export default function Admin() {
                         return { ...prev, contentBlocks: currentBlocks };
                       });
                     }} 
-                    className="w-full border border-black/15 bg-white px-2 py-1.5 h-[34px] text-xs outline-none rounded-none font-sans" 
-                    placeholder="Text Content..." 
+                    className="w-full border border-black/15 bg-white p-3 h-[180px] text-xs outline-none rounded-none font-sans overflow-y-auto resize-none leading-relaxed" 
+                    placeholder="Enter story text content..." 
                   />
                 </div>
               )}
@@ -3523,7 +3523,7 @@ export default function Admin() {
               )}
 
               {activeTab === 'journal' && (
-                <>
+                <div className="space-y-4 mt-0 pt-0">
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                     <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
@@ -3583,7 +3583,7 @@ export default function Admin() {
                       </div>
                     </div>
                   </div>
-                </>
+                </div>
               )}
 
               {activeTab === 'space' && (
@@ -3803,8 +3803,8 @@ export default function Admin() {
                               </div>
                             </div>
                           </td>
-                          <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0 overflow-hidden text-center px-1">
-                            <span className="caption-nano text-orange px-2 py-0.5 border border-orange/30 rounded-full font-bold inline-block truncate max-w-full">{p.category}</span>
+                          <td className="py-1 md:py-3 align-middle block md:table-cell shrink-0 text-center px-1">
+                            <span className="text-[10px] font-semibold tracking-tight text-orange px-2.5 py-0.5 border-[1.5px] border-orange/50 rounded-full inline-block whitespace-nowrap">{p.category}</span>
                           </td>
                           <td className="py-2 md:py-3 align-middle text-center block md:table-cell shrink-0 border-t border-black/5 md:border-0 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
                             <div className="flex justify-center items-center">

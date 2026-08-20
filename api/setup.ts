@@ -84,6 +84,8 @@ export default async function handler(req: any, res: any) {
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "shipping" TEXT DEFAULT ''`; } catch(e) {}
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "sku" TEXT DEFAULT ''`; } catch(e) {}
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "color" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "bodyColors" TEXT DEFAULT '[]'`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "fabricColors" TEXT DEFAULT '[]'`; } catch(e) {}
 
     // Migration: customer_users table info columns
     try { await sql`ALTER TABLE customer_users ADD COLUMN IF NOT EXISTS "name" TEXT DEFAULT ''`; } catch(e) {}
