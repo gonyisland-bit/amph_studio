@@ -190,7 +190,7 @@ const MediaUploadInput = ({
              Uploading...
            </div>
         ) : value ? (
-           <div className="relative group/preview w-full h-44 bg-black/5 overflow-hidden">
+           <div className="relative group/preview w-full h-[120px] bg-black/5 overflow-hidden">
              {isVideo ? (
                <video src={normalizeMediaUrl(value)} className="w-full h-full object-cover rounded-none" autoPlay loop muted playsInline />
              ) : (
@@ -956,9 +956,17 @@ export default function Admin() {
     if (!isAuthenticated) return;
     const params = new URLSearchParams(location.search);
     const editId = params.get('edit');
-    const tabParam = params.get('tab');
+    const tabParam = params.get('tab') || 'collection';
 
-    if (!editId) return;
+    if (!editId) {
+      setEditingId(null);
+      const empty = tabParam === 'collection' ? emptyProduct : tabParam === 'journal' ? emptyJournal : tabParam === 'space' ? emptySpace : emptyProduct;
+      const freshEmpty = JSON.parse(JSON.stringify(empty));
+      setForm(freshEmpty);
+      setOriginalForm(freshEmpty);
+      setIsDirty(false);
+      return;
+    }
 
     const targetTab = tabParam || 'collection';
 
@@ -1111,8 +1119,9 @@ export default function Admin() {
     setActiveTab(tab);
     setEditingId(null);
     const empty = tab === 'collection' ? emptyProduct : tab === 'journal' ? emptyJournal : tab === 'space' ? emptySpace : emptyProduct;
-    setForm(empty);
-    setOriginalForm(JSON.parse(JSON.stringify(empty)));
+    const freshEmpty = JSON.parse(JSON.stringify(empty));
+    setForm(freshEmpty);
+    setOriginalForm(freshEmpty);
     setIsDirty(false);
     setSaveStatus('idle');
     setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
@@ -3076,10 +3085,10 @@ export default function Admin() {
                   {/* Live Preview & Direct Interactive Media Manager: Actual image grid matching product detail layout */}
                   <div className="bg-black/5 rounded-none border border-black/10 overflow-hidden shadow-none space-y-2 p-3">
                     <div className="flex justify-between items-center px-1 pb-1">
-                      <span className="text-[10px] font-black uppercase text-ink/70 tracking-wider font-mono">
+                      <span className="block text-[10px] font-bold uppercase text-ink/50 tracking-wider font-mono">
                         INTERACTIVE GALLERY
                       </span>
-                      <span className="text-[9px] font-bold text-cobalt uppercase font-mono">
+                      <span className="text-[10px] font-bold text-cobalt uppercase font-mono tracking-wider">
                         {(form.images || []).filter(Boolean).length} Images
                       </span>
                     </div>
