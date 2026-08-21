@@ -381,6 +381,7 @@ export default function Admin() {
 
   // Unsaved changes tracking states
   const [isDirty, setIsDirty] = useState(false);
+  const [modalSaveStatus, setModalSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [originalForm, setOriginalForm] = useState<any>(null);
   const [originalHomeSettings, setOriginalHomeSettings] = useState<any>(null);
   const [pendingNavigation, setPendingNavigation] = useState<{
@@ -1370,15 +1371,12 @@ export default function Admin() {
 
     return (
       <div className="mb-4 space-y-4">
-        <div className="flex justify-between items-center border-b border-black/5 pb-2">
-          <label className="block text-[10px] font-bold uppercase text-ink/60 tracking-wider">Editorial Story</label>
-        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {contentBlocksWithIds.map((cb: ContentBlock & { id: string }, i: number) => (
             <div key={cb.id} className="p-4 border border-black/10 bg-off-white/50 space-y-3 relative group rounded-none shadow-2xs">
-              <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase text-ink/40 font-mono">Block {i + 1}</span>
+              <div className="flex justify-between items-center border-b border-black/5 pb-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 shrink">
+                  <span className="text-xs font-black uppercase text-ink/50 font-mono whitespace-nowrap shrink-0">#{i + 1}</span>
                   <select 
                     value={cb.type || 'image'} 
                     onChange={e => {
@@ -1393,13 +1391,13 @@ export default function Admin() {
                         return { ...prev, contentBlocks: newCb };
                       });
                     }} 
-                    className="border border-black/15 bg-white p-1 text-[9px] uppercase font-bold text-ink outline-none rounded-none"
+                    className="border border-black/15 bg-white p-1 text-[9px] uppercase font-bold text-ink outline-none rounded-none shrink-0"
                   >
                     <option value="image">MEDIA</option>
                     <option value="text">TEXT</option>
                   </select>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <div className="flex items-center gap-0.5 border-r border-black/10 pr-2">
                     <button 
                       type="button" 
@@ -1559,7 +1557,7 @@ export default function Admin() {
             }} 
             className="flex-1 py-2 bg-cobalt/5 hover:bg-cobalt text-cobalt hover:text-white text-[9px] font-black uppercase tracking-widest transition-colors border border-cobalt/20 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
           >
-            <Plus size={12} /> + Media Block
+            <Plus size={12} /> Media Block
           </button>
           <button 
             type="button" 
@@ -1570,9 +1568,9 @@ export default function Admin() {
                 contentBlocks: [...(prev.contentBlocks || []), { id: newBlockId, type: 'text', value: '', caption: '' }]
               }));
             }} 
-            className="flex-1 py-2 bg-black/5 hover:bg-ink text-ink hover:text-white text-[9px] font-black uppercase tracking-widest transition-colors border border-black/10 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
+            className="flex-1 py-2 bg-black/5 hover:bg-black text-ink hover:text-white text-[9px] font-black uppercase tracking-widest transition-colors border border-black/10 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
           >
-            <Plus size={12} /> + Text Block
+            <Plus size={12} /> Text Block
           </button>
         </div>
       </div>
@@ -3068,9 +3066,9 @@ export default function Admin() {
                   <div className="bg-black/5 rounded-none border border-black/10 overflow-hidden shadow-none space-y-2 p-3">
                     <div className="flex justify-between items-center px-1 pb-1">
                       <span className="text-[10px] font-black uppercase text-ink/70 tracking-wider font-mono">
-                        Interactive Gallery (미디어 그리드 직관 편집 &amp; Drag &amp; Drop 순서변경)
+                        INTERACTIVE GALLERY
                       </span>
-                      <span className="text-[9px] font-bold text-cobalt uppercase">
+                      <span className="text-[9px] font-bold text-cobalt uppercase font-mono">
                         {(form.images || []).filter(Boolean).length} Images
                       </span>
                     </div>
@@ -3349,7 +3347,7 @@ export default function Admin() {
                     {/* Direct + Add Media Dropzone Slot */}
                     <div className="pt-2 border-t border-black/10">
                       <MediaUploadInput 
-                        label="+ Add Media to Product Gallery (미디어 추가 드롭존)"
+                        label="+ ADD MEDIA"
                         value=""
                         onChange={val => {
                           if (val) {
@@ -3713,7 +3711,7 @@ export default function Admin() {
                       onClick={() => toggleSection('story')}
                       className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
                     >
-                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Product Editorial Story</span>
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider font-mono">STORY MEDIA</span>
                       <span className="text-ink/30">{activeSections.story ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
                     </button>
                     {activeSections.story && (
@@ -4283,50 +4281,76 @@ export default function Admin() {
             </p>
             <div className="w-full flex flex-col gap-2">
               <button 
+                disabled={modalSaveStatus === 'saving'}
                 onClick={async () => {
+                  setModalSaveStatus('saving');
                   const success = await handleSave();
                   if (success) {
-                    const nav = pendingNavigation;
-                    setPendingNavigation(null);
-                    if (nav.type === 'tab' && nav.targetTab) {
-                      if (nav.targetTab === activeTab) {
-                        proceedCancelEdit();
-                      } else {
-                        proceedTab(nav.targetTab);
+                    setModalSaveStatus('saved');
+                    setTimeout(() => {
+                      const nav = pendingNavigation;
+                      setModalSaveStatus('idle');
+                      setPendingNavigation(null);
+                      if (nav && nav.type === 'tab' && nav.targetTab) {
+                        if (nav.targetTab === activeTab) {
+                          proceedCancelEdit();
+                        } else {
+                          proceedTab(nav.targetTab);
+                        }
+                      } else if (nav && nav.type === 'edit' && nav.targetItem) {
+                        proceedEdit(nav.targetItem);
                       }
-                    } else if (nav.type === 'edit' && nav.targetItem) {
-                      proceedEdit(nav.targetItem);
-                    }
+                    }, 300);
+                  } else {
+                    setModalSaveStatus('idle');
                   }
                 }}
-                className="bg-cobalt text-white py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-ink transition-colors rounded-none w-full cursor-pointer"
+                className={`py-2.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-none w-full cursor-pointer flex items-center justify-center gap-1.5 shadow-xs ${
+                  modalSaveStatus === 'saving' ? 'bg-cobalt text-white opacity-80 cursor-wait pointer-events-none' :
+                  modalSaveStatus === 'saved' ? 'bg-emerald-600 text-white' :
+                  'bg-cobalt text-white hover:bg-ink'
+                }`}
               >
-                Save & Leave
+                {modalSaveStatus === 'saving' ? (
+                  <>
+                    <span className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                    <span>SAVING...</span>
+                  </>
+                ) : modalSaveStatus === 'saved' ? (
+                  <>
+                    <CheckCircle2 size={10} />
+                    <span>SAVED</span>
+                  </>
+                ) : (
+                  <span>Save</span>
+                )}
               </button>
               <button 
+                disabled={modalSaveStatus === 'saving'}
                 onClick={() => {
                   const nav = pendingNavigation;
                   setIsDirty(false);
                   setPendingNavigation(null);
-                  if (nav.type === 'tab' && nav.targetTab) {
+                  if (nav && nav.type === 'tab' && nav.targetTab) {
                     if (nav.targetTab === activeTab) {
                       proceedCancelEdit();
                     } else {
                       proceedTab(nav.targetTab);
                     }
-                  } else if (nav.type === 'edit' && nav.targetItem) {
+                  } else if (nav && nav.type === 'edit' && nav.targetItem) {
                     proceedEdit(nav.targetItem);
                   }
                 }}
-                className="bg-ink text-white py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-orange transition-colors rounded-none w-full cursor-pointer"
+                className="bg-ink text-white py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-orange transition-colors rounded-none w-full cursor-pointer disabled:opacity-50"
               >
-                Discard & Leave
+                Discard
               </button>
               <button 
+                disabled={modalSaveStatus === 'saving'}
                 onClick={() => {
                   setPendingNavigation(null);
                 }}
-                className="bg-black/5 text-ink/60 border border-black/5 py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-black/10 transition-colors rounded-none w-full cursor-pointer"
+                className="bg-black/5 text-ink/60 border border-black/5 py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-black/10 transition-colors rounded-none w-full cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
