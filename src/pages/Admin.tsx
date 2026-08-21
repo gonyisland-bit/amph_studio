@@ -3147,11 +3147,27 @@ export default function Admin() {
                                         if (uploadedUrls.length > 0) {
                                           setForm((prev: any) => {
                                             const current = [...(prev.images || [])];
-                                            current[realIdx] = uploadedUrls[0];
+                                            const oldUrl = current[realIdx] || '';
+                                            const newUrl = uploadedUrls[0];
+                                            current[realIdx] = newUrl;
                                             if (uploadedUrls.length > 1) {
                                               current.splice(realIdx + 1, 0, ...uploadedUrls.slice(1));
                                             }
-                                            return { ...prev, images: current };
+
+                                            // Preserve & transfer Portrait & Hover settings if oldUrl existed
+                                            let nextHover = prev.hoverImages || [];
+                                            let nextPortrait = prev.portraitImages || [];
+                                            if (oldUrl && newUrl && oldUrl !== newUrl) {
+                                              nextHover = nextHover.map((url: string) => (url === oldUrl || normalizeMediaUrl(url) === normalizeMediaUrl(oldUrl)) ? newUrl : url);
+                                              nextPortrait = nextPortrait.map((url: string) => (url === oldUrl || normalizeMediaUrl(url) === normalizeMediaUrl(oldUrl)) ? newUrl : url);
+                                            }
+
+                                            return {
+                                              ...prev,
+                                              images: current,
+                                              hoverImages: nextHover,
+                                              portraitImages: nextPortrait
+                                            };
                                           });
                                         }
                                       } catch (err) {
