@@ -161,7 +161,7 @@ const MediaUploadInput = ({
       {label && <label className="block text-[10px] font-bold uppercase text-ink/50 mb-2">{label}</label>}
       <div 
         className={`relative rounded-none transition-all cursor-pointer overflow-hidden ${
-          value ? 'border border-solid border-black/15 bg-black/5 p-0 min-h-[160px]' :
+          value ? 'border border-solid border-black/15 bg-black/5 p-0 h-[120px]' :
           dragActive ? 'border-2 border-dashed border-cobalt bg-cobalt/5 p-4 min-h-[120px] flex flex-col items-center justify-center' :
           'border-2 border-dashed border-black/20 bg-black/5 hover:bg-black/10 p-4 min-h-[120px] flex flex-col items-center justify-center'
         }`}
@@ -3085,11 +3085,11 @@ export default function Admin() {
                   {/* Live Preview & Direct Interactive Media Manager: Actual image grid matching product detail layout */}
                   <div className="bg-black/5 rounded-none border border-black/10 overflow-hidden shadow-none space-y-2 p-3">
                     <div className="flex justify-between items-center px-1 pb-1">
-                      <span className="block text-[10px] font-bold uppercase text-ink/50 tracking-wider font-mono">
+                      <span className="block text-[10px] font-bold uppercase text-ink/50">
                         INTERACTIVE GALLERY
                       </span>
-                      <span className="text-[10px] font-bold text-cobalt uppercase font-mono tracking-wider">
-                        {(form.images || []).filter(Boolean).length} Images
+                      <span className="block text-[10px] font-bold uppercase text-cobalt">
+                        {(form.images || []).filter(Boolean).length} IMAGES
                       </span>
                     </div>
 
