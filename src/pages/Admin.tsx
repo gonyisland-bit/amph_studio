@@ -160,7 +160,11 @@ const MediaUploadInput = ({
     <div className="w-full mb-4">
       {label && <label className="block text-[10px] font-bold uppercase text-ink/50 mb-2">{label}</label>}
       <div 
-        className={`relative border-2 border-dashed rounded-none flex flex-col items-center justify-center p-4 transition-colors cursor-pointer min-h-[120px] overflow-hidden ${dragActive ? 'border-cobalt bg-cobalt/5' : 'border-black/20 bg-black/5 hover:bg-black/10'}`}
+        className={`relative rounded-none transition-all cursor-pointer overflow-hidden ${
+          value ? 'border border-solid border-black/15 bg-black/5 p-0 min-h-[160px]' :
+          dragActive ? 'border-2 border-dashed border-cobalt bg-cobalt/5 p-4 min-h-[120px] flex flex-col items-center justify-center' :
+          'border-2 border-dashed border-black/20 bg-black/5 hover:bg-black/10 p-4 min-h-[120px] flex flex-col items-center justify-center'
+        }`}
         onDragEnter={onDrag} onDragLeave={onDrag} onDragOver={onDrag} onDrop={onDrop}
         onClick={(e) => {
           if ((e.target as HTMLElement).closest('.remove-btn')) return;
@@ -181,14 +185,20 @@ const MediaUploadInput = ({
           }} 
         />
         {uploading ? (
-           <div className="text-orange text-xs animate-pulse font-bold">Uploading...</div>
+           <div className="py-12 flex flex-col items-center justify-center text-orange text-xs animate-pulse font-bold font-mono">
+             <span className="w-4 h-4 border-2 border-orange border-t-transparent rounded-full animate-spin mb-1.5 inline-block" />
+             Uploading...
+           </div>
         ) : value ? (
-           <div className="relative group/preview w-full flex justify-center">
+           <div className="relative group/preview w-full h-44 bg-black/5 overflow-hidden">
              {isVideo ? (
-               <video src={normalizeMediaUrl(value)} className="h-24 w-auto object-contain rounded-none" muted preload="metadata" />
+               <video src={normalizeMediaUrl(value)} className="w-full h-full object-cover rounded-none" autoPlay loop muted playsInline />
              ) : (
-               <img src={normalizeMediaUrl(value)} alt="Preview" className="h-24 w-auto object-contain mix-blend-multiply" nopin="nopin" data-pin-no-hover="true" />
+               <img src={normalizeMediaUrl(value)} alt="Preview" className="w-full h-full object-cover rounded-none group-hover/preview:scale-[1.02] transition-transform duration-300" nopin="nopin" data-pin-no-hover="true" />
              )}
+             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+               <span className="bg-black/70 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-none font-mono">Click or Drop to Replace</span>
+             </div>
              <button 
               type="button"
               onClick={async (e) => {
@@ -198,7 +208,8 @@ const MediaUploadInput = ({
                   onChange('');
                 }
               }}
-              className="remove-btn absolute -top-2 -right-2 bg-orange text-white w-5 h-5 rounded-none flex items-center justify-center text-[10px] font-bold shadow-md hover:scale-110 transition-transform z-10"
+              className="remove-btn absolute top-2 right-2 bg-orange hover:bg-ink text-white w-6 h-6 rounded-none flex items-center justify-center text-xs font-bold shadow-md hover:scale-105 transition-all z-10 cursor-pointer"
+              title="Delete Media"
              >
                ✕
              </button>
