@@ -3093,15 +3093,62 @@ export default function Admin() {
                                 onDragLeave={() => {
                                   if (dragOverPreviewImgIndex === realIdx) setDragOverPreviewImgIndex(null);
                                 }}
-                                onDrop={(e) => {
+                                onDrop={async (e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  if (draggedPreviewImgIndex !== null && draggedPreviewImgIndex !== realIdx) {
+                                  
+                                  // Case 1: External Computer File Drop Direct Upload
+                                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                                    const rawFiles = Array.from(e.dataTransfer.files) as File[];
+                                    const files = rawFiles.filter((f: File) => f.type.startsWith('image/') || f.type.startsWith('video/'));
+                                    if (files.length > 0) {
+                                      showToast(`Uploading file to Media #${realIdx + 1}...`);
+                                      try {
+                                        const uploadedUrls = await Promise.all(files.map(async (file: File) => {
+                                          const initRes = await fetch('/api/upload', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                              filename: file.name,
+                                              contentType: file.type || 'application/octet-stream'
+                                            }),
+                                          });
+                                          if (!initRes.ok) throw new Error('Upload prepare failed');
+                                          const { uploadUrl, url } = await initRes.json();
+                                          const putRes = await fetch(uploadUrl, {
+                                            method: 'PUT',
+                                            headers: { 'Content-Type': file.type || 'application/octet-stream' },
+                                            body: file,
+                                          });
+                                          if (!putRes.ok) throw new Error('Upload to R2 failed');
+                                          return url;
+                                        }));
+
+                                        if (uploadedUrls.length > 0) {
+                                          setForm((prev: any) => {
+                                            const current = [...(prev.images || [])];
+                                            current[realIdx] = uploadedUrls[0];
+                                            if (uploadedUrls.length > 1) {
+                                              current.splice(realIdx + 1, 0, ...uploadedUrls.slice(1));
+                                            }
+                                            return { ...prev, images: current };
+                                          });
+                                          showToast(`Uploaded ${uploadedUrls.length} file(s) to Media #${realIdx + 1}`);
+                                        }
+                                      } catch (err) {
+                                        console.error(err);
+                                        showToast('Failed to upload dropped file');
+                                      }
+                                    }
+                                  } 
+                                  // Case 2: Internal Reordering Drag Drop
+                                  else if (draggedPreviewImgIndex !== null && draggedPreviewImgIndex !== realIdx) {
                                     const current = [...originalImages];
                                     const [moved] = current.splice(draggedPreviewImgIndex, 1);
                                     current.splice(realIdx, 0, moved);
                                     setForm((prev: any) => ({ ...prev, images: current }));
                                   }
+
                                   setDraggedPreviewImgIndex(null);
                                   setDragOverPreviewImgIndex(null);
                                 }}
@@ -3109,109 +3156,69 @@ export default function Admin() {
                                   setDraggedPreviewImgIndex(null);
                                   setDragOverPreviewImgIndex(null);
                                 }}
-                                className={`${spanClass} overflow-hidden bg-silver/10 relative group border transition-all cursor-grab active:cursor-grabbing ${
+                                className={`${spanClass} bg-silver/10 relative group border transition-all cursor-grab active:cursor-grabbing ${
                                   isDragging ? 'opacity-30 border-dashed border-cobalt' :
                                   isDragOver ? 'ring-4 ring-cobalt border-cobalt scale-[1.01]' :
                                   'border-black/10 hover:border-cobalt/60'
                                 }`}
                               >
-                                <MediaRenderer src={img} alt={`Preview ${realIdx+1}`} className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+                                {/* Media Display Inner Container — overflow-hidden isolated to prevent popup clipping */}
+                                <div className="absolute inset-0 w-full h-full overflow-hidden">
+                                  <MediaRenderer src={img} alt={`Preview ${realIdx+1}`} className="w-full h-full object-cover pointer-events-none" />
+                                </div>
 
                                 {/* Order Badge & Flags */}
                                 <div className="absolute top-2 left-2 z-10 flex items-center gap-1 pointer-events-none">
-                                  <span className="bg-black/70 text-white text-[9px] font-black px-1.5 py-0.5 rounded-none font-mono">
+                                  <span className="bg-black/70 text-white text-[9px] font-black px-1.5 py-0.5 rounded-none font-mono shadow-xs">
                                     #{realIdx + 1}
                                   </span>
                                   {isForcedPortrait && (
-                                    <span className="bg-cobalt text-white text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-none">
+                                    <span className="bg-cobalt text-white text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-none shadow-xs">
                                       Portrait
                                     </span>
                                   )}
                                   {isHover && (
-                                    <span className="bg-orange text-white text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-none">
+                                    <span className="bg-orange text-white text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-none shadow-xs">
                                       Hover Effect
                                     </span>
                                   )}
                                 </div>
 
-                                {/* Right-Top Hamburger Menu Button (⋮) */}
-                                <div className="absolute top-2 right-2 z-20">
+                                {/* Right-Top Hamburger Options Button & Popup (Unclipped z-50) */}
+                                <div className="absolute top-2 right-2 z-30">
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setActiveMenuImgIndex(isMenuOpen ? null : realIdx);
                                     }}
-                                    className="w-7 h-7 bg-black/70 hover:bg-cobalt text-white flex items-center justify-center transition-colors rounded-none shadow-md cursor-pointer"
+                                    className="w-7 h-7 bg-black/80 hover:bg-cobalt text-white flex items-center justify-center transition-colors rounded-none shadow-md cursor-pointer"
                                     title="Media Options & Settings"
                                   >
                                     <MoreVertical size={14} />
                                   </button>
 
-                                  {/* Hamburger Menu Dropdown Layer Popup */}
+                                  {/* Compact Unclipped Hamburger Menu Options Popup */}
                                   {isMenuOpen && (
                                     <div 
-                                      className="absolute top-8 right-0 w-64 bg-white border border-black/20 shadow-xl p-3 z-50 text-ink text-left space-y-3 rounded-none animate-in fade-in zoom-in-95 duration-150"
+                                      className="absolute top-8 right-0 w-56 bg-white border border-black/20 shadow-2xl p-3 z-50 text-ink text-left space-y-2.5 rounded-none animate-in fade-in zoom-in-95 duration-150"
                                       onClick={e => e.stopPropagation()}
                                     >
                                       <div className="flex justify-between items-center border-b border-black/10 pb-1.5">
                                         <span className="text-[9px] font-black uppercase text-cobalt font-mono">
-                                          Media #{realIdx + 1} Settings
+                                          Media #{realIdx + 1} Options
                                         </span>
                                         <button 
                                           type="button" 
                                           onClick={() => setActiveMenuImgIndex(null)}
-                                          className="text-[9px] font-bold text-ink/40 hover:text-ink cursor-pointer"
+                                          className="text-[9px] font-bold text-ink/40 hover:text-ink cursor-pointer px-1"
                                         >
                                           ✕
                                         </button>
                                       </div>
 
-                                      {/* 1. Media Upload Input / Drag Drop */}
-                                      <div className="space-y-1">
-                                        <label className="block text-[8px] font-black uppercase text-ink/60">Upload / Replace Media</label>
-                                        <MediaUploadInput 
-                                          label=""
-                                          value={img} 
-                                          onChange={newVal => {
-                                            setForm((prev: any) => {
-                                              const current = [...(prev.images || [])];
-                                              if (newVal === '') {
-                                                current.splice(realIdx, 1);
-                                              } else {
-                                                current[realIdx] = newVal;
-                                              }
-                                              return { ...prev, images: current };
-                                            });
-                                          }} 
-                                        />
-                                      </div>
-
-                                      {/* 2. Image URL Toggle & Copy */}
-                                      <div className="pt-2 border-t border-black/5 space-y-1">
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-[8px] font-black uppercase text-ink/60">Image URL</span>
-                                          <button
-                                            type="button"
-                                            onClick={() => setShowUrlImgIndex(isUrlShowing ? null : realIdx)}
-                                            className="text-[8px] font-bold uppercase text-cobalt hover:underline cursor-pointer"
-                                          >
-                                            {isUrlShowing ? 'Hide URL' : 'Show URL'}
-                                          </button>
-                                        </div>
-                                        {isUrlShowing && (
-                                          <input 
-                                            type="text" 
-                                            readOnly 
-                                            value={img} 
-                                            onClick={e => (e.target as HTMLInputElement).select()}
-                                            className="w-full text-[9px] font-mono p-1 bg-black/5 border border-black/10 text-ink/70 select-all outline-none" 
-                                          />
-                                        )}
-                                      </div>
-
-                                      {/* 3. Options Toggles (Portrait & Hover) */}
-                                      <div className="pt-2 border-t border-black/5 space-y-1.5">
+                                      {/* Options Toggles (Portrait & Hover) */}
+                                      <div className="space-y-2 pt-0.5">
                                         <label className="flex items-center gap-2 cursor-pointer select-none">
                                           <input 
                                             type="checkbox" 
@@ -3225,7 +3232,7 @@ export default function Admin() {
                                             }}
                                             className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
                                           />
-                                          <span className="text-[9px] font-bold uppercase text-ink/80">Portrait View (세로형 고정)</span>
+                                          <span className="text-[9px] font-bold uppercase text-ink/90">Portrait (세로형 고정)</span>
                                         </label>
 
                                         <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -3241,12 +3248,35 @@ export default function Admin() {
                                             }}
                                             className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
                                           />
-                                          <span className="text-[9px] font-bold uppercase text-ink/80">Hover Effect Image (마우스 오버 이미지)</span>
+                                          <span className="text-[9px] font-bold uppercase text-ink/90">Hover Effect (마우스오버)</span>
                                         </label>
                                       </div>
 
-                                      {/* 4. Delete Action */}
-                                      <div className="pt-2 border-t border-black/5 flex justify-end">
+                                      {/* Image URL Toggle & Copy */}
+                                      <div className="pt-2 border-t border-black/10 space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-[8px] font-black uppercase text-ink/50">Image URL</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setShowUrlImgIndex(isUrlShowing ? null : realIdx)}
+                                            className="text-[8px] font-bold uppercase text-cobalt hover:underline cursor-pointer"
+                                          >
+                                            {isUrlShowing ? 'Hide URL' : 'Show URL'}
+                                          </button>
+                                        </div>
+                                        {isUrlShowing && (
+                                          <input 
+                                            type="text" 
+                                            readOnly 
+                                            value={img} 
+                                            onClick={e => (e.target as HTMLInputElement).select()}
+                                            className="w-full text-[9px] font-mono p-1.5 bg-black/5 border border-black/10 text-ink/80 select-all outline-none" 
+                                          />
+                                        )}
+                                      </div>
+
+                                      {/* Delete Action */}
+                                      <div className="pt-2 border-t border-black/10 flex justify-end">
                                         <button
                                           type="button"
                                           onClick={() => {
