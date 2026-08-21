@@ -374,6 +374,7 @@ export default function Admin() {
   const [dragOverPreviewImgIndex, setDragOverPreviewImgIndex] = useState<number | null>(null);
   const [activeMenuImgIndex, setActiveMenuImgIndex] = useState<number | null>(null);
   const [showUrlImgIndex, setShowUrlImgIndex] = useState<number | null>(null);
+  const [uploadingCellIndex, setUploadingCellIndex] = useState<number | null>(null);
   const [draggedProductSwatchIndex, setDraggedProductSwatchIndex] = useState<number | null>(null);
   const [dragOverProductSwatchIndex, setDragOverProductSwatchIndex] = useState<number | null>(null);
   const [previewAspects, setPreviewAspects] = useState<Record<string, 'portrait' | 'landscape'>>({});
@@ -3121,6 +3122,7 @@ export default function Admin() {
                                     const rawFiles = Array.from(e.dataTransfer.files) as File[];
                                     const files = rawFiles.filter((f: File) => f.type.startsWith('image/') || f.type.startsWith('video/'));
                                     if (files.length > 0) {
+                                      setUploadingCellIndex(realIdx);
                                       try {
                                         const uploadedUrls = await Promise.all(files.map(async (file: File) => {
                                           const initRes = await fetch('/api/upload', {
@@ -3151,11 +3153,11 @@ export default function Admin() {
                                             }
                                             return { ...prev, images: current };
                                           });
-                                          showToast(`Uploaded ${uploadedUrls.length} file(s) to Media #${realIdx + 1}`);
                                         }
                                       } catch (err) {
                                         console.error(err);
-                                        showToast('Failed to upload dropped file');
+                                      } finally {
+                                        setUploadingCellIndex(null);
                                       }
                                     }
                                   } 
@@ -3183,6 +3185,12 @@ export default function Admin() {
                                 {/* Media Display Inner Container — overflow-hidden isolated to prevent popup clipping */}
                                 <div className="absolute inset-0 w-full h-full overflow-hidden">
                                   <MediaRenderer src={img} alt={`Preview ${realIdx+1}`} className="w-full h-full object-cover pointer-events-none" />
+                                  {uploadingCellIndex === realIdx && (
+                                    <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center text-white z-40 animate-in fade-in duration-150">
+                                      <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mb-1.5 inline-block" />
+                                      <span className="text-[9px] font-black uppercase tracking-wider font-mono">Uploading...</span>
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* Order Badge & Flags */}
