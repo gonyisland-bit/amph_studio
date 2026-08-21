@@ -388,6 +388,25 @@ export default function Admin() {
     targetItem?: any;
   } | null>(null);
 
+  // Outside click & ESC key handlers for Live Preview Hamburger Menu Popup
+  useEffect(() => {
+    if (activeMenuImgIndex === null) return;
+    const handleClickOutside = () => {
+      setActiveMenuImgIndex(null);
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveMenuImgIndex(null);
+      }
+    };
+    window.addEventListener('click', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeMenuImgIndex]);
+
   useEffect(() => {
     if (!form) return;
     const images = (form.images || []).filter(Boolean);
@@ -2342,8 +2361,8 @@ export default function Admin() {
                   </div>
                 )}
               </div>
-              <form id="editor-form" key={editingId || 'new'} onSubmit={handleSave} className="space-y-4 text-sm">
-                <fieldset disabled={saveStatus === 'saving'} className="space-y-4 w-full border-none p-0 m-0">
+              <form id="editor-form" key={editingId || 'new'} onSubmit={handleSave} className="space-y-4 text-sm mt-0 pt-0">
+                <fieldset disabled={saveStatus === 'saving'} className="space-y-4 w-full border-none p-0 m-0 mt-0 pt-0">
                   {activeTab === 'home' && (
                     <div className="max-w-5xl mx-auto space-y-12 pb-20">
                       {/* General Copy */}
@@ -3102,7 +3121,6 @@ export default function Admin() {
                                     const rawFiles = Array.from(e.dataTransfer.files) as File[];
                                     const files = rawFiles.filter((f: File) => f.type.startsWith('image/') || f.type.startsWith('video/'));
                                     if (files.length > 0) {
-                                      showToast(`Uploading file to Media #${realIdx + 1}...`);
                                       try {
                                         const uploadedUrls = await Promise.all(files.map(async (file: File) => {
                                           const initRes = await fetch('/api/upload', {
@@ -3329,6 +3347,341 @@ export default function Admin() {
                     </div>
                   </div>
 
+                  {/* Card 1: Basic Information (Accordion) */}
+                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
+                    <button 
+                      type="button"
+                      onClick={() => toggleSection('basic')}
+                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
+                    >
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Basic Info</span>
+                      <span className="text-ink/30">{activeSections.basic ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                    </button>
+                    {activeSections.basic && (
+                      <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <EditorInput label="Product Name" required value={form.name || ''} onChange={val => setForm({...form, name: val})} />
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-black uppercase text-ink/40 tracking-wider mb-2">Category</label>
+                            <select 
+                              value={form.category || 'Chairs'} 
+                              onChange={e => setForm({...form, category: e.target.value as Category})} 
+                              className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt text-xs transition-all shadow-sm"
+                            >
+                              <option value="Chairs">Chairs</option>
+                              <option value="Furniture">Furniture</option>
+                              <option value="Lighting">Lighting</option>
+                              <option value="Objects">Objects</option>
+                            </select>
+                          </div>
+                          <EditorInput label="Price ($)" type="number" required value={form.price || 0} onChange={val => setForm({...form, price: val})} />
+                        </div>
+                        
+                        <EditorInput label="Sub Title" required value={form.subTitle || ''} onChange={val => setForm({...form, subTitle: val})} />
+                        <EditorInput label="Overview Description" required rows={3} value={form.description || ''} onChange={val => setForm({...form, description: val})} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card 2: Detailed Specifications (Accordion) */}
+                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
+                    <button 
+                      type="button"
+                      onClick={() => toggleSection('specs')}
+                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
+                    >
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Specifications</span>
+                      <span className="text-ink/30">{activeSections.specs ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                    </button>
+                    {activeSections.specs && (
+                      <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div>
+                          <EditorInput label="Material (e.g., Oak, Steel)" value={form.material || ''} onChange={val => setForm({...form, material: val})} />
+                        </div>
+                        <EditorInput label="Dimensions (e.g., H 75 x W 120 x D 60 cm)" value={form.dimensions || ''} onChange={val => setForm({...form, dimensions: val})} />
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-black uppercase text-ink/40 tracking-wider mb-2">SHIPPING</label>
+                            <select
+                              value={form.shipping || 'Delivery (Free)'}
+                              onChange={e => setForm({...form, shipping: e.target.value})}
+                              className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt text-xs font-semibold transition-all shadow-sm text-ink"
+                            >
+                              <option value="Delivery (Free)">Delivery (Free)</option>
+                              <option value="Freight (Excl.)">Freight (Excl.)</option>
+                              <option value="Pickup">Pickup</option>
+                            </select>
+                          </div>
+                          <EditorInput 
+                            label="Product Code (제품코드)" 
+                            value={form.sku || generateProductCode(form.category || 'Chairs', form.name || '')} 
+                            onChange={val => setForm({...form, sku: val})} 
+                          />
+                        </div>
+                        <div className="mt-4 border-t border-black/5 pt-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={form.cartEnabled !== false} 
+                              onChange={e => setForm({...form, cartEnabled: e.target.checked})} 
+                              className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                            />
+                            <span className="text-[10px] uppercase font-black text-ink/60 tracking-wider">Enable Add to Cart Button</span>
+                          </label>
+                          <p className="text-[8px] text-ink/40 uppercase tracking-widest mt-1">If unchecked, the product detail page will show a disabled button with "Coming soon".</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card 3: Color Options (Restored Accordion with Drag & Drop Reorder) */}
+                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
+                    <button 
+                      type="button"
+                      onClick={() => toggleSection('options')}
+                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
+                    >
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Color Options</span>
+                      <span className="text-ink/30">{activeSections.options ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                    </button>
+                    {activeSections.options && (
+                      <div className="p-6 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300 text-ink">
+                        {/* Target Slot Activation Tabs Header */}
+                        <div className="bg-black/5 p-4 border border-black/10 space-y-3">
+                          <span className="text-[10px] font-black uppercase text-ink/60 tracking-wider block font-mono">
+                            1. Select Edit Target Slot
+                          </span>
+                          <div className="grid grid-cols-2 gap-3">
+                            {/* Body Slot Selection Box */}
+                            <button
+                              type="button"
+                              onClick={() => setActiveColorTarget('body')}
+                              className={`p-3 border text-left transition-all relative rounded-none cursor-pointer ${
+                                activeColorTarget === 'body'
+                                  ? 'bg-cobalt/10 border-cobalt ring-1 ring-cobalt'
+                                  : 'bg-white border-black/15 hover:border-black/30'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <span className={`text-xs font-black uppercase tracking-wider ${activeColorTarget === 'body' ? 'text-cobalt' : 'text-ink/70'}`}>
+                                  Body
+                                </span>
+                                {activeColorTarget === 'body' && (
+                                  <span className="text-[9px] font-bold text-cobalt flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-cobalt inline-block animate-pulse" />
+                                    Active
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-2" onClick={e => e.stopPropagation()}>
+                                {(() => {
+                                  const bodyList = form.bodyColors && Array.isArray(form.bodyColors) ? form.bodyColors : [];
+                                  if (bodyList.length === 0) return <span className="text-[9px] text-ink/40 uppercase font-mono">No colors selected</span>;
+                                  return bodyList.map((c: any, i: number) => (
+                                    <span 
+                                      key={i} 
+                                      draggable
+                                      onDragStart={(e) => {
+                                        e.stopPropagation();
+                                        e.dataTransfer.setData('text/plain', i.toString());
+                                        setDraggedProductSwatchIndex(i);
+                                      }}
+                                      onDragOver={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setDragOverProductSwatchIndex(i);
+                                      }}
+                                      onDrop={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (draggedProductSwatchIndex !== null && draggedProductSwatchIndex !== i) {
+                                          const newList = [...bodyList];
+                                          const [moved] = newList.splice(draggedProductSwatchIndex, 1);
+                                          newList.splice(i, 0, moved);
+                                          setForm((prev: any) => ({ ...prev, bodyColors: newList }));
+                                        }
+                                        setDraggedProductSwatchIndex(null);
+                                        setDragOverProductSwatchIndex(null);
+                                      }}
+                                      className={`text-[8px] bg-white border px-1.5 py-0.5 uppercase font-bold text-ink/80 flex items-center gap-1 cursor-grab active:cursor-grabbing transition-all ${
+                                        dragOverProductSwatchIndex === i && draggedProductSwatchIndex !== i ? 'border-cobalt border-2 bg-cobalt/10' : 'border-black/15'
+                                      }`}
+                                      title="Drag to reorder body color"
+                                    >
+                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c.hex || '#888') }} />
+                                      {typeof c === 'string' ? c : c.name}
+                                    </span>
+                                  ));
+                                })()}
+                              </div>
+                            </button>
+
+                            {/* Fabric Slot Selection Box */}
+                            <button
+                              type="button"
+                              onClick={() => setActiveColorTarget('fabric')}
+                              className={`p-3 border text-left transition-all relative rounded-none cursor-pointer ${
+                                activeColorTarget === 'fabric'
+                                  ? 'bg-orange/10 border-orange ring-1 ring-orange'
+                                  : 'bg-white border-black/15 hover:border-black/30'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <span className={`text-xs font-black uppercase tracking-wider ${activeColorTarget === 'fabric' ? 'text-orange' : 'text-ink/70'}`}>
+                                  Fabric
+                                </span>
+                                {activeColorTarget === 'fabric' && (
+                                  <span className="text-[9px] font-bold text-orange flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-orange inline-block animate-pulse" />
+                                    Active
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-2" onClick={e => e.stopPropagation()}>
+                                {(() => {
+                                  const fabricList = form.fabricColors;
+                                  if (!fabricList || !Array.isArray(fabricList) || fabricList.length === 0) return <span className="text-[9px] text-ink/40 uppercase font-mono">No colors selected</span>;
+                                  return fabricList.map((c: any, i: number) => (
+                                    <span 
+                                      key={i} 
+                                      draggable
+                                      onDragStart={(e) => {
+                                        e.stopPropagation();
+                                        e.dataTransfer.setData('text/plain', i.toString());
+                                        setDraggedProductSwatchIndex(i);
+                                      }}
+                                      onDragOver={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setDragOverProductSwatchIndex(i);
+                                      }}
+                                      onDrop={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (draggedProductSwatchIndex !== null && draggedProductSwatchIndex !== i) {
+                                          const newList = [...fabricList];
+                                          const [moved] = newList.splice(draggedProductSwatchIndex, 1);
+                                          newList.splice(i, 0, moved);
+                                          setForm((prev: any) => ({ ...prev, fabricColors: newList }));
+                                        }
+                                        setDraggedProductSwatchIndex(null);
+                                        setDragOverProductSwatchIndex(null);
+                                      }}
+                                      className={`text-[8px] bg-white border px-1.5 py-0.5 uppercase font-bold text-ink/80 flex items-center gap-1 cursor-grab active:cursor-grabbing transition-all ${
+                                        dragOverProductSwatchIndex === i && draggedProductSwatchIndex !== i ? 'border-orange border-2 bg-orange/10' : 'border-black/15'
+                                      }`}
+                                      title="Drag to reorder fabric color"
+                                    >
+                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c.hex || '#888') }} />
+                                      {typeof c === 'string' ? c : c.name}
+                                    </span>
+                                  ));
+                                })()}
+                              </div>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Global Swatches Selector (2. Tap Swatch to Attach to Active Target) */}
+                        <div className="bg-white p-5 border border-black/10 space-y-4 shadow-2xs">
+                          <div className="flex justify-between items-center border-b border-black/5 pb-2">
+                            <span className="text-[11px] font-black uppercase text-ink tracking-wider font-mono">
+                              2. Tap Swatches below to attach to [{activeColorTarget.toUpperCase()}]
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => switchTab('colorAssets')}
+                              className="text-[9px] font-black uppercase text-ink/40 hover:text-cobalt underline"
+                            >
+                              Manage Assets Dashboard →
+                            </button>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {(homeSettings.colorAssets || defaultColorAssets).map((asset, aIdx) => {
+                              const currentList = activeColorTarget === 'body' 
+                                ? (Array.isArray(form.bodyColors) ? form.bodyColors : [])
+                                : (Array.isArray(form.fabricColors) ? form.fabricColors : []);
+
+                              const isAttached = currentList.some((c: any) => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
+
+                              return (
+                                <button
+                                  key={`${asset.name}-${aIdx}`}
+                                  type="button"
+                                  onClick={() => handleToggleColorForTarget(asset)}
+                                  className={`px-3 py-2 border text-[10px] font-bold uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer ${
+                                    isAttached 
+                                      ? (activeColorTarget === 'body' ? 'bg-cobalt text-white border-cobalt shadow-xs' : 'bg-orange text-white border-orange shadow-xs')
+                                      : 'bg-white text-ink border-black/15 hover:border-black/40 hover:bg-black/5'
+                                  }`}
+                                >
+                                  <span 
+                                    className="w-3.5 h-3.5 rounded-full border border-black/20 flex-shrink-0" 
+                                    style={{ backgroundColor: asset.hex || '#000000' }} 
+                                  />
+                                  <span>{asset.name}</span>
+                                  {isAttached ? (
+                                    <span className="text-[9px] font-black">✓</span>
+                                  ) : (
+                                    <span className="text-[8px] opacity-40">+</span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Add New Custom Swatch to Library & Auto-Attach */}
+                        <div className="bg-off-white/70 p-4 border border-black/10 space-y-3">
+                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider font-mono">
+                            + Add New Swatch (New Swatch &amp; Attach to [{activeColorTarget.toUpperCase()}])
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                            <div className="sm:col-span-5">
+                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Color Name</label>
+                              <input 
+                                type="text"
+                                value={newCustomColorName}
+                                onChange={e => setNewCustomColorName(e.target.value)}
+                                placeholder="e.g. Oak, Walnut, Leather Black"
+                                className="w-full border border-black/10 p-2 text-xs bg-white text-ink outline-none focus:border-cobalt rounded-none h-[34px]"
+                              />
+                            </div>
+                            <div className="sm:col-span-4">
+                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Hex Swatch</label>
+                              <div className="flex gap-2 items-center">
+                                <input 
+                                  type="color"
+                                  value={newCustomColorHex}
+                                  onChange={e => setNewCustomColorHex(e.target.value)}
+                                  className="w-7 h-[34px] border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
+                                />
+                                <input 
+                                  type="text"
+                                  value={newCustomColorHex}
+                                  onChange={e => setNewCustomColorHex(e.target.value)}
+                                  className="w-full border border-black/10 p-2 text-xs font-mono uppercase bg-white text-ink outline-none focus:border-cobalt rounded-none h-[34px]"
+                                />
+                              </div>
+                            </div>
+                            <div className="sm:col-span-3">
+                              <button
+                                type="button"
+                                onClick={handleAddGlobalSwatch}
+                                className="w-full bg-cobalt hover:bg-ink text-white px-2 py-2 text-[10px] font-black uppercase tracking-wider transition-colors rounded-none cursor-pointer h-[34px] flex items-center justify-center whitespace-nowrap shadow-xs"
+                              >
+                                + Add Color
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Card 4: Story Blocks (Accordion) */}
                   <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden mb-4">
                     <button 
@@ -3427,7 +3780,7 @@ export default function Admin() {
               )}
 
               {activeTab === 'journal' && (
-                <div className="space-y-4 mt-0 pt-0">
+                <div className="space-y-4 !mt-0 !pt-0">
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
                     <input required value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" /></div>
                   <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
