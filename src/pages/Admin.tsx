@@ -6,7 +6,7 @@ import {
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets, MagazineCard
 } from "../lib/data";
-import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock, Save } from "lucide-react";
+import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock, Save, MoreVertical } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 
 const emptyProduct: Omit<Product, 'id'> = {
@@ -368,6 +368,14 @@ export default function Admin() {
   const [draggedColorIndex, setDraggedColorIndex] = useState<number | null>(null);
   const [dragOverColorIndex, setDragOverColorIndex] = useState<number | null>(null);
   const [expandedColorUsageId, setExpandedColorUsageId] = useState<string | null>(null);
+
+  // Live Preview Grid: Image Drag & Drop, Hamburger Menu & Swatch Reorder States
+  const [draggedPreviewImgIndex, setDraggedPreviewImgIndex] = useState<number | null>(null);
+  const [dragOverPreviewImgIndex, setDragOverPreviewImgIndex] = useState<number | null>(null);
+  const [activeMenuImgIndex, setActiveMenuImgIndex] = useState<number | null>(null);
+  const [showUrlImgIndex, setShowUrlImgIndex] = useState<number | null>(null);
+  const [draggedProductSwatchIndex, setDraggedProductSwatchIndex] = useState<number | null>(null);
+  const [dragOverProductSwatchIndex, setDragOverProductSwatchIndex] = useState<number | null>(null);
   const [previewAspects, setPreviewAspects] = useState<Record<string, 'portrait' | 'landscape'>>({});
 
   // Unsaved changes tracking states
@@ -1796,7 +1804,6 @@ export default function Admin() {
                       const [moved] = current.splice(draggedColorIndex, 1);
                       current.splice(idx, 0, moved);
                       setHomeSettings({ ...homeSettings, colorAssets: current });
-                      showToast(`Reordered '${moved.name}'`);
                     }
                     setDraggedColorIndex(null);
                     setDragOverColorIndex(null);
@@ -3037,506 +3044,260 @@ export default function Admin() {
 
               {activeTab === 'collection' && (
                 <div className="space-y-6">
-                  {/* Live Preview: Actual image grid matching the product detail layout */}
-                  <div className="bg-black/5 rounded-none border border-black/10 overflow-hidden shadow-none">
+                  {/* Live Preview & Direct Interactive Media Manager: Actual image grid matching product detail layout */}
+                  <div className="bg-black/5 rounded-none border border-black/10 overflow-hidden shadow-none space-y-2 p-3">
+                    <div className="flex justify-between items-center px-1 pb-1">
+                      <span className="text-[10px] font-black uppercase text-ink/70 tracking-wider font-mono">
+                        Interactive Gallery (미디어 그리드 직관 편집 &amp; Drag &amp; Drop 순서변경)
+                      </span>
+                      <span className="text-[9px] font-bold text-cobalt uppercase">
+                        {(form.images || []).filter(Boolean).length} Images
+                      </span>
+                    </div>
+
                     {(form.images || []).filter(Boolean).length > 0 ? (
-                      <div className="grid grid-cols-2 gap-px bg-black/10">
+                      <div className="grid grid-cols-2 gap-2 bg-black/10 p-1">
                         {(() => {
                           const originalImages = (form.images || []).filter(Boolean);
                           const portraitList = form.portraitImages || [];
-                          const gridItems: Array<{ type: 'image'; src: string; isLandscape: boolean } | { type: 'blank' }> = [];
-                          let col = 0;
-                          
-                          originalImages.forEach(img => {
+                          const hoverList = form.hoverImages || [];
+
+                          return originalImages.map((img, realIdx) => {
                             const normImg = normalizeMediaUrl(img);
                             const normalizedPortraitList = portraitList.map(normalizeMediaUrl);
                             const isForcedPortrait = normalizedPortraitList.includes(normImg) || portraitList.includes(img);
                             const physicalAspect = previewAspects[normImg] || previewAspects[img] || (isForcedPortrait ? 'portrait' : 'landscape');
                             const isLandscape = !isForcedPortrait && physicalAspect === 'landscape';
-                            
-                            if (isLandscape) {
-                              if (col === 1) {
-                                gridItems.push({ type: 'blank' });
-                                col = 0;
-                              }
-                              gridItems.push({ type: 'image', src: img, isLandscape: true });
-                            } else {
-                              gridItems.push({ type: 'image', src: img, isLandscape: false });
-                              col = (col + 1) % 2;
-                            }
-                          });
-                          
-                          if (col === 1) {
-                            gridItems.push({ type: 'blank' });
-                          }
-                          
-                          return gridItems.map((item, idx) => {
-                            if (item.type === 'blank') {
-                              return (
-                                <div key={`blank-${idx}`} className="col-span-1 aspect-[4/5] bg-white" />
-                              );
-                            }
-                            const spanClass = item.isLandscape ? "col-span-2 aspect-[16/10]" : "col-span-1 aspect-[4/5]";
+                            const isHover = hoverList.includes(img);
+                            const isMenuOpen = activeMenuImgIndex === realIdx;
+                            const isUrlShowing = showUrlImgIndex === realIdx;
+
+                            const spanClass = isLandscape ? "col-span-2 aspect-[16/10]" : "col-span-1 aspect-[4/5]";
+                            const isDragging = draggedPreviewImgIndex === realIdx;
+                            const isDragOver = dragOverPreviewImgIndex === realIdx && draggedPreviewImgIndex !== realIdx;
+
                             return (
-                              <div key={`img-${idx}`} className={`${spanClass} overflow-hidden bg-silver/5 relative`}>
-                                <MediaRenderer src={item.src} alt={`Preview ${idx+1}`} className="absolute inset-0 w-full h-full object-cover" />
+                              <div 
+                                key={`img-item-${realIdx}`} 
+                                draggable
+                                onDragStart={(e) => {
+                                  e.stopPropagation();
+                                  e.dataTransfer.setData('text/plain', realIdx.toString());
+                                  setDraggedPreviewImgIndex(realIdx);
+                                }}
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setDragOverPreviewImgIndex(realIdx);
+                                }}
+                                onDragLeave={() => {
+                                  if (dragOverPreviewImgIndex === realIdx) setDragOverPreviewImgIndex(null);
+                                }}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (draggedPreviewImgIndex !== null && draggedPreviewImgIndex !== realIdx) {
+                                    const current = [...originalImages];
+                                    const [moved] = current.splice(draggedPreviewImgIndex, 1);
+                                    current.splice(realIdx, 0, moved);
+                                    setForm((prev: any) => ({ ...prev, images: current }));
+                                  }
+                                  setDraggedPreviewImgIndex(null);
+                                  setDragOverPreviewImgIndex(null);
+                                }}
+                                onDragEnd={() => {
+                                  setDraggedPreviewImgIndex(null);
+                                  setDragOverPreviewImgIndex(null);
+                                }}
+                                className={`${spanClass} overflow-hidden bg-silver/10 relative group border transition-all cursor-grab active:cursor-grabbing ${
+                                  isDragging ? 'opacity-30 border-dashed border-cobalt' :
+                                  isDragOver ? 'ring-4 ring-cobalt border-cobalt scale-[1.01]' :
+                                  'border-black/10 hover:border-cobalt/60'
+                                }`}
+                              >
+                                <MediaRenderer src={img} alt={`Preview ${realIdx+1}`} className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+
+                                {/* Order Badge & Flags */}
+                                <div className="absolute top-2 left-2 z-10 flex items-center gap-1 pointer-events-none">
+                                  <span className="bg-black/70 text-white text-[9px] font-black px-1.5 py-0.5 rounded-none font-mono">
+                                    #{realIdx + 1}
+                                  </span>
+                                  {isForcedPortrait && (
+                                    <span className="bg-cobalt text-white text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-none">
+                                      Portrait
+                                    </span>
+                                  )}
+                                  {isHover && (
+                                    <span className="bg-orange text-white text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-none">
+                                      Hover Effect
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Right-Top Hamburger Menu Button (⋮) */}
+                                <div className="absolute top-2 right-2 z-20">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenuImgIndex(isMenuOpen ? null : realIdx);
+                                    }}
+                                    className="w-7 h-7 bg-black/70 hover:bg-cobalt text-white flex items-center justify-center transition-colors rounded-none shadow-md cursor-pointer"
+                                    title="Media Options & Settings"
+                                  >
+                                    <MoreVertical size={14} />
+                                  </button>
+
+                                  {/* Hamburger Menu Dropdown Layer Popup */}
+                                  {isMenuOpen && (
+                                    <div 
+                                      className="absolute top-8 right-0 w-64 bg-white border border-black/20 shadow-xl p-3 z-50 text-ink text-left space-y-3 rounded-none animate-in fade-in zoom-in-95 duration-150"
+                                      onClick={e => e.stopPropagation()}
+                                    >
+                                      <div className="flex justify-between items-center border-b border-black/10 pb-1.5">
+                                        <span className="text-[9px] font-black uppercase text-cobalt font-mono">
+                                          Media #{realIdx + 1} Settings
+                                        </span>
+                                        <button 
+                                          type="button" 
+                                          onClick={() => setActiveMenuImgIndex(null)}
+                                          className="text-[9px] font-bold text-ink/40 hover:text-ink cursor-pointer"
+                                        >
+                                          ✕
+                                        </button>
+                                      </div>
+
+                                      {/* 1. Media Upload Input / Drag Drop */}
+                                      <div className="space-y-1">
+                                        <label className="block text-[8px] font-black uppercase text-ink/60">Upload / Replace Media</label>
+                                        <MediaUploadInput 
+                                          label=""
+                                          value={img} 
+                                          onChange={newVal => {
+                                            setForm((prev: any) => {
+                                              const current = [...(prev.images || [])];
+                                              if (newVal === '') {
+                                                current.splice(realIdx, 1);
+                                              } else {
+                                                current[realIdx] = newVal;
+                                              }
+                                              return { ...prev, images: current };
+                                            });
+                                          }} 
+                                        />
+                                      </div>
+
+                                      {/* 2. Image URL Toggle & Copy */}
+                                      <div className="pt-2 border-t border-black/5 space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-[8px] font-black uppercase text-ink/60">Image URL</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setShowUrlImgIndex(isUrlShowing ? null : realIdx)}
+                                            className="text-[8px] font-bold uppercase text-cobalt hover:underline cursor-pointer"
+                                          >
+                                            {isUrlShowing ? 'Hide URL' : 'Show URL'}
+                                          </button>
+                                        </div>
+                                        {isUrlShowing && (
+                                          <input 
+                                            type="text" 
+                                            readOnly 
+                                            value={img} 
+                                            onClick={e => (e.target as HTMLInputElement).select()}
+                                            className="w-full text-[9px] font-mono p-1 bg-black/5 border border-black/10 text-ink/70 select-all outline-none" 
+                                          />
+                                        )}
+                                      </div>
+
+                                      {/* 3. Options Toggles (Portrait & Hover) */}
+                                      <div className="pt-2 border-t border-black/5 space-y-1.5">
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                          <input 
+                                            type="checkbox" 
+                                            checked={isForcedPortrait}
+                                            onChange={e => {
+                                              const current = form.portraitImages || [];
+                                              const next = e.target.checked 
+                                                ? [...current, img] 
+                                                : current.filter((x: string) => x !== img && normalizeMediaUrl(x) !== normImg);
+                                              setForm({ ...form, portraitImages: next });
+                                            }}
+                                            className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                                          />
+                                          <span className="text-[9px] font-bold uppercase text-ink/80">Portrait View (세로형 고정)</span>
+                                        </label>
+
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                          <input 
+                                            type="checkbox" 
+                                            checked={isHover}
+                                            onChange={e => {
+                                              if (e.target.checked) {
+                                                setForm({ ...form, hoverImages: [img] });
+                                              } else {
+                                                setForm({ ...form, hoverImages: [] });
+                                              }
+                                            }}
+                                            className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
+                                          />
+                                          <span className="text-[9px] font-bold uppercase text-ink/80">Hover Effect Image (마우스 오버 이미지)</span>
+                                        </label>
+                                      </div>
+
+                                      {/* 4. Delete Action */}
+                                      <div className="pt-2 border-t border-black/5 flex justify-end">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const current = [...originalImages];
+                                            current.splice(realIdx, 1);
+                                            setForm((prev: any) => ({ ...prev, images: current }));
+                                            setActiveMenuImgIndex(null);
+                                          }}
+                                          className="text-[9px] font-black uppercase text-orange hover:underline cursor-pointer flex items-center gap-1"
+                                        >
+                                          <Trash2 size={11} /> Delete Media
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             );
                           });
                         })()}
                       </div>
                     ) : (
-                      <div className="h-40 flex items-center justify-center text-[10px] text-ink/20 font-bold uppercase">No Media Uploaded</div>
-                    )}
-                  </div>
-
-                  {/* Card 1: Basic Information (Accordion) */}
-                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
-                    <button 
-                      type="button"
-                      onClick={() => toggleSection('basic')}
-                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
-                    >
-                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Basic Info</span>
-                      <span className="text-ink/30">{activeSections.basic ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
-                    </button>
-                    {activeSections.basic && (
-                      <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <EditorInput label="Product Name" required value={form.name || ''} onChange={val => setForm({...form, name: val})} />
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-black uppercase text-ink/40 tracking-wider mb-2">Category</label>
-                            <select 
-                              value={form.category || 'Chairs'} 
-                              onChange={e => setForm({...form, category: e.target.value as Category})} 
-                              className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt text-xs transition-all shadow-sm"
-                            >
-                              <option value="Chairs">Chairs</option>
-                              <option value="Furniture">Furniture</option>
-                              <option value="Lighting">Lighting</option>
-                              <option value="Objects">Objects</option>
-                            </select>
-                          </div>
-                          <EditorInput label="Price ($)" type="number" required value={form.price || 0} onChange={val => setForm({...form, price: val})} />
-                        </div>
-                        
-                        <EditorInput label="Sub Title" required value={form.subTitle || ''} onChange={val => setForm({...form, subTitle: val})} />
-                        <EditorInput label="Overview Description" required rows={3} value={form.description || ''} onChange={val => setForm({...form, description: val})} />
+                      <div className="h-32 flex items-center justify-center text-[10px] text-ink/30 font-bold uppercase border-2 border-dashed border-black/10">
+                        No Media Uploaded Yet
                       </div>
                     )}
-                  </div>
 
-                  {/* Card 2: Detailed Specifications (Accordion) */}
-                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
-                    <button 
-                      type="button"
-                      onClick={() => toggleSection('specs')}
-                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
-                    >
-                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Specifications</span>
-                      <span className="text-ink/30">{activeSections.specs ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
-                    </button>
-                    {activeSections.specs && (
-                      <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div>
-                          <EditorInput label="Material (e.g., Oak, Steel)" value={form.material || ''} onChange={val => setForm({...form, material: val})} />
-                        </div>
-                        <EditorInput label="Dimensions (e.g., H 75 x W 120 x D 60 cm)" value={form.dimensions || ''} onChange={val => setForm({...form, dimensions: val})} />
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-black uppercase text-ink/40 tracking-wider mb-2">SHIPPING</label>
-                            <select
-                              value={form.shipping || 'Delivery (Free)'}
-                              onChange={e => setForm({...form, shipping: e.target.value})}
-                              className="w-full border border-black/10 rounded-none p-3 bg-white outline-none focus:border-cobalt text-xs font-semibold transition-all shadow-sm text-ink"
-                            >
-                              <option value="Delivery (Free)">Delivery (Free)</option>
-                              <option value="Freight (Excl.)">Freight (Excl.)</option>
-                              <option value="Pickup">Pickup</option>
-                            </select>
-                          </div>
-                          <EditorInput 
-                            label="Product Code (제품코드)" 
-                            value={form.sku || generateProductCode(form.category || 'Chairs', form.name || '')} 
-                            onChange={val => setForm({...form, sku: val})} 
-                          />
-                        </div>
-                        <div className="mt-4 border-t border-black/5 pt-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={form.cartEnabled !== false} 
-                              onChange={e => setForm({...form, cartEnabled: e.target.checked})} 
-                              className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
-                            />
-                            <span className="text-[10px] uppercase font-black text-ink/60 tracking-wider">Enable Add to Cart Button</span>
-                          </label>
-                          <p className="text-[8px] text-ink/40 uppercase tracking-widest mt-1">If unchecked, the product detail page will show a disabled button with "Coming soon".</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Card: Options (Color Swatches) (Accordion) */}
-                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
-                    <button 
-                      type="button"
-                      onClick={() => toggleSection('options')}
-                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
-                    >
-                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Color Options</span>
-                      <span className="text-ink/30">{activeSections.options ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
-                    </button>
-                    {activeSections.options && (
-                      <div className="p-6 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300 text-ink">
-                        {/* Target Slot Activation Tabs Header */}
-                        <div className="bg-black/5 p-4 border border-black/10 space-y-3">
-                          <span className="text-[10px] font-black uppercase text-ink/60 tracking-wider block font-mono">
-                            1. Select Edit Target Slot
-                          </span>
-                          <div className="grid grid-cols-2 gap-3">
-                            {/* Body Slot Selection Box */}
-                            <button
-                              type="button"
-                              onClick={() => setActiveColorTarget('body')}
-                              className={`p-3 border text-left transition-all relative rounded-none cursor-pointer ${
-                                activeColorTarget === 'body'
-                                  ? 'bg-cobalt/10 border-cobalt ring-1 ring-cobalt'
-                                  : 'bg-white border-black/15 hover:border-black/30'
-                              }`}
-                            >
-                              <div className="flex justify-between items-center mb-1">
-                                <span className={`text-xs font-black uppercase tracking-wider ${activeColorTarget === 'body' ? 'text-cobalt' : 'text-ink/70'}`}>
-                                  Body
-                                </span>
-                                {activeColorTarget === 'body' && (
-                                  <span className="text-[9px] font-bold text-cobalt flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-cobalt inline-block animate-pulse" />
-                                    Active
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {(() => {
-                                  const bodyList = form.bodyColors && Array.isArray(form.bodyColors) ? form.bodyColors : [];
-                                  if (bodyList.length === 0) return <span className="text-[9px] text-ink/40 uppercase font-mono">No colors selected</span>;
-                                  return bodyList.map((c: any, i: number) => (
-                                    <span key={i} className="text-[8px] bg-white border border-black/15 px-1.5 py-0.5 uppercase font-bold text-ink/80 flex items-center gap-1">
-                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c.hex || '#888') }} />
-                                      {typeof c === 'string' ? c : c.name}
-                                    </span>
-                                  ));
-                                })()}
-                              </div>
-                            </button>
-
-                            {/* Fabric Slot Selection Box */}
-                            <button
-                              type="button"
-                              onClick={() => setActiveColorTarget('fabric')}
-                              className={`p-3 border text-left transition-all relative rounded-none cursor-pointer ${
-                                activeColorTarget === 'fabric'
-                                  ? 'bg-orange/10 border-orange ring-1 ring-orange'
-                                  : 'bg-white border-black/15 hover:border-black/30'
-                              }`}
-                            >
-                              <div className="flex justify-between items-center mb-1">
-                                <span className={`text-xs font-black uppercase tracking-wider ${activeColorTarget === 'fabric' ? 'text-orange' : 'text-ink/70'}`}>
-                                  Fabric
-                                </span>
-                                {activeColorTarget === 'fabric' && (
-                                  <span className="text-[9px] font-bold text-orange flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-orange inline-block animate-pulse" />
-                                    Active
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {(() => {
-                                  const fabricList = form.fabricColors;
-                                  if (!fabricList || !Array.isArray(fabricList) || fabricList.length === 0) return <span className="text-[9px] text-ink/40 uppercase font-mono">No colors selected</span>;
-                                  return fabricList.map((c: any, i: number) => (
-                                    <span key={i} className="text-[8px] bg-white border border-black/15 px-1.5 py-0.5 uppercase font-bold text-ink/80 flex items-center gap-1">
-                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c.hex || '#888') }} />
-                                      {typeof c === 'string' ? c : c.name}
-                                    </span>
-                                  ));
-                                })()}
-                              </div>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Global Swatches Selector (2. Tap Swatch to Attach to Active Target) */}
-                        <div className="bg-white p-5 border border-black/10 space-y-4 shadow-2xs">
-                          <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                            <span className="text-[11px] font-black uppercase text-ink tracking-wider font-mono">
-                              2. Tap Swatches below to attach to [{activeColorTarget.toUpperCase()}]
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => switchTab('colorAssets')}
-                              className="text-[9px] font-black uppercase text-ink/40 hover:text-cobalt underline"
-                            >
-                              Manage Assets Dashboard →
-                            </button>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 pt-1">
-                            {(homeSettings.colorAssets || defaultColorAssets).map((asset, aIdx) => {
-                              const currentList = activeColorTarget === 'body' 
-                                ? (Array.isArray(form.bodyColors) ? form.bodyColors : [])
-                                : (Array.isArray(form.fabricColors) ? form.fabricColors : []);
-
-                              const isAttached = currentList.some((c: any) => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
-
-                              return (
-                                <button
-                                  key={`${asset.name}-${aIdx}`}
-                                  type="button"
-                                  onClick={() => handleToggleColorForTarget(asset)}
-                                  className={`px-3 py-2 border text-[10px] font-bold uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer ${
-                                    isAttached 
-                                      ? (activeColorTarget === 'body' ? 'bg-cobalt text-white border-cobalt shadow-xs' : 'bg-orange text-white border-orange shadow-xs')
-                                      : 'bg-white text-ink border-black/15 hover:border-black/40 hover:bg-black/5'
-                                  }`}
-                                >
-                                  <span 
-                                    className="w-3.5 h-3.5 rounded-full border border-black/20 flex-shrink-0" 
-                                    style={{ backgroundColor: asset.hex || '#000000' }} 
-                                  />
-                                  <span>{asset.name}</span>
-                                  {isAttached ? (
-                                    <span className="text-[9px] font-black">✓</span>
-                                  ) : (
-                                    <span className="text-[8px] opacity-40">+</span>
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Add New Custom Swatch to Library & Auto-Attach */}
-                        <div className="bg-off-white/70 p-4 border border-black/10 space-y-3">
-                          <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider font-mono">
-                            + Add New Swatch (New Swatch &amp; Attach to [{activeColorTarget.toUpperCase()}])
-                          </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                            <div className="sm:col-span-5">
-                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Color Name</label>
-                              <input 
-                                type="text"
-                                value={newCustomColorName}
-                                onChange={e => setNewCustomColorName(e.target.value)}
-                                placeholder="e.g. Oak, Walnut, Leather Black"
-                                className="w-full border border-black/10 p-2 text-xs bg-white text-ink outline-none focus:border-cobalt rounded-none h-[34px]"
-                              />
-                            </div>
-                            <div className="sm:col-span-4">
-                              <label className="block text-[8px] font-black uppercase text-ink/40 mb-1">Hex Swatch</label>
-                              <div className="flex gap-2 items-center">
-                                <input 
-                                  type="color"
-                                  value={newCustomColorHex}
-                                  onChange={e => setNewCustomColorHex(e.target.value)}
-                                  className="w-7 h-[34px] border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
-                                />
-                                <input 
-                                  type="text"
-                                  value={newCustomColorHex}
-                                  onChange={e => setNewCustomColorHex(e.target.value)}
-                                  className="w-full border border-black/10 p-2 text-xs font-mono uppercase bg-white text-ink outline-none focus:border-cobalt rounded-none h-[34px]"
-                                />
-                              </div>
-                            </div>
-                            <div className="sm:col-span-3">
-                              <button
-                                type="button"
-                                onClick={handleAddGlobalSwatch}
-                                className="w-full bg-cobalt hover:bg-ink text-white px-2 py-2 text-[10px] font-black uppercase tracking-wider transition-colors rounded-none cursor-pointer h-[34px] flex items-center justify-center whitespace-nowrap shadow-xs"
-                              >
-                                + Add Color
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Card 3: Media Gallery (Main & Hover Images) (Accordion) */}
-                  <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
-                    <button 
-                      type="button"
-                      onClick={() => toggleSection('media')}
-                      className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
-                    >
-                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Media & Images</span>
-                      <span className="text-ink/30">{activeSections.media ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
-                    </button>
-                    {activeSections.media && (
-                        <div className="p-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                          {/* Primary/Main Images — 2-col grid, larger drag zones */}
-                          <div>
-                            <h4 className="text-[10px] font-black uppercase text-ink/60 mb-3 tracking-wider">Product Main Gallery</h4>
-                            <div className="grid grid-cols-2 gap-3">
-                              {(() => {
-                                const currentImages = form.images || [];
-                                const displayImages = [...currentImages];
-                                while (displayImages.length < 3) {
-                                  displayImages.push('');
-                                }
-                                if (displayImages[displayImages.length - 1] !== '') {
-                                  displayImages.push('');
-                                }
-                                return displayImages.map((img: string, i: number) => (
-                                  <div key={`img-${i}`} className="relative border border-black/5 p-3 bg-black/[0.01] rounded-none">
-                                    <MediaUploadInput 
-                                      label={i === 0 ? "Primary" : `Image ${i+1}`} 
-                                      value={img} 
-                                      onChange={val => { 
-                                        setForm((prev: any) => {
-                                          const currentImages = (prev.images || []).filter(Boolean);
-                                          const oldUrl = currentImages[i] || '';
-                                          let newImages = [...currentImages];
-                                          if (val === '') {
-                                            newImages = newImages.filter((_, idx) => idx !== i);
-                                          } else {
-                                            if (i < newImages.length) {
-                                              newImages[i] = val;
-                                            } else {
-                                              newImages.push(val);
-                                            }
-                                          }
-                                          const compacted = newImages.filter(Boolean);
-
-                                          let nextHover = prev.hoverImages || [];
-                                          let nextPortrait = prev.portraitImages || [];
-                                          if (oldUrl && val && oldUrl !== val) {
-                                            nextHover = nextHover.map((url: string) => url === oldUrl ? val : url);
-                                            nextPortrait = nextPortrait.map((url: string) => url === oldUrl ? val : url);
-                                          }
-
-                                          return {
-                                            ...prev,
-                                            images: compacted,
-                                            hoverImages: nextHover,
-                                            portraitImages: nextPortrait
-                                          };
-                                        }); 
-                                      }} 
-                                      onBatchUpload={urls => {
-                                        setForm((prev: any) => {
-                                          const currentImages = (prev.images || []).filter(Boolean);
-                                          const oldUrl = currentImages[i] || '';
-                                          let newImages = [...currentImages];
-                                          
-                                          const firstUrl = urls[0];
-                                          if (i < newImages.length) {
-                                            newImages[i] = firstUrl;
-                                          } else {
-                                            newImages.push(firstUrl);
-                                          }
-
-                                          const extraUrls = urls.slice(1);
-                                          newImages = [...newImages, ...extraUrls];
-                                          const compacted = newImages.filter(Boolean);
-
-                                          let nextHover = prev.hoverImages || [];
-                                          let nextPortrait = prev.portraitImages || [];
-                                          if (oldUrl && firstUrl && oldUrl !== firstUrl) {
-                                            nextHover = nextHover.map((url: string) => url === oldUrl ? firstUrl : url);
-                                            nextPortrait = nextPortrait.map((url: string) => url === oldUrl ? firstUrl : url);
-                                          }
-
-                                          return {
-                                            ...prev,
-                                            images: compacted,
-                                            hoverImages: nextHover,
-                                            portraitImages: nextPortrait
-                                          };
-                                        });
-                                      }}
-                                    />
-                                    {img && (
-                                      <div className="mt-2 flex flex-col gap-2 border-t border-black/5 pt-2">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex gap-4">
-                                            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                                              <input 
-                                                type="checkbox" 
-                                                checked={(form.hoverImages || []).includes(img)}
-                                                onChange={e => {
-                                                  if (e.target.checked) {
-                                                    setForm({...form, hoverImages: [img]}); // Set as hover (only one)
-                                                  } else {
-                                                    setForm({...form, hoverImages: []}); // Clear if unchecked
-                                                  }
-                                                }}
-                                                className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
-                                              />
-                                              <span className="text-[9px] uppercase font-bold text-ink/60">Hover Effect</span>
-                                            </label>
-                                            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                                              <input 
-                                                type="checkbox" 
-                                                checked={(form.portraitImages || []).includes(img)}
-                                                onChange={e => {
-                                                  const current = form.portraitImages || [];
-                                                  const next = e.target.checked 
-                                                    ? [...current, img] 
-                                                    : current.filter(x => x !== img);
-                                                  setForm({...form, portraitImages: next});
-                                                }}
-                                                className="w-3.5 h-3.5 text-cobalt border-black/20 focus:ring-cobalt rounded-none"
-                                              />
-                                              <span className="text-[9px] uppercase font-bold text-ink/60">Portrait View</span>
-                                            </label>
-                                          </div>
-                                          <div className="flex items-center gap-1">
-                                            <button 
-                                              type="button" 
-                                              disabled={i === 0} 
-                                              onClick={() => {
-                                                const currentImages = form.images || [];
-                                                const newImg = [...currentImages];
-                                                [newImg[i], newImg[i - 1]] = [newImg[i - 1], newImg[i]];
-                                                setForm({ ...form, images: newImg.filter(Boolean) });
-                                              }}
-                                              className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
-                                              title="Move Prev"
-                                            >
-                                              <ChevronLeft size={14} />
-                                            </button>
-                                            <button 
-                                              type="button" 
-                                              disabled={i >= displayImages.length - 2} 
-                                              onClick={() => {
-                                                const currentImages = form.images || [];
-                                                const newImg = [...currentImages];
-                                                [newImg[i], newImg[i + 1]] = [newImg[i + 1], newImg[i]];
-                                                setForm({ ...form, images: newImg.filter(Boolean) });
-                                              }}
-                                              className="text-ink/30 hover:text-cobalt disabled:opacity-30 cursor-pointer p-0.5"
-                                              title="Move Next"
-                                            >
-                                              <ChevronRight size={14} />
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                ));
-                              })()}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                    {/* Direct + Add Media Dropzone Slot */}
+                    <div className="pt-2 border-t border-black/10">
+                      <MediaUploadInput 
+                        label="+ Add Media to Product Gallery (미디어 추가 드롭존)"
+                        value=""
+                        onChange={val => {
+                          if (val) {
+                            setForm((prev: any) => ({
+                              ...prev,
+                              images: [...(prev.images || []).filter(Boolean), val]
+                            }));
+                          }
+                        }}
+                        onBatchUpload={urls => {
+                          if (urls && urls.length > 0) {
+                            setForm((prev: any) => ({
+                              ...prev,
+                              images: [...(prev.images || []).filter(Boolean), ...urls]
+                            }));
+                          }
+                        }}
+                      />
                     </div>
+                  </div>
 
                   {/* Card 4: Story Blocks (Accordion) */}
                   <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden mb-4">
