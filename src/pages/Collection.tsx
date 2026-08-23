@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings, ColorOption } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
-import { LayoutGrid, Grid2X2, List, ArrowRight } from "lucide-react";
+import { LayoutGrid, Grid2X2, List, ArrowRight, SlidersHorizontal, ChevronDown, ChevronUp, X, RotateCcw } from "lucide-react";
 
 const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
 const CATEGORY_LABELS: Record<string, string> = {
@@ -14,6 +14,19 @@ const CATEGORY_LABELS: Record<string, string> = {
   'Objects': 'OBJECT'
 };
 
+const MATERIALS = ['All', 'Oak', 'Ash', 'Walnut', 'Steel', 'Leather', 'Glass'];
+const COLORS = [
+  { name: 'All', hex: '' },
+  { name: 'Black', hex: '#1c1c1c' },
+  { name: 'White', hex: '#ffffff' },
+  { name: 'Oak', hex: '#d7c29d' },
+  { name: 'Walnut', hex: '#4b382a' },
+  { name: 'Cobalt', hex: '#0047AB' },
+  { name: 'Orange', hex: '#FF4500' },
+  { name: 'Silver', hex: '#E0E0E2' },
+  { name: 'Pink', hex: '#F8BBD0' },
+];
+
 export default function Collection() {
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
@@ -21,6 +34,13 @@ export default function Collection() {
   const [viewMode, setViewMode] = useState<'grid4' | 'grid2' | 'list'>(() => {
     return (localStorage.getItem('amph_collection_view_mode') as 'grid4' | 'grid2' | 'list') || 'grid4';
   });
+  
+  // Quick Filter States
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<string>('All');
+  const [selectedColor, setSelectedColor] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<'curated' | 'newest' | 'name'>('curated');
+
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search');
   const categoryQuery = searchParams.get('category');
@@ -36,6 +56,14 @@ export default function Collection() {
     localStorage.setItem('amph_collection_view_mode', mode);
   };
 
+  const handleResetFilters = () => {
+    setSelectedMaterial('All');
+    setSelectedColor('All');
+    setSortBy('curated');
+  };
+
+  const activeFilterCount = (selectedMaterial !== 'All' ? 1 : 0) + (selectedColor !== 'All' ? 1 : 0) + (sortBy !== 'curated' ? 1 : 0);
+
   // Sync category query from search submit
   useEffect(() => {
     if (categoryQuery && CATEGORIES.includes(categoryQuery as Category)) {
@@ -44,21 +72,53 @@ export default function Collection() {
   }, [categoryQuery]);
 
   const filteredProducts = products.filter(p => {
-    // Migration: Treat 'Tables' as 'Furniture'
+    // 1. Category filter
     const cat = (p.category as string) === 'Tables' ? 'Furniture' : p.category;
     const categoryMatches = activeCategory === 'All' || cat === activeCategory;
 
+    // 2. Search query filter
+    let searchMatches = true;
     if (searchQuery) {
       const q = searchQuery.toLowerCase().trim();
       const nameMatches = p.name.toLowerCase().includes(q);
       const subMatches = p.subTitle?.toLowerCase().includes(q) || false;
       const matMatches = p.material?.toLowerCase().includes(q) || false;
       const catMatches = cat.toLowerCase().includes(q);
-      return categoryMatches && (nameMatches || subMatches || matMatches || catMatches);
+      searchMatches = nameMatches || subMatches || matMatches || catMatches;
     }
 
-    return categoryMatches;
+    // 3. Material filter
+    const materialMatches = selectedMaterial === 'All' || 
+      (p.material && p.material.toLowerCase().includes(selectedMaterial.toLowerCase()));
+
+    // 4. Color filter
+    const colorMatches = selectedColor === 'All' || (() => {
+      const qColor = selectedColor.toLowerCase();
+      if (p.bodyColors && Array.isArray(p.bodyColors)) {
+        if (p.bodyColors.some((c: any) => (typeof c === 'string' ? c : c?.name)?.toLowerCase().includes(qColor))) return true;
+      }
+      if (p.fabricColors && Array.isArray(p.fabricColors)) {
+        if (p.fabricColors.some((c: any) => (typeof c === 'string' ? c : c?.name)?.toLowerCase().includes(qColor))) return true;
+      }
+      if (p.color) {
+        if (Array.isArray(p.color)) {
+          if (p.color.some((c: any) => (c?.name || '')?.toLowerCase().includes(qColor))) return true;
+        } else if (typeof p.color === 'string') {
+          if (p.color.toLowerCase().includes(qColor)) return true;
+        }
+      }
+      return false;
+    })();
+
+    return categoryMatches && searchMatches && materialMatches && colorMatches;
   }).sort((a, b) => {
+    if (sortBy === 'newest') {
+      return (b.id || '').localeCompare(a.id || '');
+    }
+    if (sortBy === 'name') {
+      return a.name.localeCompare(b.name);
+    }
+    // Default Curated
     const orderList = settings.globalProductOrder || [];
     const aIdx = orderList.indexOf(a.id);
     const bIdx = orderList.indexOf(b.id);
@@ -68,7 +128,7 @@ export default function Collection() {
     return 0;
   });
 
-  useScrollReveal([filteredProducts, viewMode, activeCategory]);
+  useScrollReveal([filteredProducts, viewMode, activeCategory, selectedMaterial, selectedColor, sortBy]);
 
   return (
     <div className="flex flex-col flex-grow">
@@ -82,47 +142,70 @@ export default function Collection() {
             <p className="text-lg md:text-xl font-serif italic text-ink/60 max-w-2xl">{settings.hubSettings?.collection?.description}</p>
           </div>
 
-          {/* View Mode Toggle Controls */}
-          <div className="flex items-center gap-1 self-start md:self-auto bg-black/5 p-1 rounded-none border border-black/10">
+          {/* Action Group: View Mode Toggle & Filter Toggle Button */}
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+            {/* Filter Toggle Button */}
             <button
               type="button"
-              onClick={() => handleViewModeChange('grid4')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer rounded-none ${
-                viewMode === 'grid4'
-                  ? 'bg-cobalt text-white shadow-xs'
-                  : 'text-ink/60 hover:text-ink hover:bg-black/5'
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-widest border transition-all cursor-pointer ${
+                isFilterOpen || activeFilterCount > 0
+                  ? 'bg-ink text-white border-ink shadow-xs'
+                  : 'bg-black/5 text-ink/70 border-black/10 hover:bg-black/10'
               }`}
-              title="4-Column Grid View"
             >
-              <LayoutGrid size={13} />
-              <span>4-GRID</span>
+              <SlidersHorizontal size={13} />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="bg-cobalt text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-mono">
+                  {activeFilterCount}
+                </span>
+              )}
+              {isFilterOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             </button>
-            <button
-              type="button"
-              onClick={() => handleViewModeChange('grid2')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer rounded-none ${
-                viewMode === 'grid2'
-                  ? 'bg-cobalt text-white shadow-xs'
-                  : 'text-ink/60 hover:text-ink hover:bg-black/5'
-              }`}
-              title="2-Column Large View"
-            >
-              <Grid2X2 size={13} />
-              <span>2-LARGE</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleViewModeChange('list')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer rounded-none ${
-                viewMode === 'list'
-                  ? 'bg-cobalt text-white shadow-xs'
-                  : 'text-ink/60 hover:text-ink hover:bg-black/5'
-              }`}
-              title="List View"
-            >
-              <List size={13} />
-              <span>LIST</span>
-            </button>
+
+            {/* View Mode Toggle Controls */}
+            <div className="flex items-center gap-1 bg-black/5 p-1 rounded-none border border-black/10">
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('grid4')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer rounded-none ${
+                  viewMode === 'grid4'
+                    ? 'bg-cobalt text-white shadow-xs'
+                    : 'text-ink/60 hover:text-ink hover:bg-black/5'
+                }`}
+                title="4-Column Grid View"
+              >
+                <LayoutGrid size={13} />
+                <span>4-GRID</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('grid2')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer rounded-none ${
+                  viewMode === 'grid2'
+                    ? 'bg-cobalt text-white shadow-xs'
+                    : 'text-ink/60 hover:text-ink hover:bg-black/5'
+                }`}
+                title="2-Column Large View"
+              >
+                <Grid2X2 size={13} />
+                <span>2-LARGE</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('list')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer rounded-none ${
+                  viewMode === 'list'
+                    ? 'bg-cobalt text-white shadow-xs'
+                    : 'text-ink/60 hover:text-ink hover:bg-black/5'
+                }`}
+                title="List View"
+              >
+                <List size={13} />
+                <span>LIST</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -145,6 +228,145 @@ export default function Collection() {
           ))}
         </div>
       </div>
+
+      {/* Collapsible Quick Filter Drawer Panel */}
+      {isFilterOpen && (
+        <div className="bg-white border-b border-black/10 px-6 md:px-12 py-6 animate-in slide-in-from-top-2 duration-300">
+          <div className="max-w-[1800px] mx-auto space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-12 divide-y md:divide-y-0 md:divide-x divide-black/5">
+              {/* 1. Material Filter */}
+              <div className="space-y-3">
+                <span className="caption-nano text-cobalt font-black block">Material</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {MATERIALS.map((mat) => (
+                    <button
+                      key={mat}
+                      type="button"
+                      onClick={() => setSelectedMaterial(mat)}
+                      className={`px-3 py-1 text-[10px] uppercase font-bold tracking-wider rounded-none border transition-all cursor-pointer ${
+                        selectedMaterial === mat
+                          ? 'bg-cobalt text-white border-cobalt shadow-xs'
+                          : 'bg-off-white text-ink/70 border-black/10 hover:border-black/30'
+                      }`}
+                    >
+                      {mat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Color Filter */}
+              <div className="space-y-3 pt-6 md:pt-0 md:pl-6 lg:pl-12">
+                <span className="caption-nano text-orange font-black block">Color Tone</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {COLORS.map((c) => (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => setSelectedColor(c.name)}
+                      className={`px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider rounded-none border transition-all flex items-center gap-1.5 cursor-pointer ${
+                        selectedColor === c.name
+                          ? 'bg-ink text-white border-ink shadow-xs'
+                          : 'bg-off-white text-ink/70 border-black/10 hover:border-black/30'
+                      }`}
+                    >
+                      {c.hex && (
+                        <div 
+                          className="w-2.5 h-2.5 rounded-full border border-black/20 shrink-0" 
+                          style={{ backgroundColor: c.hex }} 
+                        />
+                      )}
+                      <span>{c.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Sort Filter */}
+              <div className="space-y-3 pt-6 md:pt-0 md:pl-6 lg:pl-12">
+                <span className="caption-nano text-ink/60 font-black block">Sort By</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { id: 'curated', label: 'Curated' },
+                    { id: 'newest', label: 'Newest' },
+                    { id: 'name', label: 'Name (A-Z)' },
+                  ].map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSortBy(s.id as any)}
+                      className={`px-3 py-1 text-[10px] uppercase font-bold tracking-wider rounded-none border transition-all cursor-pointer ${
+                        sortBy === s.id
+                          ? 'bg-cobalt text-white border-cobalt shadow-xs'
+                          : 'bg-off-white text-ink/70 border-black/10 hover:border-black/30'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions of Filter Panel */}
+            {activeFilterCount > 0 && (
+              <div className="border-t border-black/5 pt-4 flex items-center justify-between">
+                <span className="text-[10px] text-ink/50 uppercase font-mono tracking-wider">
+                  {filteredProducts.length} object{filteredProducts.length === 1 ? '' : 's'} found
+                </span>
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-wider text-orange hover:underline cursor-pointer"
+                >
+                  <RotateCcw size={12} />
+                  <span>Reset All Filters</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Active Filter Chips Strip (When active) */}
+      {activeFilterCount > 0 && !isFilterOpen && (
+        <div className="bg-white border-b border-black/5 px-6 md:px-12 py-2.5 flex items-center gap-2 overflow-x-auto hide-scrollbar">
+          <span className="text-[9px] uppercase font-bold text-ink/40 tracking-wider mr-1">Active:</span>
+          {selectedMaterial !== 'All' && (
+            <button
+              onClick={() => setSelectedMaterial('All')}
+              className="flex items-center gap-1 px-2 py-0.5 text-[9px] uppercase font-bold bg-cobalt/10 text-cobalt border border-cobalt/20 hover:bg-cobalt/20 transition-colors"
+            >
+              <span>Material: {selectedMaterial}</span>
+              <X size={10} />
+            </button>
+          )}
+          {selectedColor !== 'All' && (
+            <button
+              onClick={() => setSelectedColor('All')}
+              className="flex items-center gap-1 px-2 py-0.5 text-[9px] uppercase font-bold bg-ink/10 text-ink border border-black/20 hover:bg-ink/20 transition-colors"
+            >
+              <span>Color: {selectedColor}</span>
+              <X size={10} />
+            </button>
+          )}
+          {sortBy !== 'curated' && (
+            <button
+              onClick={() => setSortBy('curated')}
+              className="flex items-center gap-1 px-2 py-0.5 text-[9px] uppercase font-bold bg-orange/10 text-orange border border-orange/20 hover:bg-orange/20 transition-colors"
+            >
+              <span>Sort: {sortBy}</span>
+              <X size={10} />
+            </button>
+          )}
+          <button
+            onClick={handleResetFilters}
+            className="text-[9px] uppercase font-bold text-ink/40 hover:text-orange ml-2 tracking-wider underline cursor-pointer"
+          >
+            Clear All
+          </button>
+        </div>
+      )}
 
       {/* 1. 4-GRID & 2-LARGE GRID VIEW MODES */}
       {(viewMode === 'grid4' || viewMode === 'grid2') && (
