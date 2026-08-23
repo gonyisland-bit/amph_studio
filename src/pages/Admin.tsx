@@ -3440,6 +3440,59 @@ export default function Admin() {
                       <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                         <div>
                           <EditorInput label="Material (e.g., Oak, Steel)" value={form.material || ''} onChange={val => setForm({...form, material: val})} />
+                          {/* Quick Material Selection Chips from other products */}
+                          {(() => {
+                            const existingMaterials: string[] = Array.from(
+                              new Set<string>(
+                                products
+                                  .flatMap(p => p.material ? p.material.split(',').map(m => m.trim()).filter(Boolean) : [])
+                              )
+                            ).filter(Boolean);
+
+                            const currentMaterials = (form.material || '')
+                              .split(',')
+                              .map((m: string) => m.trim())
+                              .filter(Boolean);
+
+                            const handleToggleMaterial = (mat: string) => {
+                              let nextMaterials: string[];
+                              if (currentMaterials.some((m: string) => m.toLowerCase() === mat.toLowerCase())) {
+                                nextMaterials = currentMaterials.filter((m: string) => m.toLowerCase() !== mat.toLowerCase());
+                              } else {
+                                nextMaterials = [...currentMaterials, mat];
+                              }
+                              setForm({ ...form, material: nextMaterials.join(', ') });
+                            };
+
+                            if (existingMaterials.length === 0) return null;
+
+                            return (
+                              <div className="mt-2.5 pt-2 border-t border-black/5 space-y-1.5">
+                                <span className="text-[9px] font-bold uppercase text-ink/50 tracking-wider block">
+                                  Quick Select (기존 등록된 소재 키워드 클릭 시 자동 추가/제거):
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {existingMaterials.map(mat => {
+                                    const isSelected = currentMaterials.some((m: string) => m.toLowerCase() === mat.toLowerCase());
+                                    return (
+                                      <button
+                                        key={mat}
+                                        type="button"
+                                        onClick={() => handleToggleMaterial(mat)}
+                                        className={`px-2 py-0.5 text-[9px] uppercase font-bold tracking-wider rounded-none border transition-all cursor-pointer ${
+                                          isSelected
+                                            ? 'bg-cobalt text-white border-cobalt shadow-xs'
+                                            : 'bg-off-white text-ink/70 border-black/10 hover:border-black/30'
+                                        }`}
+                                      >
+                                        <span>{isSelected ? `✓ ${mat}` : `+ ${mat}`}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                         <EditorInput label="Dimensions (e.g., H 75 x W 120 x D 60 cm)" value={form.dimensions || ''} onChange={val => setForm({...form, dimensions: val})} />
                         
@@ -3731,7 +3784,7 @@ export default function Admin() {
                       onClick={() => toggleSection('story')}
                       className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5"
                     >
-                      <span className="text-xs font-black uppercase text-cobalt tracking-wider font-mono">STORY MEDIA</span>
+                      <span className="text-xs font-black uppercase text-cobalt tracking-wider">Story Media</span>
                       <span className="text-ink/30">{activeSections.story ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
                     </button>
                     {activeSections.story && (

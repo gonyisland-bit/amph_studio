@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings, ColorOption } from "../lib/data";
+import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 import { LayoutGrid, Grid2X2, List, ArrowRight, SlidersHorizontal, ChevronDown, ChevronUp, X, RotateCcw } from "lucide-react";
@@ -13,19 +13,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   'Lighting': 'LIGHTING',
   'Objects': 'OBJECT'
 };
-
-const MATERIALS = ['All', 'Oak', 'Ash', 'Walnut', 'Steel', 'Leather', 'Glass'];
-const COLORS = [
-  { name: 'All', hex: '' },
-  { name: 'Black', hex: '#1c1c1c' },
-  { name: 'White', hex: '#ffffff' },
-  { name: 'Oak', hex: '#d7c29d' },
-  { name: 'Walnut', hex: '#4b382a' },
-  { name: 'Cobalt', hex: '#0047AB' },
-  { name: 'Orange', hex: '#FF4500' },
-  { name: 'Silver', hex: '#E0E0E2' },
-  { name: 'Pink', hex: '#F8BBD0' },
-];
 
 export default function Collection() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -50,6 +37,92 @@ export default function Collection() {
     getHomeSettings().then(setSettings);
     document.title = "Collection — Amph";
   }, []);
+
+  // Dynamically extract materials that actually exist in the products of the active category
+  const availableMaterials = React.useMemo(() => {
+    const relevantProducts = activeCategory === 'All'
+      ? products
+      : products.filter(p => {
+          const cat = (p.category as string) === 'Tables' ? 'Furniture' : p.category;
+          return cat === activeCategory;
+        });
+
+    const set = new Set<string>();
+    relevantProducts.forEach(p => {
+      if (p.material) {
+        p.material.split(',').forEach(m => {
+          const trimmed = m.trim();
+          if (trimmed) set.add(trimmed);
+        });
+      }
+    });
+    return ['All', ...Array.from(set)];
+  }, [products, activeCategory]);
+
+  // Dynamically extract colors that actually exist in the products of the active category
+  const availableColors = React.useMemo(() => {
+    const relevantProducts = activeCategory === 'All'
+      ? products
+      : products.filter(p => {
+          const cat = (p.category as string) === 'Tables' ? 'Furniture' : p.category;
+          return cat === activeCategory;
+        });
+
+    const set = new Set<string>();
+    relevantProducts.forEach(p => {
+      if (p.bodyColors && Array.isArray(p.bodyColors)) {
+        p.bodyColors.forEach((c: any) => {
+          const name = typeof c === 'string' ? c : c?.name;
+          if (name && name.trim()) set.add(name.trim());
+        });
+      }
+      if (p.fabricColors && Array.isArray(p.fabricColors)) {
+        p.fabricColors.forEach((c: any) => {
+          const name = typeof c === 'string' ? c : c?.name;
+          if (name && name.trim()) set.add(name.trim());
+        });
+      }
+      if (p.color) {
+        if (Array.isArray(p.color)) {
+          p.color.forEach((c: any) => {
+            const name = c?.name;
+            if (name && name.trim()) set.add(name.trim());
+          });
+        } else if (typeof p.color === 'string') {
+          p.color.split(',').forEach(c => {
+            const name = c.trim();
+            if (name) set.add(name);
+          });
+        }
+      }
+    });
+
+    const colorMap: Record<string, string> = {
+      'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
+      'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
+      'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
+      'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
+    };
+
+    const list: { name: string; hex: string }[] = [{ name: 'All', hex: '' }];
+    Array.from(set).forEach(name => {
+      list.push({ name, hex: colorMap[name] || '#888888' });
+    });
+    return list;
+  }, [products, activeCategory]);
+
+  // If active filter is no longer available in current category, auto reset to 'All'
+  useEffect(() => {
+    if (selectedMaterial !== 'All' && !availableMaterials.includes(selectedMaterial)) {
+      setSelectedMaterial('All');
+    }
+  }, [availableMaterials, selectedMaterial]);
+
+  useEffect(() => {
+    if (selectedColor !== 'All' && !availableColors.some(c => c.name.toLowerCase() === selectedColor.toLowerCase())) {
+      setSelectedColor('All');
+    }
+  }, [availableColors, selectedColor]);
 
   const handleViewModeChange = (mode: 'grid4' | 'grid2' | 'list') => {
     setViewMode(mode);
@@ -238,7 +311,7 @@ export default function Collection() {
               <div className="space-y-3">
                 <span className="caption-nano text-cobalt font-black block">Material</span>
                 <div className="flex flex-wrap gap-1.5">
-                  {MATERIALS.map((mat) => (
+                  {availableMaterials.map((mat) => (
                     <button
                       key={mat}
                       type="button"
@@ -259,7 +332,7 @@ export default function Collection() {
               <div className="space-y-3 pt-6 md:pt-0 md:pl-6 lg:pl-12">
                 <span className="caption-nano text-orange font-black block">Color Tone</span>
                 <div className="flex flex-wrap gap-1.5">
-                  {COLORS.map((c) => (
+                  {availableColors.map((c) => (
                     <button
                       key={c.name}
                       type="button"
@@ -528,7 +601,7 @@ function renderChips(product: Product) {
           <div 
             key={`col-${col}`} 
             className="w-3 h-3 rounded-full border border-black/15 shadow-sm shrink-0" 
-            style={{ backgroundColor: hex }}
+            style={{ backgroundColor: hex }} 
             title={col}
           />
         );
