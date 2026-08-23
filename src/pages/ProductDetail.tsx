@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getProductById, getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, ColorOption, generateProductCode } from "../lib/data";
+import { resolveColorHex } from "../lib/colorUtils";
 import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
@@ -552,18 +553,12 @@ export default function ProductDetail() {
               const fabricColorsList: ColorOption[] = [];
               const legacyColorsList: ColorOption[] = [];
 
-              const colorMap: Record<string, string> = {
-                'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
-                'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
-                'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
-                'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
-              };
-
               // Process Body Colors
               if (product.bodyColors && Array.isArray(product.bodyColors)) {
                 product.bodyColors.forEach(c => {
                   const name = typeof c === 'string' ? c : c?.name;
-                  const hex = typeof c === 'string' ? (colorMap[c] || '#888888') : (c?.hex || '#888888');
+                  const customHex = typeof c === 'object' ? c?.hex : undefined;
+                  const hex = resolveColorHex(name || '', customHex);
                   if (name && !bodyColorsList.some(b => b.name.toLowerCase() === name.toLowerCase())) {
                     bodyColorsList.push({ name, hex, group: 'body' });
                   }
@@ -574,7 +569,8 @@ export default function ProductDetail() {
               if (product.fabricColors && Array.isArray(product.fabricColors)) {
                 product.fabricColors.forEach(c => {
                   const name = typeof c === 'string' ? c : c?.name;
-                  const hex = typeof c === 'string' ? (colorMap[c] || '#888888') : (c?.hex || '#888888');
+                  const customHex = typeof c === 'object' ? c?.hex : undefined;
+                  const hex = resolveColorHex(name || '', customHex);
                   if (name && !fabricColorsList.some(f => f.name.toLowerCase() === name.toLowerCase())) {
                     fabricColorsList.push({ name, hex, group: 'fabric' });
                   }
@@ -1261,7 +1257,7 @@ function renderChips(product: Product) {
   const chips: React.ReactNode[] = [];
   
   if (product.material) {
-    const materials = product.material.split(',').map(m => m.trim());
+    const materials = product.material.split(',').map(m => m.trim()).filter(Boolean);
     materials.forEach(mat => {
       chips.push(
         <span key={`mat-${mat}`} className="text-[9px] font-sans font-bold tracking-wider uppercase bg-ink/5 text-ink/60 px-2 py-0.5 rounded-[2px] border border-black/5">
@@ -1271,47 +1267,46 @@ function renderChips(product: Product) {
     });
   }
 
-  if (product.color) {
-    let colorsList: { name: string; hex: string }[] = [];
-    if (Array.isArray(product.color)) {
-      colorsList = product.color;
-    } else {
-      const colorMap: Record<string, string> = {
-        'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
-        'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
-        'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
-        'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
-      };
-      colorsList = product.color.split(',').map(c => {
-        const name = c.trim();
-        return {
-          name,
-          hex: colorMap[name] || '#888888'
-        };
-      });
-    }
+  const colorItems: { name: string; hex: string }[] = [];
+  const seenNames = new Set<string>();
 
-    colorsList.forEach(c => {
-      const hex = c.hex;
-      const col = c.name;
-      if (hex && hex !== '#888888') {
-        chips.push(
-          <div 
-            key={`col-${col}`} 
-            className="w-3 h-3 rounded-full border border-black/15 shadow-sm shrink-0" 
-            style={{ backgroundColor: hex }}
-            title={col}
-          />
-        );
-      } else {
-        chips.push(
-          <span key={`col-${col}`} className="text-[9px] font-sans font-bold tracking-wider uppercase bg-cobalt/5 text-cobalt/70 px-2 py-0.5 rounded-[2px] border border-cobalt/10">
-            {col}
-          </span>
-        );
-      }
-    });
+  const processColor = (c: any) => {
+    if (!c) return;
+    const name = typeof c === 'string' ? c.trim() : c.name?.trim();
+    if (!name) return;
+    const key = name.toLowerCase();
+    if (seenNames.has(key)) return;
+    seenNames.add(key);
+
+    const customHex = typeof c === 'object' ? c.hex : undefined;
+    const hex = resolveColorHex(name, customHex);
+    colorItems.push({ name, hex });
+  };
+
+  if (product.bodyColors && Array.isArray(product.bodyColors)) {
+    product.bodyColors.forEach(processColor);
   }
+  if (product.fabricColors && Array.isArray(product.fabricColors)) {
+    product.fabricColors.forEach(processColor);
+  }
+  if (product.color) {
+    if (Array.isArray(product.color)) {
+      product.color.forEach(processColor);
+    } else if (typeof product.color === 'string') {
+      product.color.split(',').forEach(processColor);
+    }
+  }
+
+  colorItems.forEach(c => {
+    chips.push(
+      <div 
+        key={`col-${c.name}`} 
+        className="w-3 h-3 rounded-full border border-black/15 shadow-sm shrink-0" 
+        style={{ backgroundColor: c.hex }} 
+        title={c.name}
+      />
+    );
+  });
 
   return chips.length > 0 ? chips : <span className="text-[9px] text-ink/30 font-sans">Standard options</span>;
 }

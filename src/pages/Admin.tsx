@@ -6,6 +6,7 @@ import {
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets, MagazineCard
 } from "../lib/data";
+import { resolveColorHex } from "../lib/colorUtils";
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock, Save, MoreVertical } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 
@@ -704,12 +705,6 @@ export default function Admin() {
 
   const normalizeProductColors = (prod: any) => {
     if (!prod) return prod;
-    const colorMap: Record<string, string> = {
-      'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
-      'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
-      'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
-      'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
-    };
 
     const bodyList: ColorOption[] = [];
     const fabricList: ColorOption[] = [];
@@ -717,11 +712,11 @@ export default function Admin() {
     const parseItem = (item: any, defaultGroup: 'body' | 'fabric'): ColorOption | null => {
       if (!item) return null;
       if (typeof item === 'string') {
-        const hex = colorMap[item] || '#888888';
+        const hex = resolveColorHex(item);
         return { name: item, hex, group: defaultGroup };
       }
       if (typeof item === 'object' && item.name) {
-        const hex = item.hex || colorMap[item.name] || '#888888';
+        const hex = resolveColorHex(item.name, item.hex);
         const group = item.group === 'fabric' || item.group === 'upholstery' ? 'fabric' : (item.group || defaultGroup);
         return { name: item.name, hex, group };
       }
@@ -747,7 +742,8 @@ export default function Admin() {
       });
     }
 
-    if (prod.color && Array.isArray(prod.color)) {
+    // Only fallback to legacy prod.color if neither bodyColors nor fabricColors were defined on prod
+    if (prod.bodyColors === undefined && prod.fabricColors === undefined && prod.color && Array.isArray(prod.color)) {
       prod.color.forEach((c: any) => {
         const parsed = parseItem(c, 'body');
         if (parsed) {
@@ -774,17 +770,10 @@ export default function Admin() {
       const bodyList: ColorOption[] = [];
       const fabricList: ColorOption[] = [];
 
-      const colorMap: Record<string, string> = {
-        'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
-        'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
-        'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
-        'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
-      };
-
       if (form.bodyColors && Array.isArray(form.bodyColors)) {
         form.bodyColors.forEach((b: any) => {
           const name = typeof b === 'string' ? b : b?.name;
-          const hex = typeof b === 'string' ? (colorMap[b] || '#888888') : (b?.hex || '#888888');
+          const hex = resolveColorHex(name || '', typeof b === 'object' ? b?.hex : undefined);
           if (name && !bodyList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
             bodyList.push({ name, hex, group: 'body' });
           }
@@ -795,21 +784,22 @@ export default function Admin() {
       if (rawFabric && Array.isArray(rawFabric)) {
         rawFabric.forEach((f: any) => {
           const name = typeof f === 'string' ? f : f?.name;
-          const hex = typeof f === 'string' ? (colorMap[f] || '#888888') : (f?.hex || '#888888');
+          const hex = resolveColorHex(name || '', typeof f === 'object' ? f?.hex : undefined);
           if (name && !fabricList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
             fabricList.push({ name, hex, group: 'fabric' });
           }
         });
       }
 
-      // Legacy fallback parsing into colorOptions list
-      if (form.color && Array.isArray(form.color)) {
+      // Legacy fallback parsing into colorOptions list ONLY if bodyColors and fabricColors were undefined
+      if (form.bodyColors === undefined && form.fabricColors === undefined && form.color && Array.isArray(form.color)) {
         form.color.forEach((c: any) => {
           if (c && c.name) {
+            const hex = resolveColorHex(c.name, c.hex);
             if (c.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === c.name.toLowerCase())) {
-              bodyList.push({ ...c, group: 'body' });
+              bodyList.push({ ...c, hex, group: 'body' });
             } else if ((c.group === 'fabric' || c.group === 'upholstery') && !fabricList.some(f => f.name.toLowerCase() === c.name.toLowerCase())) {
-              fabricList.push({ ...c, group: 'fabric' });
+              fabricList.push({ ...c, hex, group: 'fabric' });
             }
           }
         });
@@ -834,7 +824,8 @@ export default function Admin() {
     if (existsIndex > -1) {
       updatedTargetList = targetList.filter((_, idx) => idx !== existsIndex);
     } else {
-      updatedTargetList = [...targetList, { name: asset.name, hex: asset.hex, group: activeColorTarget }];
+      const resolvedHex = resolveColorHex(asset.name, asset.hex);
+      updatedTargetList = [...targetList, { name: asset.name, hex: resolvedHex, group: activeColorTarget }];
     }
 
     const nextBodyColors = isBody ? updatedTargetList : currentBodyList;
@@ -843,7 +834,8 @@ export default function Admin() {
     setForm((prev: any) => ({
       ...prev,
       bodyColors: nextBodyColors,
-      fabricColors: nextFabricColors
+      fabricColors: nextFabricColors,
+      color: [...nextBodyColors, ...nextFabricColors]
     }));
 
     setColorOptions([...nextBodyColors, ...nextFabricColors]);
@@ -1155,7 +1147,8 @@ export default function Admin() {
           ...form, 
           images: cleanedImages, 
           bodyColors: currentBody, 
-          fabricColors: currentFabric 
+          fabricColors: currentFabric,
+          color: [...currentBody, ...currentFabric]
         };
         if (editingId) {
           await updateProduct(editingId, cleanedForm);

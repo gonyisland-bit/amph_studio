@@ -75,27 +75,50 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST') {
     try {
-      const { id: newId, name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, bodyColors, fabricColors, cartEnabled, portraitImages, relatedProductIds, relatedSpaceIds, relatedJournalIds } = req.body;
+      const b = req.body || {};
+      const newId = b.id || `prod-${Date.now()}`;
+      const name = b.name || '';
+      const category = b.category || 'Objects';
+      const description = b.description || '';
+      const subTitle = b.subTitle || '';
+      const material = b.material || '';
+      const price = b.price !== undefined && b.price !== '' && !isNaN(Number(b.price)) ? Number(b.price) : 0;
+      const images = Array.isArray(b.images) ? b.images : [];
+      const hoverImages = Array.isArray(b.hoverImages) ? b.hoverImages : [];
+      const contentBlocks = Array.isArray(b.contentBlocks) ? b.contentBlocks : [];
+      const isFeatured = Boolean(b.isFeatured);
+      const dimensions = b.dimensions || '';
+      const shipping = b.shipping || '';
+      const sku = b.sku || '';
+      const color = b.color !== undefined ? (typeof b.color === 'string' ? b.color : JSON.stringify(b.color)) : '[]';
+      const bodyColors = Array.isArray(b.bodyColors) ? b.bodyColors : [];
+      const fabricColors = Array.isArray(b.fabricColors) ? b.fabricColors : [];
+      const cartEnabled = b.cartEnabled !== false;
+      const portraitImages = Array.isArray(b.portraitImages) ? b.portraitImages : [];
+      const relatedProductIds = Array.isArray(b.relatedProductIds) ? b.relatedProductIds : [];
+      const relatedSpaceIds = Array.isArray(b.relatedSpaceIds) ? b.relatedSpaceIds : [];
+      const relatedJournalIds = Array.isArray(b.relatedJournalIds) ? b.relatedJournalIds : [];
+
       await sql`
         INSERT INTO products (
           id, name, category, description, "subTitle", material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color, "bodyColors", "fabricColors", "cartEnabled", "portraitImages", "relatedProductIds", "relatedSpaceIds", "relatedJournalIds"
         ) VALUES (
-          ${newId}, ${name}, ${category}, ${description}, ${subTitle || ''}, ${material}, ${price}, 
-          ${JSON.stringify(images || [])}, 
-          ${JSON.stringify(hoverImages || [])}, 
-          ${JSON.stringify(contentBlocks || [])}, 
-          ${isFeatured || false},
-          ${dimensions || ''},
-          ${shipping || ''},
-          ${sku || ''},
-          ${typeof color === 'string' ? color : JSON.stringify(color || [])},
-          ${JSON.stringify(bodyColors || [])},
-          ${JSON.stringify(fabricColors || [])},
-          ${cartEnabled !== false},
-          ${JSON.stringify(portraitImages || [])},
-          ${JSON.stringify(relatedProductIds || [])},
-          ${JSON.stringify(relatedSpaceIds || [])},
-          ${JSON.stringify(relatedJournalIds || [])}
+          ${newId}, ${name}, ${category}, ${description}, ${subTitle}, ${material}, ${price}, 
+          ${JSON.stringify(images)}, 
+          ${JSON.stringify(hoverImages)}, 
+          ${JSON.stringify(contentBlocks)}, 
+          ${isFeatured},
+          ${dimensions},
+          ${shipping},
+          ${sku},
+          ${color},
+          ${JSON.stringify(bodyColors)},
+          ${JSON.stringify(fabricColors)},
+          ${cartEnabled},
+          ${JSON.stringify(portraitImages)},
+          ${JSON.stringify(relatedProductIds)},
+          ${JSON.stringify(relatedSpaceIds)},
+          ${JSON.stringify(relatedJournalIds)}
         )
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
@@ -130,7 +153,29 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'PUT') {
     if (!id) return res.status(400).json({ error: 'ID is required' });
     try {
-      const { name, category, description, subTitle, material, price, images, hoverImages, contentBlocks, isFeatured, dimensions, shipping, sku, color, bodyColors, fabricColors, cartEnabled, portraitImages, relatedProductIds, relatedSpaceIds, relatedJournalIds } = req.body;
+      const b = req.body || {};
+      const name = b.name || '';
+      const category = b.category || 'Objects';
+      const description = b.description || '';
+      const subTitle = b.subTitle || '';
+      const material = b.material || '';
+      const price = b.price !== undefined && b.price !== '' && !isNaN(Number(b.price)) ? Number(b.price) : 0;
+      const images = Array.isArray(b.images) ? b.images : [];
+      const hoverImages = Array.isArray(b.hoverImages) ? b.hoverImages : [];
+      const contentBlocks = Array.isArray(b.contentBlocks) ? b.contentBlocks : [];
+      const isFeatured = Boolean(b.isFeatured);
+      const dimensions = b.dimensions || '';
+      const shipping = b.shipping || '';
+      const sku = b.sku || '';
+      const color = b.color !== undefined ? (typeof b.color === 'string' ? b.color : JSON.stringify(b.color)) : '[]';
+      const bodyColors = Array.isArray(b.bodyColors) ? b.bodyColors : [];
+      const fabricColors = Array.isArray(b.fabricColors) ? b.fabricColors : [];
+      const cartEnabled = b.cartEnabled !== false;
+      const portraitImages = Array.isArray(b.portraitImages) ? b.portraitImages : [];
+      const relatedProductIds = Array.isArray(b.relatedProductIds) ? b.relatedProductIds : [];
+      const relatedSpaceIds = Array.isArray(b.relatedSpaceIds) ? b.relatedSpaceIds : [];
+      const relatedJournalIds = Array.isArray(b.relatedJournalIds) ? b.relatedJournalIds : [];
+
       await sql`
         UPDATE products SET 
           name = ${name}, 
@@ -139,21 +184,21 @@ export default async function handler(req: any, res: any) {
           "subTitle" = ${subTitle},
           material = ${material}, 
           price = ${price}, 
-          images = ${JSON.stringify(images || [])}, 
-          "hoverImages" = ${JSON.stringify(hoverImages || [])}, 
-          "contentBlocks" = ${JSON.stringify(contentBlocks || [])}, 
+          images = ${JSON.stringify(images)}, 
+          "hoverImages" = ${JSON.stringify(hoverImages)}, 
+          "contentBlocks" = ${JSON.stringify(contentBlocks)}, 
           "isFeatured" = ${isFeatured},
           dimensions = ${dimensions},
           shipping = ${shipping},
           sku = ${sku},
-          color = ${typeof color === 'string' ? color : JSON.stringify(color || [])},
-          "bodyColors" = ${JSON.stringify(bodyColors || [])},
-          "fabricColors" = ${JSON.stringify(fabricColors || [])},
-          "cartEnabled" = ${cartEnabled !== false},
-          "portraitImages" = ${JSON.stringify(portraitImages || [])},
-          "relatedProductIds" = ${JSON.stringify(relatedProductIds || [])},
-          "relatedSpaceIds" = ${JSON.stringify(relatedSpaceIds || [])},
-          "relatedJournalIds" = ${JSON.stringify(relatedJournalIds || [])}
+          color = ${color},
+          "bodyColors" = ${JSON.stringify(bodyColors)},
+          "fabricColors" = ${JSON.stringify(fabricColors)},
+          "cartEnabled" = ${cartEnabled},
+          "portraitImages" = ${JSON.stringify(portraitImages)},
+          "relatedProductIds" = ${JSON.stringify(relatedProductIds)},
+          "relatedSpaceIds" = ${JSON.stringify(relatedSpaceIds)},
+          "relatedJournalIds" = ${JSON.stringify(relatedJournalIds)}
         WHERE id = ${id}
       `;
       return res.status(200).json({ success: true, id });

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
+import { resolveColorHex } from "../lib/colorUtils";
 import { LayoutGrid, Grid2X2, List, ArrowRight, SlidersHorizontal, ChevronDown, ChevronUp, X, RotateCcw } from "lucide-react";
 
 const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
@@ -80,23 +81,16 @@ export default function Collection() {
           return cat === activeCategory;
         });
 
-    const colorMap: Record<string, string> = {
-      'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
-      'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
-      'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
-      'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
-    };
-
     const colorItemsMap = new Map<string, { name: string; hex: string }>();
     relevantProducts.forEach(p => {
-      const addColor = (nameStr: string) => {
+      const addColor = (nameStr: string, customHex?: string) => {
         if (!nameStr) return;
         const formatted = nameStr.trim().charAt(0).toUpperCase() + nameStr.trim().slice(1);
         const key = formatted.toLowerCase();
         if (formatted && !colorItemsMap.has(key)) {
           colorItemsMap.set(key, {
             name: formatted,
-            hex: colorMap[formatted] || '#888888'
+            hex: resolveColorHex(formatted, customHex)
           });
         }
       };
@@ -104,19 +98,21 @@ export default function Collection() {
       if (p.bodyColors && Array.isArray(p.bodyColors)) {
         p.bodyColors.forEach((c: any) => {
           const name = typeof c === 'string' ? c : c?.name;
-          if (name) addColor(name);
+          const hex = typeof c === 'object' ? c?.hex : undefined;
+          if (name) addColor(name, hex);
         });
       }
       if (p.fabricColors && Array.isArray(p.fabricColors)) {
         p.fabricColors.forEach((c: any) => {
           const name = typeof c === 'string' ? c : c?.name;
-          if (name) addColor(name);
+          const hex = typeof c === 'object' ? c?.hex : undefined;
+          if (name) addColor(name, hex);
         });
       }
       if (p.color) {
         if (Array.isArray(p.color)) {
           p.color.forEach((c: any) => {
-            if (c?.name) addColor(c.name);
+            if (c?.name) addColor(c.name, c.hex);
           });
         } else if (typeof p.color === 'string') {
           p.color.split(',').forEach(c => addColor(c));
@@ -578,7 +574,7 @@ function renderChips(product: Product) {
   
   // 1. Material chips (Oak, Steel, Ash, etc.)
   if (product.material) {
-    const materials = product.material.split(',').map(m => m.trim());
+    const materials = product.material.split(',').map(m => m.trim()).filter(Boolean);
     materials.forEach(mat => {
       chips.push(
         <span key={`mat-${mat}`} className="text-[9px] font-sans font-bold tracking-wider uppercase bg-ink/5 text-ink/60 px-2 py-0.5 rounded-[2px] border border-black/5">
@@ -588,48 +584,47 @@ function renderChips(product: Product) {
     });
   }
 
-  // 2. Color chips
-  if (product.color) {
-    let colorsList: { name: string; hex: string }[] = [];
-    if (Array.isArray(product.color)) {
-      colorsList = product.color;
-    } else {
-      const colorMap: Record<string, string> = {
-        'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
-        'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
-        'Pink': '#F8BBD0', 'Silver': '#E0E0E2', 'Gray': '#808080', 'Charcoal': '#36454F',
-        'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
-      };
-      colorsList = product.color.split(',').map(c => {
-        const name = c.trim();
-        return {
-          name,
-          hex: colorMap[name] || '#888888'
-        };
-      });
-    }
+  // 2. Color chips (from bodyColors, fabricColors, or legacy color)
+  const colorItems: { name: string; hex: string }[] = [];
+  const seenNames = new Set<string>();
 
-    colorsList.forEach(c => {
-      const hex = c.hex;
-      const col = c.name;
-      if (hex && hex !== '#888888') {
-        chips.push(
-          <div 
-            key={`col-${col}`} 
-            className="w-3 h-3 rounded-full border border-black/15 shadow-sm shrink-0" 
-            style={{ backgroundColor: hex }} 
-            title={col}
-          />
-        );
-      } else {
-        chips.push(
-          <span key={`col-${col}`} className="text-[9px] font-sans font-bold tracking-wider uppercase bg-cobalt/5 text-cobalt/70 px-2 py-0.5 rounded-[2px] border border-cobalt/10">
-            {col}
-          </span>
-        );
-      }
-    });
+  const processColor = (c: any) => {
+    if (!c) return;
+    const name = typeof c === 'string' ? c.trim() : c.name?.trim();
+    if (!name) return;
+    const key = name.toLowerCase();
+    if (seenNames.has(key)) return;
+    seenNames.add(key);
+
+    const customHex = typeof c === 'object' ? c.hex : undefined;
+    const hex = resolveColorHex(name, customHex);
+    colorItems.push({ name, hex });
+  };
+
+  if (product.bodyColors && Array.isArray(product.bodyColors)) {
+    product.bodyColors.forEach(processColor);
   }
+  if (product.fabricColors && Array.isArray(product.fabricColors)) {
+    product.fabricColors.forEach(processColor);
+  }
+  if (product.color) {
+    if (Array.isArray(product.color)) {
+      product.color.forEach(processColor);
+    } else if (typeof product.color === 'string') {
+      product.color.split(',').forEach(processColor);
+    }
+  }
+
+  colorItems.forEach(c => {
+    chips.push(
+      <div 
+        key={`col-${c.name}`} 
+        className="w-3 h-3 rounded-full border border-black/15 shadow-sm shrink-0" 
+        style={{ backgroundColor: c.hex }} 
+        title={c.name}
+      />
+    );
+  });
 
   return chips.length > 0 ? chips : <span className="text-[9px] text-ink/30 italic">Standard options</span>;
 }
