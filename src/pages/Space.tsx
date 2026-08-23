@@ -12,8 +12,6 @@ export default function Space() {
     return (localStorage.getItem('amph_space_view_mode') as 'magazine' | 'card') || 'magazine';
   });
 
-  useScrollReveal();
-
   useEffect(() => {
     getSpaces().then(setSpaces);
     getHomeSettings().then(setSettings);
@@ -33,6 +31,8 @@ export default function Space() {
     if (bIdx === -1) return -1;
     return aIdx - bIdx;
   });
+
+  useScrollReveal([sortedSpaces, viewMode]);
 
   return (
     <div className="flex flex-col flex-grow bg-white">

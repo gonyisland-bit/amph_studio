@@ -25,8 +25,6 @@ export default function Collection() {
   const searchQuery = searchParams.get('search');
   const categoryQuery = searchParams.get('category');
 
-  useScrollReveal();
-
   useEffect(() => {
     getProducts().then(setProducts);
     getHomeSettings().then(setSettings);
@@ -69,6 +67,8 @@ export default function Collection() {
     if (bIdx !== -1) return 1;
     return 0;
   });
+
+  useScrollReveal([filteredProducts, viewMode, activeCategory]);
 
   return (
     <div className="flex flex-col flex-grow">
@@ -148,7 +148,10 @@ export default function Collection() {
 
       {/* 1. 4-GRID & 2-LARGE GRID VIEW MODES */}
       {(viewMode === 'grid4' || viewMode === 'grid2') && (
-        <div className={`grid ${viewMode === 'grid2' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'} border-t border-l border-black/10 auto-rows-fr`}>
+        <div 
+          key={`grid-${viewMode}-${activeCategory}`}
+          className={`grid ${viewMode === 'grid2' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'} border-t border-l border-black/10 auto-rows-fr`}
+        >
           {filteredProducts.map((product) => (
             <Link 
               to={`/product/${product.id}`}

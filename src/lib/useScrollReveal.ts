@@ -2,41 +2,50 @@ import { useEffect } from 'react';
 
 export function useScrollReveal(deps: any[] = []) {
   useEffect(() => {
-    const revealElements = document.querySelectorAll('.reveal');
-    const windowHeight = window.innerHeight || 800;
+    let observer: IntersectionObserver | null = null;
 
-    // 1. Immediately activate top viewport elements to prevent scroll lag
-    revealElements.forEach((el) => {
-      const rect = el.getBoundingClientRect();
-      if (rect.top < windowHeight + 200) {
-        el.classList.add('active');
-      }
-    });
+    const runReveal = () => {
+      const revealElements = document.querySelectorAll('.reveal');
+      const windowHeight = window.innerHeight || 800;
 
-    // 2. Observer for remaining elements
-    const observerOptions = {
-      root: null,
-      rootMargin: '200px 0px',
-      threshold: 0.01,
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('active');
-          observer.unobserve(entry.target);
+      // 1. Immediately activate top viewport elements to prevent layout / blank gap lag
+      revealElements.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < windowHeight + 300) {
+          el.classList.add('active');
         }
       });
-    }, observerOptions);
 
-    revealElements.forEach((el) => {
-      if (!el.classList.contains('active')) {
-        observer.observe(el);
-      }
-    });
+      // 2. Observer for remaining elements
+      const observerOptions = {
+        root: null,
+        rootMargin: '200px 0px',
+        threshold: 0.01,
+      };
+
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            observer?.unobserve(entry.target);
+          }
+        });
+      }, observerOptions);
+
+      revealElements.forEach((el) => {
+        if (!el.classList.contains('active')) {
+          observer?.observe(el);
+        }
+      });
+    };
+
+    const frameId = requestAnimationFrame(runReveal);
 
     return () => {
-      revealElements.forEach((el) => observer.unobserve(el));
+      cancelAnimationFrame(frameId);
+      if (observer) {
+        document.querySelectorAll('.reveal').forEach((el) => observer?.unobserve(el));
+      }
     };
   }, deps);
 }

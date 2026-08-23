@@ -12,8 +12,6 @@ export default function Journal() {
     return (localStorage.getItem('amph_journal_view_mode') as 'magazine' | 'card') || 'magazine';
   });
 
-  useScrollReveal();
-
   useEffect(() => {
     getJournals().then(setArticles);
     getHomeSettings().then(setSettings);
@@ -33,6 +31,8 @@ export default function Journal() {
     if (bIdx === -1) return -1;
     return aIdx - bIdx;
   });
+
+  useScrollReveal([sortedArticles, viewMode]);
 
   return (
     <div className="flex flex-col flex-grow bg-white">
