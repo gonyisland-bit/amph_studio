@@ -1,7 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { HotspotPin, Product } from "../lib/data";
 import { MediaRenderer } from "./MediaRenderer";
-import { X, Plus, Trash2, Check, MapPin, Search, Layers, Eye } from "lucide-react";
+import { X, Plus, Trash2, Check, MapPin, Search, Layers, Eye, Move } from "lucide-react";
 
 interface AdminHotspotEditorProps {
   isOpen: boolean;
@@ -26,14 +26,50 @@ export function AdminHotspotEditor({
 }: AdminHotspotEditorProps) {
   const [pins, setPins] = useState<HotspotPin[]>(() => JSON.parse(JSON.stringify(hotspots || [])));
   const [selectedPinId, setSelectedPinId] = useState<string | null>(() => (hotspots && hotspots[0]?.id) || null);
+  const [draggingPinId, setDraggingPinId] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState("");
   const [aspectMode, setAspectMode] = useState<'story' | 'hero' | 'natural'>(initialAspectMode);
   
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef<boolean>(false);
+
+  // Global mousemove and mouseup listeners for smooth pin dragging
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current || !draggingPinId) return;
+      const container = imageContainerRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const percentX = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10));
+      const percentY = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10));
+
+      setPins(prev => prev.map(p => p.id === draggingPinId ? { ...p, x: percentX, y: percentY } : p));
+    };
+
+    const handleMouseUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        setDraggingPinId(null);
+      }
+    };
+
+    if (draggingPinId) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [draggingPinId]);
 
   if (!isOpen) return null;
 
   const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // If just finished dragging, prevent adding a new pin
+    if (isDraggingRef.current) return;
+
     const container = imageContainerRef.current;
     if (!container) return;
 
@@ -56,8 +92,24 @@ export function AdminHotspotEditor({
     setSelectedPinId(newPin.id);
   };
 
+  const handlePinMouseDown = (pinId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSelectedPinId(pinId);
+    setDraggingPinId(pinId);
+    isDraggingRef.current = true;
+  };
+
   const handleUpdatePinProduct = (pinId: string, productId: string) => {
     setPins(prev => prev.map(p => p.id === pinId ? { ...p, productId } : p));
+  };
+
+  const handleUpdatePinCoordinates = (pinId: string, x: number, y: number) => {
+    setPins(prev => prev.map(p => p.id === pinId ? { 
+      ...p, 
+      x: Math.max(0, Math.min(100, Math.round(x * 10) / 10)), 
+      y: Math.max(0, Math.min(100, Math.round(y * 10) / 10)) 
+    } : p));
   };
 
   const handleDeletePin = (pinId: string, e?: React.MouseEvent) => {
@@ -110,7 +162,7 @@ export function AdminHotspotEditor({
                 {title}
               </h3>
               <p className="text-[10px] text-ink/50 font-serif italic mt-0.5">
-                Click on the framed image below to plot product pins with exact coordinate accuracy.
+                Click to drop new pins, or <strong className="text-cobalt font-semibold">drag any pin</strong> to adjust its position seamlessly.
               </p>
             </div>
           </div>
@@ -183,41 +235,50 @@ export function AdminHotspotEditor({
               <MediaRenderer
                 src={imageSrc}
                 alt="Hotspot target"
-                className={`w-full h-full ${aspectMode === 'natural' ? 'object-contain' : 'object-cover'} block`}
+                className={`w-full h-full ${aspectMode === 'natural' ? 'object-contain' : 'object-cover'} block pointer-events-none`}
               />
 
-              {/* Pins on top of Image */}
+              {/* Pins on top of Image (Draggable) */}
               {pins.map((pin, idx) => {
                 const isSelected = selectedPinId === pin.id;
+                const isDragging = draggingPinId === pin.id;
                 const prod = products.find(p => p.id === pin.productId);
 
                 return (
                   <div
                     key={pin.id}
+                    onMouseDown={(e) => handlePinMouseDown(pin.id, e)}
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedPinId(pin.id);
                     }}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 group/pin cursor-pointer z-20"
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 group/pin z-20 transition-transform ${
+                      isDragging ? 'cursor-grabbing scale-125 z-40' : 'cursor-grab hover:scale-115'
+                    }`}
                     style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
                   >
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black font-mono transition-all duration-200 shadow-xl border-2 ${
-                      isSelected 
-                        ? 'bg-cobalt text-white border-white scale-125 ring-4 ring-cobalt/40' 
-                        : 'bg-black/85 text-white border-white/80 hover:scale-110'
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black font-mono transition-all duration-150 shadow-xl border-2 select-none ${
+                      isDragging 
+                        ? 'bg-orange text-white border-white scale-125 ring-4 ring-orange/50'
+                        : isSelected 
+                        ? 'bg-cobalt text-white border-white scale-110 ring-4 ring-cobalt/40' 
+                        : 'bg-black/85 text-white border-white/80 hover:bg-cobalt'
                     }`}>
                       {idx + 1}
                     </div>
-                    {/* Hover Badge */}
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 opacity-0 group-hover/pin:opacity-100 transition-opacity whitespace-nowrap bg-black/90 text-white text-[9px] px-2 py-0.5 pointer-events-none font-bold uppercase tracking-wider shadow-md">
-                      {prod ? prod.name : `Pin #${idx + 1}`}
+
+                    {/* Drag indicator & coordinate pill */}
+                    <div className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-black/90 text-white text-[9px] px-2 py-0.5 pointer-events-none font-mono font-bold tracking-wider shadow-md ${
+                      isDragging || isSelected ? 'opacity-100' : 'opacity-0 group-hover/pin:opacity-100 transition-opacity'
+                    }`}>
+                      {isDragging ? `(X: ${pin.x}%, Y: ${pin.y}%)` : (prod ? prod.name : `Pin #${idx + 1}`)}
                     </div>
                   </div>
                 );
               })}
             </div>
             <div className="flex items-center justify-between w-full max-w-2xl mt-3 text-[10px] font-mono text-ink/50 uppercase tracking-wider">
-              <span>✦ Click on canvas to drop pin</span>
+              <span>✦ Click to drop pin • <strong className="text-cobalt">Drag pin to reposition</strong></span>
               <span>Mode: {aspectMode.toUpperCase()}</span>
             </div>
           </div>
@@ -279,10 +340,15 @@ export function AdminHotspotEditor({
                   {selectedPin && (
                     <div className="p-3.5 border border-cobalt/40 bg-cobalt/5 space-y-3 flex-1 flex flex-col overflow-hidden">
                       <div className="flex items-center justify-between shrink-0">
-                        <span className="text-[10px] font-mono font-bold text-cobalt flex items-center gap-1.5">
-                          <MapPin size={12} />
-                          <span>Pin #{pins.findIndex(p => p.id === selectedPin.id) + 1} (X: {selectedPin.x}%, Y: {selectedPin.y}%)</span>
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono font-bold text-cobalt flex items-center gap-1">
+                            <Move size={11} />
+                            <span>Pin #{pins.findIndex(p => p.id === selectedPin.id) + 1}</span>
+                          </span>
+                          <span className="text-[9px] font-mono text-ink/50">
+                            (X: {selectedPin.x}%, Y: {selectedPin.y}%)
+                          </span>
+                        </div>
                         <button
                           type="button"
                           onClick={(e) => handleDeletePin(selectedPin.id, e)}
@@ -291,6 +357,36 @@ export function AdminHotspotEditor({
                           <Trash2 size={11} />
                           <span>Delete Pin</span>
                         </button>
+                      </div>
+
+                      {/* Position Fine-Tuner Controls */}
+                      <div className="grid grid-cols-2 gap-2 bg-white p-2 border border-black/10 shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-mono font-bold text-ink/60">X:</span>
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.5}
+                            value={selectedPin.x}
+                            onChange={(e) => handleUpdatePinCoordinates(selectedPin.id, Number(e.target.value), selectedPin.y)}
+                            className="w-full text-[10px] font-mono p-1 border border-black/15 outline-none rounded-none focus:border-cobalt"
+                          />
+                          <span className="text-[8px] text-ink/40">%</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-mono font-bold text-ink/60">Y:</span>
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.5}
+                            value={selectedPin.y}
+                            onChange={(e) => handleUpdatePinCoordinates(selectedPin.id, selectedPin.x, Number(e.target.value))}
+                            className="w-full text-[10px] font-mono p-1 border border-black/15 outline-none rounded-none focus:border-cobalt"
+                          />
+                          <span className="text-[8px] text-ink/40">%</span>
+                        </div>
                       </div>
 
                       {/* Searchable Product Dropdown / Auto-Complete */}
@@ -321,7 +417,7 @@ export function AdminHotspotEditor({
                         </div>
 
                         {/* Product List with Mini-Thumbnails */}
-                        <div className="flex-1 overflow-y-auto divide-y divide-black/5 border border-black/10 bg-white max-h-[36vh]">
+                        <div className="flex-1 overflow-y-auto divide-y divide-black/5 border border-black/10 bg-white max-h-[30vh]">
                           {filteredProducts.length === 0 ? (
                             <p className="p-4 text-center text-[10px] text-ink/40 font-serif italic">No matching products found.</p>
                           ) : (
@@ -370,8 +466,8 @@ export function AdminHotspotEditor({
 
             {/* Bottom Tip */}
             <div className="p-3 bg-off-white border border-black/5 text-[9px] text-ink/60 space-y-0.5 shrink-0">
-              <p className="font-bold text-ink uppercase font-mono">💡 Framing &amp; Coordinates</p>
-              <p>Pins plotted in Story (4:3) mode match the public 2-column editorial story blocks with 100% pixel precision.</p>
+              <p className="font-bold text-ink uppercase font-mono">💡 Drag &amp; Drop Hotspot Pins</p>
+              <p>Drag any pin directly on the canvas, or use the X/Y number inputs to fine-tune exact placement.</p>
             </div>
           </div>
         </div>
