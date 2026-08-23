@@ -1,6 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { LogOut, User, Search, X, ShoppingBag, ClipboardList } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { LogOut, User, Search, X, ShoppingBag, ClipboardList, Menu } from "lucide-react";
 import { getProducts, getSpaces, getJournals, getHomeSettings, Product, Category, HomeSettings } from "../lib/data";
 import { CartDrawer } from "./CartDrawer";
 
@@ -15,7 +15,58 @@ export function Navigation() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [homeSettings, setHomeSettings] = useState<HomeSettings | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Smart Sticky Header states (Hide on scroll down, show on scroll up)
+  const [isVisible, setIsVisible] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const lastScrollYRef = useRef(0);
+  
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Close mobile menu on page navigation
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
+  // Smart Header Scroll Listener
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > 60) {
+        setIsScrolled(true);
+        if (currentScrollY > lastScrollYRef.current + 10) {
+          // Scrolling down -> Hide header
+          setIsVisible(false);
+        } else if (currentScrollY < lastScrollYRef.current - 10) {
+          // Scrolling up -> Show header
+          setIsVisible(true);
+        }
+      } else {
+        setIsScrolled(false);
+        setIsVisible(true);
+      }
+      
+      lastScrollYRef.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const updateCartCount = () => {
     const cartStr = localStorage.getItem('cart') || '[]';
@@ -110,7 +161,15 @@ export function Navigation() {
 
   return (
     <>
-      <nav className="px-6 md:px-12 py-6 border-b border-black/5 bg-white z-50 relative select-none">
+      <nav 
+        className={`sticky top-0 z-50 select-none transition-all duration-300 px-6 md:px-12 ${
+          isVisible ? 'translate-y-0' : '-translate-y-full'
+        } ${
+          isScrolled 
+            ? 'bg-white/95 backdrop-blur-md shadow-xs py-4 md:py-4.5 border-b border-black/10' 
+            : 'bg-white py-5 md:py-6 border-b border-black/5'
+        }`}
+      >
         <div className="max-w-[1800px] mx-auto grid grid-cols-2 md:grid-cols-3 items-center">
           {/* Logo */}
           <div className="flex justify-start items-center">
@@ -121,7 +180,7 @@ export function Navigation() {
                 <img 
                   src={homeSettings?.logoImage || "/logo.png"} 
                   alt="Amph Studio" 
-                  className="h-8 md:h-11 w-auto object-contain transition-transform group-hover:scale-105" 
+                  className="h-7 md:h-11 w-auto object-contain transition-transform group-hover:scale-105" 
                   nopin="nopin"
                   data-pin-no-hover="true"
                 />
@@ -139,7 +198,7 @@ export function Navigation() {
           </div>
  
           {/* Right Actions */}
-          <div className="flex justify-end gap-4 md:gap-6 items-center">
+          <div className="flex justify-end gap-3.5 sm:gap-4 md:gap-6 items-center">
             {/* Slide-out/Fade-in search input bar */}
             <div className="flex items-center gap-2 relative">
               {showSearch && (
@@ -152,7 +211,7 @@ export function Navigation() {
                     onKeyDown={e => {
                       if (e.key === 'Enter') handleSearchSubmit();
                     }}
-                    className="border-b border-black/20 outline-none text-[10px] uppercase tracking-wider py-1 bg-transparent w-28 md:w-40 animate-in slide-in-from-right-2 duration-300 font-sans"
+                    className="border-b border-black/20 outline-none text-[10px] uppercase tracking-wider py-1 bg-transparent w-24 sm:w-28 md:w-40 animate-in slide-in-from-right-2 duration-300 font-sans"
                     autoFocus
                   />
 
@@ -208,7 +267,7 @@ export function Navigation() {
                     setShowSearch(!showSearch);
                   }
                 }} 
-                className="text-ink/60 hover:text-cobalt transition-colors focus:outline-none cursor-pointer"
+                className="text-ink/60 hover:text-cobalt transition-colors focus:outline-none cursor-pointer p-1"
                 title="Search Products"
               >
                 <Search size={16} />
@@ -226,7 +285,7 @@ export function Navigation() {
             {isAuth ? (
               <Link 
                 to="/admin?tab=orders" 
-                className="text-ink/60 hover:text-cobalt transition-colors flex items-center justify-center"
+                className="text-ink/60 hover:text-cobalt transition-colors flex items-center justify-center p-1"
                 title="Order Verification"
               >
                 <ClipboardList size={16} />
@@ -234,12 +293,12 @@ export function Navigation() {
             ) : (
               <button 
                 onClick={() => setIsCartOpen(true)}
-                className="text-ink/60 hover:text-cobalt transition-colors flex items-center justify-center relative cursor-pointer"
+                className="text-ink/60 hover:text-cobalt transition-colors flex items-center justify-center relative cursor-pointer p-1"
                 title="Cart"
               >
                 <ShoppingBag size={16} />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-cobalt text-white text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
+                  <span className="absolute -top-1 -right-1 bg-cobalt text-white text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
                     {cartCount}
                   </span>
                 )}
@@ -250,23 +309,23 @@ export function Navigation() {
             {isAuth ? (
               <button 
                 onClick={handleAdminLogout} 
-                className="text-orange hover:text-ink transition-colors flex items-center justify-center cursor-pointer"
+                className="text-orange hover:text-ink transition-colors flex items-center justify-center cursor-pointer p-1"
                 title="Admin Logout"
               >
                 <LogOut size={16} />
               </button>
             ) : customerEmail ? (
-              <div className="flex gap-3 items-center">
+              <div className="flex gap-2 items-center">
                 <Link 
                   to="/account" 
-                  className="text-cobalt hover:text-ink transition-colors flex items-center justify-center"
+                  className="text-cobalt hover:text-ink transition-colors flex items-center justify-center p-1"
                   title="My Account"
                 >
                   <User size={16} />
                 </Link>
                 <button 
                   onClick={handleCustomerLogout} 
-                  className="text-orange/70 hover:text-orange transition-colors flex items-center justify-center cursor-pointer"
+                  className="text-orange/70 hover:text-orange transition-colors flex items-center justify-center cursor-pointer p-1"
                   title="Customer Logout"
                 >
                   <LogOut size={14} />
@@ -275,18 +334,92 @@ export function Navigation() {
             ) : (
               <Link 
                 to="/login" 
-                className="text-ink/60 hover:text-cobalt transition-colors flex items-center justify-center"
+                className="text-ink/60 hover:text-cobalt transition-colors flex items-center justify-center p-1"
                 title="Customer Login"
               >
                 <User size={16} />
               </Link>
             )}
+
+            {/* Mobile Hamburger Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden text-ink hover:text-cobalt transition-colors p-1 cursor-pointer flex items-center justify-center"
+              aria-label="Toggle Mobile Menu"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Tab Switcher */}
-      <div className="flex md:hidden border-b border-black/10 bg-white sticky top-0 z-[49] overflow-x-auto hide-scrollbar select-none">
+      {/* Fullscreen Mobile Editorial Drawer */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-[100] bg-white flex flex-col justify-between p-8 sm:p-12 animate-in fade-in duration-200 select-none overflow-y-auto">
+          {/* Top Bar inside Drawer */}
+          <div className="flex justify-between items-center border-b border-black/10 pb-6">
+            <Link 
+              to="/" 
+              onClick={() => setIsMobileMenuOpen(false)} 
+              className="text-2xl font-bold tracking-tighter uppercase font-sans text-ink"
+            >
+              Amph
+            </Link>
+            <button 
+              onClick={() => setIsMobileMenuOpen(false)} 
+              className="p-2 text-ink hover:text-cobalt transition-colors cursor-pointer"
+              aria-label="Close menu"
+            >
+              <X size={22} />
+            </button>
+          </div>
+
+          {/* Editorial Menu Navigation Links with Staggered Visual Rhythm */}
+          <div className="flex flex-col gap-6 sm:gap-8 my-auto py-8">
+            {[
+              { num: '01', path: '/', label: 'HOME' },
+              { num: '02', path: '/collection', label: 'COLLECTION' },
+              { num: '03', path: '/catalogue', label: 'CATALOGUE' },
+              { num: '04', path: '/space', label: 'SPACE' },
+              { num: '05', path: '/journal', label: 'JOURNAL' }
+            ].map(item => (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="group flex items-baseline gap-4 text-3xl sm:text-4xl font-medium tracking-tighter uppercase hover:text-cobalt transition-colors font-sans"
+              >
+                <span className="text-[11px] font-mono text-cobalt tracking-widest font-bold">{item.num}</span>
+                <span className="group-hover:translate-x-3 transition-transform duration-300 leading-none">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Bottom Utility Strip */}
+          <div className="border-t border-black/10 pt-6 flex flex-col gap-4 text-[11px] uppercase tracking-widest font-sans font-bold text-ink/60">
+            <div className="flex justify-between items-center">
+              <div className="flex gap-4">
+                <Link to="/collection" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-cobalt transition-colors">
+                  All Works
+                </Link>
+                <span>•</span>
+                <Link to="/space" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-cobalt transition-colors">
+                  Space Story
+                </Link>
+              </div>
+              <span className="text-ink/40">KR / EN</span>
+            </div>
+            <div className="flex justify-between items-center text-[10px] text-ink/40 font-medium">
+              <span>© AMPH STUDIO</span>
+              <span>AMPLIFY YOUR ORDINARY</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Horizontal Quick-Tab Switcher (Kept compact for ultra-fast tab hopping on mobile) */}
+      <div className="flex md:hidden border-b border-black/10 bg-white/95 backdrop-blur-sm overflow-x-auto hide-scrollbar select-none">
         {[
           { path: '/', label: 'HOME' },
           { path: '/collection', label: 'COLLECTION' },
@@ -297,7 +430,7 @@ export function Navigation() {
           <Link 
             key={tab.path} 
             to={tab.path} 
-            className="flex-1 py-4 text-center text-[10px] font-black tracking-widest border-r border-black/5 last:border-r-0 hover:bg-silver/10 active:bg-silver/20 select-none cursor-pointer"
+            className="flex-1 py-3 text-center text-[9px] font-black tracking-widest border-r border-black/5 last:border-r-0 hover:bg-silver/10 active:bg-silver/20 select-none cursor-pointer whitespace-nowrap px-3"
           >
             {tab.label}
           </Link>
