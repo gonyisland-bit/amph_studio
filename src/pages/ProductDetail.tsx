@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getProductById, getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, ColorOption, generateProductCode } from "../lib/data";
 import { resolveColorHex } from "../lib/colorUtils";
-import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
+import { useWishlist } from "../lib/wishlist";
+import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight, Bookmark } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 import { ReadingProgressBar } from "../components/ReadingProgressBar";
@@ -18,6 +19,7 @@ export default function ProductDetail() {
   const [selectedMaterial, setSelectedMaterial] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
+  const { toggle: toggleWishlist, isSaved } = useWishlist();
 
   const [spacesSliderPos, setSpacesSliderPos] = useState({ canLeft: false, canRight: true });
   const [journalsSliderPos, setJournalsSliderPos] = useState({ canLeft: false, canRight: true });
@@ -732,22 +734,37 @@ export default function ProductDetail() {
               </table>
             </div>
             
-            {/* Purchase CTA */}
-            {product.cartEnabled === false ? (
-              <button 
-                disabled 
-                className="bg-black/10 text-ink/30 text-[11px] uppercase tracking-[0.2em] font-black py-5 px-8 rounded-none w-full cursor-not-allowed border border-black/5"
+            {/* Purchase CTA & Wishlist Bookmark */}
+            <div className="flex gap-2 w-full">
+              {product.cartEnabled === false ? (
+                <button 
+                  disabled 
+                  className="bg-black/10 text-ink/30 text-[11px] uppercase tracking-[0.2em] font-black py-5 px-8 rounded-none flex-1 cursor-not-allowed border border-black/5"
+                >
+                  Coming soon
+                </button>
+              ) : (
+                <button 
+                  onClick={handleAddToCart}
+                  className="bg-ink hover:bg-cobalt text-white text-[11px] uppercase tracking-[0.2em] font-black py-5 px-8 rounded-none flex-1 transition-all duration-300 shadow-md cursor-pointer"
+                >
+                  Add to Cart
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => toggleWishlist(product.id)}
+                className={`p-5 border transition-all duration-300 flex items-center justify-center cursor-pointer shrink-0 rounded-none ${
+                  isSaved(product.id)
+                    ? 'bg-cobalt text-white border-cobalt shadow-sm'
+                    : 'bg-white text-ink/70 border-black/15 hover:border-black/40 hover:text-ink hover:bg-black/5'
+                }`}
+                title={isSaved(product.id) ? "Remove from Saved" : "Save to Wishlist"}
+                aria-label="Save to Wishlist"
               >
-                Coming soon
+                <Bookmark size={18} className={isSaved(product.id) ? "fill-current" : ""} />
               </button>
-            ) : (
-              <button 
-                onClick={handleAddToCart}
-                className="bg-ink hover:bg-cobalt text-white text-[11px] uppercase tracking-[0.2em] font-black py-5 px-8 rounded-none w-full transition-all duration-300 shadow-md cursor-pointer"
-              >
-                Add to Cart
-              </button>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -1228,8 +1245,21 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Right: Action Button */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Right: Action Button & Wishlist */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => toggleWishlist(product.id)}
+              className={`p-2.5 sm:p-3 border transition-all duration-300 flex items-center justify-center cursor-pointer shrink-0 rounded-none ${
+                isSaved(product.id)
+                  ? 'bg-cobalt text-white border-cobalt shadow-xs'
+                  : 'bg-white text-ink/70 border-black/15 hover:border-black/40 hover:text-ink'
+              }`}
+              title={isSaved(product.id) ? "Remove from Saved" : "Save to Wishlist"}
+              aria-label="Save to Wishlist"
+            >
+              <Bookmark size={14} className={isSaved(product.id) ? "fill-current" : ""} />
+            </button>
             {product.cartEnabled === false ? (
               <button 
                 disabled 

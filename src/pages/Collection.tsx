@@ -4,7 +4,8 @@ import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultH
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 import { resolveColorHex } from "../lib/colorUtils";
-import { LayoutGrid, Grid2X2, List, ArrowRight, SlidersHorizontal, ChevronDown, ChevronUp, X, RotateCcw } from "lucide-react";
+import { useWishlist } from "../lib/wishlist";
+import { LayoutGrid, Grid2X2, List, ArrowRight, SlidersHorizontal, ChevronDown, ChevronUp, X, RotateCcw, Bookmark } from "lucide-react";
 
 const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
 const CATEGORY_LABELS: Record<string, string> = {
@@ -28,6 +29,9 @@ export default function Collection() {
   const [selectedMaterial, setSelectedMaterial] = useState<string>('All');
   const [selectedColor, setSelectedColor] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'curated' | 'newest' | 'name'>('curated');
+
+  // Wishlist Hook
+  const { toggle: toggleWishlist, isSaved } = useWishlist();
 
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search');
@@ -472,6 +476,25 @@ export default function Collection() {
                 </span>
               </div>
 
+              {/* Wishlist Bookmark Button on top-right */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleWishlist(product.id);
+                }}
+                className={`absolute top-5 right-5 z-30 p-2 rounded-full backdrop-blur-md transition-all duration-300 cursor-pointer ${
+                  isSaved(product.id)
+                    ? 'bg-cobalt text-white shadow-md'
+                    : 'bg-black/30 text-white/80 hover:text-white hover:bg-black/60 border border-white/10 opacity-0 group-hover:opacity-100'
+                }`}
+                title={isSaved(product.id) ? "Remove from Saved" : "Save to Wishlist"}
+                aria-label="Save to Wishlist"
+              >
+                <Bookmark size={13} className={isSaved(product.id) ? "fill-current" : ""} />
+              </button>
+
               {/* Product Name & Subtitle on bottom-left */}
               <div className="absolute bottom-6 left-6 right-6 z-20 pointer-events-none">
                 <h2 className="text-base sm:text-lg md:text-xl font-bold font-sans tracking-tight leading-tight text-white drop-shadow-md group-hover:text-cobalt transition-colors">
@@ -519,7 +542,7 @@ export default function Collection() {
             <Link
               key={product.id}
               to={`/product/${product.id}`}
-              className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 hover:bg-off-white transition-colors duration-200 reveal gap-4"
+              className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 hover:bg-off-white transition-colors duration-200 reveal gap-4 relative"
             >
               {/* Left info & media */}
               <div className="flex items-center gap-4 sm:gap-6 min-w-0 flex-1">
@@ -551,10 +574,28 @@ export default function Collection() {
               </div>
 
               {/* Right Details & Action */}
-              <div className="flex items-center gap-6 sm:gap-12 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-black/5 pt-3 sm:pt-0">
+              <div className="flex items-center gap-4 sm:gap-8 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-black/5 pt-3 sm:pt-0">
                 <div className="flex items-center gap-2">
                   {renderChips(product)}
                 </div>
+                
+                {/* Wishlist button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleWishlist(product.id);
+                  }}
+                  className={`p-2 transition-colors rounded-none cursor-pointer ${
+                    isSaved(product.id) ? 'text-cobalt' : 'text-ink/30 hover:text-cobalt'
+                  }`}
+                  title={isSaved(product.id) ? "Remove from Saved" : "Save to Wishlist"}
+                  aria-label="Save to Wishlist"
+                >
+                  <Bookmark size={15} className={isSaved(product.id) ? "fill-cobalt" : ""} />
+                </button>
+
                 <div className="flex items-center gap-2 text-ink/40 group-hover:text-cobalt text-[10px] uppercase font-black tracking-widest shrink-0">
                   <span>View Object</span>
                   <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />

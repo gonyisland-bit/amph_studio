@@ -1,9 +1,11 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import { LogOut, User, Search, X, ShoppingBag, ClipboardList, Menu } from "lucide-react";
+import { LogOut, User, Search, X, ShoppingBag, ClipboardList, Menu, Bookmark } from "lucide-react";
 import { getProducts, getSpaces, getJournals, getHomeSettings, Product, Category, HomeSettings } from "../lib/data";
+import { useWishlist } from "../lib/wishlist";
 import { CartDrawer } from "./CartDrawer";
 import { SearchModal } from "./SearchModal";
+import { WishlistDrawer } from "./WishlistDrawer";
 
 const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
 
@@ -11,6 +13,8 @@ export function Navigation() {
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
   const [customerEmail, setCustomerEmail] = useState<string | null>(localStorage.getItem('customer_email'));
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const { count: wishlistCount } = useWishlist();
   const [products, setProducts] = useState<Product[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
@@ -196,6 +200,22 @@ export function Navigation() {
 
             <span className="hidden lg:inline text-ink/30 text-[10px] tracking-widest font-sans font-bold">KR / EN</span>
 
+            {/* Wishlist Saved Objects Button */}
+            <button
+              type="button"
+              onClick={() => setIsWishlistOpen(true)}
+              className="text-ink/60 hover:text-cobalt transition-colors flex items-center justify-center relative cursor-pointer p-1"
+              title="Saved Objects (Wishlist)"
+              aria-label="View Saved Objects"
+            >
+              <Bookmark size={16} className={wishlistCount > 0 ? "fill-cobalt text-cobalt" : ""} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-cobalt text-white text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
+
             {/* Cart Icon or Admin Orders Icon */}
             {isAuth ? (
               <Link 
@@ -353,6 +373,7 @@ export function Navigation() {
       </div>
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <WishlistDrawer isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
       <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)} />
     </>
   );
