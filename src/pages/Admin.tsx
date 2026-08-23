@@ -3442,12 +3442,23 @@ export default function Admin() {
                           <EditorInput label="Material (e.g., Oak, Steel)" value={form.material || ''} onChange={val => setForm({...form, material: val})} />
                           {/* Quick Material Selection Chips from other products */}
                           {(() => {
-                            const existingMaterials: string[] = Array.from(
-                              new Set<string>(
-                                products
-                                  .flatMap(p => p.material ? p.material.split(',').map(m => m.trim()).filter(Boolean) : [])
-                              )
-                            ).filter(Boolean);
+                            const materialMap = new Map<string, string>();
+                            products.forEach(p => {
+                              if (p.material) {
+                                p.material.split(',').forEach(m => {
+                                  const trimmed = m.trim();
+                                  if (trimmed) {
+                                    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+                                    const key = formatted.toLowerCase();
+                                    if (!materialMap.has(key)) {
+                                      materialMap.set(key, formatted);
+                                    }
+                                  }
+                                });
+                              }
+                            });
+
+                            const existingMaterials = Array.from(materialMap.values());
 
                             const currentMaterials = (form.material || '')
                               .split(',')
@@ -3461,7 +3472,16 @@ export default function Admin() {
                               } else {
                                 nextMaterials = [...currentMaterials, mat];
                               }
-                              setForm({ ...form, material: nextMaterials.join(', ') });
+                              // Clean and remove any duplicates case-insensitively
+                              const cleanMap = new Map<string, string>();
+                              nextMaterials.forEach(m => {
+                                const tr = m.trim();
+                                if (tr) {
+                                  const formatted = tr.charAt(0).toUpperCase() + tr.slice(1);
+                                  cleanMap.set(formatted.toLowerCase(), formatted);
+                                }
+                              });
+                              setForm({ ...form, material: Array.from(cleanMap.values()).join(', ') });
                             };
 
                             if (existingMaterials.length === 0) return null;

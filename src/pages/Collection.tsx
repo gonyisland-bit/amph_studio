@@ -38,6 +38,13 @@ export default function Collection() {
     document.title = "Collection — Amph";
   }, []);
 
+  // Helper to format material name consistently (e.g. "plastic" -> "Plastic")
+  const formatMaterialName = (raw: string): string => {
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  };
+
   // Dynamically extract materials that actually exist in the products of the active category
   const availableMaterials = React.useMemo(() => {
     const relevantProducts = activeCategory === 'All'
@@ -47,16 +54,21 @@ export default function Collection() {
           return cat === activeCategory;
         });
 
-    const set = new Set<string>();
+    const materialMap = new Map<string, string>();
     relevantProducts.forEach(p => {
       if (p.material) {
         p.material.split(',').forEach(m => {
-          const trimmed = m.trim();
-          if (trimmed) set.add(trimmed);
+          const formatted = formatMaterialName(m);
+          if (formatted) {
+            const key = formatted.toLowerCase();
+            if (!materialMap.has(key)) {
+              materialMap.set(key, formatted);
+            }
+          }
         });
       }
     });
-    return ['All', ...Array.from(set)];
+    return ['All', ...Array.from(materialMap.values())];
   }, [products, activeCategory]);
 
   // Dynamically extract colors that actually exist in the products of the active category
@@ -68,35 +80,6 @@ export default function Collection() {
           return cat === activeCategory;
         });
 
-    const set = new Set<string>();
-    relevantProducts.forEach(p => {
-      if (p.bodyColors && Array.isArray(p.bodyColors)) {
-        p.bodyColors.forEach((c: any) => {
-          const name = typeof c === 'string' ? c : c?.name;
-          if (name && name.trim()) set.add(name.trim());
-        });
-      }
-      if (p.fabricColors && Array.isArray(p.fabricColors)) {
-        p.fabricColors.forEach((c: any) => {
-          const name = typeof c === 'string' ? c : c?.name;
-          if (name && name.trim()) set.add(name.trim());
-        });
-      }
-      if (p.color) {
-        if (Array.isArray(p.color)) {
-          p.color.forEach((c: any) => {
-            const name = c?.name;
-            if (name && name.trim()) set.add(name.trim());
-          });
-        } else if (typeof p.color === 'string') {
-          p.color.split(',').forEach(c => {
-            const name = c.trim();
-            if (name) set.add(name);
-          });
-        }
-      }
-    });
-
     const colorMap: Record<string, string> = {
       'Oak': '#d7c29d', 'Ash': '#e5dec9', 'Walnut': '#4b382a', 'Steel': '#8a9597',
       'Black': '#1c1c1c', 'White': '#ffffff', 'Cobalt': '#0047AB', 'Orange': '#FF4500',
@@ -104,11 +87,44 @@ export default function Collection() {
       'Cream': '#FFFDD0', 'Beige': '#F5F5DC', 'Natural': '#e8d8c1'
     };
 
-    const list: { name: string; hex: string }[] = [{ name: 'All', hex: '' }];
-    Array.from(set).forEach(name => {
-      list.push({ name, hex: colorMap[name] || '#888888' });
+    const colorItemsMap = new Map<string, { name: string; hex: string }>();
+    relevantProducts.forEach(p => {
+      const addColor = (nameStr: string) => {
+        if (!nameStr) return;
+        const formatted = nameStr.trim().charAt(0).toUpperCase() + nameStr.trim().slice(1);
+        const key = formatted.toLowerCase();
+        if (formatted && !colorItemsMap.has(key)) {
+          colorItemsMap.set(key, {
+            name: formatted,
+            hex: colorMap[formatted] || '#888888'
+          });
+        }
+      };
+
+      if (p.bodyColors && Array.isArray(p.bodyColors)) {
+        p.bodyColors.forEach((c: any) => {
+          const name = typeof c === 'string' ? c : c?.name;
+          if (name) addColor(name);
+        });
+      }
+      if (p.fabricColors && Array.isArray(p.fabricColors)) {
+        p.fabricColors.forEach((c: any) => {
+          const name = typeof c === 'string' ? c : c?.name;
+          if (name) addColor(name);
+        });
+      }
+      if (p.color) {
+        if (Array.isArray(p.color)) {
+          p.color.forEach((c: any) => {
+            if (c?.name) addColor(c.name);
+          });
+        } else if (typeof p.color === 'string') {
+          p.color.split(',').forEach(c => addColor(c));
+        }
+      }
     });
-    return list;
+
+    return [{ name: 'All', hex: '' }, ...Array.from(colorItemsMap.values())];
   }, [products, activeCategory]);
 
   // If active filter is no longer available in current category, auto reset to 'All'
