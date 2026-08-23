@@ -3,14 +3,14 @@ import { useEffect, useState, useRef } from "react";
 import { LogOut, User, Search, X, ShoppingBag, ClipboardList, Menu } from "lucide-react";
 import { getProducts, getSpaces, getJournals, getHomeSettings, Product, Category, HomeSettings } from "../lib/data";
 import { CartDrawer } from "./CartDrawer";
+import { SearchModal } from "./SearchModal";
 
 const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
 
 export function Navigation() {
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
   const [customerEmail, setCustomerEmail] = useState<string | null>(localStorage.getItem('customer_email'));
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
@@ -116,6 +116,18 @@ export function Navigation() {
     };
   }, []);
 
+  // Global Cmd+K / Ctrl+K keyboard shortcut for Search Modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchModalOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleAdminLogout = () => {
     localStorage.removeItem('admin_auth');
     setIsAuth(false);
@@ -130,34 +142,6 @@ export function Navigation() {
     window.dispatchEvent(new Event('customer_auth_change'));
     navigate('/');
   };
-
-  const handleSearchSubmit = () => {
-    if (!searchQuery.trim()) return;
-    const q = searchQuery.toLowerCase().trim();
-    
-    if (q.includes('chair')) {
-      navigate('/collection?category=Chairs');
-    } else if (q.includes('furni')) {
-      navigate('/collection?category=Furniture');
-    } else if (q.includes('light')) {
-      navigate('/collection?category=Lighting');
-    } else if (q.includes('obj')) {
-      navigate('/collection?category=Objects');
-    } else {
-      navigate(`/collection?search=${encodeURIComponent(q)}`);
-    }
-    setShowSearch(false);
-    setSearchQuery('');
-  };
-
-  // Get matching suggestions dynamically
-  const suggestionsCategories = searchQuery.trim() 
-    ? CATEGORIES.filter(cat => cat.toLowerCase().includes(searchQuery.toLowerCase().trim()))
-    : [];
-
-  const suggestionsProducts = searchQuery.trim()
-    ? products.filter(prod => prod.name.toLowerCase().includes(searchQuery.toLowerCase().trim())).slice(0, 5)
-    : [];
 
   return (
     <>
@@ -199,85 +183,16 @@ export function Navigation() {
  
           {/* Right Actions */}
           <div className="flex justify-end gap-3.5 sm:gap-4 md:gap-6 items-center">
-            {/* Slide-out/Fade-in search input bar */}
-            <div className="flex items-center gap-2 relative">
-              {showSearch && (
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder="Search..." 
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') handleSearchSubmit();
-                    }}
-                    className="border-b border-black/20 outline-none text-[10px] uppercase tracking-wider py-1 bg-transparent w-24 sm:w-28 md:w-40 animate-in slide-in-from-right-2 duration-300 font-sans"
-                    autoFocus
-                  />
-
-                  {/* Real-time suggestions dropdown list */}
-                  {searchQuery.trim().length > 0 && (suggestionsCategories.length > 0 || suggestionsProducts.length > 0) && (
-                    <div className="absolute right-0 top-full mt-2 bg-white border border-black/10 shadow-2xl w-48 md:w-56 z-50 text-[9px] uppercase font-sans tracking-widest text-ink rounded-[2px] overflow-hidden">
-                      {suggestionsCategories.length > 0 && (
-                        <div className="border-b border-black/5 p-2">
-                          <p className="text-[7px] text-ink/30 mb-1 font-bold">Categories</p>
-                          {suggestionsCategories.map(cat => (
-                            <button
-                              key={cat}
-                              onClick={() => {
-                                navigate(`/collection?category=${cat}`);
-                                setShowSearch(false);
-                                setSearchQuery('');
-                              }}
-                              className="w-full text-left py-1 hover:text-cobalt transition-colors block cursor-pointer font-bold"
-                            >
-                              {cat}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {suggestionsProducts.length > 0 && (
-                        <div className="p-2">
-                          <p className="text-[7px] text-ink/30 mb-1 font-bold">Products</p>
-                          {suggestionsProducts.map(prod => (
-                            <button
-                              key={prod.id}
-                              onClick={() => {
-                                navigate(`/product/${prod.id}`);
-                                setShowSearch(false);
-                                setSearchQuery('');
-                              }}
-                              className="w-full text-left py-1 hover:text-cobalt transition-colors block truncate cursor-pointer font-bold"
-                            >
-                              {prod.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-              <button 
-                onClick={() => {
-                  if (showSearch && searchQuery.trim()) {
-                    handleSearchSubmit();
-                  } else {
-                    setShowSearch(!showSearch);
-                  }
-                }} 
-                className="text-ink/60 hover:text-cobalt transition-colors focus:outline-none cursor-pointer p-1"
-                title="Search Products"
-              >
-                <Search size={16} />
-              </button>
-              {showSearch && (
-                <button onClick={() => { setShowSearch(false); setSearchQuery(''); }} className="text-ink/30 hover:text-orange transition-colors">
-                  <X size={12} />
-                </button>
-              )}
-            </div>
+            {/* Search Modal Trigger Button */}
+            <button 
+              onClick={() => setIsSearchModalOpen(true)} 
+              className="text-ink/60 hover:text-cobalt transition-colors focus:outline-none cursor-pointer flex items-center gap-1.5 p-1 group"
+              title="Search (⌘K)"
+              aria-label="Search"
+            >
+              <Search size={16} />
+              <span className="hidden xl:inline text-[9px] font-mono text-ink/30 border border-black/10 px-1 py-0.2 rounded-[2px] group-hover:border-cobalt/30 group-hover:text-cobalt">⌘K</span>
+            </button>
 
             <span className="hidden lg:inline text-ink/30 text-[10px] tracking-widest font-sans font-bold">KR / EN</span>
 
@@ -438,6 +353,7 @@ export function Navigation() {
       </div>
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)} />
     </>
   );
 }

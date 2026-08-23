@@ -233,7 +233,7 @@ export default function Home() {
                         nopin="nopin"
                       />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent z-10 pointer-events-none" />
                   </div>
                 </Link>
               );

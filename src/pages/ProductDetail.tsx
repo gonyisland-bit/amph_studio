@@ -15,9 +15,23 @@ export default function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedMaterial, setSelectedMaterial] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
 
   const [spacesSliderPos, setSpacesSliderPos] = useState({ canLeft: false, canRight: true });
   const [journalsSliderPos, setJournalsSliderPos] = useState({ canLeft: false, canRight: true });
+
+  // Scroll listener to toggle Sticky Bottom Purchase Bar
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 450) {
+        setShowStickyBar(true);
+      } else {
+        setShowStickyBar(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleAddToCart = () => {
     if (!product || product.cartEnabled === false) return;
@@ -1186,6 +1200,53 @@ export default function ProductDetail() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sticky Bottom Purchase Bar (Floating Action Bar on Scroll) */}
+      {product && (
+        <div 
+          className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-black/10 px-4 sm:px-8 md:px-12 py-3 sm:py-3.5 shadow-2xl transition-all duration-300 flex items-center justify-between gap-4 ${
+            showStickyBar ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+          }`}
+        >
+          {/* Left: Thumbnail & Info */}
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-silver/10 overflow-hidden flex-shrink-0 border border-black/5">
+              <MediaRenderer src={displayImages[0]} alt={product.name} className="w-full h-full object-cover" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-xs sm:text-sm uppercase tracking-tight text-ink truncate font-sans">{product.name}</span>
+                <span className="caption-nano text-orange px-2 py-0.5 border border-orange/30 rounded-full font-bold hidden sm:inline-block">{product.category}</span>
+              </div>
+              <div className="text-[10px] text-ink/50 uppercase tracking-wider truncate flex items-center gap-1.5 font-medium">
+                {selectedColor && <span>Color: {selectedColor}</span>}
+                {selectedColor && selectedMaterial && <span>•</span>}
+                {selectedMaterial && <span>{selectedMaterial}</span>}
+                {!selectedColor && !selectedMaterial && <span>{product.subTitle || 'Crafted Edition'}</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Action Button */}
+          <div className="flex items-center gap-3 shrink-0">
+            {product.cartEnabled === false ? (
+              <button 
+                disabled 
+                className="bg-black/10 text-ink/30 text-[10px] uppercase tracking-widest font-black px-5 sm:px-8 py-2.5 sm:py-3 cursor-not-allowed border border-black/5"
+              >
+                Coming soon
+              </button>
+            ) : (
+              <button 
+                onClick={handleAddToCart}
+                className="bg-ink hover:bg-cobalt text-white text-[10px] uppercase tracking-widest font-black px-5 sm:px-8 py-2.5 sm:py-3 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
+              >
+                Add to Cart
+              </button>
+            )}
           </div>
         </div>
       )}
