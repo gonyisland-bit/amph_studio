@@ -4,6 +4,7 @@ import { MoveLeft, MoveRight, X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } fr
 import { getJournalById, getJournals, getProducts, JournalArticle, Product } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
+import { ReadingProgressBar } from "../components/ReadingProgressBar";
 
 export default function JournalDetail() {
   const { id } = useParams<{ id: string }>();
@@ -263,6 +264,7 @@ export default function JournalDetail() {
 
   return (
     <div className="flex flex-col flex-grow bg-white">
+      <ReadingProgressBar />
       {/* Immersive Article Hero (Identical to Space Hero Layout) */}
       <div 
         onClick={() => {

@@ -4,6 +4,7 @@ import { getProductById, getProducts, getSpaces, getJournals, Product, SpaceMode
 import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
+import { ReadingProgressBar } from "../components/ReadingProgressBar";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -444,6 +445,7 @@ export default function ProductDetail() {
 
   return (
     <div className="flex flex-col flex-grow bg-white">
+      <ReadingProgressBar />
       {toastMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-ink text-white px-8 py-4 uppercase text-[10px] tracking-widest font-black shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300">
           {toastMessage}

@@ -4,6 +4,7 @@ import { getSpaces, getProducts, SpaceModel, Product } from "../lib/data";
 import { MoveRight, X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
+import { ReadingProgressBar } from "../components/ReadingProgressBar";
 
 export default function SpaceDetail() {
   const { id } = useParams<{ id: string }>();
@@ -266,7 +267,8 @@ export default function SpaceDetail() {
   };
 
   return (
-    <div className="flex flex-col flex-grow bg-white font-sans text-ink">
+    <div className="flex flex-col flex-grow bg-white">
+      <ReadingProgressBar />
       {/* Immersive Hero Header */}
       <div 
         onClick={() => {
