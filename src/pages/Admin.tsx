@@ -376,7 +376,7 @@ export default function Admin() {
 
   const [form, setForm] = useState<any>(emptyProduct);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [hotspotEditorTarget, setHotspotEditorTarget] = useState<{ imageSrc: string; title: string; hotspots: HotspotPin[]; onSave: (updated: HotspotPin[]) => void } | null>(null);
+  const [hotspotEditorTarget, setHotspotEditorTarget] = useState<{ imageSrc: string; title: string; hotspots: HotspotPin[]; onSave: (updated: HotspotPin[]) => void; initialAspectMode?: 'story' | 'hero' | 'natural' } | null>(null);
   
   // Color Assets Dashboard: Drag & drop reorder and usage list expansion states
   const [draggedColorIndex, setDraggedColorIndex] = useState<number | null>(null);
@@ -1539,6 +1539,7 @@ export default function Admin() {
                           imageSrc: cb.value,
                           title: `Media #${i + 1} Interactive Hotspots`,
                           hotspots: cb.hotspots || (form.image === cb.value ? (form.hotspots || []) : []),
+                          initialAspectMode: form.image === cb.value ? 'hero' : 'story',
                           onSave: (updated) => {
                             const blockId = cb.id;
                             setForm(prev => {
@@ -4546,6 +4547,7 @@ export default function Admin() {
           hotspots={hotspotEditorTarget.hotspots}
           onSaveHotspots={hotspotEditorTarget.onSave}
           products={products}
+          initialAspectMode={hotspotEditorTarget.initialAspectMode}
         />
       )}
     </div>

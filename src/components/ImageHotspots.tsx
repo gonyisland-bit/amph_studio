@@ -29,6 +29,7 @@ export function ImageHotspots({
 }: ImageHotspotsProps) {
   const [activePinId, setActivePinId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const leaveTimerRef = useRef<any>(null);
 
   // Close active popup when clicking outside (especially on mobile)
   useEffect(() => {
@@ -42,8 +43,33 @@ export function ImageHotspots({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
+      if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
     };
   }, []);
+
+  const handlePinMouseEnter = (pinId: string) => {
+    if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+    setActivePinId(pinId);
+  };
+
+  const handlePinMouseLeave = () => {
+    if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+    // Grace period of 350ms so user can smoothly move mouse from pin dot into popup card
+    leaveTimerRef.current = setTimeout(() => {
+      setActivePinId(null);
+    }, 350);
+  };
+
+  const handlePopupMouseEnter = () => {
+    if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+  };
+
+  const handlePopupMouseLeave = () => {
+    if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+    leaveTimerRef.current = setTimeout(() => {
+      setActivePinId(null);
+    }, 300);
+  };
 
   const validHotspots = (hotspots || []).filter(h => h && typeof h.x === 'number' && typeof h.y === 'number');
 
@@ -76,22 +102,23 @@ export function ImageHotspots({
         if (isNearRight) popupXClass = "right-0 translate-x-0";
         if (isNearLeft) popupXClass = "left-0 translate-x-0";
 
-        let popupYClass = "top-full mt-3";
-        if (isNearBottom) popupYClass = "bottom-full mb-3";
+        let popupYClass = "top-full mt-2";
+        if (isNearBottom) popupYClass = "bottom-full mb-2";
 
         return (
           <div
             key={pin.id || `${pin.x}-${pin.y}`}
             className="absolute z-30 -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
-            onMouseEnter={() => setActivePinId(pin.id)}
-            onMouseLeave={() => setActivePinId(null)}
+            onMouseEnter={() => handlePinMouseEnter(pin.id)}
+            onMouseLeave={handlePinMouseLeave}
           >
             {/* Interactive Pin Button */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
                 setActivePinId(isActive ? null : pin.id);
               }}
               className={`relative group/pin flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer ${
@@ -107,11 +134,22 @@ export function ImageHotspots({
               <Plus size={12} className={`transition-transform duration-300 ${isActive ? 'rotate-45' : 'group-hover/pin:rotate-90'}`} />
             </button>
 
+            {/* Invisible hover bridge zone connecting pin button to popup card so mouse never loses focus */}
+            {isActive && (
+              <div 
+                className={`absolute ${isNearBottom ? 'bottom-full h-4 w-full left-0' : 'top-full h-4 w-full left-0'} z-40`}
+                onMouseEnter={handlePopupMouseEnter}
+                onMouseLeave={handlePopupMouseLeave}
+              />
+            )}
+
             {/* Hotspot Preview Tooltip Card */}
             {(isActive && product) && (
               <div 
                 className={`absolute ${popupXClass} ${popupYClass} z-50 w-56 sm:w-64 bg-white/95 backdrop-blur-md p-3 border border-black/15 shadow-2xl animate-in fade-in zoom-in-95 duration-200 pointer-events-auto rounded-none`}
                 onClick={(e) => e.stopPropagation()}
+                onMouseEnter={handlePopupMouseEnter}
+                onMouseLeave={handlePopupMouseLeave}
               >
                 <div className="flex gap-3 items-center">
                   <div className="w-14 h-14 bg-silver/10 overflow-hidden flex-shrink-0 border border-black/5 relative">
