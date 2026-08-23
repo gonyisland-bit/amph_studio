@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { getProducts, Product, Category, getHomeSettings, HomeSettings, defaultHomeSettings, ColorOption, generateProductCode } from "../lib/data";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
+import { useWishlist } from "../lib/wishlist";
+import { Bookmark } from "lucide-react";
 
 export default function Catalogue() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -10,6 +12,9 @@ export default function Catalogue() {
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState("");
   const [showSpecs, setShowSpecs] = useState(true);
+
+  // Wishlist Hook
+  const { toggle: toggleWishlist, isSaved } = useWishlist();
 
   useScrollReveal([products, activeCategory, searchQuery]);
 
@@ -119,6 +124,25 @@ export default function Catalogue() {
                       {p.category}
                     </span>
                   </div>
+
+                  {/* Wishlist Bookmark Button on top-right */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleWishlist(p.id);
+                    }}
+                    className={`absolute top-2 right-2 z-20 p-1.5 rounded-full backdrop-blur-md transition-all duration-300 cursor-pointer ${
+                      isSaved(p.id)
+                        ? 'bg-cobalt text-white shadow-md'
+                        : 'bg-white/90 text-ink/70 hover:text-white hover:bg-cobalt border border-black/10 opacity-0 group-hover:opacity-100'
+                    }`}
+                    title={isSaved(p.id) ? "Remove from Saved" : "Save to Wishlist"}
+                    aria-label="Save to Wishlist"
+                  >
+                    <Bookmark size={12} className={isSaved(p.id) ? "fill-current" : ""} />
+                  </button>
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-tight text-ink group-hover:text-cobalt transition-colors truncate mb-1">
                   {p.name}

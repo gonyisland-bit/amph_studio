@@ -143,10 +143,11 @@ export function ImageHotspots({
               />
             )}
 
-            {/* Hotspot Preview Tooltip Card */}
+            {/* Hotspot Preview Tooltip Card — clickable whole card */}
             {(isActive && product) && (
-              <div 
-                className={`absolute ${popupXClass} ${popupYClass} z-50 w-56 sm:w-64 bg-white/95 backdrop-blur-md p-3 border border-black/15 shadow-2xl animate-in fade-in zoom-in-95 duration-200 pointer-events-auto rounded-none`}
+              <Link 
+                to={`/product/${product.id}`}
+                className={`absolute ${popupXClass} ${popupYClass} z-50 w-56 sm:w-64 bg-white/95 hover:bg-white backdrop-blur-md p-3 border border-black/15 hover:border-cobalt shadow-2xl animate-in fade-in zoom-in-95 duration-200 pointer-events-auto rounded-none block cursor-pointer transition-all group/popup text-ink`}
                 onClick={(e) => e.stopPropagation()}
                 onMouseEnter={handlePopupMouseEnter}
                 onMouseLeave={handlePopupMouseLeave}
@@ -156,12 +157,12 @@ export function ImageHotspots({
                     <MediaRenderer
                       src={product.images[0]}
                       alt={product.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover/popup:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div className="min-w-0 flex-1">
                     <span className="caption-nano text-orange font-bold block mb-0.5 uppercase tracking-wider">{product.category}</span>
-                    <h4 className="text-[11px] font-bold uppercase tracking-tight text-ink truncate font-sans">
+                    <h4 className="text-[11px] font-bold uppercase tracking-tight text-ink group-hover/popup:text-cobalt transition-colors truncate font-sans">
                       {product.name}
                     </h4>
                     {product.price > 0 && (
@@ -169,16 +170,13 @@ export function ImageHotspots({
                         ${Number(product.price).toLocaleString()}
                       </p>
                     )}
-                    <Link
-                      to={`/product/${product.id}`}
-                      className="mt-1.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-cobalt hover:text-ink transition-colors font-sans"
-                    >
+                    <span className="mt-1.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-cobalt group-hover/popup:text-ink transition-colors font-sans">
                       <span>View Object</span>
-                      <ArrowRight size={10} />
-                    </Link>
+                      <ArrowRight size={10} className="group-hover/popup:translate-x-0.5 transition-transform" />
+                    </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             )}
           </div>
         );
