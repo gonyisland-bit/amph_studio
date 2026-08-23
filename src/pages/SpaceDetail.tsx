@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { getSpaces, getProducts, SpaceModel, Product } from "../lib/data";
 import { MoveRight, X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
+import { ImageHotspots } from "../components/ImageHotspots";
 import { useScrollReveal } from "../lib/useScrollReveal";
 import { ReadingProgressBar } from "../components/ReadingProgressBar";
 
@@ -10,6 +11,7 @@ export default function SpaceDetail() {
   const { id } = useParams<{ id: string }>();
   const [space, setSpace] = useState<SpaceModel | null>(null);
   const [appliedProducts, setAppliedProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [allSpaces, setAllSpaces] = useState<SpaceModel[]>([]);
   
   // Fullscreen Lightbox State
@@ -97,6 +99,8 @@ export default function SpaceDetail() {
   useScrollReveal([space, appliedProducts]);
 
   useEffect(() => {
+    getProducts().then(setAllProducts).catch(console.error);
+
     if (id) {
       getSpaces().then(all => {
         setAllSpaces(all);
@@ -271,20 +275,22 @@ export default function SpaceDetail() {
       <ReadingProgressBar />
       {/* Immersive Hero Header */}
       <div 
-        onClick={() => {
-          const heroImg = displayImages[0] || space.image;
-          const idx = allImages.indexOf(heroImg);
-          setLightboxIndex(idx !== -1 ? idx : 0);
-          setZoomScale(1);
-        }}
-        className="relative w-full h-[50vh] min-h-[350px] sm:h-[70vh] md:h-[95vh] bg-black overflow-hidden cursor-zoom-in group"
+        className="relative w-full h-[50vh] min-h-[350px] sm:h-[70vh] md:h-[95vh] bg-black overflow-hidden group"
       >
-        <MediaRenderer 
+        <ImageHotspots 
           src={displayImages[0] || space.image} 
           alt={space.title} 
-          className="w-full h-full opacity-80 group-hover:scale-105 transition-transform duration-1000"
+          hotspots={space.hotspots || []}
+          products={allProducts}
+          className="w-full h-full cursor-zoom-in"
+          imageClassName="w-full h-full opacity-80 group-hover:scale-105 transition-transform duration-1000 object-cover"
           loading="eager"
-          fetchpriority="high"
+          onClick={() => {
+            const heroImg = displayImages[0] || space.image;
+            const idx = allImages.indexOf(heroImg);
+            setLightboxIndex(idx !== -1 ? idx : 0);
+            setZoomScale(1);
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
         
@@ -328,18 +334,21 @@ export default function SpaceDetail() {
                 return (
                   <div key={idx} className="flex flex-col reveal group w-full">
                     <div 
-                      onClick={() => {
-                        setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
-                        setZoomScale(1);
-                      }}
                       className="w-full aspect-[4/3] bg-transparent overflow-hidden border border-black/5 relative rounded-none cursor-zoom-in"
                     >
-                      <MediaRenderer 
+                      <ImageHotspots 
                         src={imageUrl} 
                         alt={`Space view ${idx + 1}`} 
-                        className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
+                        hotspots={block.hotspots || []}
+                        products={allProducts}
+                        className="w-full h-full"
+                        imageClassName="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
                         loading="lazy" 
                         nopin="nopin"
+                        onClick={() => {
+                          setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
+                          setZoomScale(1);
+                        }}
                       />
                     </div>
                     {textContent && (

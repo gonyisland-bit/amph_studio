@@ -25,7 +25,8 @@ export default async function handler(req: any, res: any) {
       { name: 'featured', type: 'BOOLEAN DEFAULT false' },
       { name: 'relatedJournalIds', type: 'TEXT' },
       { name: 'appliedProductIds', type: 'TEXT' },
-      { name: 'contentBlocks', type: 'TEXT' }
+      { name: 'contentBlocks', type: 'TEXT' },
+      { name: 'hotspots', type: 'TEXT' }
     ];
     for (const col of columns) {
       try {
@@ -50,6 +51,7 @@ export default async function handler(req: any, res: any) {
         relatedJournalIds: typeof r.relatedJournalIds === 'string' ? JSON.parse(r.relatedJournalIds) : (r.relatedJournalIds || []),
         appliedProductIds: typeof r.appliedProductIds === 'string' ? JSON.parse(r.appliedProductIds) : (r.appliedProductIds || []),
         contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
+        hotspots: typeof r.hotspots === 'string' ? JSON.parse(r.hotspots) : (r.hotspots || [])
       }));
       return res.status(200).json(parsedRows);
     } catch (error) {
@@ -60,7 +62,7 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST' || req.method === 'PUT') {
     try {
-      const { id: bodyId, title, description, category, date, image, featured, relatedJournalIds, appliedProductIds, contentBlocks } = req.body;
+      const { id: bodyId, title, description, category, date, image, featured, relatedJournalIds, appliedProductIds, contentBlocks, hotspots } = req.body;
       const targetId = id || bodyId;
 
       if (!targetId) return res.status(400).json({ error: 'ID is required' });
@@ -68,7 +70,7 @@ export default async function handler(req: any, res: any) {
       await sql`
         INSERT INTO journals (
           id, title, description, category, date, image, featured, 
-          "relatedJournalIds", "appliedProductIds", "contentBlocks"
+          "relatedJournalIds", "appliedProductIds", "contentBlocks", hotspots
         )
         VALUES (
           ${targetId}, 
@@ -80,7 +82,8 @@ export default async function handler(req: any, res: any) {
           ${!!featured}, 
           ${JSON.stringify(relatedJournalIds || [])}, 
           ${JSON.stringify(appliedProductIds || [])}, 
-          ${JSON.stringify(contentBlocks || [])}
+          ${JSON.stringify(contentBlocks || [])},
+          ${JSON.stringify(hotspots || [])}
         )
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
@@ -91,7 +94,8 @@ export default async function handler(req: any, res: any) {
           featured = EXCLUDED.featured,
           "relatedJournalIds" = EXCLUDED."relatedJournalIds",
           "appliedProductIds" = EXCLUDED."appliedProductIds",
-          "contentBlocks" = EXCLUDED."contentBlocks"
+          "contentBlocks" = EXCLUDED."contentBlocks",
+          hotspots = EXCLUDED.hotspots
       `;
       return res.status(200).json({ success: true, id: targetId });
     } catch (error) {

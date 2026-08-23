@@ -1,10 +1,19 @@
 export type Category = 'Chairs' | 'Furniture' | 'Lighting' | 'Objects';
 
+export interface HotspotPin {
+  id: string;
+  productId: string;
+  x: number; // percentage 0 to 100
+  y: number; // percentage 0 to 100
+  label?: string;
+}
+
 export interface ContentBlock {
   id?: string;
   type: 'text' | 'image';
   value: string;
   caption?: string;
+  hotspots?: HotspotPin[];
 }
 
 export interface ColorOption {
@@ -70,6 +79,7 @@ export interface JournalArticle {
   relatedJournalIds?: string[];
   appliedProductIds?: string[];
   contentBlocks?: ContentBlock[];
+  hotspots?: HotspotPin[];
 }
 
 export interface SpaceModel {
@@ -82,6 +92,7 @@ export interface SpaceModel {
   relatedSpaceIds?: string[];
   appliedProductIds?: string[];
   contentBlocks?: ContentBlock[];
+  hotspots?: HotspotPin[];
 }
 
 // Global cache and fetch promises

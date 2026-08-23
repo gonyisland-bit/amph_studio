@@ -1,14 +1,15 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
-  getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock, ColorOption,
+  getProducts, Product, deleteProduct, updateProduct, addProduct, Category, ContentBlock, ColorOption, HotspotPin,
   getJournals, JournalArticle, deleteJournal, updateJournal, addJournal,
   getSpaces, SpaceModel, deleteSpace, updateSpace, addSpace,
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets, MagazineCard
 } from "../lib/data";
 import { resolveColorHex } from "../lib/colorUtils";
-import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock, Save, MoreVertical } from "lucide-react";
+import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock, Save, MoreVertical, MapPin } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
+import { AdminHotspotEditor } from "../components/AdminHotspotEditor";
 
 const emptyProduct: Omit<Product, 'id'> = {
   name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: ['', '', ''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []
@@ -375,6 +376,7 @@ export default function Admin() {
 
   const [form, setForm] = useState<any>(emptyProduct);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [hotspotEditorTarget, setHotspotEditorTarget] = useState<{ imageSrc: string; title: string; hotspots: HotspotPin[]; onSave: (updated: HotspotPin[]) => void } | null>(null);
   
   // Color Assets Dashboard: Drag & drop reorder and usage list expansion states
   const [draggedColorIndex, setDraggedColorIndex] = useState<number | null>(null);
@@ -1507,7 +1509,7 @@ export default function Admin() {
                     />
                   </div>
                   {!isProduct && cb.value && (
-                    <div className="pt-2 border-t border-black/5 flex items-center justify-between">
+                    <div className="pt-2 border-t border-black/5 flex items-center justify-between gap-2">
                       <label className="flex items-center gap-1.5 cursor-pointer select-none">
                         <input 
                           type="checkbox" 
@@ -1529,6 +1531,35 @@ export default function Admin() {
                           {form.image === cb.value ? "✓ Hero Cover" : "Set as Hero Cover"}
                         </span>
                       </label>
+
+                      {/* Hotspots Pin Manager Trigger */}
+                      <button
+                        type="button"
+                        onClick={() => setHotspotEditorTarget({
+                          imageSrc: cb.value,
+                          title: `Media #${i + 1} Interactive Hotspots`,
+                          hotspots: cb.hotspots || (form.image === cb.value ? (form.hotspots || []) : []),
+                          onSave: (updated) => {
+                            const blockId = cb.id;
+                            setForm(prev => {
+                              const currentBlocks = [...(prev.contentBlocks || [])];
+                              const targetIdx = currentBlocks.findIndex((b: any, idx: number) => (b.id || `block-${idx}`) === blockId || idx === i);
+                              if (targetIdx !== -1) {
+                                currentBlocks[targetIdx] = { ...currentBlocks[targetIdx], hotspots: updated };
+                              }
+                              const nextForm: any = { ...prev, contentBlocks: currentBlocks };
+                              if (prev.image === cb.value) {
+                                nextForm.hotspots = updated;
+                              }
+                              return nextForm;
+                            });
+                          }
+                        })}
+                        className="px-2 py-1 bg-black/5 hover:bg-cobalt hover:text-white text-ink text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer border border-black/10"
+                      >
+                        <MapPin size={10} />
+                        <span>Hotspots ({(cb.hotspots || (form.image === cb.value ? form.hotspots : []))?.length || 0})</span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -4504,6 +4535,19 @@ export default function Admin() {
           </>
         )}
       </button>
+
+      {/* Visual Hotspot Pin Editor Modal */}
+      {hotspotEditorTarget && (
+        <AdminHotspotEditor
+          isOpen={true}
+          onClose={() => setHotspotEditorTarget(null)}
+          imageSrc={hotspotEditorTarget.imageSrc}
+          title={hotspotEditorTarget.title}
+          hotspots={hotspotEditorTarget.hotspots}
+          onSaveHotspots={hotspotEditorTarget.onSave}
+          products={products}
+        />
+      )}
     </div>
   );
 }

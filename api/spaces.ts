@@ -30,7 +30,8 @@ export default async function handler(req: any, res: any) {
       { name: 'location', type: 'TEXT DEFAULT \'\'' },
       { name: 'address', type: 'TEXT DEFAULT \'\'' },
       { name: 'hours', type: 'TEXT DEFAULT \'\'' },
-      { name: 'image', type: 'TEXT DEFAULT \'\'' }
+      { name: 'image', type: 'TEXT DEFAULT \'\'' },
+      { name: 'hotspots', type: 'TEXT' }
     ];
     for (const col of columns) {
       try {
@@ -58,6 +59,7 @@ export default async function handler(req: any, res: any) {
         images: typeof r.images === 'string' ? JSON.parse(r.images) : (r.images || []),
         appliedProductIds: typeof r.appliedProductIds === 'string' ? JSON.parse(r.appliedProductIds) : (r.appliedProductIds || []),
         contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
+        hotspots: typeof r.hotspots === 'string' ? JSON.parse(r.hotspots) : (r.hotspots || [])
       }));
       return res.status(200).json(parsedRows);
     } catch (error) {
@@ -68,7 +70,7 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST' || req.method === 'PUT') {
     try {
-      const { id: bodyId, title, description, images, featured, appliedProductIds, contentBlocks } = req.body;
+      const { id: bodyId, title, description, images, featured, appliedProductIds, contentBlocks, hotspots } = req.body;
       const targetId = id || bodyId;
       
       if (!targetId) return res.status(400).json({ error: 'ID is required' });
@@ -77,7 +79,7 @@ export default async function handler(req: any, res: any) {
       await sql`
         INSERT INTO spaces (
           id, title, description, images, featured, "appliedProductIds", "contentBlocks", 
-          location, address, hours, image
+          location, address, hours, image, hotspots
         )
         VALUES (
           ${targetId}, 
@@ -87,7 +89,8 @@ export default async function handler(req: any, res: any) {
           ${!!featured},
           ${JSON.stringify(appliedProductIds || [])},
           ${JSON.stringify(contentBlocks || [])},
-          '', '', '', ''
+          '', '', '', '',
+          ${JSON.stringify(hotspots || [])}
         )
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
@@ -95,7 +98,8 @@ export default async function handler(req: any, res: any) {
           images = EXCLUDED.images,
           featured = EXCLUDED.featured,
           "appliedProductIds" = EXCLUDED."appliedProductIds",
-          "contentBlocks" = EXCLUDED."contentBlocks"
+          "contentBlocks" = EXCLUDED."contentBlocks",
+          hotspots = EXCLUDED.hotspots
       `;
       return res.status(200).json({ success: true, id: targetId });
     } catch (error) {
