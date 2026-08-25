@@ -450,41 +450,34 @@ export default function Admin() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [activeSections, setActiveSections] = useState<Record<string, boolean>>({ basic: true, specs: false, options: false, media: false, story: false });
 
-  // Monitor form input changes to set dirty state
+  // Unified isDirty tracking for homeSettings and item forms (collection, space, journal)
   useEffect(() => {
-    if (!originalForm) {
-      setIsDirty(false);
-      return;
-    }
-    const currentStr = JSON.stringify(form);
-    const originalStr = JSON.stringify(originalForm);
-    if (currentStr !== originalStr) {
-      setIsDirty(true);
-      if (saveStatus === 'saved') {
+    if (activeTab === 'home') {
+      if (!originalHomeSettings) {
+        setIsDirty(false);
+        return;
+      }
+      const currentStr = JSON.stringify(homeSettings);
+      const originalStr = JSON.stringify(originalHomeSettings);
+      const dirty = currentStr !== originalStr;
+      setIsDirty(dirty);
+      if (dirty && saveStatus === 'saved') {
         setSaveStatus('idle');
       }
     } else {
-      setIsDirty(false);
-    }
-  }, [form, originalForm]);
-
-  // Monitor home settings changes
-  useEffect(() => {
-    if (!originalHomeSettings) {
-      setIsDirty(false);
-      return;
-    }
-    const currentStr = JSON.stringify(homeSettings);
-    const originalStr = JSON.stringify(originalHomeSettings);
-    if (currentStr !== originalStr) {
-      setIsDirty(true);
-      if (saveStatus === 'saved') {
+      if (!originalForm) {
+        setIsDirty(false);
+        return;
+      }
+      const currentStr = JSON.stringify(form);
+      const originalStr = JSON.stringify(originalForm);
+      const dirty = currentStr !== originalStr;
+      setIsDirty(dirty);
+      if (dirty && saveStatus === 'saved') {
         setSaveStatus('idle');
       }
-    } else {
-      setIsDirty(false);
     }
-  }, [homeSettings, originalHomeSettings]);
+  }, [activeTab, form, originalForm, homeSettings, originalHomeSettings, saveStatus]);
 
 
   // Warn user on window refresh / tab close when form is dirty

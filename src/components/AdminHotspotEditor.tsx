@@ -38,21 +38,25 @@ export function AdminHotspotEditor({
   useEffect(() => {
     if (!imageSrc) return;
     const img = new window.Image();
-    img.src = imageSrc;
     img.onload = () => {
       if (img.naturalWidth > 0 && img.naturalHeight > 0) {
         setNaturalAspect(img.naturalWidth / img.naturalHeight);
       }
     };
+    img.src = imageSrc;
+    if (img.complete && img.naturalWidth > 0) {
+      setNaturalAspect(img.naturalWidth / img.naturalHeight);
+    }
   }, [imageSrc]);
 
   // Convert canonical natural image coordinates (0% ~ 100%) to display coordinates on the cropped canvas box
   const getDisplayCoords = (canonicalX: number, canonicalY: number) => {
-    if (aspectMode === 'natural' || !naturalAspect) {
+    const aImg = naturalAspect || (16 / 9);
+    const aBox = aspectMode === 'story' ? (4 / 3) : aspectMode === 'hero' ? (16 / 9) : aImg;
+
+    if (aspectMode === 'natural' || Math.abs(aBox - aImg) < 0.01) {
       return { displayX: canonicalX, displayY: canonicalY, isVisible: true };
     }
-    const aImg = naturalAspect;
-    const aBox = aspectMode === 'story' ? (4 / 3) : (16 / 9);
 
     let dX = canonicalX;
     let dY = canonicalY;
@@ -77,14 +81,15 @@ export function AdminHotspotEditor({
 
   // Convert click/drag percentage on the cropped canvas box back to canonical natural image coordinates
   const getCanonicalCoords = (clickPercentX: number, clickPercentY: number) => {
-    if (aspectMode === 'natural' || !naturalAspect) {
+    const aImg = naturalAspect || (16 / 9);
+    const aBox = aspectMode === 'story' ? (4 / 3) : aspectMode === 'hero' ? (16 / 9) : aImg;
+
+    if (aspectMode === 'natural' || Math.abs(aBox - aImg) < 0.01) {
       return { 
         canonicalX: Math.max(0, Math.min(100, Math.round(clickPercentX * 10) / 10)), 
         canonicalY: Math.max(0, Math.min(100, Math.round(clickPercentY * 10) / 10)) 
       };
     }
-    const aImg = naturalAspect;
-    const aBox = aspectMode === 'story' ? (4 / 3) : (16 / 9);
 
     let cX = clickPercentX;
     let cY = clickPercentY;
@@ -214,10 +219,14 @@ export function AdminHotspotEditor({
 
   // Aspect ratio container styles matching public pages
   let aspectContainerClass = "aspect-[4/3] w-full max-w-2xl";
+  let containerStyle: React.CSSProperties = {};
   if (aspectMode === 'hero') {
     aspectContainerClass = "aspect-[16/9] w-full max-w-3xl";
   } else if (aspectMode === 'natural') {
-    aspectContainerClass = "max-w-full max-h-[60vh]";
+    aspectContainerClass = "w-full max-w-3xl";
+    if (naturalAspect) {
+      containerStyle = { aspectRatio: `${naturalAspect}` };
+    }
   }
 
   return (
@@ -307,12 +316,13 @@ export function AdminHotspotEditor({
             <div 
               ref={imageContainerRef}
               onClick={handleImageClick}
+              style={containerStyle}
               className={`relative overflow-hidden cursor-crosshair border border-black/20 shadow-lg group select-none bg-black/5 ${aspectContainerClass}`}
             >
               <MediaRenderer
                 src={imageSrc}
                 alt="Hotspot target"
-                className={`w-full h-full ${aspectMode === 'natural' ? 'object-contain' : 'object-cover'} block pointer-events-none`}
+                className="w-full h-full object-cover block pointer-events-none"
               />
 
               {/* 4:3 Story Crop Safe Zone Guide Overlay on Wide / Original screens */}
