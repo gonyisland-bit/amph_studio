@@ -70,7 +70,7 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST' || req.method === 'PUT') {
     try {
-      const { id: bodyId, title, description, images, featured, appliedProductIds, contentBlocks, hotspots } = req.body;
+      const { id: bodyId, title, description, images, featured, appliedProductIds, contentBlocks, hotspots, image } = req.body;
       const targetId = id || bodyId;
       
       if (!targetId) return res.status(400).json({ error: 'ID is required' });
@@ -89,7 +89,7 @@ export default async function handler(req: any, res: any) {
           ${!!featured},
           ${JSON.stringify(appliedProductIds || [])},
           ${JSON.stringify(contentBlocks || [])},
-          '', '', '', '',
+          '', '', '', ${image || ''},
           ${JSON.stringify(hotspots || [])}
         )
         ON CONFLICT (id) DO UPDATE SET
@@ -99,6 +99,7 @@ export default async function handler(req: any, res: any) {
           featured = EXCLUDED.featured,
           "appliedProductIds" = EXCLUDED."appliedProductIds",
           "contentBlocks" = EXCLUDED."contentBlocks",
+          image = EXCLUDED.image,
           hotspots = EXCLUDED.hotspots
       `;
       return res.status(200).json({ success: true, id: targetId });

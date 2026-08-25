@@ -460,7 +460,10 @@ export default function Home() {
             const sp = spaces.find(s => s.id === item.targetId) || spaces[0];
             if (sp) {
               if (!resolvedImg) resolvedImg = sp.image || sp.images?.[0] || '';
-              if (resolvedHotspots.length === 0) resolvedHotspots = sp.hotspots || [];
+              if (resolvedHotspots.length === 0) {
+                const matchingBlock = (sp.contentBlocks || []).find(b => b.value === resolvedImg && b.hotspots && b.hotspots.length > 0);
+                resolvedHotspots = matchingBlock?.hotspots || (resolvedImg === sp.image ? (sp.hotspots || []) : []);
+              }
               if (!resolvedTitle) resolvedTitle = sp.title || 'Shop The Space';
               targetLink = `/space/${sp.id}`;
             }
@@ -468,7 +471,10 @@ export default function Home() {
             const jn = journals.find(j => j.id === item.targetId) || journals[0];
             if (jn) {
               if (!resolvedImg) resolvedImg = jn.image || '';
-              if (resolvedHotspots.length === 0) resolvedHotspots = jn.hotspots || [];
+              if (resolvedHotspots.length === 0) {
+                const matchingBlock = (jn.contentBlocks || []).find(b => b.value === resolvedImg && b.hotspots && b.hotspots.length > 0);
+                resolvedHotspots = matchingBlock?.hotspots || (resolvedImg === jn.image ? (jn.hotspots || []) : []);
+              }
               if (!resolvedTitle) resolvedTitle = jn.title || 'Featured Story';
               resolvedSubtitle = item.subtitle || 'Editorial Journal';
               targetLink = `/journal/${jn.id}`;

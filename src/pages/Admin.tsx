@@ -2653,35 +2653,72 @@ export default function Admin() {
                           }
                         ];
 
+                    const isValidCandidateImg = (url?: any): url is string => {
+                      return typeof url === 'string' && url.trim().length > 5 && !url.includes('<svg') && !url.startsWith('data:image/svg+xml');
+                    };
+
                     const getCandidateImages = (sourceType?: string, targetId?: string) => {
-                      const list: { url: string; label: string; pinCount: number; hotspots?: HotspotPin[] }[] = [];
+                      const list: { url: string; label: string; pinCount: number; hotspots: HotspotPin[] }[] = [];
                       if (sourceType === 'space' && targetId) {
                         const sp = spaces.find(s => s.id === targetId);
                         if (sp) {
-                          const cover = sp.image || sp.images?.[0];
-                          if (cover) {
+                          // 1. Cover image
+                          const cover = isValidCandidateImg(sp.image) ? sp.image : (sp.images || []).find(isValidCandidateImg);
+                          if (isValidCandidateImg(cover)) {
                             list.push({ url: cover, label: 'Main Cover', pinCount: (sp.hotspots || []).length, hotspots: sp.hotspots || [] });
                           }
-                          (sp.images || []).forEach((img, i) => {
-                            if (img && img !== cover && !list.some(x => x.url === img)) {
-                              list.push({ url: img, label: `Gallery #${i + 1}`, pinCount: 0 });
+                          // 2. Story content blocks (images with their specific block hotspots)
+                          let storyIdx = 0;
+                          (sp.contentBlocks || []).forEach((b) => {
+                            if ((b.type === 'image' || !b.type) && isValidCandidateImg(b.value)) {
+                              storyIdx++;
+                              const bPins = b.hotspots || [];
+                              const existing = list.find(x => x.url === b.value);
+                              if (!existing) {
+                                list.push({ 
+                                  url: b.value, 
+                                  label: `Story #${storyIdx}`, 
+                                  pinCount: bPins.length > 0 ? bPins.length : (b.value === cover ? (sp.hotspots || []).length : 0), 
+                                  hotspots: bPins.length > 0 ? bPins : (b.value === cover ? (sp.hotspots || []) : []) 
+                                });
+                              } else if (bPins.length > 0 && existing.pinCount === 0) {
+                                existing.pinCount = bPins.length;
+                                existing.hotspots = bPins;
+                              }
                             }
                           });
-                          (sp.contentBlocks || []).forEach((b, bIdx) => {
-                            if (b.type === 'image' && b.value && !list.some(x => x.url === b.value)) {
-                              list.push({ url: b.value, label: `Story Block #${bIdx + 1}`, pinCount: (b.hotspots || []).length, hotspots: b.hotspots || [] });
+                          // 3. Gallery images in sp.images
+                          (sp.images || []).forEach((img, i) => {
+                            if (isValidCandidateImg(img) && !list.some(x => x.url === img)) {
+                              list.push({ url: img, label: `Gallery #${i + 1}`, pinCount: 0, hotspots: [] });
                             }
                           });
                         }
                       } else if (sourceType === 'journal' && targetId) {
                         const jn = journals.find(j => j.id === targetId);
                         if (jn) {
-                          if (jn.image) {
+                          // 1. Cover
+                          if (isValidCandidateImg(jn.image)) {
                             list.push({ url: jn.image, label: 'Main Cover', pinCount: (jn.hotspots || []).length, hotspots: jn.hotspots || [] });
                           }
-                          (jn.contentBlocks || []).forEach((b, bIdx) => {
-                            if (b.type === 'image' && b.value && !list.some(x => x.url === b.value)) {
-                              list.push({ url: b.value, label: `Story Block #${bIdx + 1}`, pinCount: (b.hotspots || []).length, hotspots: b.hotspots || [] });
+                          // 2. Story content blocks
+                          let storyIdx = 0;
+                          (jn.contentBlocks || []).forEach((b) => {
+                            if ((b.type === 'image' || !b.type) && isValidCandidateImg(b.value)) {
+                              storyIdx++;
+                              const bPins = b.hotspots || [];
+                              const existing = list.find(x => x.url === b.value);
+                              if (!existing) {
+                                list.push({ 
+                                  url: b.value, 
+                                  label: `Story #${storyIdx}`, 
+                                  pinCount: bPins.length > 0 ? bPins.length : (b.value === jn.image ? (jn.hotspots || []).length : 0), 
+                                  hotspots: bPins.length > 0 ? bPins : (b.value === jn.image ? (jn.hotspots || []) : []) 
+                                });
+                              } else if (bPins.length > 0 && existing.pinCount === 0) {
+                                existing.pinCount = bPins.length;
+                                existing.hotspots = bPins;
+                              }
                             }
                           });
                         }
@@ -3319,12 +3356,11 @@ export default function Admin() {
                                             value={targetId}
                                             onChange={e => {
                                               const newTargetId = e.target.value;
-                                              const sp = spaces.find(s => s.id === newTargetId);
-                                              const firstImg = sp?.image || sp?.images?.[0] || '';
+                                              const cands = getCandidateImages('space', newTargetId);
                                               updateItem({
                                                 targetId: newTargetId,
-                                                selectedImage: firstImg,
-                                                hotspots: sp?.hotspots || []
+                                                selectedImage: cands[0]?.url || '',
+                                                hotspots: cands[0]?.hotspots || []
                                               });
                                             }}
                                             className="w-full border border-black/15 p-2 bg-white text-xs outline-none focus:border-cobalt font-medium"
@@ -3357,7 +3393,7 @@ export default function Admin() {
                                                     onClick={() => {
                                                       updateItem({
                                                         selectedImage: cImg.url,
-                                                        hotspots: cImg.hotspots && cImg.hotspots.length > 0 ? cImg.hotspots : item.hotspots
+                                                        hotspots: cImg.hotspots || []
                                                       });
                                                     }}
                                                     className={`relative shrink-0 w-24 h-24 border-2 cursor-pointer transition-all overflow-hidden group/thumb ${
@@ -3397,11 +3433,11 @@ export default function Admin() {
                                             value={targetId}
                                             onChange={e => {
                                               const newTargetId = e.target.value;
-                                              const jn = journals.find(j => j.id === newTargetId);
+                                              const cands = getCandidateImages('journal', newTargetId);
                                               updateItem({
                                                 targetId: newTargetId,
-                                                selectedImage: jn?.image || '',
-                                                hotspots: jn?.hotspots || []
+                                                selectedImage: cands[0]?.url || '',
+                                                hotspots: cands[0]?.hotspots || []
                                               });
                                             }}
                                             className="w-full border border-black/15 p-2 bg-white text-xs outline-none focus:border-cobalt font-medium"
@@ -3434,7 +3470,7 @@ export default function Admin() {
                                                     onClick={() => {
                                                       updateItem({
                                                         selectedImage: cImg.url,
-                                                        hotspots: cImg.hotspots && cImg.hotspots.length > 0 ? cImg.hotspots : item.hotspots
+                                                        hotspots: cImg.hotspots || []
                                                       });
                                                     }}
                                                     className={`relative shrink-0 w-24 h-24 border-2 cursor-pointer transition-all overflow-hidden group/thumb ${
@@ -3539,22 +3575,87 @@ export default function Admin() {
                                       </div>
                                     </div>
 
-                                    {/* Live Mini Preview for this item */}
+                                    {/* Full Natural Lookbook Interactive Pin Preview with Direct Edit */}
                                     {selectedImgUrl && (
-                                      <div className="w-full h-36 bg-black relative overflow-hidden border border-black/10">
-                                        <MediaRenderer src={selectedImgUrl} className="w-full h-full object-cover opacity-85" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end justify-between p-3 pointer-events-none">
-                                          <div>
-                                            <span className="text-[8px] font-bold uppercase text-white/70 block tracking-widest font-mono">
-                                              LOOKBOOK #{itemIdx + 1} // {source.toUpperCase()}
-                                            </span>
-                                            <span className="text-[11px] font-black uppercase text-white tracking-wider">
-                                              {item.title || 'Shop The Space'}
+                                      <div className="space-y-2 pt-1">
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-[10px] font-black uppercase text-ink/70 tracking-wider flex items-center gap-1.5">
+                                            <span>Lookbook #{itemIdx + 1} Interactive Preview ({currentHotspots.length} Pins)</span>
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setHotspotEditorTarget({
+                                                imageSrc: selectedImgUrl,
+                                                title: `Showcase #${itemIdx + 1} Interactive Pins Editor`,
+                                                hotspots: currentHotspots,
+                                                onSave: (updated) => {
+                                                  updateItem({ hotspots: updated });
+                                                  setHotspotEditorTarget(null);
+                                                }
+                                              });
+                                            }}
+                                            className="text-[9px] font-bold text-cobalt hover:underline cursor-pointer flex items-center gap-1"
+                                          >
+                                            <span>✏️ Open Pin Editor</span>
+                                          </button>
+                                        </div>
+
+                                        <div 
+                                          onClick={() => {
+                                            setHotspotEditorTarget({
+                                              imageSrc: selectedImgUrl,
+                                              title: `Showcase #${itemIdx + 1} Interactive Pins Editor`,
+                                              hotspots: currentHotspots,
+                                              onSave: (updated) => {
+                                                updateItem({ hotspots: updated });
+                                                setHotspotEditorTarget(null);
+                                              }
+                                            });
+                                          }}
+                                          className="w-full min-h-[220px] max-h-[460px] bg-black/95 relative overflow-hidden border border-black/15 group/preview cursor-pointer flex items-center justify-center"
+                                          title="Click to open Interactive Pin Editor"
+                                        >
+                                          <MediaRenderer src={selectedImgUrl} className="w-full h-auto max-h-[460px] object-contain" />
+                                          
+                                          {/* Visual Pins Overlay on the Preview Image */}
+                                          {currentHotspots.map((pin, pIdx) => {
+                                            const prod = products.find(p => p.id === pin.productId);
+                                            return (
+                                              <div
+                                                key={pin.id || pIdx}
+                                                style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
+                                                className="absolute -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none flex flex-col items-center"
+                                              >
+                                                <span className="w-5 h-5 rounded-full bg-cobalt text-white text-[9px] font-black flex items-center justify-center shadow-md border-2 border-white animate-pulse">
+                                                  {pIdx + 1}
+                                                </span>
+                                                <span className="mt-1 bg-black/80 text-white text-[7.5px] font-bold px-1.5 py-0.5 rounded-none whitespace-nowrap shadow-xs backdrop-blur-xs">
+                                                  {prod?.name || pin.label || `Pin #${pIdx + 1}`}
+                                                </span>
+                                              </div>
+                                            );
+                                          })}
+
+                                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                            <span className="bg-cobalt text-white px-4 py-2 text-[10px] font-black uppercase tracking-wider shadow-lg">
+                                              Click Image to Edit Hotspots ({currentHotspots.length} Active Pins)
                                             </span>
                                           </div>
-                                          <span className="text-[8px] font-black text-white bg-cobalt px-2 py-0.5">
-                                            {currentHotspots.length} Pins
-                                          </span>
+
+                                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end justify-between p-3 pointer-events-none">
+                                            <div>
+                                              <span className="text-[8px] font-bold uppercase text-white/70 block tracking-widest font-mono">
+                                                LOOKBOOK #{itemIdx + 1} // {source.toUpperCase()}
+                                              </span>
+                                              <span className="text-[11px] font-black uppercase text-white tracking-wider">
+                                                {item.title || 'Shop The Space'}
+                                              </span>
+                                            </div>
+                                            <span className="text-[8px] font-black text-white bg-cobalt px-2.5 py-0.5 shadow-xs">
+                                              {currentHotspots.length} Pins Registered
+                                            </span>
+                                          </div>
                                         </div>
                                       </div>
                                     )}
