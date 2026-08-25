@@ -150,15 +150,7 @@ const MediaUploadInput = ({
   };
 
   const isVideo = (value || '').toLowerCase().match(/\.(mp4|webm|mov|ogg)$/) || (value || '').includes('video');
-
-  const isExternalUrl = value && !value.includes('blob.vercel-storage.com');
-  const [showUrl, setShowUrl] = useState(!!isExternalUrl);
-
-  useEffect(() => {
-    if (isExternalUrl) {
-      setShowUrl(true);
-    }
-  }, [value]);
+  const [showUrl, setShowUrl] = useState(false);
 
   return (
     <div className="w-full mb-4">
@@ -1151,11 +1143,15 @@ export default function Admin() {
       let savedData: any = null;
       if (activeTab === 'collection') {
         const cleanedImages = (form.images || []).filter(Boolean);
+        const cleanedBlocks = (form.contentBlocks || [])
+          .filter((b: any) => b && typeof b.value === 'string' && b.value.trim().length > 0)
+          .map((b: any, idx: number) => ({ ...b, id: b.id || `block-${idx}` }));
         const currentBody = Array.isArray(form.bodyColors) ? form.bodyColors : [];
         const currentFabric = Array.isArray(form.fabricColors) ? form.fabricColors : [];
         const cleanedForm = { 
           ...form, 
           images: cleanedImages, 
+          contentBlocks: cleanedBlocks,
           bodyColors: currentBody, 
           fabricColors: currentFabric,
           color: [...currentBody, ...currentFabric]
@@ -1229,12 +1225,17 @@ export default function Admin() {
           await Promise.all(syncPromises);
         }
       } else if (activeTab === 'journal') {
+        const cleanedBlocks = (form.contentBlocks || [])
+          .filter((b: any) => b && typeof b.value === 'string' && b.value.trim().length > 0)
+          .map((b: any, idx: number) => ({ ...b, id: b.id || `block-${idx}` }));
+        const cleanedForm = { ...form, contentBlocks: cleanedBlocks };
+
         if (editingId) {
-          await updateJournal(editingId, form);
-          savedData = form;
+          await updateJournal(editingId, cleanedForm);
+          savedData = cleanedForm;
         } else {
           const newId = `j-${Date.now()}`;
-          const newJournal = { ...form, id: newId };
+          const newJournal = { ...cleanedForm, id: newId };
           await addJournal(newJournal);
           setEditingId(newId);
           savedData = newJournal;
@@ -1242,7 +1243,7 @@ export default function Admin() {
 
         // Bi-directional cross-save to Products with Promise.all (병렬 최적화)
         const journalId = savedData.id;
-        const currentAppliedProds: string[] = form.appliedProductIds || [];
+        const currentAppliedProds: string[] = cleanedForm.appliedProductIds || [];
         const journalSyncPromises: Promise<any>[] = [];
         for (const p of products) {
           const hasJournal = p.relatedJournalIds?.includes(journalId);
@@ -1260,7 +1261,10 @@ export default function Admin() {
           cleanedImages = [form.image, ...cleanedImages.filter((x: string) => x !== form.image)];
         }
         const heroImg = form.image || cleanedImages[0] || '';
-        const cleanedForm = { ...form, image: heroImg, images: cleanedImages };
+        const cleanedBlocks = (form.contentBlocks || [])
+          .filter((b: any) => b && typeof b.value === 'string' && b.value.trim().length > 0)
+          .map((b: any, idx: number) => ({ ...b, id: b.id || `block-${idx}` }));
+        const cleanedForm = { ...form, image: heroImg, images: cleanedImages, contentBlocks: cleanedBlocks };
         if (editingId) {
           await updateSpace(editingId, cleanedForm);
           savedData = cleanedForm;
@@ -2951,13 +2955,14 @@ export default function Admin() {
                               </button>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                               {effectiveMagCards.map((card, idx) => {
                                 const dimMode = (card.overlayMode || 'DARK').toUpperCase();
                                 const isLightMode = dimMode === 'LIGHT';
+                                const fileInputId = `mag-card-input-${card.id || idx}`;
 
                                 return (
-                                  <div key={card.id || idx} className="p-3.5 bg-white rounded-none border border-black/10 shadow-xs space-y-3 relative group">
+                                  <div key={card.id || idx} className="p-3 bg-white rounded-none border border-black/10 shadow-xs space-y-2.5 relative group">
                                     <div className="flex items-center justify-between border-b border-black/5 pb-1.5">
                                       <span className="text-[10px] font-black uppercase text-orange">
                                         Magazine Card #{idx + 1}
@@ -2979,15 +2984,76 @@ export default function Admin() {
                                     {/* 4:5 Aspect Ratio Integrated Media Drag & Live Card Simulator */}
                                     <div>
                                       <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-[9px] font-black uppercase text-cobalt tracking-wider">
-                                          4:5 Cover Media & Live Simulator (미디어 드래그 & 라이브 시뮬레이터)
+                                        <label className="block text-[8.5px] font-black uppercase text-cobalt tracking-wider">
+                                          4:5 Cover Simulator (클릭/드롭 업로드)
                                         </label>
-                                        <span className="text-[8px] text-ink/40 font-bold uppercase">4:5 Aspect Ratio</span>
+                                        <span className="text-[7.5px] text-ink/40 font-bold uppercase">4:5 Fit</span>
                                       </div>
                                       <div 
-                                        className="aspect-[4/5] w-full p-4 relative overflow-hidden border border-black/20 flex flex-col justify-between shadow-inner group/sim"
+                                        className="aspect-[4/5] w-full p-4 relative overflow-hidden border border-black/20 flex flex-col justify-between shadow-inner group/sim cursor-pointer transition-all hover:border-cobalt"
                                         style={{ backgroundColor: card.bgColor || '#1c1c1c' }}
+                                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                        onDrop={async (e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                            const file = e.dataTransfer.files[0];
+                                            try {
+                                              const initRes = await fetch('/api/upload', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream' })
+                                              });
+                                              if (initRes.ok) {
+                                                const { uploadUrl, url } = await initRes.json();
+                                                const putRes = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file });
+                                                if (putRes.ok) {
+                                                  const current = [...effectiveMagCards];
+                                                  current[idx] = { ...current[idx], image: url };
+                                                  setHomeSettings({ ...homeSettings, magazineCards: current });
+                                                }
+                                              }
+                                            } catch (err) {
+                                              console.error(err);
+                                            }
+                                          }
+                                        }}
+                                        onClick={(e) => {
+                                          if ((e.target as HTMLElement).closest('.mag-action-btn')) return;
+                                          document.getElementById(fileInputId)?.click();
+                                        }}
                                       >
+                                        <input 
+                                          id={fileInputId} 
+                                          type="file" 
+                                          accept="image/*" 
+                                          className="hidden" 
+                                          onChange={async (e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                              const file = e.target.files[0];
+                                              try {
+                                                const initRes = await fetch('/api/upload', {
+                                                  method: 'POST',
+                                                  headers: { 'Content-Type': 'application/json' },
+                                                  body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream' })
+                                                });
+                                                if (initRes.ok) {
+                                                  const { uploadUrl, url } = await initRes.json();
+                                                  const putRes = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file });
+                                                  if (putRes.ok) {
+                                                    const current = [...effectiveMagCards];
+                                                    current[idx] = { ...current[idx], image: url };
+                                                    setHomeSettings({ ...homeSettings, magazineCards: current });
+                                                  }
+                                                }
+                                              } catch (err) {
+                                                console.error(err);
+                                              }
+                                              e.target.value = '';
+                                            }
+                                          }}
+                                        />
+
                                         {/* Background Image & Dimming Overlay */}
                                         {card.image && (
                                           <div className="absolute inset-0 w-full h-full z-0">
@@ -2999,19 +3065,19 @@ export default function Admin() {
 
                                         {/* Actual Font Shape Simulator Overlay */}
                                         <div className="relative z-10 flex flex-col justify-between h-full min-h-0 pointer-events-none">
-                                          <span className={`text-[8.5px] uppercase tracking-[0.2em] font-black block truncate ${
+                                          <span className={`text-[8px] uppercase tracking-[0.2em] font-black block truncate ${
                                             isLightMode ? 'text-ink/60' : 'text-white/60'
                                           }`}>
                                             {card.title || 'CARD TITLE PREVIEW'}
                                           </span>
                                           <div className="my-auto overflow-hidden py-1">
-                                            <p className={`text-base sm:text-lg md:text-xl font-sans font-black uppercase tracking-tighter leading-[1.05] break-words line-clamp-4 ${
+                                            <p className={`text-sm sm:text-base font-sans font-black uppercase tracking-tighter leading-[1.05] break-words line-clamp-4 ${
                                               isLightMode ? 'text-ink' : 'text-white'
                                             }`}>
                                               "{card.quote || 'DESIGN PHILOSOPHY CONTENT'}"
                                             </p>
                                           </div>
-                                          <span className={`text-[8px] uppercase tracking-widest font-bold block truncate ${
+                                          <span className={`text-[7.5px] uppercase tracking-widest font-bold block truncate ${
                                             isLightMode ? 'text-ink/40' : 'text-white/40'
                                           }`}>
                                             {card.author || '// AMPH STUDIO'}
@@ -3019,28 +3085,32 @@ export default function Admin() {
                                         </div>
 
                                         {/* Floating Quick Media Action Overlay on hover */}
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/sim:opacity-100 transition-opacity z-20 flex flex-col items-center justify-center p-3 gap-2 backdrop-blur-[1px]">
-                                          <span className="text-[9px] text-white font-black uppercase tracking-widest">
-                                            {card.image ? 'Replace Image' : 'Drop or Select Media'}
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/sim:opacity-100 transition-opacity z-20 flex flex-col items-center justify-center p-2 gap-1.5 backdrop-blur-[1px]">
+                                          <span className="text-[8.5px] text-white font-black uppercase tracking-widest bg-cobalt px-2.5 py-1 shadow-sm">
+                                            {card.image ? 'Replace Image' : '+ Drop / Click Image'}
                                           </span>
+                                          {card.image && (
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                const current = [...effectiveMagCards];
+                                                current[idx] = { ...current[idx], image: '' };
+                                                setHomeSettings({ ...homeSettings, magazineCards: current });
+                                              }}
+                                              className="mag-action-btn text-[7.5px] text-white/80 hover:text-orange bg-black/70 px-2 py-0.5 border border-white/20 uppercase font-bold tracking-wider cursor-pointer"
+                                            >
+                                              Remove Image
+                                            </button>
+                                          )}
                                         </div>
                                       </div>
                                     </div>
 
-                                    {/* Inputs */}
+                                    {/* Clean Text Inputs */}
                                     <div className="space-y-2">
-                                      <MediaUploadInput
-                                        label="Card Background Image (Optional)"
-                                        value={card.image || ''}
-                                        onChange={val => {
-                                          const current = [...effectiveMagCards];
-                                          current[idx] = { ...current[idx], image: val };
-                                          setHomeSettings({ ...homeSettings, magazineCards: current });
-                                        }}
-                                      />
-
                                       <div>
-                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-0.5">Title Header</label>
+                                        <label className="block text-[8.5px] font-bold uppercase text-ink/50 mb-0.5">Title Header</label>
                                         <input
                                           value={card.title || ''}
                                           onChange={e => {
@@ -3053,7 +3123,7 @@ export default function Admin() {
                                       </div>
 
                                       <div>
-                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-0.5">Quote / Philosophy</label>
+                                        <label className="block text-[8.5px] font-bold uppercase text-ink/50 mb-0.5">Quote / Philosophy</label>
                                         <textarea
                                           value={card.quote || ''}
                                           onChange={e => {
@@ -3061,13 +3131,13 @@ export default function Admin() {
                                             current[idx] = { ...current[idx], quote: e.target.value };
                                             setHomeSettings({ ...homeSettings, magazineCards: current });
                                           }}
-                                          className="w-full border border-black/10 p-1.5 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans resize-none overflow-hidden text-ink min-h-[60px]"
+                                          className="w-full border border-black/10 p-1.5 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans resize-none overflow-hidden text-ink min-h-[48px]"
                                           rows={2}
                                         />
                                       </div>
 
                                       <div>
-                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-0.5">Author / Subtitle</label>
+                                        <label className="block text-[8.5px] font-bold uppercase text-ink/50 mb-0.5">Author / Subtitle</label>
                                         <input
                                           value={card.author || ''}
                                           onChange={e => {
@@ -3083,8 +3153,8 @@ export default function Admin() {
                                     {/* Card Background Color Picker & Dimming Option */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-black/5">
                                       <div>
-                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">
-                                          Card Bg Color (단색 배경)
+                                        <label className="block text-[8.5px] font-bold uppercase text-ink/50 mb-1">
+                                          Card Bg Color
                                         </label>
                                         <div className="flex gap-1.5 items-center">
                                           <input 
@@ -3095,7 +3165,7 @@ export default function Admin() {
                                               current[idx] = { ...current[idx], bgColor: e.target.value };
                                               setHomeSettings({ ...homeSettings, magazineCards: current });
                                             }}
-                                            className="w-6 h-6 border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
+                                            className="w-5 h-5 border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
                                           />
                                           <input 
                                             type="text"
@@ -3106,13 +3176,13 @@ export default function Admin() {
                                               setHomeSettings({ ...homeSettings, magazineCards: current });
                                             }}
                                             placeholder="#1C1C1C"
-                                            className="w-full border border-black/10 p-1 text-[11px] outline-none focus:border-cobalt rounded-none bg-white font-mono text-ink"
+                                            className="w-full border border-black/10 p-1 text-[10px] outline-none focus:border-cobalt rounded-none bg-white font-mono text-ink"
                                           />
                                         </div>
                                       </div>
 
                                       <div>
-                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">
+                                        <label className="block text-[8.5px] font-bold uppercase text-ink/50 mb-1">
                                           Overlay Dimming
                                         </label>
                                         <div className="grid grid-cols-3 gap-1">
@@ -3137,7 +3207,7 @@ export default function Admin() {
                                                     : 'bg-white text-ink border-black/15 hover:border-black/30'
                                                 }`}
                                               >
-                                                <span className="block text-[9px] font-black uppercase">{opt.label}</span>
+                                                <span className="block text-[8px] font-black uppercase">{opt.label}</span>
                                               </button>
                                             );
                                           })}

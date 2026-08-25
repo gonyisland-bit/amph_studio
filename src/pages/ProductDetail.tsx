@@ -785,62 +785,67 @@ export default function ProductDetail() {
       )}
 
       {/* Content Blocks (Editorial Section - Full-Width 2-Column Grid) */}
-      {product.contentBlocks && product.contentBlocks.length > 0 && (
-        <div className="px-4 md:px-8 lg:px-12 py-16 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
-            {product.contentBlocks.map((block, idx) => {
-              const textContent = block.caption || (block.type === 'text' ? block.value : '');
-              const imageUrl = block.type === 'image' ? block.value : '';
+      {(() => {
+        const validBlocks = (product.contentBlocks || []).filter(b => b && typeof b.value === 'string' && b.value.trim().length > 0);
+        if (validBlocks.length === 0) return null;
 
-              if (block.type === 'image' && imageUrl) {
-                const storyImgIdx = storyImages.indexOf(imageUrl);
-                const targetLightboxIdx = storyImgIdx !== -1 ? displayImages.length + storyImgIdx : 0;
-                return (
-                  <div key={idx} className="flex flex-col reveal group w-full">
-                    <div 
-                      onClick={() => {
-                        setLightboxIndex(targetLightboxIdx);
-                        setZoomScale(1);
-                      }}
-                      className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 cursor-zoom-in relative"
-                    >
-                      <MediaRenderer 
-                        src={imageUrl} 
-                        alt={`Editorial view ${idx + 1}`} 
-                        className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
-                        loading="lazy" 
-                        nopin="nopin"
-                      />
-                    </div>
-                    {textContent && (
-                      <div className="mt-4">
-                        <p className="text-xs sm:text-sm md:text-base font-sans leading-relaxed text-ink/80 break-words max-w-full px-2">{textContent}</p>
+        return (
+          <div className="px-4 md:px-8 lg:px-12 py-16 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
+              {validBlocks.map((block, idx) => {
+                const textContent = block.caption || (block.type === 'text' ? block.value : '');
+                const imageUrl = block.type === 'image' ? block.value : '';
+
+                if (block.type === 'image' && imageUrl) {
+                  const storyImgIdx = storyImages.indexOf(imageUrl);
+                  const targetLightboxIdx = storyImgIdx !== -1 ? displayImages.length + storyImgIdx : 0;
+                  return (
+                    <div key={block.id || idx} className="flex flex-col reveal group w-full">
+                      <div 
+                        onClick={() => {
+                          setLightboxIndex(targetLightboxIdx);
+                          setZoomScale(1);
+                        }}
+                        className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 cursor-zoom-in relative"
+                      >
+                        <MediaRenderer 
+                          src={imageUrl} 
+                          alt={`Editorial view ${idx + 1}`} 
+                          className="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
+                          loading="lazy" 
+                          nopin="nopin"
+                        />
                       </div>
-                    )}
-                  </div>
-                );
-              }
+                      {textContent && (
+                        <div className="mt-4">
+                          <p className="text-xs sm:text-sm md:text-base font-sans leading-relaxed text-ink/80 break-words max-w-full px-2">{textContent}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
 
-              if (block.type === 'text') {
-                const len = block.value ? block.value.trim().length : 0;
-                const textStyleClass = len < 40 
-                  ? "text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight leading-snug md:leading-tight"
-                  : len < 120 
-                    ? "text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold tracking-tight leading-snug"
-                    : "text-sm sm:text-base md:text-lg font-medium leading-relaxed";
+                if (block.type === 'text' && block.value && block.value.trim().length > 0) {
+                  const len = block.value.trim().length;
+                  const textStyleClass = len < 40 
+                    ? "text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight leading-snug md:leading-tight"
+                    : len < 120 
+                      ? "text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold tracking-tight leading-snug"
+                      : "text-sm sm:text-base md:text-lg font-medium leading-relaxed";
 
-                return (
-                  <div key={idx} className="flex flex-col reveal py-4 w-full overflow-hidden max-w-full">
-                    <p className={`w-full max-w-full [word-break:break-all] sm:[word-break:break-word] [overflow-wrap:anywhere] break-words whitespace-pre-wrap font-sans text-ink/80 ${textStyleClass}`}>{block.value}</p>
-                  </div>
-                );
-              }
+                  return (
+                    <div key={block.id || idx} className="flex flex-col reveal py-4 w-full overflow-hidden max-w-full">
+                      <p className={`w-full max-w-full [word-break:break-all] sm:[word-break:break-word] [overflow-wrap:anywhere] break-words whitespace-pre-wrap font-sans text-ink/80 ${textStyleClass}`}>{block.value}</p>
+                    </div>
+                  );
+                }
 
-              return null;
-            })}
+                return null;
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Amplify With (Recommended Products Grid) - Unified Layout */}
       <div className="w-full px-4 md:px-8 lg:px-12 py-20 border-t border-black/10 reveal bg-white">

@@ -632,8 +632,22 @@ export default function Home() {
         );
       })()}
 
-      {/* 3. Curated Gallery / Magazine Intros - Placed after Selected Works, border-aligned & padding-optimized */}
-      <section className="flex flex-col bg-white border-t border-black/10 px-0 py-0">
+      {/* 3. Curated Gallery / Category Banners - Section Separation with Refined Margin & Header */}
+      <section className="flex flex-col bg-white border-t border-black/10 mt-12 sm:mt-16 md:mt-24 pt-8 md:pt-12 px-0">
+        <div className="w-full px-4 md:px-8 lg:px-12 pb-6 md:pb-8 flex justify-between items-end border-b border-black/10 reveal">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-1 font-mono">
+              CURATIONS // ARCHITECTURAL PORTFOLIO
+            </span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase font-sans leading-none">
+              Explore By Category
+            </h2>
+          </div>
+          <span className="text-[10px] font-mono font-bold text-ink/40 uppercase tracking-widest hidden sm:block">
+            Collection • Space • Journal
+          </span>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 auto-rows-fr border-b border-black/10">
           {[
             { key: 'collection', link: '/collection' },

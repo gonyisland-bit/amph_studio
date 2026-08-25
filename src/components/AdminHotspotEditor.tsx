@@ -22,7 +22,7 @@ export function AdminHotspotEditor({
   hotspots = [],
   onSaveHotspots,
   products = [],
-  initialAspectMode = 'story'
+  initialAspectMode = 'natural'
 }: AdminHotspotEditorProps) {
   const [pins, setPins] = useState<HotspotPin[]>(() => JSON.parse(JSON.stringify(hotspots || [])));
   const [selectedPinId, setSelectedPinId] = useState<string | null>(() => (hotspots && hotspots[0]?.id) || null);

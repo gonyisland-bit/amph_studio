@@ -31,6 +31,47 @@ export function ImageHotspots({
   const containerRef = useRef<HTMLDivElement>(null);
   const leaveTimerRef = useRef<any>(null);
 
+  const [naturalAspect, setNaturalAspect] = useState<number | null>(null);
+  const [containerAspect, setContainerAspect] = useState<number | null>(null);
+
+  // Load natural dimensions of the image
+  useEffect(() => {
+    if (!src) return;
+    const img = new window.Image();
+    img.src = src;
+    img.onload = () => {
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+        setNaturalAspect(img.naturalWidth / img.naturalHeight);
+      }
+    };
+  }, [src]);
+
+  // Update container aspect ratio on mount & resize
+  useEffect(() => {
+    const updateContainerAspect = () => {
+      if (containerRef.current) {
+        const { clientWidth, clientHeight } = containerRef.current;
+        if (clientWidth > 0 && clientHeight > 0) {
+          setContainerAspect(clientWidth / clientHeight);
+        }
+      }
+    };
+
+    updateContainerAspect();
+    window.addEventListener("resize", updateContainerAspect);
+    
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+      ro = new ResizeObserver(() => updateContainerAspect());
+      ro.observe(containerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", updateContainerAspect);
+      if (ro) ro.disconnect();
+    };
+  }, []);
+
   // Close active popup when clicking outside (especially on mobile)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
@@ -71,6 +112,38 @@ export function ImageHotspots({
     }, 300);
   };
 
+  // Precise mathematical aspect-ratio pin coordinate mapping for object-cover
+  const getCalibratedPos = (pinX: number, pinY: number) => {
+    if (!naturalAspect || !containerAspect) {
+      return { x: pinX, y: pinY, isVisible: true };
+    }
+
+    const aImg = naturalAspect;
+    const aBox = containerAspect;
+
+    let calX = pinX;
+    let calY = pinY;
+
+    if (aBox > aImg) {
+      // Container is wider than natural image: top and bottom are cropped in object-cover
+      calX = pinX;
+      calY = 50 + (pinY - 50) * (aBox / aImg);
+    } else if (aBox < aImg) {
+      // Container is taller/narrower than natural image: left and right are cropped in object-cover
+      calX = 50 + (pinX - 50) * (aImg / aBox);
+      calY = pinY;
+    }
+
+    // Visibility test within container bounds
+    const isVisible = calX >= -3 && calX <= 103 && calY >= -3 && calY <= 103;
+
+    return { 
+      x: Math.max(0, Math.min(100, calX)), 
+      y: Math.max(0, Math.min(100, calY)), 
+      isVisible 
+    };
+  };
+
   const validHotspots = (hotspots || []).filter(h => h && typeof h.x === 'number' && typeof h.y === 'number');
 
   return (
@@ -93,10 +166,13 @@ export function ImageHotspots({
         const product = products.find(p => p.id === pin.productId);
         const isActive = activePinId === pin.id;
 
+        const { x: finalX, y: finalY, isVisible } = getCalibratedPos(pin.x, pin.y);
+        if (!isVisible) return null;
+
         // Position alignment calculation to prevent screen overflow
-        const isNearRight = pin.x > 60;
-        const isNearLeft = pin.x < 30;
-        const isNearBottom = pin.y > 60;
+        const isNearRight = finalX > 60;
+        const isNearLeft = finalX < 30;
+        const isNearBottom = finalY > 60;
 
         let popupXClass = "-translate-x-1/2 left-1/2";
         if (isNearRight) popupXClass = "right-0 translate-x-0";
@@ -109,7 +185,7 @@ export function ImageHotspots({
           <div
             key={pin.id || `${pin.x}-${pin.y}`}
             className="absolute z-30 -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
+            style={{ left: `${finalX}%`, top: `${finalY}%` }}
             onMouseEnter={() => handlePinMouseEnter(pin.id)}
             onMouseLeave={handlePinMouseLeave}
           >

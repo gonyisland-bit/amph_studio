@@ -314,74 +314,79 @@ export default function SpaceDetail() {
       </div>
 
       {/* Content Blocks (Editorial Section - Full-Bleed 2-Column Grid) */}
-      {space.contentBlocks && space.contentBlocks.length > 0 && (
-        <div className="w-full px-4 md:px-8 lg:px-12 py-6 md:py-12 border-t border-black/10">
-          <div className="flex justify-between items-center mb-6 md:mb-8 border-b border-black/10 pb-4">
-            <h3 className="text-xs uppercase font-black tracking-[0.2em] text-cobalt font-mono">
-              EDITORIAL STORY
-            </h3>
-            <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-ink/40 font-mono">
-              {space.title}
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
-            {space.contentBlocks.map((block, idx) => {
-              const textContent = block.caption || (block.type === 'text' ? block.value : '');
-              const imageUrl = block.type === 'image' ? block.value : '';
+      {(() => {
+        const validBlocks = (space.contentBlocks || []).filter(b => b && typeof b.value === 'string' && b.value.trim().length > 0);
+        if (validBlocks.length === 0) return null;
 
-              if (block.type === 'image' && imageUrl) {
-                const targetIdx = allImages.indexOf(imageUrl);
-                return (
-                  <div key={idx} className="flex flex-col reveal group w-full">
-                    <div 
-                      className="w-full aspect-[4/3] bg-transparent overflow-hidden border border-black/5 relative rounded-none cursor-zoom-in"
-                    >
-                      <ImageHotspots 
-                        src={imageUrl} 
-                        alt={`Space view ${idx + 1}`} 
-                        hotspots={block.hotspots || []}
-                        products={allProducts}
-                        className="w-full h-full"
-                        imageClassName="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
-                        loading="lazy" 
-                        nopin="nopin"
-                        onClick={() => {
-                          setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
-                          setZoomScale(1);
-                        }}
-                      />
-                    </div>
-                    {textContent && (
-                      <div className="mt-3 sm:mt-4">
-                        <p className="text-xs sm:text-sm md:text-base font-sans leading-relaxed text-ink/80 text-center break-words max-w-full px-2">{textContent}</p>
+        return (
+          <div className="w-full px-4 md:px-8 lg:px-12 py-6 md:py-12 border-t border-black/10">
+            <div className="flex justify-between items-center mb-6 md:mb-8 border-b border-black/10 pb-4">
+              <h3 className="text-xs uppercase font-black tracking-[0.2em] text-cobalt font-mono">
+                EDITORIAL STORY
+              </h3>
+              <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-ink/40 font-mono">
+                {space.title}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
+              {validBlocks.map((block, idx) => {
+                const textContent = block.caption || (block.type === 'text' ? block.value : '');
+                const imageUrl = block.type === 'image' ? block.value : '';
+
+                if (block.type === 'image' && imageUrl) {
+                  const targetIdx = allImages.indexOf(imageUrl);
+                  return (
+                    <div key={block.id || idx} className="flex flex-col reveal group w-full">
+                      <div 
+                        className="w-full aspect-[4/3] bg-transparent overflow-hidden border border-black/5 relative rounded-none cursor-zoom-in"
+                      >
+                        <ImageHotspots 
+                          src={imageUrl} 
+                          alt={`Space view ${idx + 1}`} 
+                          hotspots={block.hotspots || []}
+                          products={allProducts}
+                          className="w-full h-full"
+                          imageClassName="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
+                          loading="lazy" 
+                          nopin="nopin"
+                          onClick={() => {
+                            setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
+                            setZoomScale(1);
+                          }}
+                        />
                       </div>
-                    )}
-                  </div>
-                );
-              }
+                      {textContent && (
+                        <div className="mt-3 sm:mt-4">
+                          <p className="text-xs sm:text-sm md:text-base font-sans leading-relaxed text-ink/80 text-center break-words max-w-full px-2">{textContent}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
 
-              if (block.type === 'text') {
-                const len = block.value ? block.value.trim().length : 0;
-                const textStyleClass = len < 40 
-                  ? "text-lg sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight md:leading-[0.95]"
-                  : len < 120 
-                    ? "text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight leading-snug md:leading-tight"
-                    : "text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium leading-relaxed";
+                if (block.type === 'text' && block.value && block.value.trim().length > 0) {
+                  const len = block.value.trim().length;
+                  const textStyleClass = len < 40 
+                    ? "text-lg sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight md:leading-[0.95]"
+                    : len < 120 
+                      ? "text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight leading-snug md:leading-tight"
+                      : "text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium leading-relaxed";
 
-                return (
-                  <div key={idx} className="flex flex-col reveal py-8 md:py-16 w-full h-full min-h-[180px] md:min-h-[300px] justify-center items-center text-center my-auto px-4 sm:px-6 overflow-hidden max-w-full">
-                    <p className={`w-full max-w-full [word-break:break-all] sm:[word-break:break-word] [overflow-wrap:anywhere] break-words whitespace-pre-wrap font-sans text-ink uppercase text-center mx-auto ${textStyleClass}`}>
-                      {block.value}
-                    </p>
-                  </div>
-                );
-              }
+                  return (
+                    <div key={block.id || idx} className="flex flex-col reveal py-8 md:py-16 w-full h-full min-h-[180px] md:min-h-[300px] justify-center items-center text-center my-auto px-4 sm:px-6 overflow-hidden max-w-full">
+                      <p className={`w-full max-w-full [word-break:break-all] sm:[word-break:break-word] [overflow-wrap:anywhere] break-words whitespace-pre-wrap font-sans text-ink uppercase text-center mx-auto ${textStyleClass}`}>
+                        {block.value}
+                      </p>
+                    </div>
+                  );
+                }
 
-              return null;
-            })}
+                return null;
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Applied Products (Amplify With) */}
       {appliedProducts.length > 0 && (

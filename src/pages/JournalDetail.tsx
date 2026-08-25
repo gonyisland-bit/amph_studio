@@ -311,64 +311,67 @@ export default function JournalDetail() {
       )}
 
       {/* Article Body Elements (Editorial 2-Column Grid Layout) */}
-      <div className="w-full px-4 md:px-8 lg:px-12 py-6 md:py-12">
-        {!article.contentBlocks || article.contentBlocks.length === 0 ? (
-          <p className="italic text-ink/50 text-center font-serif text-xl">No additional body content available.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
-            {article.contentBlocks.map((block, idx) => {
-              if (block.type === 'text') {
-                const len = block.value ? block.value.trim().length : 0;
-                const textStyleClass = len < 40 
-                  ? "text-lg sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight md:leading-[0.95]"
-                  : len < 120 
-                    ? "text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight leading-snug md:leading-tight"
-                    : "text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium leading-relaxed";
+      {(() => {
+        const validBlocks = (article.contentBlocks || []).filter(b => b && typeof b.value === 'string' && b.value.trim().length > 0);
+        if (validBlocks.length === 0) return null;
 
-                return (
-                  <div key={idx} className="flex flex-col reveal py-8 md:py-16 w-full h-full min-h-[180px] md:min-h-[300px] justify-center items-center text-center my-auto px-4 sm:px-6 overflow-hidden max-w-full">
-                    <p className={`w-full max-w-full [word-break:break-all] sm:[word-break:break-word] [overflow-wrap:anywhere] break-words whitespace-pre-wrap font-sans text-ink uppercase text-center mx-auto ${textStyleClass}`}>
-                      {block.value}
-                    </p>
-                  </div>
-                );
-              }
-              if (block.type === 'image') {
-                const textContent = block.caption || '';
-                const targetIdx = allImages.indexOf(block.value);
-                return (
-                  <div key={idx} className="flex flex-col reveal group w-full">
-                    <div 
-                      className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none cursor-zoom-in"
-                    >
-                      <ImageHotspots 
-                        src={block.value} 
-                        alt={`Journal view ${idx + 1}`} 
-                        hotspots={block.hotspots || []}
-                        products={allProducts}
-                        className="w-full h-full"
-                        imageClassName="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
-                        loading="lazy" 
-                        nopin="nopin"
-                        onClick={() => {
-                          setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
-                          setZoomScale(1);
-                        }}
-                      />
+        return (
+          <div className="w-full px-4 md:px-8 lg:px-12 py-6 md:py-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-start w-full">
+              {validBlocks.map((block, idx) => {
+                if (block.type === 'text' && block.value && block.value.trim().length > 0) {
+                  const len = block.value.trim().length;
+                  const textStyleClass = len < 40 
+                    ? "text-lg sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl font-bold tracking-tighter leading-tight md:leading-[0.95]"
+                    : len < 120 
+                      ? "text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight leading-snug md:leading-tight"
+                      : "text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium leading-relaxed";
+
+                  return (
+                    <div key={block.id || idx} className="flex flex-col reveal py-8 md:py-16 w-full h-full min-h-[180px] md:min-h-[300px] justify-center items-center text-center my-auto px-4 sm:px-6 overflow-hidden max-w-full">
+                      <p className={`w-full max-w-full [word-break:break-all] sm:[word-break:break-word] [overflow-wrap:anywhere] break-words whitespace-pre-wrap font-sans text-ink uppercase text-center mx-auto ${textStyleClass}`}>
+                        {block.value}
+                      </p>
                     </div>
-                    {textContent && (
-                      <div className="mt-3 sm:mt-4">
-                        <p className="text-xs sm:text-sm md:text-base font-sans leading-relaxed text-ink/80 text-center break-words max-w-full px-2">{textContent}</p>
+                  );
+                }
+                if (block.type === 'image' && block.value && block.value.trim().length > 0) {
+                  const textContent = block.caption || '';
+                  const targetIdx = allImages.indexOf(block.value);
+                  return (
+                    <div key={block.id || idx} className="flex flex-col reveal group w-full">
+                      <div 
+                        className="w-full aspect-[4/3] bg-silver/5 overflow-hidden border border-black/5 relative rounded-none cursor-zoom-in"
+                      >
+                        <ImageHotspots 
+                          src={block.value} 
+                          alt={`Journal view ${idx + 1}`} 
+                          hotspots={block.hotspots || []}
+                          products={allProducts}
+                          className="w-full h-full"
+                          imageClassName="w-full h-full object-cover rounded-none shadow-none group-hover:scale-105 transition-transform duration-700" 
+                          loading="lazy" 
+                          nopin="nopin"
+                          onClick={() => {
+                            setLightboxIndex(targetIdx !== -1 ? targetIdx : 0);
+                            setZoomScale(1);
+                          }}
+                        />
                       </div>
-                    )}
-                  </div>
-                );
-              }
-              return null;
-            })}
+                      {textContent && (
+                        <div className="mt-3 sm:mt-4">
+                          <p className="text-xs sm:text-sm md:text-base font-sans leading-relaxed text-ink/80 text-center break-words max-w-full px-2">{textContent}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return null;
+              })}
+            </div>
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* Applied Products (Amplify With) */}
       {appliedProducts.length > 0 && (
