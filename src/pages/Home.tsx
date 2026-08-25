@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, getHomeSettings, HomeSettings, defaultHomeSettings, HomeShowcaseItem } from "../lib/data";
-import { ArrowRight, MoveRight, Bookmark, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, MoveRight, Bookmark, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { ImageHotspots } from "../components/ImageHotspots";
 import { useWishlist } from "../lib/wishlist";
@@ -18,6 +18,17 @@ export default function Home() {
   const [activeShowcaseIdx, setActiveShowcaseIdx] = useState(0);
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
   const { toggle: toggleWishlist, isSaved } = useWishlist();
+
+  const [activeSectionIdx, setActiveSectionIdx] = useState(0);
+  const [isAtBottom, setIsAtBottom] = useState(false);
+
+  const isShowcaseEnabled = settings.showcase?.enabled !== false;
+  const sectionIds = useMemo(() => [
+    'home-hero',
+    'home-selected-works',
+    ...(isShowcaseEnabled ? ['home-showcase'] : []),
+    'home-category-banners'
+  ], [isShowcaseEnabled]);
 
   const [showSplash, setShowSplash] = useState(() => {
     if ((window as any).__triggerSplash) {
@@ -74,6 +85,57 @@ export default function Home() {
       };
     }
   }, [settings.heroSlides]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const scrollHeight = document.documentElement.scrollHeight;
+
+      const nearBottom = scrollY + windowHeight >= scrollHeight - 80;
+      setIsAtBottom(nearBottom);
+
+      let currentIdx = 0;
+      sectionIds.forEach((id, idx) => {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= windowHeight * 0.45) {
+            currentIdx = idx;
+          }
+        }
+      });
+
+      if (nearBottom) {
+        currentIdx = sectionIds.length - 1;
+      }
+
+      setActiveSectionIdx(currentIdx);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [sectionIds]);
+
+  const scrollToSectionIndex = (index: number) => {
+    const targetId = sectionIds[index];
+    if (!targetId) return;
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleScrollNext = () => {
+    const nextIdx = Math.min(sectionIds.length - 1, activeSectionIdx + 1);
+    scrollToSectionIndex(nextIdx);
+  };
+
+  const handleScrollPrev = () => {
+    const prevIdx = Math.max(0, activeSectionIdx - 1);
+    scrollToSectionIndex(prevIdx);
+  };
 
   const featured = settings.featuredProductIds
     .map(id => products.find(p => p.id === id))
@@ -143,7 +205,7 @@ export default function Home() {
       {isAuth && null}
 
       {/* 1. Hero Section: Editorial Slideshow (Split-screen on desktop) */}
-      <section className="relative w-full h-[80vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10 select-none group/hero">
+      <section id="home-hero" className="relative w-full h-[80vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10 select-none group/hero">
         {settings.heroSlides?.map((slide, idx) => {
           const isActive = idx === activeSlide;
           return (
@@ -264,15 +326,25 @@ export default function Home() {
           </div>
         )}
 
-        {/* Scroll Down Indicator */}
-        <div className="absolute bottom-8 right-8 md:bottom-12 md:right-12 z-30 flex items-center gap-2 pointer-events-none text-white/90 text-[10px] font-mono font-bold tracking-widest uppercase">
-          <span className="drop-shadow-md">Scroll</span>
-          <span className="inline-block animate-bounce text-sm drop-shadow-md">↓</span>
+        {/* Scroll Down Pulse Indicator (Center Aligned on Hero) */}
+        <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={handleScrollNext}
+            className="group flex flex-col items-center gap-1 text-white cursor-pointer select-none transition-all duration-300 hover:scale-110 active:scale-95"
+            title="Scroll to Selected Works"
+            aria-label="Scroll to next section"
+          >
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/40 hover:bg-cobalt backdrop-blur-md border border-white/30 flex items-center justify-center shadow-lg transition-colors relative">
+              <span className="absolute inset-0 rounded-full border border-white/50 animate-ping opacity-60 pointer-events-none" />
+              <ChevronDown size={20} className="text-white drop-shadow-md group-hover:translate-y-0.5 transition-transform" />
+            </div>
+          </button>
         </div>
       </section>
 
       {/* 2. Selected Works (Featured Products) - Now directly after Hero slider */}
-      <section className="px-8 md:px-20 py-32 md:py-48 bg-off-white">
+      <section id="home-selected-works" className="px-8 md:px-20 py-32 md:py-48 bg-off-white">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-24 gap-8">
           <h2 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9]">Selected<br/>Works</h2>
           <p className="text-sm md:text-sm font-light tracking-wide text-ink/50 font-sans max-w-sm">A rhythmic display of industrial aesthetics and vivid comfort.</p>
@@ -508,7 +580,7 @@ export default function Home() {
         const currentItem = resolvedItems[currentIdx];
 
         return (
-          <section className="bg-white border-t border-black/10 flex flex-col reveal group/showcase-sec">
+          <section id="home-showcase" className="bg-white border-t border-black/10 flex flex-col reveal group/showcase-sec">
             <div className="px-8 md:px-20 py-16 md:py-24 flex flex-col md:flex-row justify-between items-baseline gap-6 border-b border-black/10">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
@@ -633,7 +705,7 @@ export default function Home() {
       })()}
 
       {/* 3. Curated Gallery / Category Banners - Section Separation with Refined Margin & Header */}
-      <section className="flex flex-col bg-white border-t border-black/10 mt-12 sm:mt-16 md:mt-24 pt-8 md:pt-12 px-0">
+      <section id="home-category-banners" className="flex flex-col bg-white border-t border-black/10 mt-12 sm:mt-16 md:mt-24 pt-8 md:pt-12 px-0">
         <div className="w-full px-4 md:px-8 lg:px-12 pb-6 md:pb-8 flex justify-between items-end border-b border-black/10 reveal">
           <div>
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cobalt block mb-1 font-mono">
@@ -669,7 +741,7 @@ export default function Home() {
                       src={intro.image} 
                       className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
                       alt={intro.title} 
-                      loading="lazy"
+                      loading="lazy" 
                       nopin="nopin"
                     />
                   ) : (
@@ -724,6 +796,55 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {/* Floating Smart Section Navigator (Active below Hero) */}
+      {activeSectionIdx > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-3 duration-300 pointer-events-auto">
+          <div className="flex items-center gap-1.5 p-1.5 bg-black/80 hover:bg-black/90 backdrop-blur-md border border-white/20 rounded-full shadow-2xl transition-all select-none">
+            {/* Up Arrow: Moves to previous section */}
+            <button
+              type="button"
+              onClick={handleScrollPrev}
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-cobalt text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+              title="이전 섹션으로 이동"
+              aria-label="Previous section"
+            >
+              <ChevronUp size={18} />
+            </button>
+
+            {/* Section Progress Dots */}
+            <div className="flex items-center gap-1 px-1.5">
+              {sectionIds.map((_, sIdx) => (
+                <button
+                  key={sIdx}
+                  type="button"
+                  onClick={() => scrollToSectionIndex(sIdx)}
+                  className={`transition-all rounded-full cursor-pointer p-0 border-0 outline-none ${
+                    sIdx === activeSectionIdx 
+                      ? 'w-4 h-1.5 bg-cobalt' 
+                      : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'
+                  }`}
+                  title={`Section ${sIdx + 1}`}
+                  aria-label={`Go to section ${sIdx + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Down Arrow: Moves to next section (hidden on bottom-most section) */}
+            {!isAtBottom && activeSectionIdx < sectionIds.length - 1 && (
+              <button
+                type="button"
+                onClick={handleScrollNext}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-cobalt text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95 group/down"
+                title="다음 섹션으로 이동"
+                aria-label="Next section"
+              >
+                <ChevronDown size={18} className="group-hover/down:translate-y-0.5 transition-transform" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

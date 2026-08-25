@@ -704,6 +704,9 @@ export default function Admin() {
   const [activeColorTarget, setActiveColorTarget] = useState<'body' | 'fabric'>('body');
   const [newCustomColorName, setNewCustomColorName] = useState("");
   const [newCustomColorHex, setNewCustomColorHex] = useState("#0047AB");
+  const [showProductPicker, setShowProductPicker] = useState(false);
+  const [showMagCards, setShowMagCards] = useState(true);
+  const [activeShowcaseEditTab, setActiveShowcaseEditTab] = useState(0);
 
   const normalizeProductColors = (prod: any) => {
     if (!prod) return prod;
@@ -2884,50 +2887,72 @@ export default function Admin() {
                             </div>
                           )}
 
-                          {/* 3-B. Checkbox grid for adding/removing items */}
-                          <div>
-                            <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider mb-3">
-                              Toggle Products to Add/Remove
-                            </h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[350px] overflow-y-auto p-4 bg-white rounded-none border border-black/10 shadow-inner">
-                              {products.map(p => {
-                                const isSelected = homeSettings.featuredProductIds.includes(p.id);
-                                return (
-                                  <label key={p.id} className={`flex items-center gap-3 p-3 rounded-none border transition-all cursor-pointer ${isSelected ? 'bg-cobalt/5 border-cobalt shadow-xs' : 'bg-transparent border-black/10 hover:border-black/30'}`}>
-                                    <input 
-                                      type="checkbox" 
-                                      checked={isSelected} 
-                                      onChange={(e) => {
-                                        const current = homeSettings.featuredProductIds || [];
-                                        const next = e.target.checked ? [...current, p.id] : current.filter(id => id !== p.id);
-                                        setHomeSettings({...homeSettings, featuredProductIds: next});
-                                      }} 
-                                      className="w-4 h-4 rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                                    />
-                                    <div className="flex items-center gap-2.5 overflow-hidden">
-                                      <MediaRenderer src={p.images[0]} className="w-8 h-8 rounded-none object-cover mix-blend-multiply flex-shrink-0 border border-black/5" />
-                                      <div className="flex flex-col min-w-0">
-                                        <span className="text-[10px] font-black uppercase truncate">{p.name}</span>
-                                        <span className="text-[9px] text-ink/40 uppercase truncate">{p.category}</span>
-                                      </div>
-                                    </div>
-                                  </label>
-                                );
-                              })}
-                            </div>
+                          {/* 3-B. Checkbox grid for adding/removing items (Accordion Toggle) */}
+                          <div className="bg-white border border-black/10 shadow-xs">
+                            <button
+                              type="button"
+                              onClick={() => setShowProductPicker(prev => !prev)}
+                              className="w-full p-3 flex items-center justify-between bg-off-white/60 hover:bg-off-white transition-colors cursor-pointer border-b border-black/5"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase text-ink tracking-wider">
+                                  Toggle Products to Add / Remove (제품 추가 / 해제 리스트)
+                                </span>
+                                <span className="text-[9px] font-bold text-cobalt bg-cobalt/10 px-2 py-0.5 rounded-full">
+                                  {homeSettings.featuredProductIds.length} / {products.length} Selected
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 text-[10px] font-black uppercase text-ink/50">
+                                <span>{showProductPicker ? '접기' : '펼치기'}</span>
+                                {showProductPicker ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                              </div>
+                            </button>
+
+                            {showProductPicker && (
+                              <div className="p-3.5 animate-in fade-in duration-200">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-[300px] overflow-y-auto p-2.5 bg-white rounded-none border border-black/10 shadow-inner">
+                                  {products.map(p => {
+                                    const isSelected = homeSettings.featuredProductIds.includes(p.id);
+                                    return (
+                                      <label key={p.id} className={`flex items-center gap-2.5 p-2.5 rounded-none border transition-all cursor-pointer ${isSelected ? 'bg-cobalt/5 border-cobalt shadow-xs' : 'bg-transparent border-black/10 hover:border-black/30'}`}>
+                                        <input 
+                                          type="checkbox" 
+                                          checked={isSelected} 
+                                          onChange={(e) => {
+                                            const current = homeSettings.featuredProductIds || [];
+                                            const next = e.target.checked ? [...current, p.id] : current.filter(id => id !== p.id);
+                                            setHomeSettings({...homeSettings, featuredProductIds: next});
+                                          }} 
+                                          className="w-3.5 h-3.5 rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
+                                        />
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                          <MediaRenderer src={p.images[0]} className="w-7 h-7 rounded-none object-cover mix-blend-multiply flex-shrink-0 border border-black/5" />
+                                          <div className="flex flex-col min-w-0">
+                                            <span className="text-[9.5px] font-black uppercase truncate">{p.name}</span>
+                                            <span className="text-[8.5px] text-ink/40 uppercase truncate">{p.category}</span>
+                                          </div>
+                                        </div>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                           </div>
 
-                          {/* 3-C. Magazine Cards List Manager */}
-                          <div className="pt-6 border-t border-black/10 space-y-6">
+                          {/* 3-C. Magazine Cards List Manager (Accordion Toggle) */}
+                          <div className="pt-4 border-t border-black/10 space-y-4">
                             <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="text-[11px] font-black uppercase text-ink tracking-wider">
-                                  Magazine Cards List (매거진 인용구 카드 생성 및 배치)
+                              <button
+                                type="button"
+                                onClick={() => setShowMagCards(prev => !prev)}
+                                className="flex items-center gap-2 text-left cursor-pointer group"
+                              >
+                                <h4 className="text-[11px] font-black uppercase text-ink tracking-wider group-hover:text-cobalt transition-colors flex items-center gap-1.5">
+                                  <span>Magazine Cards List (매거진 인용구 카드 {effectiveMagCards.length}개)</span>
+                                  {showMagCards ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                 </h4>
-                                <p className="text-[10px] text-ink/50 mt-0.5 font-sans">
-                                  매거진 카드를 제한 없이 추가하고, Selected Works 제품 몇 번째 뒤에 끼워 노출할지 배치 위치를 지정합니다.
-                                </p>
-                              </div>
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => {
@@ -2942,14 +2967,16 @@ export default function Admin() {
                                     image: ''
                                   };
                                   setHomeSettings({ ...homeSettings, magazineCards: [...currentCards, newCard] });
+                                  setShowMagCards(true);
                                 }}
-                                className="bg-ink text-white px-4 py-2 font-black uppercase text-[10px] tracking-wider hover:bg-cobalt transition-colors cursor-pointer rounded-none"
+                                className="bg-ink text-white px-3 py-1.5 font-black uppercase text-[10px] tracking-wider hover:bg-cobalt transition-colors cursor-pointer rounded-none"
                               >
                                 + Add Magazine Card
                               </button>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {showMagCards && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in duration-200">
                               {effectiveMagCards.map((card, idx) => {
                                 const dimMode = (card.overlayMode || 'DARK').toUpperCase();
                                 const isLightMode = dimMode === 'LIGHT';
@@ -3228,35 +3255,6 @@ export default function Admin() {
                               </p>
                             </div>
                             <div className="flex items-center gap-4">
-                              {isShowcaseEnabled && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const current = showcaseItems;
-                                    const newItem: HomeShowcaseItem = {
-                                      id: `showcase-${Date.now()}`,
-                                      sourceType: 'space',
-                                      targetId: spaces[0]?.id || '',
-                                      selectedImage: spaces[0]?.image || spaces[0]?.images?.[0] || '',
-                                      title: 'Shop The Space',
-                                      subtitle: 'Spatial Curation',
-                                      description: 'Explore objects placed in real architectural context.',
-                                      image: '',
-                                      hotspots: spaces[0]?.hotspots || []
-                                    };
-                                    setHomeSettings({
-                                      ...homeSettings,
-                                      showcase: {
-                                        ...showcaseData,
-                                        items: [...current, newItem]
-                                      }
-                                    });
-                                  }}
-                                  className="bg-ink text-white px-3.5 py-1.5 rounded-none text-[9px] font-black uppercase tracking-wider hover:bg-cobalt transition-colors cursor-pointer"
-                                >
-                                  + Add Showcase Lookbook
-                                </button>
-                              )}
                               <label className="relative inline-flex items-center cursor-pointer select-none">
                                 <input 
                                   type="checkbox" 
@@ -3277,319 +3275,391 @@ export default function Admin() {
                             </div>
                           </div>
 
-                          {isShowcaseEnabled && (
-                            <div className="space-y-6 animate-in fade-in duration-300">
-                              {showcaseItems.map((item, itemIdx) => {
-                                const source = item.sourceType || 'space';
-                                const targetId = item.targetId || '';
-                                const candidateImages = getCandidateImages(source, targetId);
-                                const selectedImgUrl = item.selectedImage || (source === 'custom' ? item.image : candidateImages[0]?.url) || '';
-                                const currentHotspots = item.hotspots || [];
+                          {isShowcaseEnabled && (() => {
+                            const safeActiveTab = Math.min(Math.max(0, activeShowcaseEditTab), Math.max(0, showcaseItems.length - 1));
+                            const item = showcaseItems[safeActiveTab] || showcaseItems[0];
+                            const itemIdx = safeActiveTab;
 
-                                const updateItem = (updates: Partial<HomeShowcaseItem>) => {
-                                  const updated = [...showcaseItems];
-                                  updated[itemIdx] = { ...updated[itemIdx], ...updates };
-                                  setHomeSettings({
-                                    ...homeSettings,
-                                    showcase: {
-                                      ...showcaseData,
-                                      items: updated
-                                    }
-                                  });
-                                };
+                            if (!item) return null;
 
-                                return (
-                                  <div key={item.id || itemIdx} className="bg-white p-5 md:p-6 rounded-none border border-black/10 shadow-xs space-y-6 relative group">
-                                    {/* Item Header & Reordering */}
-                                    <div className="flex items-center justify-between border-b border-black/10 pb-3">
-                                      <div className="flex items-center gap-2">
-                                        <span className="w-5 h-5 rounded-full bg-cobalt text-white text-[9px] font-black flex items-center justify-center">
-                                          {itemIdx + 1}
-                                        </span>
-                                        <span className="text-[11px] font-black uppercase text-ink tracking-wider">
-                                          Showcase Lookbook #{itemIdx + 1} {item.title ? `// ${item.title}` : ''}
-                                        </span>
-                                      </div>
+                            const source = item.sourceType || 'space';
+                            const targetId = item.targetId || '';
+                            const candidateImages = getCandidateImages(source, targetId);
+                            const selectedImgUrl = item.selectedImage || (source === 'custom' ? item.image : candidateImages[0]?.url) || '';
+                            const currentHotspots = item.hotspots || [];
 
-                                      <div className="flex items-center gap-1">
-                                        <button 
-                                          type="button" 
-                                          disabled={itemIdx === 0} 
-                                          onClick={() => {
-                                            const next = [...showcaseItems];
-                                            [next[itemIdx], next[itemIdx - 1]] = [next[itemIdx - 1], next[itemIdx]];
-                                            setHomeSettings({ ...homeSettings, showcase: { ...showcaseData, items: next } });
-                                          }} 
-                                          className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-1"
-                                          title="Move Up"
+                            const updateItem = (updates: Partial<HomeShowcaseItem>) => {
+                              const updated = [...showcaseItems];
+                              updated[itemIdx] = { ...updated[itemIdx], ...updates };
+                              setHomeSettings({
+                                ...homeSettings,
+                                showcase: {
+                                  ...showcaseData,
+                                  items: updated
+                                }
+                              });
+                            };
+
+                            return (
+                              <div className="space-y-4 animate-in fade-in duration-300">
+                                {/* Horizontal Lookbook Tab Selector & Navigation */}
+                                <div className="flex items-center justify-between bg-white p-2.5 border border-black/10 shadow-xs flex-wrap gap-2">
+                                  <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 scrollbar-thin flex-1 min-w-0">
+                                    <button
+                                      type="button"
+                                      disabled={safeActiveTab === 0}
+                                      onClick={() => setActiveShowcaseEditTab(prev => Math.max(0, prev - 1))}
+                                      className="p-1.5 border border-black/15 bg-off-white hover:bg-black/5 disabled:opacity-20 cursor-pointer shrink-0"
+                                      title="Previous Lookbook"
+                                    >
+                                      <ChevronLeft size={14} />
+                                    </button>
+
+                                    {showcaseItems.map((sItem, sIdx) => {
+                                      const isActive = sIdx === safeActiveTab;
+                                      return (
+                                        <button
+                                          key={sItem.id || sIdx}
+                                          type="button"
+                                          onClick={() => setActiveShowcaseEditTab(sIdx)}
+                                          className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-2 border transition-all cursor-pointer rounded-none shrink-0 ${
+                                            isActive
+                                              ? 'bg-cobalt text-white border-cobalt shadow-xs'
+                                              : 'bg-white text-ink/70 border-black/15 hover:border-black/30'
+                                          }`}
                                         >
-                                          <ChevronUp size={14}/>
-                                        </button>
-                                        <button 
-                                          type="button" 
-                                          disabled={itemIdx === showcaseItems.length - 1} 
-                                          onClick={() => {
-                                            const next = [...showcaseItems];
-                                            [next[itemIdx], next[itemIdx + 1]] = [next[itemIdx + 1], next[itemIdx]];
-                                            setHomeSettings({ ...homeSettings, showcase: { ...showcaseData, items: next } });
-                                          }} 
-                                          className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-1"
-                                          title="Move Down"
-                                        >
-                                          <ChevronDown size={14}/>
-                                        </button>
-                                        {showcaseItems.length > 1 && (
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              const next = showcaseItems.filter((_, i) => i !== itemIdx);
-                                              setHomeSettings({ ...homeSettings, showcase: { ...showcaseData, items: next } });
-                                            }}
-                                            className="text-ink/20 hover:text-orange transition-colors p-1 cursor-pointer ml-1"
-                                            title="Delete Showcase Lookbook"
-                                          >
-                                            <Trash2 size={14} />
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    {/* Source Type Selector: Space / Journal / Custom */}
-                                    <div>
-                                      <label className="block text-[9px] font-black uppercase text-ink/70 tracking-wider mb-2">
-                                        Content Source Type (연동 대상 선택)
-                                      </label>
-                                      <div className="grid grid-cols-3 gap-2">
-                                        {[
-                                          { type: 'space', label: 'Space (공간) 연동', desc: '등록된 공간의 테마 및 세부 이미지 연동' },
-                                          { type: 'journal', label: 'Journal (매거진) 연동', desc: '등록된 아티클의 스토리 이미지 연동' },
-                                          { type: 'custom', label: 'Custom (홈 커스텀)', desc: '홈 전용 독립 이미지 & 핀 직접 등록' }
-                                        ].map(opt => (
-                                          <button
-                                            key={opt.type}
-                                            type="button"
-                                            onClick={() => {
-                                              if (opt.type === 'space') {
-                                                const firstSpace = spaces[0];
-                                                updateItem({
-                                                  sourceType: 'space',
-                                                  targetId: firstSpace?.id || '',
-                                                  selectedImage: firstSpace?.image || firstSpace?.images?.[0] || '',
-                                                  hotspots: firstSpace?.hotspots || []
-                                                });
-                                              } else if (opt.type === 'journal') {
-                                                const firstJournal = journals[0];
-                                                updateItem({
-                                                  sourceType: 'journal',
-                                                  targetId: firstJournal?.id || '',
-                                                  selectedImage: firstJournal?.image || '',
-                                                  hotspots: firstJournal?.hotspots || []
-                                                });
-                                              } else {
-                                                updateItem({
-                                                  sourceType: 'custom',
-                                                  targetId: ''
-                                                });
-                                              }
-                                            }}
-                                            className={`p-3 border text-left transition-all cursor-pointer rounded-none ${
-                                              source === opt.type
-                                                ? 'bg-cobalt/5 border-cobalt shadow-xs'
-                                                : 'bg-white border-black/10 hover:border-black/30'
-                                            }`}
-                                          >
-                                            <span className={`block text-[10px] font-black uppercase mb-0.5 ${source === opt.type ? 'text-cobalt' : 'text-ink'}`}>
-                                              {opt.label}
-                                            </span>
-                                            <span className="block text-[8px] text-ink/50 leading-tight">
-                                              {opt.desc}
-                                            </span>
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-
-                                    {/* Source Specific Configuration */}
-                                    {source === 'space' && (
-                                      <div className="space-y-3 bg-off-white/50 p-4 border border-black/10">
-                                        <div>
-                                          <label className="block text-[9px] font-bold uppercase text-ink/60 mb-1">
-                                            Select Space Theme (연동할 공간 테마 선택)
-                                          </label>
-                                          <select
-                                            value={targetId}
-                                            onChange={e => {
-                                              const newTargetId = e.target.value;
-                                              const cands = getCandidateImages('space', newTargetId);
-                                              updateItem({
-                                                targetId: newTargetId,
-                                                selectedImage: cands[0]?.url || '',
-                                                hotspots: cands[0]?.hotspots || []
-                                              });
-                                            }}
-                                            className="w-full border border-black/15 p-2 bg-white text-xs outline-none focus:border-cobalt font-medium"
-                                          >
-                                            {spaces.map(s => (
-                                              <option key={s.id} value={s.id}>
-                                                {s.title} ({getCandidateImages('space', s.id).length} Images Available)
-                                              </option>
-                                            ))}
-                                          </select>
-                                        </div>
-
-                                        {/* Visual Thumbnail Picker Strip for Space Images */}
-                                        {candidateImages.length > 0 && (
-                                          <div>
-                                            <div className="flex justify-between items-center mb-1.5">
-                                              <label className="block text-[9px] font-black uppercase text-cobalt tracking-wider">
-                                                Select Featured Image from Space (쇼케이스에 노출할 세부 이미지 선택)
-                                              </label>
-                                              <span className="text-[8px] text-ink/40 font-bold uppercase">
-                                                {candidateImages.length} Images Found
-                                              </span>
-                                            </div>
-                                            <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-thin">
-                                              {candidateImages.map((cImg, cIdx) => {
-                                                const isSelected = selectedImgUrl === cImg.url;
-                                                return (
-                                                  <div
-                                                    key={cIdx}
-                                                    onClick={() => {
-                                                      updateItem({
-                                                        selectedImage: cImg.url,
-                                                        hotspots: cImg.hotspots || []
-                                                      });
-                                                    }}
-                                                    className={`relative shrink-0 w-24 h-24 border-2 cursor-pointer transition-all overflow-hidden group/thumb ${
-                                                      isSelected ? 'border-cobalt ring-2 ring-cobalt/30 scale-102 shadow-md' : 'border-black/10 opacity-70 hover:opacity-100 hover:border-black/40'
-                                                    }`}
-                                                  >
-                                                    <MediaRenderer src={cImg.url} className="w-full h-full object-cover" />
-                                                    <div className="absolute top-1 left-1 bg-black/70 text-white text-[7.5px] font-bold px-1.5 py-0.5 rounded-none backdrop-blur-xs">
-                                                      {cImg.label}
-                                                    </div>
-                                                    {cImg.pinCount > 0 && (
-                                                      <div className="absolute bottom-1 right-1 bg-cobalt text-white text-[7.5px] font-black px-1.5 py-0.5 rounded-none">
-                                                        📍 {cImg.pinCount} Pins
-                                                      </div>
-                                                    )}
-                                                    {isSelected && (
-                                                      <div className="absolute inset-0 bg-cobalt/15 border border-cobalt flex items-center justify-center">
-                                                        <CheckCircle2 size={16} className="text-white drop-shadow-md" />
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                );
-                                              })}
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-
-                                    {source === 'journal' && (
-                                      <div className="space-y-3 bg-off-white/50 p-4 border border-black/10">
-                                        <div>
-                                          <label className="block text-[9px] font-bold uppercase text-ink/60 mb-1">
-                                            Select Journal Article (연동할 저널/매거진 선택)
-                                          </label>
-                                          <select
-                                            value={targetId}
-                                            onChange={e => {
-                                              const newTargetId = e.target.value;
-                                              const cands = getCandidateImages('journal', newTargetId);
-                                              updateItem({
-                                                targetId: newTargetId,
-                                                selectedImage: cands[0]?.url || '',
-                                                hotspots: cands[0]?.hotspots || []
-                                              });
-                                            }}
-                                            className="w-full border border-black/15 p-2 bg-white text-xs outline-none focus:border-cobalt font-medium"
-                                          >
-                                            {journals.map(j => (
-                                              <option key={j.id} value={j.id}>
-                                                {j.title} ({getCandidateImages('journal', j.id).length} Images Available)
-                                              </option>
-                                            ))}
-                                          </select>
-                                        </div>
-
-                                        {/* Visual Thumbnail Picker Strip for Journal Images */}
-                                        {candidateImages.length > 0 && (
-                                          <div>
-                                            <div className="flex justify-between items-center mb-1.5">
-                                              <label className="block text-[9px] font-black uppercase text-cobalt tracking-wider">
-                                                Select Featured Image from Journal (쇼케이스에 노출할 세부 이미지 선택)
-                                              </label>
-                                              <span className="text-[8px] text-ink/40 font-bold uppercase">
-                                                {candidateImages.length} Images Found
-                                              </span>
-                                            </div>
-                                            <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-thin">
-                                              {candidateImages.map((cImg, cIdx) => {
-                                                const isSelected = selectedImgUrl === cImg.url;
-                                                return (
-                                                  <div
-                                                    key={cIdx}
-                                                    onClick={() => {
-                                                      updateItem({
-                                                        selectedImage: cImg.url,
-                                                        hotspots: cImg.hotspots || []
-                                                      });
-                                                    }}
-                                                    className={`relative shrink-0 w-24 h-24 border-2 cursor-pointer transition-all overflow-hidden group/thumb ${
-                                                      isSelected ? 'border-cobalt ring-2 ring-cobalt/30 scale-102 shadow-md' : 'border-black/10 opacity-70 hover:opacity-100 hover:border-black/40'
-                                                    }`}
-                                                  >
-                                                    <MediaRenderer src={cImg.url} className="w-full h-full object-cover" />
-                                                    <div className="absolute top-1 left-1 bg-black/70 text-white text-[7.5px] font-bold px-1.5 py-0.5 rounded-none backdrop-blur-xs">
-                                                      {cImg.label}
-                                                    </div>
-                                                    {cImg.pinCount > 0 && (
-                                                      <div className="absolute bottom-1 right-1 bg-cobalt text-white text-[7.5px] font-black px-1.5 py-0.5 rounded-none">
-                                                        📍 {cImg.pinCount} Pins
-                                                      </div>
-                                                    )}
-                                                    {isSelected && (
-                                                      <div className="absolute inset-0 bg-cobalt/15 border border-cobalt flex items-center justify-center">
-                                                        <CheckCircle2 size={16} className="text-white drop-shadow-md" />
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                );
-                                              })}
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-
-                                    {source === 'custom' && (
-                                      <div className="space-y-3 bg-off-white/50 p-4 border border-black/10">
-                                        <MediaUploadInput
-                                          label="Custom Showcase Background Image (홈 전용 배경 이미지)"
-                                          value={item.image || ''}
-                                          onChange={val => {
-                                            updateItem({ image: val, selectedImage: val });
-                                          }}
-                                        />
-                                      </div>
-                                    )}
-
-                                    {/* Hotspot Pin Management Strip */}
-                                    {selectedImgUrl && (
-                                      <div className="flex justify-between items-center bg-cobalt/5 p-3.5 border border-cobalt/20">
-                                        <div className="flex items-center gap-2.5">
-                                          <span className="text-[10px] font-black uppercase text-ink">Interactive Hotspot Pins:</span>
-                                          <span className="text-[9px] font-black text-cobalt bg-cobalt/15 px-2.5 py-0.5 rounded-full">
-                                            {currentHotspots.length} Pins Active
+                                          <span className="w-3.5 h-3.5 rounded-full bg-white/20 text-current text-[8px] flex items-center justify-center font-mono">
+                                            {sIdx + 1}
                                           </span>
+                                          <span className="truncate max-w-[120px]">
+                                            {sItem.title ? sItem.title : `Lookbook #${sIdx + 1}`}
+                                          </span>
+                                        </button>
+                                      );
+                                    })}
+
+                                    <button
+                                      type="button"
+                                      disabled={safeActiveTab >= showcaseItems.length - 1}
+                                      onClick={() => setActiveShowcaseEditTab(prev => Math.min(showcaseItems.length - 1, prev + 1))}
+                                      className="p-1.5 border border-black/15 bg-off-white hover:bg-black/5 disabled:opacity-20 cursor-pointer shrink-0"
+                                      title="Next Lookbook"
+                                    >
+                                      <ChevronRight size={14} />
+                                    </button>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[9px] font-bold text-ink/40 uppercase hidden sm:inline">
+                                      {safeActiveTab + 1} / {showcaseItems.length} Lookbooks
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newItem: HomeShowcaseItem = {
+                                          id: `showcase-${Date.now()}`,
+                                          sourceType: 'space',
+                                          targetId: spaces[0]?.id || '',
+                                          selectedImage: spaces[0]?.image || '',
+                                          title: `Lookbook #${showcaseItems.length + 1}`,
+                                          subtitle: 'Spatial Curation',
+                                          description: 'Explore objects placed in real architectural context.',
+                                          image: '',
+                                          hotspots: spaces[0]?.hotspots || []
+                                        };
+                                        const updated = [...showcaseItems, newItem];
+                                        setHomeSettings({
+                                          ...homeSettings,
+                                          showcase: {
+                                            ...showcaseData,
+                                            items: updated
+                                          }
+                                        });
+                                        setActiveShowcaseEditTab(updated.length - 1);
+                                      }}
+                                      className="bg-ink text-white px-3 py-1.5 text-[9.5px] font-black uppercase tracking-wider hover:bg-cobalt transition-colors cursor-pointer rounded-none"
+                                    >
+                                      + Add Lookbook
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Active Lookbook Card Editor */}
+                                <div key={item.id || itemIdx} className="bg-white p-5 md:p-6 rounded-none border border-black/10 shadow-xs space-y-6 relative group">
+                                  {/* Item Header & Reordering */}
+                                  <div className="flex items-center justify-between border-b border-black/10 pb-3">
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-5 h-5 rounded-full bg-cobalt text-white text-[9px] font-black flex items-center justify-center font-mono">
+                                        {itemIdx + 1}
+                                      </span>
+                                      <span className="text-[11px] font-black uppercase text-ink tracking-wider">
+                                        Showcase Lookbook #{itemIdx + 1} {item.title ? `// ${item.title}` : ''}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                      <button 
+                                        type="button" 
+                                        disabled={itemIdx === 0} 
+                                        onClick={() => {
+                                          const next = [...showcaseItems];
+                                          [next[itemIdx], next[itemIdx - 1]] = [next[itemIdx - 1], next[itemIdx]];
+                                          setHomeSettings({ ...homeSettings, showcase: { ...showcaseData, items: next } });
+                                          setActiveShowcaseEditTab(itemIdx - 1);
+                                        }} 
+                                        className="text-ink/40 hover:text-cobalt disabled:opacity-20 cursor-pointer p-1"
+                                        title="Move Left (순서 앞으로 이동)"
+                                      >
+                                        <ChevronLeft size={15}/>
+                                      </button>
+                                      <button 
+                                        type="button" 
+                                        disabled={itemIdx === showcaseItems.length - 1} 
+                                        onClick={() => {
+                                          const next = [...showcaseItems];
+                                          [next[itemIdx], next[itemIdx + 1]] = [next[itemIdx + 1], next[itemIdx]];
+                                          setHomeSettings({ ...homeSettings, showcase: { ...showcaseData, items: next } });
+                                          setActiveShowcaseEditTab(itemIdx + 1);
+                                        }} 
+                                        className="text-ink/40 hover:text-cobalt disabled:opacity-20 cursor-pointer p-1"
+                                        title="Move Right (순서 뒤로 이동)"
+                                      >
+                                        <ChevronRight size={15}/>
+                                      </button>
+                                      {showcaseItems.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const next = showcaseItems.filter((_, i) => i !== itemIdx);
+                                            setHomeSettings({ ...homeSettings, showcase: { ...showcaseData, items: next } });
+                                            setActiveShowcaseEditTab(Math.max(0, itemIdx - 1));
+                                          }}
+                                          className="text-ink/30 hover:text-orange transition-colors p-1 cursor-pointer ml-1.5"
+                                          title="Delete Showcase Lookbook"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Source Type Selector: Space / Journal / Custom */}
+                                  <div>
+                                    <label className="block text-[9px] font-black uppercase text-ink/70 tracking-wider mb-2">
+                                      Content Source Type (연동 대상 선택)
+                                    </label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                      {[
+                                        { type: 'space', label: 'Space (공간) 연동', desc: '등록된 공간의 테마 및 세부 이미지 연동' },
+                                        { type: 'journal', label: 'Journal (매거진) 연동', desc: '등록된 아티클의 스토리 이미지 연동' },
+                                        { type: 'custom', label: 'Custom (홈 커스텀)', desc: '홈 전용 독립 이미지 & 핀 직접 등록' }
+                                      ].map(opt => (
+                                        <button
+                                          key={opt.type}
+                                          type="button"
+                                          onClick={() => {
+                                            const targetSource = opt.type as any;
+                                            const defaultTargetId = targetSource === 'space' 
+                                              ? (spaces[0]?.id || '') 
+                                              : targetSource === 'journal' 
+                                                ? (journals[0]?.id || '') 
+                                                : '';
+                                            const cands = getCandidateImages(targetSource, defaultTargetId);
+                                            updateItem({
+                                              sourceType: targetSource,
+                                              targetId: defaultTargetId,
+                                              selectedImage: cands[0]?.url || '',
+                                              hotspots: cands[0]?.hotspots || []
+                                            });
+                                          }}
+                                          className={`p-2.5 text-left border transition-all cursor-pointer rounded-none ${
+                                            source === opt.type 
+                                              ? 'border-cobalt bg-cobalt/5 ring-1 ring-cobalt' 
+                                              : 'border-black/10 bg-white hover:border-black/30'
+                                          }`}
+                                        >
+                                          <span className={`block text-[10px] font-black uppercase ${source === opt.type ? 'text-cobalt' : 'text-ink'}`}>
+                                            {opt.label}
+                                          </span>
+                                          <span className="block text-[8px] text-ink/50 mt-0.5 font-sans">
+                                            {opt.desc}
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Target Space Selection & Candidate Images Strip */}
+                                  {source === 'space' && (
+                                    <div className="space-y-3 bg-off-white/50 p-4 border border-black/10">
+                                      <div>
+                                        <label className="block text-[9px] font-bold uppercase text-ink/60 mb-1">
+                                          Select Space Theme (연동할 공간 선택)
+                                        </label>
+                                        <select
+                                          value={targetId}
+                                          onChange={e => {
+                                            const newTargetId = e.target.value;
+                                            const cands = getCandidateImages('space', newTargetId);
+                                            updateItem({
+                                              targetId: newTargetId,
+                                              selectedImage: cands[0]?.url || '',
+                                              hotspots: cands[0]?.hotspots || []
+                                            });
+                                          }}
+                                          className="w-full border border-black/15 p-2 bg-white text-xs outline-none focus:border-cobalt font-medium"
+                                        >
+                                          {spaces.map(s => (
+                                            <option key={s.id} value={s.id}>
+                                              {s.title} ({getCandidateImages('space', s.id).length} Images Available)
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+
+                                      {/* Visual Thumbnail Picker Strip for Space Images */}
+                                      {candidateImages.length > 0 && (
+                                        <div>
+                                          <div className="flex justify-between items-center mb-1.5">
+                                            <label className="block text-[9px] font-black uppercase text-cobalt tracking-wider">
+                                              Select Featured Image from Space (쇼케이스에 노출할 세부 이미지 선택)
+                                            </label>
+                                            <span className="text-[8px] text-ink/40 font-bold uppercase">
+                                              {candidateImages.length} Images Found
+                                            </span>
+                                          </div>
+                                          <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-thin">
+                                            {candidateImages.map((cImg, cIdx) => {
+                                              const isSelected = selectedImgUrl === cImg.url;
+                                              return (
+                                                <div
+                                                  key={cIdx}
+                                                  onClick={() => {
+                                                    updateItem({
+                                                      selectedImage: cImg.url,
+                                                      hotspots: cImg.hotspots || []
+                                                    });
+                                                  }}
+                                                  className={`relative shrink-0 w-24 h-24 border-2 cursor-pointer transition-all overflow-hidden group/thumb ${
+                                                    isSelected ? 'border-cobalt ring-2 ring-cobalt/30 scale-102 shadow-md' : 'border-black/10 opacity-70 hover:opacity-100 hover:border-black/40'
+                                                  }`}
+                                                >
+                                                  <MediaRenderer src={cImg.url} className="w-full h-full object-cover" />
+                                                  <div className="absolute top-1 left-1 bg-black/70 text-white text-[7.5px] font-bold px-1.5 py-0.5 rounded-none backdrop-blur-xs">
+                                                    {cImg.label}
+                                                  </div>
+                                                  {cImg.pinCount > 0 && (
+                                                    <div className="absolute bottom-1 right-1 bg-cobalt text-white text-[7.5px] font-black px-1.5 py-0.5 rounded-none">
+                                                      📍 {cImg.pinCount} Pins
+                                                    </div>
+                                                  )}
+                                                  {isSelected && (
+                                                    <div className="absolute inset-0 bg-cobalt/15 border border-cobalt flex items-center justify-center">
+                                                      <CheckCircle2 size={16} className="text-white drop-shadow-md" />
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
                                         </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {source === 'journal' && (
+                                    <div className="space-y-3 bg-off-white/50 p-4 border border-black/10">
+                                      <div>
+                                        <label className="block text-[9px] font-bold uppercase text-ink/60 mb-1">
+                                          Select Journal Article (연동할 저널/매거진 선택)
+                                        </label>
+                                        <select
+                                          value={targetId}
+                                          onChange={e => {
+                                            const newTargetId = e.target.value;
+                                            const cands = getCandidateImages('journal', newTargetId);
+                                            updateItem({
+                                              targetId: newTargetId,
+                                              selectedImage: cands[0]?.url || '',
+                                              hotspots: cands[0]?.hotspots || []
+                                            });
+                                          }}
+                                          className="w-full border border-black/15 p-2 bg-white text-xs outline-none focus:border-cobalt font-medium"
+                                        >
+                                          {journals.map(j => (
+                                            <option key={j.id} value={j.id}>
+                                              {j.title} ({getCandidateImages('journal', j.id).length} Images Available)
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+
+                                      {/* Visual Thumbnail Picker Strip for Journal Images */}
+                                      {candidateImages.length > 0 && (
+                                        <div>
+                                          <div className="flex justify-between items-center mb-1.5">
+                                            <label className="block text-[9px] font-black uppercase text-cobalt tracking-wider">
+                                              Select Story Image from Journal (쇼케이스에 노출할 스토리 이미지 선택)
+                                            </label>
+                                            <span className="text-[8px] text-ink/40 font-bold uppercase">
+                                              {candidateImages.length} Images Found
+                                            </span>
+                                          </div>
+                                          <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-thin">
+                                            {candidateImages.map((cImg, cIdx) => {
+                                              const isSelected = selectedImgUrl === cImg.url;
+                                              return (
+                                                <div
+                                                  key={cIdx}
+                                                  onClick={() => {
+                                                    updateItem({
+                                                      selectedImage: cImg.url,
+                                                      hotspots: cImg.hotspots || []
+                                                    });
+                                                  }}
+                                                  className={`relative shrink-0 w-24 h-24 border-2 cursor-pointer transition-all overflow-hidden group/thumb ${
+                                                    isSelected ? 'border-cobalt ring-2 ring-cobalt/30 scale-102 shadow-md' : 'border-black/10 opacity-70 hover:opacity-100 hover:border-black/40'
+                                                  }`}
+                                                >
+                                                  <MediaRenderer src={cImg.url} className="w-full h-full object-cover" />
+                                                  <div className="absolute top-1 left-1 bg-black/70 text-white text-[7.5px] font-bold px-1.5 py-0.5 rounded-none backdrop-blur-xs">
+                                                    {cImg.label}
+                                                  </div>
+                                                  {cImg.pinCount > 0 && (
+                                                    <div className="absolute bottom-1 right-1 bg-cobalt text-white text-[7.5px] font-black px-1.5 py-0.5 rounded-none">
+                                                      📍 {cImg.pinCount} Pins
+                                                    </div>
+                                                  )}
+                                                  {isSelected && (
+                                                    <div className="absolute inset-0 bg-cobalt/15 border border-cobalt flex items-center justify-center">
+                                                      <CheckCircle2 size={16} className="text-white drop-shadow-md" />
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {source === 'custom' && (
+                                    <div className="space-y-4 bg-off-white/50 p-4 border border-black/10">
+                                      <MediaUploadInput 
+                                        label="Showcase Custom Cover Image/Video" 
+                                        value={item.image || ''} 
+                                        onChange={val => updateItem({ image: val, selectedImage: val })} 
+                                      />
+                                      <div className="flex justify-between items-center pt-2">
+                                        <span className="text-[10px] font-bold uppercase text-ink/70 font-mono">
+                                          Custom Image Hotspot Pins ({currentHotspots.length} Registered)
+                                        </span>
                                         <button
                                           type="button"
                                           onClick={() => {
                                             setHotspotEditorTarget({
-                                              imageSrc: selectedImgUrl,
+                                              imageSrc: item.image || '',
                                               title: `Showcase #${itemIdx + 1} Interactive Pins Editor`,
                                               hotspots: currentHotspots,
                                               onSave: (updated) => {
@@ -3603,119 +3673,6 @@ export default function Admin() {
                                           Manage Pins (핀 추가/편집)
                                         </button>
                                       </div>
-                                    )}
-
-                                    {/* Typography & Headings */}
-                                    <div className="space-y-3 pt-2">
-                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div>
-                                          <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">Subtitle / Slogan</label>
-                                          <input 
-                                            value={item.subtitle || ''} 
-                                            placeholder="Spatial Curation"
-                                            onChange={e => updateItem({ subtitle: e.target.value })}
-                                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans text-ink" 
-                                          />
-                                        </div>
-                                        <div>
-                                          <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">Main Heading Title</label>
-                                          <input 
-                                            value={item.title || ''} 
-                                            placeholder="Shop The Space"
-                                            onChange={e => updateItem({ title: e.target.value })}
-                                            className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans text-ink" 
-                                          />
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">Description</label>
-                                        <textarea 
-                                          value={item.description || ''} 
-                                          placeholder="Explore objects placed in real architectural context. Hover or tap the interactive pins to preview details."
-                                          onChange={e => updateItem({ description: e.target.value })}
-                                          className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none resize-none bg-white font-sans text-ink"
-                                          rows={2}
-                                        />
-                                      </div>
-                                    </div>
-
-                                    {/* Full Natural Lookbook Interactive Pin Preview with Direct Edit */}
-                                    {selectedImgUrl && (
-                                      <div className="space-y-2 pt-1">
-                                        <div className="flex justify-between items-center">
-                                          <span className="text-[10px] font-black uppercase text-ink/70 tracking-wider flex items-center gap-1.5">
-                                            <span>Lookbook #{itemIdx + 1} Interactive Preview ({currentHotspots.length} Pins)</span>
-                                          </span>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setHotspotEditorTarget({
-                                                imageSrc: selectedImgUrl,
-                                                title: `Showcase #${itemIdx + 1} Interactive Pins Editor`,
-                                                hotspots: currentHotspots,
-                                                onSave: (updated) => {
-                                                  updateItem({ hotspots: updated });
-                                                  setHotspotEditorTarget(null);
-                                                }
-                                              });
-                                            }}
-                                            className="text-[9px] font-bold text-cobalt hover:underline cursor-pointer flex items-center gap-1"
-                                          >
-                                            <span>✏️ Open Pin Editor</span>
-                                          </button>
-                                        </div>
-
-                                        <div 
-                                          onClick={() => {
-                                            setHotspotEditorTarget({
-                                              imageSrc: selectedImgUrl,
-                                              title: `Showcase #${itemIdx + 1} Interactive Pins Editor`,
-                                              hotspots: currentHotspots,
-                                              onSave: (updated) => {
-                                                updateItem({ hotspots: updated });
-                                                setHotspotEditorTarget(null);
-                                              }
-                                            });
-                                          }}
-                                          className="w-full min-h-[220px] max-h-[460px] bg-black/95 relative overflow-hidden border border-black/15 group/preview cursor-pointer flex items-center justify-center"
-                                          title="Click to open Interactive Pin Editor"
-                                        >
-                                          <MediaRenderer src={selectedImgUrl} className="w-full h-auto max-h-[460px] object-contain" />
-                                          
-                                          {/* Visual Pins Overlay on the Preview Image */}
-                                          {currentHotspots.map((pin, pIdx) => {
-                                            const prod = products.find(p => p.id === pin.productId);
-                                            return (
-                                              <div
-                                                key={pin.id || pIdx}
-                                                style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
-                                                className="absolute -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none flex flex-col items-center"
-                                              >
-                                                <span className="w-5 h-5 rounded-full bg-cobalt text-white text-[9px] font-black flex items-center justify-center shadow-md border-2 border-white animate-pulse">
-                                                  {pIdx + 1}
-                                                </span>
-                                                <span className="mt-1 bg-black/80 text-white text-[7.5px] font-bold px-1.5 py-0.5 rounded-none whitespace-nowrap shadow-xs backdrop-blur-xs">
-                                                  {prod?.name || pin.label || `Pin #${pIdx + 1}`}
-                                                </span>
-                                              </div>
-                                            );
-                                          })}
-
-                                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                                            <span className="bg-cobalt text-white px-4 py-2 text-[10px] font-black uppercase tracking-wider shadow-lg">
-                                              Click Image to Edit Hotspots ({currentHotspots.length} Active Pins)
-                                            </span>
-                                          </div>
-
-                                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end justify-between p-3 pointer-events-none">
-                                            <div>
-                                              <span className="text-[8px] font-bold uppercase text-white/70 block tracking-widest font-mono">
-                                                LOOKBOOK #{itemIdx + 1} // {source.toUpperCase()}
-                                              </span>
-                                              <span className="text-[11px] font-black uppercase text-white tracking-wider">
-                                                {item.title || 'Shop The Space'}
-                                              </span>
-                                            </div>
                                             <span className="text-[8px] font-black text-white bg-cobalt px-2.5 py-0.5 shadow-xs">
                                               {currentHotspots.length} Pins Registered
                                             </span>
