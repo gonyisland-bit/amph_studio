@@ -72,16 +72,40 @@ export default function Home() {
     .filter((p): p is Product => p !== undefined);
 
   const [activeSlide, setActiveSlide] = useState(0);
+  const [slideProgress, setSlideProgress] = useState(0);
+  const [isHeroHovered, setIsHeroHovered] = useState(false);
+
+  const transitionDuration = (settings.heroTransitionSpeed || 5) * 1000;
+  const slideCount = settings.heroSlides?.length || 0;
 
   useEffect(() => {
-    if (!settings.heroSlides || settings.heroSlides.length <= 1) return;
+    if (!settings.heroSlides || settings.heroSlides.length <= 1) {
+      setSlideProgress(0);
+      return;
+    }
     
+    if (isHeroHovered) return;
+
+    const stepMs = 50;
+    const progressIncrement = (stepMs / transitionDuration) * 100;
+
     const interval = setInterval(() => {
-      setActiveSlide(prev => (prev + 1) % settings.heroSlides.length);
-    }, (settings.heroTransitionSpeed || 5) * 1000);
+      setSlideProgress(prev => {
+        if (prev + progressIncrement >= 100) {
+          setActiveSlide(curr => (curr + 1) % slideCount);
+          return 0;
+        }
+        return prev + progressIncrement;
+      });
+    }, stepMs);
     
     return () => clearInterval(interval);
-  }, [settings.heroSlides, settings.heroTransitionSpeed]);
+  }, [settings.heroSlides, transitionDuration, slideCount, isHeroHovered]);
+
+  const handleSelectSlide = (idx: number) => {
+    setActiveSlide(idx);
+    setSlideProgress(0);
+  };
 
   return (
     <div className="flex flex-col flex-grow w-full bg-off-white overflow-hidden">
@@ -110,70 +134,120 @@ export default function Home() {
       {isAuth && null}
 
       {/* 1. Hero Section: Editorial Slideshow (Split-screen on desktop) */}
-      <section className="relative w-full h-[55vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10">
-        {settings.heroSlides?.map((slide, idx) => (
-          <div 
-            key={slide.id} 
-            className={`absolute inset-0 flex flex-col md:flex-row transition-opacity duration-1000 ease-in-out ${idx === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}
-          >
-            {/* Left Column: Brand Slogan & Info (Only visible on MD and above, on mobile it overlays over media) */}
-            <div className="hidden md:flex md:w-[45%] bg-off-white flex-col justify-center px-12 lg:px-20 py-24 relative z-20 border-r border-black/10">
-              <span className="caption-nano text-cobalt mb-6 block font-bold tracking-[0.3em]">
-                {slide.subtitle || "Amph Original"}
-              </span>
-              <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] text-ink display-huge">
-                {(slide.title || "AMPH").split('\n').map((line, i) => (
-                  <span key={i} className="block">{line}</span>
-                ))}
-              </h1>
-              <p className="mt-8 text-sm font-serif italic text-ink/50 max-w-xs leading-relaxed">
-                A study of architectural form, sensory texture, and raw functionality.
-              </p>
-            </div>
+      <section 
+        className="relative w-full h-[80vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10 select-none group/hero"
+        onMouseEnter={() => setIsHeroHovered(true)}
+        onMouseLeave={() => setIsHeroHovered(false)}
+      >
+        {settings.heroSlides?.map((slide, idx) => {
+          const isActive = idx === activeSlide;
+          return (
+            <div 
+              key={slide.id} 
+              className={`absolute inset-0 flex flex-col md:flex-row transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}
+            >
+              {/* Left Column: Brand Slogan, Info & Action CTA (Desktop) */}
+              <div className="hidden md:flex md:w-[45%] bg-off-white flex-col justify-center px-12 lg:px-20 py-24 relative z-20 border-r border-black/10">
+                <span className={`caption-nano text-cobalt mb-6 block font-bold tracking-[0.3em] ${isActive ? 'animate-in fade-in slide-in-from-bottom-2 duration-500' : ''}`}>
+                  {slide.subtitle || "Amph Original"}
+                </span>
+                <h1 className={`text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] text-ink display-huge ${isActive ? 'animate-in fade-in slide-in-from-bottom-3 duration-700 delay-100' : ''}`}>
+                  {(slide.title || "AMPH").split('\n').map((line, i) => (
+                    <span key={i} className="block">{line}</span>
+                  ))}
+                </h1>
+                <p className={`mt-8 text-sm font-serif italic text-ink/60 max-w-xs leading-relaxed ${isActive ? 'animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200' : ''}`}>
+                  A study of architectural form, sensory texture, and raw functionality.
+                </p>
+                <div className={`mt-10 ${isActive ? 'animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300' : ''}`}>
+                  <Link 
+                    to="/collection"
+                    className="inline-flex items-center gap-3 text-xs font-black uppercase tracking-widest text-ink hover:text-cobalt group/cta transition-all w-fit cursor-pointer py-1"
+                  >
+                    <span>Explore Collection</span>
+                    <ArrowRight size={14} className="group-hover/cta:translate-x-1.5 transition-transform text-cobalt" />
+                  </Link>
+                </div>
+              </div>
 
-            {/* Right Column / Background: Media Container (Takes full width on mobile, 55% on desktop) */}
-            <div className="w-full md:w-[55%] h-full relative overflow-hidden bg-black ml-auto">
-              {slide.image && (
-                <MediaRenderer 
-                  src={slide.image} 
-                  className="w-full h-full object-cover opacity-90 md:opacity-100" 
-                  alt={slide.title}
-                  loading="eager"
-                  fetchpriority={idx === activeSlide ? "high" : "auto"}
-                  key={slide.image}
-                  playing={idx === activeSlide}
-                />
-              )}
-              {/* Overlay for mobile readability & visual tone tuning */}
-              <div className="absolute inset-0 bg-black/30 md:bg-black/5 mix-blend-multiply transition-all"></div>
-            </div>
+              {/* Right Column / Background: Media Container (Takes full width on mobile, 55% on desktop) */}
+              <div className="w-full md:w-[55%] h-full relative overflow-hidden bg-black ml-auto">
+                {slide.image && (
+                  <MediaRenderer 
+                    src={slide.image} 
+                    className="w-full h-full object-cover opacity-90 md:opacity-100 transition-transform duration-[8000ms] ease-out scale-100 group-hover/hero:scale-105" 
+                    alt={slide.title}
+                    loading="eager"
+                    fetchpriority={isActive ? "high" : "auto"}
+                    key={slide.image}
+                    playing={isActive}
+                  />
+                )}
+                {/* Overlay for mobile readability & visual tone tuning */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 md:bg-black/5 md:mix-blend-multiply transition-all"></div>
+              </div>
 
-            {/* Mobile Slogan Overlay (only visible on mobile) */}
-            <div className="absolute inset-0 z-20 flex flex-col justify-end p-8 md:hidden">
-              <span className="text-[10px] uppercase tracking-[0.25em] text-white/80 mb-3 block font-bold">
-                {slide.subtitle}
-              </span>
-              <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] text-white drop-shadow-lg mb-8">
-                {(slide.title || "").split('\n').map((line, i) => (
-                  <span key={i} className="block">{line}</span>
-                ))}
-              </h1>
+              {/* Mobile Slogan Overlay (only visible on mobile) */}
+              <div className="absolute inset-0 z-20 flex flex-col justify-end p-8 pb-20 md:hidden">
+                <span className={`text-[10px] uppercase tracking-[0.25em] text-white/80 mb-3 block font-bold ${isActive ? 'animate-in fade-in slide-in-from-bottom-2 duration-500' : ''}`}>
+                  {slide.subtitle}
+                </span>
+                <h1 className={`text-4xl sm:text-5xl font-medium tracking-tighter uppercase leading-[0.9] text-white drop-shadow-lg mb-6 ${isActive ? 'animate-in fade-in slide-in-from-bottom-3 duration-700 delay-100' : ''}`}>
+                  {(slide.title || "").split('\n').map((line, i) => (
+                    <span key={i} className="block">{line}</span>
+                  ))}
+                </h1>
+                <div className={`mt-2 ${isActive ? 'animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200' : ''}`}>
+                  <Link 
+                    to="/collection"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-ink text-[10px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all w-fit rounded-none shadow-md"
+                  >
+                    <span>Explore Collection</span>
+                    <ArrowRight size={12} />
+                  </Link>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         
-        {/* Slide Indicators - Positioned carefully relative to the split */}
-        {settings.heroSlides?.length > 1 && (
-          <div className="absolute bottom-12 left-12 md:left-[45%] md:ml-12 z-30 flex gap-4">
-            {settings.heroSlides.map((_, i) => (
-              <button 
-                key={i} 
-                onClick={() => setActiveSlide(i)}
-                className={`h-1.5 transition-all duration-500 ${i === activeSlide ? 'w-16 bg-white md:bg-cobalt' : 'w-4 bg-white/30 md:bg-ink/20'}`}
-              />
-            ))}
+        {/* Slide Indicators: Time-based Progress Bars */}
+        {slideCount > 1 && (
+          <div className="absolute bottom-8 left-8 md:bottom-12 md:left-[45%] md:ml-12 z-30 flex items-center gap-3">
+            {settings.heroSlides.map((_, i) => {
+              const isCurrent = i === activeSlide;
+              const isPast = i < activeSlide;
+
+              return (
+                <button 
+                  key={i} 
+                  type="button"
+                  onClick={() => handleSelectSlide(i)}
+                  className="group/indicator relative h-1 md:h-1.5 w-12 sm:w-16 md:w-20 bg-white/30 md:bg-black/15 rounded-full overflow-hidden transition-all duration-300 cursor-pointer p-0 border-0 outline-none"
+                  title={`Go to slide ${i + 1}`}
+                  aria-label={`Slide ${i + 1}`}
+                >
+                  <div 
+                    className={`absolute inset-y-0 left-0 transition-all duration-75 rounded-full ${
+                      isCurrent 
+                        ? 'bg-white md:bg-cobalt' 
+                        : isPast 
+                          ? 'w-full bg-white/70 md:bg-ink/50' 
+                          : 'w-0'
+                    }`}
+                    style={isCurrent ? { width: `${slideProgress}%` } : undefined}
+                  />
+                </button>
+              );
+            })}
           </div>
         )}
+
+        {/* Scroll Down Indicator */}
+        <div className="absolute bottom-8 right-8 md:bottom-12 md:right-12 z-30 hidden sm:flex items-center gap-2 pointer-events-none text-white/70 md:text-ink/40 text-[9px] font-mono font-bold tracking-widest uppercase animate-pulse">
+          <span>Scroll</span>
+          <span>↓</span>
+        </div>
       </section>
 
       {/* 2. Selected Works (Featured Products) - Now directly after Hero slider */}
