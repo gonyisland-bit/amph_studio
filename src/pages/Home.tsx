@@ -626,7 +626,7 @@ export default function Home() {
             <div className="w-full bg-black relative">
               <div 
                 key={`home-showcase-${currentItem.id}-${currentIdx}-${currentItem.image}`}
-                className="w-full h-[55vh] sm:h-[65vh] md:h-[80vh] relative overflow-hidden animate-in fade-in duration-500"
+                className="w-full aspect-[4/3] sm:aspect-[16/10] md:h-[75vh] lg:h-[80vh] relative overflow-hidden animate-in fade-in duration-500"
               >
                 <ImageHotspots 
                   src={currentItem.image}
@@ -640,18 +640,18 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
                 
                 {/* Floating Bottom Info & Full Page CTA */}
-                <div className="absolute bottom-6 left-6 md:bottom-12 md:left-16 z-20 pointer-events-none">
-                  <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-white/70 block mb-2 font-mono drop-shadow-sm">
+                <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 md:bottom-12 md:left-16 z-20 pointer-events-none">
+                  <span className="text-[8px] sm:text-[10px] uppercase font-bold tracking-widest text-white/70 block mb-1.5 sm:mb-2 font-mono drop-shadow-sm">
                     LOOKBOOK // {currentItem.title}
                   </span>
                   <Link
                     to={currentItem.targetLink}
-                    className="inline-flex items-center gap-3 px-5 py-2.5 bg-white text-ink text-[10px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all pointer-events-auto rounded-none shadow-lg group/space-btn"
+                    className="inline-flex items-center gap-2 sm:gap-3 px-3.5 sm:px-5 py-2 sm:py-2.5 bg-white text-ink text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all pointer-events-auto rounded-none shadow-lg group/space-btn"
                   >
                     <span>
                       {currentItem.sourceType === 'journal' ? 'Read Full Story' : 'Explore Full Space'}
                     </span>
-                    <ArrowRight size={12} className="group-hover/space-btn:translate-x-1 transition-transform" />
+                    <ArrowRight size={11} className="group-hover/space-btn:translate-x-1 transition-transform" />
                   </Link>
                 </div>
 
