@@ -560,6 +560,7 @@ function ProductListItem({
   isSavedProduct, 
   onToggleWishlist 
 }: { 
+  key?: React.Key;
   product: Product; 
   idx: number; 
   isSavedProduct: boolean; 
