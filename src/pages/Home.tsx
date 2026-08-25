@@ -105,6 +105,7 @@ export default function Home() {
   const handleSelectSlide = (idx: number) => {
     setActiveSlide(idx);
     setSlideProgress(0);
+    setIsHeroHovered(false);
   };
 
   return (
@@ -136,8 +137,12 @@ export default function Home() {
       {/* 1. Hero Section: Editorial Slideshow (Split-screen on desktop) */}
       <section 
         className="relative w-full h-[80vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10 select-none group/hero"
-        onMouseEnter={() => setIsHeroHovered(true)}
-        onMouseLeave={() => setIsHeroHovered(false)}
+        onPointerEnter={(e) => {
+          if (e.pointerType === 'mouse') setIsHeroHovered(true);
+        }}
+        onPointerLeave={(e) => {
+          if (e.pointerType === 'mouse') setIsHeroHovered(false);
+        }}
       >
         {settings.heroSlides?.map((slide, idx) => {
           const isActive = idx === activeSlide;
@@ -148,26 +153,30 @@ export default function Home() {
             >
               {/* Left Column: Brand Slogan, Info & Action CTA (Desktop) */}
               <div className="hidden md:flex md:w-[45%] bg-off-white flex-col justify-center px-12 lg:px-20 py-24 relative z-20 border-r border-black/10">
-                <span className={`caption-nano text-cobalt mb-6 block font-bold tracking-[0.3em] ${isActive ? 'animate-in fade-in slide-in-from-bottom-2 duration-500' : ''}`}>
-                  {slide.subtitle || "Amph Original"}
-                </span>
-                <h1 className={`text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] text-ink display-huge ${isActive ? 'animate-in fade-in slide-in-from-bottom-3 duration-700 delay-100' : ''}`}>
-                  {(slide.title || "AMPH").split('\n').map((line, i) => (
-                    <span key={i} className="block">{line}</span>
-                  ))}
-                </h1>
-                <p className={`mt-8 text-sm font-serif italic text-ink/60 max-w-xs leading-relaxed ${isActive ? 'animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200' : ''}`}>
-                  A study of architectural form, sensory texture, and raw functionality.
-                </p>
-                <div className={`mt-10 ${isActive ? 'animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300' : ''}`}>
-                  <Link 
-                    to="/collection"
-                    className="inline-flex items-center gap-3 text-xs font-black uppercase tracking-widest text-ink hover:text-cobalt group/cta transition-all w-fit cursor-pointer py-1"
-                  >
-                    <span>Explore Collection</span>
-                    <ArrowRight size={14} className="group-hover/cta:translate-x-1.5 transition-transform text-cobalt" />
-                  </Link>
-                </div>
+                {isActive && (
+                  <div key={`desktop-hero-text-${activeSlide}`} className="flex flex-col">
+                    <span className="caption-nano text-cobalt mb-6 block font-bold tracking-[0.3em] animate-in fade-in slide-in-from-bottom-3 duration-500 fill-mode-both">
+                      {slide.subtitle || "Amph Original"}
+                    </span>
+                    <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] text-ink display-huge animate-in fade-in slide-in-from-bottom-4 duration-600 delay-150 fill-mode-both">
+                      {(slide.title || "AMPH").split('\n').map((line, i) => (
+                        <span key={i} className="block">{line}</span>
+                      ))}
+                    </h1>
+                    <p className="mt-8 text-sm font-serif italic text-ink/60 max-w-xs leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-600 delay-300 fill-mode-both">
+                      A study of architectural form, sensory texture, and raw functionality.
+                    </p>
+                    <div className="mt-10 animate-in fade-in slide-in-from-bottom-4 duration-600 delay-450 fill-mode-both">
+                      <Link 
+                        to="/collection"
+                        className="inline-flex items-center gap-3 text-xs font-black uppercase tracking-widest text-ink hover:text-cobalt group/cta transition-all w-fit cursor-pointer py-1"
+                      >
+                        <span>Explore Collection</span>
+                        <ArrowRight size={14} className="group-hover/cta:translate-x-1.5 transition-transform text-cobalt" />
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Right Column / Background: Media Container (Takes full width on mobile, 55% on desktop) */}
@@ -189,29 +198,33 @@ export default function Home() {
 
               {/* Mobile Slogan Overlay (only visible on mobile) */}
               <div className="absolute inset-0 z-20 flex flex-col justify-end p-8 pb-20 md:hidden">
-                <span className={`text-[10px] uppercase tracking-[0.25em] text-white/80 mb-3 block font-bold ${isActive ? 'animate-in fade-in slide-in-from-bottom-2 duration-500' : ''}`}>
-                  {slide.subtitle}
-                </span>
-                <h1 className={`text-4xl sm:text-5xl font-medium tracking-tighter uppercase leading-[0.9] text-white drop-shadow-lg mb-6 ${isActive ? 'animate-in fade-in slide-in-from-bottom-3 duration-700 delay-100' : ''}`}>
-                  {(slide.title || "").split('\n').map((line, i) => (
-                    <span key={i} className="block">{line}</span>
-                  ))}
-                </h1>
-                <div className={`mt-2 ${isActive ? 'animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200' : ''}`}>
-                  <Link 
-                    to="/collection"
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-ink text-[10px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all w-fit rounded-none shadow-md"
-                  >
-                    <span>Explore Collection</span>
-                    <ArrowRight size={12} />
-                  </Link>
-                </div>
+                {isActive && (
+                  <div key={`mobile-hero-text-${activeSlide}`} className="flex flex-col">
+                    <span className="text-[10px] uppercase tracking-[0.25em] text-white/80 mb-3 block font-bold animate-in fade-in slide-in-from-bottom-3 duration-500 fill-mode-both">
+                      {slide.subtitle}
+                    </span>
+                    <h1 className="text-4xl sm:text-5xl font-medium tracking-tighter uppercase leading-[0.9] text-white drop-shadow-lg mb-6 animate-in fade-in slide-in-from-bottom-4 duration-600 delay-150 fill-mode-both">
+                      {(slide.title || "").split('\n').map((line, i) => (
+                        <span key={i} className="block">{line}</span>
+                      ))}
+                    </h1>
+                    <div className="mt-2 animate-in fade-in slide-in-from-bottom-4 duration-600 delay-300 fill-mode-both">
+                      <Link 
+                        to="/collection"
+                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-ink text-[10px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all w-fit rounded-none shadow-md"
+                      >
+                        <span>Explore Collection</span>
+                        <ArrowRight size={12} />
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
         
-        {/* Slide Indicators: Time-based Progress Bars */}
+        {/* Slide Indicators: Time-based Progress Bars (Unified High-Contrast White Theme) */}
         {slideCount > 1 && (
           <div className="absolute bottom-8 left-8 md:bottom-12 md:left-[45%] md:ml-12 z-30 flex items-center gap-3">
             {settings.heroSlides.map((_, i) => {
@@ -223,16 +236,16 @@ export default function Home() {
                   key={i} 
                   type="button"
                   onClick={() => handleSelectSlide(i)}
-                  className="group/indicator relative h-1 md:h-1.5 w-12 sm:w-16 md:w-20 bg-white/30 md:bg-black/15 rounded-full overflow-hidden transition-all duration-300 cursor-pointer p-0 border-0 outline-none"
+                  className="group/indicator relative h-1 md:h-1.5 w-12 sm:w-16 md:w-20 bg-white/30 backdrop-blur-xs rounded-full overflow-hidden transition-all duration-300 cursor-pointer p-0 border-0 outline-none"
                   title={`Go to slide ${i + 1}`}
                   aria-label={`Slide ${i + 1}`}
                 >
                   <div 
                     className={`absolute inset-y-0 left-0 transition-all duration-75 rounded-full ${
                       isCurrent 
-                        ? 'bg-white md:bg-cobalt' 
+                        ? 'bg-white shadow-xs' 
                         : isPast 
-                          ? 'w-full bg-white/70 md:bg-ink/50' 
+                          ? 'w-full bg-white/75' 
                           : 'w-0'
                     }`}
                     style={isCurrent ? { width: `${slideProgress}%` } : undefined}
@@ -244,9 +257,9 @@ export default function Home() {
         )}
 
         {/* Scroll Down Indicator */}
-        <div className="absolute bottom-8 right-8 md:bottom-12 md:right-12 z-30 hidden sm:flex items-center gap-2 pointer-events-none text-white/70 md:text-ink/40 text-[9px] font-mono font-bold tracking-widest uppercase animate-pulse">
-          <span>Scroll</span>
-          <span>↓</span>
+        <div className="absolute bottom-8 right-8 md:bottom-12 md:right-12 z-30 flex items-center gap-2 pointer-events-none text-white/90 text-[10px] font-mono font-bold tracking-widest uppercase">
+          <span className="drop-shadow-md">Scroll</span>
+          <span className="inline-block animate-bounce text-sm drop-shadow-md">↓</span>
         </div>
       </section>
 

@@ -73,12 +73,14 @@ const MediaUploadInput = ({
   value = '', 
   onChange, 
   onBatchUpload,
-  label 
+  label,
+  fit = 'cover'
 }: { 
   value?: string, 
   onChange: (val: string) => void, 
   onBatchUpload?: (urls: string[]) => void,
-  label?: string 
+  label?: string,
+  fit?: 'cover' | 'contain'
 }) => {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -196,7 +198,13 @@ const MediaUploadInput = ({
              {isVideo ? (
                <video src={normalizeMediaUrl(value)} className="w-full h-full object-cover rounded-none" autoPlay loop muted playsInline />
              ) : (
-               <img src={normalizeMediaUrl(value)} alt="Preview" className="w-full h-full object-cover rounded-none group-hover/preview:scale-[1.02] transition-transform duration-300" nopin="nopin" data-pin-no-hover="true" />
+                <img 
+                  src={normalizeMediaUrl(value)} 
+                  alt="Preview" 
+                  className={`w-full h-full ${fit === 'contain' ? 'object-contain p-3' : 'object-cover'} rounded-none group-hover/preview:scale-[1.02] transition-transform duration-300`} 
+                  nopin="nopin" 
+                  data-pin-no-hover="true" 
+                />
              )}
              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                <span className="bg-black/70 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-none font-mono">Click or Drop to Replace</span>
@@ -2474,6 +2482,7 @@ export default function Admin() {
                             label="Upload / Custom Logo Image (PNG / SVG)" 
                             value={homeSettings.logoImage || '/logo.png'} 
                             onChange={val => setHomeSettings({ ...homeSettings, logoImage: val })} 
+                            fit="contain"
                           />
                         )}
                       </div>
