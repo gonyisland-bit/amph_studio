@@ -112,38 +112,6 @@ export function ImageHotspots({
     }, 300);
   };
 
-  // Precise mathematical aspect-ratio pin coordinate mapping for object-cover
-  const getCalibratedPos = (pinX: number, pinY: number) => {
-    if (!naturalAspect || !containerAspect) {
-      return { x: pinX, y: pinY, isVisible: true };
-    }
-
-    const aImg = naturalAspect;
-    const aBox = containerAspect;
-
-    let calX = pinX;
-    let calY = pinY;
-
-    if (aBox > aImg) {
-      // Container is wider than natural image: top and bottom are cropped in object-cover
-      calX = pinX;
-      calY = 50 + (pinY - 50) * (aBox / aImg);
-    } else if (aBox < aImg) {
-      // Container is taller/narrower than natural image: left and right are cropped in object-cover
-      calX = 50 + (pinX - 50) * (aImg / aBox);
-      calY = pinY;
-    }
-
-    // Visibility test within container bounds
-    const isVisible = calX >= -3 && calX <= 103 && calY >= -3 && calY <= 103;
-
-    return { 
-      x: Math.max(0, Math.min(100, calX)), 
-      y: Math.max(0, Math.min(100, calY)), 
-      isVisible 
-    };
-  };
-
   const validHotspots = (hotspots || []).filter(h => h && typeof h.x === 'number' && typeof h.y === 'number');
 
   return (
@@ -166,8 +134,8 @@ export function ImageHotspots({
         const product = products.find(p => p.id === pin.productId);
         const isActive = activePinId === pin.id;
 
-        const { x: finalX, y: finalY, isVisible } = getCalibratedPos(pin.x, pin.y);
-        if (!isVisible) return null;
+        const finalX = pin.x;
+        const finalY = pin.y;
 
         // Position alignment calculation to prevent screen overflow
         const isNearRight = finalX > 60;

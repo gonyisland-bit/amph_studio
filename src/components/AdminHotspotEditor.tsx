@@ -49,65 +49,6 @@ export function AdminHotspotEditor({
     }
   }, [imageSrc]);
 
-  // Convert canonical natural image coordinates (0% ~ 100%) to display coordinates on the cropped canvas box
-  const getDisplayCoords = (canonicalX: number, canonicalY: number) => {
-    const aImg = naturalAspect || (16 / 9);
-    const aBox = aspectMode === 'story' ? (4 / 3) : aspectMode === 'hero' ? (16 / 9) : aImg;
-
-    if (aspectMode === 'natural' || Math.abs(aBox - aImg) < 0.01) {
-      return { displayX: canonicalX, displayY: canonicalY, isVisible: true };
-    }
-
-    let dX = canonicalX;
-    let dY = canonicalY;
-
-    if (aBox < aImg) {
-      // Container is narrower than image: left/right are cropped in object-cover
-      dX = 50 + (canonicalX - 50) * (aImg / aBox);
-      dY = canonicalY;
-    } else if (aBox > aImg) {
-      // Container is wider than image: top/bottom are cropped in object-cover
-      dX = canonicalX;
-      dY = 50 + (canonicalY - 50) * (aBox / aImg);
-    }
-
-    const isVisible = dX >= -3 && dX <= 103 && dY >= -3 && dY <= 103;
-    return { 
-      displayX: Math.max(0, Math.min(100, dX)), 
-      displayY: Math.max(0, Math.min(100, dY)), 
-      isVisible 
-    };
-  };
-
-  // Convert click/drag percentage on the cropped canvas box back to canonical natural image coordinates
-  const getCanonicalCoords = (clickPercentX: number, clickPercentY: number) => {
-    const aImg = naturalAspect || (16 / 9);
-    const aBox = aspectMode === 'story' ? (4 / 3) : aspectMode === 'hero' ? (16 / 9) : aImg;
-
-    if (aspectMode === 'natural' || Math.abs(aBox - aImg) < 0.01) {
-      return { 
-        canonicalX: Math.max(0, Math.min(100, Math.round(clickPercentX * 10) / 10)), 
-        canonicalY: Math.max(0, Math.min(100, Math.round(clickPercentY * 10) / 10)) 
-      };
-    }
-
-    let cX = clickPercentX;
-    let cY = clickPercentY;
-
-    if (aBox < aImg) {
-      cX = 50 + (clickPercentX - 50) * (aBox / aImg);
-      cY = clickPercentY;
-    } else if (aBox > aImg) {
-      cX = clickPercentX;
-      cY = 50 + (clickPercentY - 50) * (aImg / aBox);
-    }
-
-    return { 
-      canonicalX: Math.max(0, Math.min(100, Math.round(cX * 10) / 10)), 
-      canonicalY: Math.max(0, Math.min(100, Math.round(cY * 10) / 10)) 
-    };
-  };
-
   // Global mousemove and mouseup listeners for smooth pin dragging
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -116,12 +57,10 @@ export function AdminHotspotEditor({
       if (!container) return;
 
       const rect = container.getBoundingClientRect();
-      const clickPercentX = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-      const clickPercentY = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+      const clickPercentX = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10));
+      const clickPercentY = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10));
 
-      const { canonicalX, canonicalY } = getCanonicalCoords(clickPercentX, clickPercentY);
-
-      setPins(prev => prev.map(p => p.id === draggingPinId ? { ...p, x: canonicalX, y: canonicalY } : p));
+      setPins(prev => prev.map(p => p.id === draggingPinId ? { ...p, x: clickPercentX, y: clickPercentY } : p));
     };
 
     const handleMouseUp = () => {
@@ -139,7 +78,7 @@ export function AdminHotspotEditor({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [draggingPinId, aspectMode, naturalAspect]);
+  }, [draggingPinId]);
 
   if (!isOpen) return null;
 
@@ -151,16 +90,14 @@ export function AdminHotspotEditor({
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
-    const clickPercentX = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-    const clickPercentY = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
-
-    const { canonicalX, canonicalY } = getCanonicalCoords(clickPercentX, clickPercentY);
+    const clickPercentX = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10));
+    const clickPercentY = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10));
 
     const newPin: HotspotPin = {
       id: `pin-${Date.now()}`,
       productId: products[0]?.id || "",
-      x: canonicalX,
-      y: canonicalY,
+      x: clickPercentX,
+      y: clickPercentY,
       label: ""
     };
 
@@ -337,12 +274,11 @@ export function AdminHotspotEditor({
                 </div>
               )}
 
-              {/* Pins on top of Image (Draggable & Calibrated) */}
+              {/* Pins on top of Image (Draggable & Direct 1:1 match) */}
               {pins.map((pin, idx) => {
                 const isSelected = selectedPinId === pin.id;
                 const isDragging = draggingPinId === pin.id;
                 const prod = products.find(p => p.id === pin.productId);
-                const { displayX, displayY, isVisible } = getDisplayCoords(pin.x, pin.y);
 
                 return (
                   <div
@@ -354,8 +290,8 @@ export function AdminHotspotEditor({
                     }}
                     className={`absolute -translate-x-1/2 -translate-y-1/2 group/pin z-20 transition-transform ${
                       isDragging ? 'cursor-grabbing scale-125 z-40' : 'cursor-grab hover:scale-115'
-                    } ${!isVisible ? 'opacity-40' : 'opacity-100'}`}
-                    style={{ left: `${displayX}%`, top: `${displayY}%` }}
+                    }`}
+                    style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
                   >
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black font-mono transition-all duration-150 shadow-xl border-2 select-none ${
                       isDragging 
