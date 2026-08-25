@@ -355,8 +355,21 @@ export const defaultColorAssets: ColorOption[] = [
   { name: 'Natural', hex: '#e8d8c1' }
 ];
 
+export interface HomeShowcaseItem {
+  id: string;
+  sourceType?: 'space' | 'journal' | 'custom';
+  targetId?: string; // spaceId or journalId
+  selectedImage?: string; // chosen image from space/journal
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  image?: string; // custom image or fallback
+  hotspots?: HotspotPin[];
+}
+
 export interface HomeShowcaseSettings {
   enabled?: boolean;
+  items?: HomeShowcaseItem[];
   spaceId?: string;
   title?: string;
   subtitle?: string;
@@ -408,6 +421,7 @@ export const defaultHomeSettings: HomeSettings = {
   magazineCards: [],
   showcase: {
     enabled: true,
+    items: [],
     spaceId: '',
     title: 'Shop The Space',
     subtitle: 'Spatial Curation',

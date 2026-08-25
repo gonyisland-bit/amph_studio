@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getProducts, getSpaces, Product, SpaceModel, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
-import { ArrowRight, MoveRight, Bookmark } from "lucide-react";
+import { getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, getHomeSettings, HomeSettings, defaultHomeSettings, HomeShowcaseItem } from "../lib/data";
+import { ArrowRight, MoveRight, Bookmark, ChevronLeft, ChevronRight } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { ImageHotspots } from "../components/ImageHotspots";
 import { useWishlist } from "../lib/wishlist";
@@ -13,7 +13,9 @@ let hasShownSplash = false;
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [spaces, setSpaces] = useState<SpaceModel[]>([]);
+  const [journals, setJournals] = useState<JournalArticle[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
+  const [activeShowcaseIdx, setActiveShowcaseIdx] = useState(0);
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
   const { toggle: toggleWishlist, isSaved } = useWishlist();
 
@@ -26,11 +28,12 @@ export default function Home() {
   });
   const [fadeSplash, setFadeSplash] = useState(false);
 
-  useScrollReveal([products, spaces, settings]);
+  useScrollReveal([products, spaces, journals, settings]);
 
   useEffect(() => {
     getProducts().then(setProducts);
     getSpaces().then(setSpaces);
+    getJournals().then(setJournals);
     getHomeSettings().then(setSettings);
     document.title = "Home — Amph";
     
@@ -422,69 +425,201 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2.5. Interactive Lookbook Showcase (Shop the Space) */}
+      {/* 2.5. Interactive Lookbook Showcase (Shop the Space / Journal / Custom Multi-Lookbook) */}
       {(() => {
         const showcaseConfig = settings.showcase || defaultHomeSettings.showcase;
         if (showcaseConfig?.enabled === false) return null;
 
-        // 1. If spaceId is configured in settings
-        let targetSpace = showcaseConfig?.spaceId ? spaces.find(s => s.id === showcaseConfig.spaceId) : null;
-        
-        // 2. Fallback to space with hotspots or first space with image if not explicitly set
-        if (!targetSpace && !showcaseConfig?.image) {
-          targetSpace = spaces.find(s => s.hotspots && s.hotspots.length > 0) || spaces.find(s => s.image) || spaces[0];
-        }
+        // Collect items list
+        const rawItems: HomeShowcaseItem[] = (showcaseConfig?.items && showcaseConfig.items.length > 0)
+          ? showcaseConfig.items
+          : [
+              {
+                id: 'showcase-default',
+                sourceType: showcaseConfig?.spaceId ? 'space' : 'custom',
+                targetId: showcaseConfig?.spaceId || spaces[0]?.id || '',
+                selectedImage: showcaseConfig?.image || spaces[0]?.image || '',
+                title: showcaseConfig?.title || 'Shop The Space',
+                subtitle: showcaseConfig?.subtitle || 'Spatial Curation',
+                description: showcaseConfig?.description || 'Explore objects placed in real architectural context. Hover or tap the interactive pins to preview details.',
+                image: showcaseConfig?.image || '',
+                hotspots: showcaseConfig?.hotspots || spaces[0]?.hotspots || []
+              }
+            ];
 
-        const showcaseImage = showcaseConfig?.spaceId ? (targetSpace?.image || showcaseConfig?.image) : (showcaseConfig?.image || targetSpace?.image);
-        if (!showcaseImage) return null;
+        // Process resolved items
+        const resolvedItems = rawItems.map(item => {
+          let resolvedImg = item.selectedImage || item.image || '';
+          let resolvedHotspots = item.hotspots || [];
+          let resolvedTitle = item.title;
+          let resolvedSubtitle = item.subtitle || 'Spatial Curation';
+          let resolvedDesc = item.description || 'Explore objects placed in real architectural context. Hover or tap the interactive pins to preview details.';
+          let targetLink = '/collection';
 
-        const showcaseHotspots = showcaseConfig?.spaceId ? (targetSpace?.hotspots || []) : (showcaseConfig?.hotspots || targetSpace?.hotspots || []);
-        const showcaseTitle = showcaseConfig?.title || targetSpace?.title || 'Shop The Space';
-        const showcaseSubtitle = showcaseConfig?.subtitle || 'Spatial Curation';
-        const showcaseDesc = showcaseConfig?.description || 'Explore objects placed in real architectural context. Hover or tap the interactive pins to preview details.';
-        const targetSpaceLink = targetSpace?.id ? `/space/${targetSpace.id}` : '/space';
+          if (item.sourceType === 'space') {
+            const sp = spaces.find(s => s.id === item.targetId) || spaces[0];
+            if (sp) {
+              if (!resolvedImg) resolvedImg = sp.image || sp.images?.[0] || '';
+              if (resolvedHotspots.length === 0) resolvedHotspots = sp.hotspots || [];
+              if (!resolvedTitle) resolvedTitle = sp.title || 'Shop The Space';
+              targetLink = `/space/${sp.id}`;
+            }
+          } else if (item.sourceType === 'journal') {
+            const jn = journals.find(j => j.id === item.targetId) || journals[0];
+            if (jn) {
+              if (!resolvedImg) resolvedImg = jn.image || '';
+              if (resolvedHotspots.length === 0) resolvedHotspots = jn.hotspots || [];
+              if (!resolvedTitle) resolvedTitle = jn.title || 'Featured Story';
+              resolvedSubtitle = item.subtitle || 'Editorial Journal';
+              targetLink = `/journal/${jn.id}`;
+            }
+          }
+
+          if (!resolvedImg) {
+            const fallbackSpace = spaces.find(s => s.image) || spaces[0];
+            if (fallbackSpace) {
+              resolvedImg = fallbackSpace.image || fallbackSpace.images?.[0] || '';
+              if (resolvedHotspots.length === 0) resolvedHotspots = fallbackSpace.hotspots || [];
+              if (!resolvedTitle) resolvedTitle = fallbackSpace.title || 'Shop The Space';
+              targetLink = `/space/${fallbackSpace.id}`;
+            }
+          }
+
+          return {
+            ...item,
+            image: resolvedImg,
+            hotspots: resolvedHotspots,
+            title: resolvedTitle || 'Shop The Space',
+            subtitle: resolvedSubtitle,
+            description: resolvedDesc,
+            targetLink
+          };
+        }).filter(item => Boolean(item.image));
+
+        if (resolvedItems.length === 0) return null;
+
+        const currentIdx = Math.min(activeShowcaseIdx, resolvedItems.length - 1);
+        const currentItem = resolvedItems[currentIdx];
 
         return (
-          <section className="bg-white border-t border-black/10 flex flex-col reveal">
-            <div className="px-8 md:px-20 py-20 md:py-28 flex flex-col md:flex-row justify-between items-baseline gap-6">
-              <div>
-                <span className="caption-nano text-cobalt mb-3 block font-bold tracking-[0.3em]">
-                  {showcaseSubtitle}
-                </span>
+          <section className="bg-white border-t border-black/10 flex flex-col reveal group/showcase-sec">
+            <div className="px-8 md:px-20 py-16 md:py-24 flex flex-col md:flex-row justify-between items-baseline gap-6 border-b border-black/10">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="caption-nano text-cobalt font-bold tracking-[0.3em] block">
+                    {currentItem.subtitle}
+                  </span>
+                  {resolvedItems.length > 1 && (
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-ink/40 bg-black/5 px-2 py-0.5">
+                      {String(currentIdx + 1).padStart(2, '0')} / {String(resolvedItems.length).padStart(2, '0')}
+                    </span>
+                  )}
+                </div>
                 <h2 className="text-3xl md:text-5xl font-medium tracking-tighter uppercase leading-[0.9]">
-                  {showcaseTitle}
+                  {currentItem.title}
                 </h2>
               </div>
-              <p className="text-sm font-serif italic text-ink/60 max-w-md leading-relaxed">
-                {showcaseDesc}
-              </p>
+              <div className="flex flex-col md:items-end gap-4 max-w-md">
+                <p className="text-sm font-serif italic text-ink/60 leading-relaxed">
+                  {currentItem.description}
+                </p>
+
+                {/* Left/Right Lookbook Navigation Controls */}
+                {resolvedItems.length > 1 && (
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveShowcaseIdx(prev => (prev === 0 ? resolvedItems.length - 1 : prev - 1))}
+                      className="w-8 h-8 rounded-none border border-black/20 flex items-center justify-center text-ink hover:bg-cobalt hover:text-white hover:border-cobalt transition-colors cursor-pointer"
+                      title="Previous Lookbook"
+                    >
+                      <ChevronLeft size={14} />
+                    </button>
+                    <div className="flex items-center gap-1 px-2">
+                      {resolvedItems.map((_, dotIdx) => (
+                        <button
+                          key={dotIdx}
+                          type="button"
+                          onClick={() => setActiveShowcaseIdx(dotIdx)}
+                          className={`h-1.5 transition-all cursor-pointer ${
+                            dotIdx === currentIdx ? 'w-6 bg-cobalt' : 'w-1.5 bg-black/20 hover:bg-black/40'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveShowcaseIdx(prev => (prev === resolvedItems.length - 1 ? 0 : prev + 1))}
+                      className="w-8 h-8 rounded-none border border-black/20 flex items-center justify-center text-ink hover:bg-cobalt hover:text-white hover:border-cobalt transition-colors cursor-pointer"
+                      title="Next Lookbook"
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Immersive Hotspot Space Showcase */}
-            <div className="w-full border-t border-black/10 bg-black relative">
-              <div className="w-full h-[55vh] sm:h-[65vh] md:h-[80vh] relative overflow-hidden">
+            {/* Immersive Hotspot Space Showcase with Dynamic Pins & Slide Transition */}
+            <div className="w-full bg-black relative">
+              <div 
+                key={`home-showcase-${currentItem.id}-${currentIdx}-${currentItem.image}`}
+                className="w-full h-[55vh] sm:h-[65vh] md:h-[80vh] relative overflow-hidden animate-in fade-in duration-500"
+              >
                 <ImageHotspots 
-                  src={showcaseImage}
-                  alt={showcaseTitle}
-                  hotspots={showcaseHotspots}
+                  src={currentItem.image}
+                  alt={currentItem.title}
+                  hotspots={currentItem.hotspots}
                   products={products}
                   className="w-full h-full"
                   imageClassName="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-700"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
+                
+                {/* Floating Bottom Info & Full Page CTA */}
                 <div className="absolute bottom-6 left-6 md:bottom-12 md:left-16 z-20 pointer-events-none">
                   <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-white/70 block mb-2 font-mono drop-shadow-sm">
-                    LOOKBOOK // {showcaseTitle}
+                    LOOKBOOK // {currentItem.title}
                   </span>
                   <Link
-                    to={targetSpaceLink}
+                    to={currentItem.targetLink}
                     className="inline-flex items-center gap-3 px-5 py-2.5 bg-white text-ink text-[10px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all pointer-events-auto rounded-none shadow-lg group/space-btn"
                   >
-                    <span>{targetSpace?.id ? 'Explore Full Space' : 'Explore All Spaces'}</span>
+                    <span>
+                      {currentItem.sourceType === 'journal' ? 'Read Full Story' : 'Explore Full Space'}
+                    </span>
                     <ArrowRight size={12} className="group-hover/space-btn:translate-x-1 transition-transform" />
                   </Link>
                 </div>
+
+                {/* Floating Left/Right Arrow Overlays on the image for quick browsing */}
+                {resolvedItems.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveShowcaseIdx(prev => (prev === 0 ? resolvedItems.length - 1 : prev - 1));
+                      }}
+                      className="absolute top-1/2 left-4 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/40 hover:bg-cobalt text-white backdrop-blur-md border border-white/10 flex items-center justify-center opacity-0 group-hover/showcase-sec:opacity-100 transition-all cursor-pointer shadow-lg"
+                      title="Previous Lookbook"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveShowcaseIdx(prev => (prev === resolvedItems.length - 1 ? 0 : prev + 1));
+                      }}
+                      className="absolute top-1/2 right-4 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/40 hover:bg-cobalt text-white backdrop-blur-md border border-white/10 flex items-center justify-center opacity-0 group-hover/showcase-sec:opacity-100 transition-all cursor-pointer shadow-lg"
+                      title="Next Lookbook"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </section>
