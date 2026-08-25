@@ -38,12 +38,15 @@ export function ImageHotspots({
   useEffect(() => {
     if (!src) return;
     const img = new window.Image();
-    img.src = src;
     img.onload = () => {
       if (img.naturalWidth > 0 && img.naturalHeight > 0) {
         setNaturalAspect(img.naturalWidth / img.naturalHeight);
       }
     };
+    img.src = src;
+    if (img.complete && img.naturalWidth > 0) {
+      setNaturalAspect(img.naturalWidth / img.naturalHeight);
+    }
   }, [src]);
 
   // Update container aspect ratio on mount & resize
@@ -112,6 +115,42 @@ export function ImageHotspots({
     }, 300);
   };
 
+  // Precise mathematical aspect-ratio pin coordinate mapping for object-cover
+  const getCalibratedPos = (pinX: number, pinY: number) => {
+    if (!naturalAspect || !containerAspect) {
+      return { x: pinX, y: pinY, isVisible: true };
+    }
+
+    const aImg = naturalAspect;
+    const aBox = containerAspect;
+
+    if (Math.abs(aBox - aImg) < 0.01) {
+      return { x: pinX, y: pinY, isVisible: true };
+    }
+
+    let calX = pinX;
+    let calY = pinY;
+
+    if (aBox < aImg) {
+      // Container is narrower than natural image: left and right are cropped in object-cover
+      calX = 50 + (pinX - 50) * (aImg / aBox);
+      calY = pinY;
+    } else if (aBox > aImg) {
+      // Container is wider than natural image: top and bottom are cropped in object-cover
+      calX = pinX;
+      calY = 50 + (pinY - 50) * (aBox / aImg);
+    }
+
+    // Visibility test within container bounds
+    const isVisible = calX >= -3 && calX <= 103 && calY >= -3 && calY <= 103;
+
+    return { 
+      x: Math.max(0, Math.min(100, calX)), 
+      y: Math.max(0, Math.min(100, calY)), 
+      isVisible 
+    };
+  };
+
   const validHotspots = (hotspots || []).filter(h => h && typeof h.x === 'number' && typeof h.y === 'number');
 
   return (
@@ -134,8 +173,8 @@ export function ImageHotspots({
         const product = products.find(p => p.id === pin.productId);
         const isActive = activePinId === pin.id;
 
-        const finalX = pin.x;
-        const finalY = pin.y;
+        const { x: finalX, y: finalY, isVisible } = getCalibratedPos(pin.x, pin.y);
+        if (!isVisible) return null;
 
         // Position alignment calculation to prevent screen overflow
         const isNearRight = finalX > 60;
