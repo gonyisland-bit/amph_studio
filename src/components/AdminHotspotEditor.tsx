@@ -49,9 +49,23 @@ export function AdminHotspotEditor({
     }
   }, [imageSrc]);
 
+  // Helper to get real-time accurate natural aspect ratio directly from the active DOM image element
+  const getActiveNaturalAspect = () => {
+    if (naturalAspect && naturalAspect > 0) return naturalAspect;
+    const domImg = imageContainerRef.current?.querySelector('img') as HTMLImageElement | null;
+    if (domImg && domImg.naturalWidth > 0 && domImg.naturalHeight > 0) {
+      return domImg.naturalWidth / domImg.naturalHeight;
+    }
+    const domVideo = imageContainerRef.current?.querySelector('video') as HTMLVideoElement | null;
+    if (domVideo && domVideo.videoWidth > 0 && domVideo.videoHeight > 0) {
+      return domVideo.videoWidth / domVideo.videoHeight;
+    }
+    return 16 / 9;
+  };
+
   // Convert canonical natural image coordinates (0% ~ 100%) to display coordinates on the currently active framing canvas
   const getDisplayCoords = (canonicalX: number, canonicalY: number) => {
-    const aImg = naturalAspect || (16 / 9);
+    const aImg = getActiveNaturalAspect();
     const aBox = aspectMode === 'story' ? (4 / 3) : aspectMode === 'hero' ? (16 / 9) : aImg;
 
     if (aspectMode === 'natural' || Math.abs(aBox - aImg) < 0.01) {
@@ -81,7 +95,7 @@ export function AdminHotspotEditor({
 
   // Convert click/drag percentage on the currently active framing canvas back to canonical natural image coordinates
   const getCanonicalCoords = (clickPercentX: number, clickPercentY: number) => {
-    const aImg = naturalAspect || (16 / 9);
+    const aImg = getActiveNaturalAspect();
     const aBox = aspectMode === 'story' ? (4 / 3) : aspectMode === 'hero' ? (16 / 9) : aImg;
 
     if (aspectMode === 'natural' || Math.abs(aBox - aImg) < 0.01) {

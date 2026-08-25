@@ -117,12 +117,23 @@ export function ImageHotspots({
 
   // Precise mathematical aspect-ratio pin coordinate mapping for object-cover
   const getCalibratedPos = (pinX: number, pinY: number) => {
-    if (!naturalAspect || !containerAspect) {
-      return { x: pinX, y: pinY, isVisible: true };
+    const domImg = containerRef.current?.querySelector('img') as HTMLImageElement | null;
+    const domVideo = containerRef.current?.querySelector('video') as HTMLVideoElement | null;
+    
+    let aImg = naturalAspect;
+    if (domImg && domImg.naturalWidth > 0 && domImg.naturalHeight > 0) {
+      aImg = domImg.naturalWidth / domImg.naturalHeight;
+    } else if (domVideo && domVideo.videoWidth > 0 && domVideo.videoHeight > 0) {
+      aImg = domVideo.videoWidth / domVideo.videoHeight;
     }
 
-    const aImg = naturalAspect;
-    const aBox = containerAspect;
+    let aBox = containerAspect;
+    if (containerRef.current && containerRef.current.clientWidth > 0 && containerRef.current.clientHeight > 0) {
+      aBox = containerRef.current.clientWidth / containerRef.current.clientHeight;
+    }
+
+    if (!aImg) aImg = 16 / 9;
+    if (!aBox) aBox = 4 / 3;
 
     if (Math.abs(aBox - aImg) < 0.01) {
       return { x: pinX, y: pinY, isVisible: true };
@@ -145,8 +156,8 @@ export function ImageHotspots({
     const isVisible = calX >= -3 && calX <= 103 && calY >= -3 && calY <= 103;
 
     return { 
-      x: Math.max(0, Math.min(100, calX)), 
-      y: Math.max(0, Math.min(100, calY)), 
+      x: Math.max(0, Math.min(100, Math.round(calX * 10) / 10)), 
+      y: Math.max(0, Math.min(100, Math.round(calY * 10) / 10)), 
       isVisible 
     };
   };
