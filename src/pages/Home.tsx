@@ -424,22 +424,39 @@ export default function Home() {
 
       {/* 2.5. Interactive Lookbook Showcase (Shop the Space) */}
       {(() => {
-        const featuredSpace = spaces.find(s => s.hotspots && s.hotspots.length > 0) || spaces[0];
-        if (!featuredSpace) return null;
+        const showcaseConfig = settings.showcase || defaultHomeSettings.showcase;
+        if (showcaseConfig?.enabled === false) return null;
+
+        // 1. If spaceId is configured in settings
+        let targetSpace = showcaseConfig?.spaceId ? spaces.find(s => s.id === showcaseConfig.spaceId) : null;
+        
+        // 2. Fallback to space with hotspots or first space with image if not explicitly set
+        if (!targetSpace && !showcaseConfig?.image) {
+          targetSpace = spaces.find(s => s.hotspots && s.hotspots.length > 0) || spaces.find(s => s.image) || spaces[0];
+        }
+
+        const showcaseImage = showcaseConfig?.spaceId ? (targetSpace?.image || showcaseConfig?.image) : (showcaseConfig?.image || targetSpace?.image);
+        if (!showcaseImage) return null;
+
+        const showcaseHotspots = showcaseConfig?.spaceId ? (targetSpace?.hotspots || []) : (showcaseConfig?.hotspots || targetSpace?.hotspots || []);
+        const showcaseTitle = showcaseConfig?.title || targetSpace?.title || 'Shop The Space';
+        const showcaseSubtitle = showcaseConfig?.subtitle || 'Spatial Curation';
+        const showcaseDesc = showcaseConfig?.description || 'Explore objects placed in real architectural context. Hover or tap the interactive pins to preview details.';
+        const targetSpaceLink = targetSpace?.id ? `/space/${targetSpace.id}` : '/space';
 
         return (
-          <section className="bg-white border-t border-black/10 flex flex-col">
+          <section className="bg-white border-t border-black/10 flex flex-col reveal">
             <div className="px-8 md:px-20 py-20 md:py-28 flex flex-col md:flex-row justify-between items-baseline gap-6">
               <div>
                 <span className="caption-nano text-cobalt mb-3 block font-bold tracking-[0.3em]">
-                  Spatial Curation
+                  {showcaseSubtitle}
                 </span>
                 <h2 className="text-3xl md:text-5xl font-medium tracking-tighter uppercase leading-[0.9]">
-                  Shop The Space
+                  {showcaseTitle}
                 </h2>
               </div>
               <p className="text-sm font-serif italic text-ink/60 max-w-md leading-relaxed">
-                Explore objects placed in real architectural context. Hover or tap the interactive pins to preview details.
+                {showcaseDesc}
               </p>
             </div>
 
@@ -447,9 +464,9 @@ export default function Home() {
             <div className="w-full border-t border-black/10 bg-black relative">
               <div className="w-full h-[55vh] sm:h-[65vh] md:h-[80vh] relative overflow-hidden">
                 <ImageHotspots 
-                  src={featuredSpace.image}
-                  alt={featuredSpace.title}
-                  hotspots={featuredSpace.hotspots || []}
+                  src={showcaseImage}
+                  alt={showcaseTitle}
+                  hotspots={showcaseHotspots}
                   products={products}
                   className="w-full h-full"
                   imageClassName="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-700"
@@ -458,13 +475,13 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
                 <div className="absolute bottom-6 left-6 md:bottom-12 md:left-16 z-20 pointer-events-none">
                   <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-white/70 block mb-2 font-mono drop-shadow-sm">
-                    LOOKBOOK // {featuredSpace.title}
+                    LOOKBOOK // {showcaseTitle}
                   </span>
                   <Link
-                    to={`/space/${featuredSpace.id}`}
+                    to={targetSpaceLink}
                     className="inline-flex items-center gap-3 px-5 py-2.5 bg-white text-ink text-[10px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all pointer-events-auto rounded-none shadow-lg group/space-btn"
                   >
-                    <span>Explore Full Space</span>
+                    <span>{targetSpace?.id ? 'Explore Full Space' : 'Explore All Spaces'}</span>
                     <ArrowRight size={12} className="group-hover/space-btn:translate-x-1 transition-transform" />
                   </Link>
                 </div>

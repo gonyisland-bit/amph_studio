@@ -7,7 +7,7 @@ import {
   HomeSettings, getHomeSettings, updateHomeSettings, defaultHomeSettings, deleteBlob, generateProductCode, defaultColorAssets, MagazineCard
 } from "../lib/data";
 import { resolveColorHex } from "../lib/colorUtils";
-import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock, Save, MoreVertical, MapPin } from "lucide-react";
+import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock, Save, MoreVertical, MapPin, Sparkles } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 import { AdminHotspotEditor } from "../components/AdminHotspotEditor";
 
@@ -2605,35 +2605,6 @@ export default function Admin() {
                     </div>
                   </div>
 
-                  {/* Category Intros */}
-                  <div className="bg-black/5 p-3.5 sm:p-6 md:p-8 rounded-none border border-black/5 shadow-sm min-w-0 w-full max-w-full overflow-hidden">
-                    <h3 className="font-bold text-xs uppercase text-cobalt mb-6">Category Banners</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {(['collection', 'space', 'journal'] as const).map(cat => (
-                        <div key={cat} className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4">
-                          <span className="text-[10px] font-black uppercase text-orange">{cat} Intro</span>
-                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
-                            <input value={homeSettings.intros?.[cat]?.title || ''} onChange={e => {
-                              const next = { ...(homeSettings.intros || {}) };
-                              next[cat] = { ...next[cat], title: e.target.value };
-                              setHomeSettings({...homeSettings, intros: next as any});
-                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" /></div>
-                          <div><label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
-                            <textarea value={homeSettings.intros?.[cat]?.description || ''} onChange={e => {
-                              const next = { ...(homeSettings.intros || {}) };
-                              next[cat] = { ...next[cat], description: e.target.value };
-                              setHomeSettings({...homeSettings, intros: next as any});
-                            }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} /></div>
-                          <MediaUploadInput label="Banner Media" value={homeSettings.intros?.[cat]?.image || ''} onChange={val => {
-                            const next = { ...(homeSettings.intros || {}) };
-                            next[cat] = { ...next[cat], image: val };
-                            setHomeSettings({...homeSettings, intros: next as any});
-                          }} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Effective Magazine Cards Fallback for Migration */}
                   {(() => {
                     const effectiveMagCards: MagazineCard[] = (homeSettings.magazineCards && homeSettings.magazineCards.length > 0)
@@ -2657,20 +2628,31 @@ export default function Admin() {
                           }
                         ];
 
+                    const showcaseData = homeSettings.showcase || defaultHomeSettings.showcase || {};
+                    const isShowcaseEnabled = showcaseData.enabled !== false;
+                    const selectedSpace = spaces.find(s => s.id === showcaseData.spaceId);
+                    const showcaseImg = showcaseData.spaceId ? (selectedSpace?.image || showcaseData.image || '') : (showcaseData.image || '');
+                    const currentShowcaseHotspots = showcaseData.spaceId ? (selectedSpace?.hotspots || []) : (showcaseData.hotspots || []);
+
                     return (
                       <>
-                        {/* Featured Products (Selected Works Order & Selection Manager with Interleaved Magazine Cards) */}
-                        <div className="bg-black/5 p-3.5 sm:p-6 md:p-8 rounded-none border border-black/5 shadow-sm space-y-6 min-w-0 w-full max-w-full overflow-hidden">
-                          <div className="flex justify-between items-center">
-                            <h3 className="font-bold text-xs uppercase text-cobalt flex items-center gap-2">
-                              <span>Selected Works Order & Selection (홈 추천 제품 및 매거진 카드 배치 미리보기)</span>
-                            </h3>
-                            <span className="text-[10px] font-black text-cobalt bg-cobalt/10 px-2.5 py-1 rounded-full uppercase">
+                        {/* 3. Selected Works & Magazine Cards Unified Group */}
+                        <div className="bg-black/5 p-3.5 sm:p-6 md:p-8 rounded-none border border-black/5 shadow-sm space-y-8 min-w-0 w-full max-w-full overflow-hidden">
+                          <div className="flex justify-between items-center border-b border-black/10 pb-4">
+                            <div>
+                              <h3 className="font-bold text-xs uppercase text-cobalt flex items-center gap-2">
+                                <span>Selected Works & Magazine Cards (추천 제품 및 매거진 카드 통합 관리)</span>
+                              </h3>
+                              <p className="text-[10px] text-ink/50 mt-1 font-sans">
+                                홈 화면 Selected Works 그리드에 노출될 추천 제품 목록과 그 사이에 인터리브될 매거진 인용구 카드를 함께 관리합니다.
+                              </p>
+                            </div>
+                            <span className="text-[10px] font-black text-cobalt bg-cobalt/10 px-3 py-1 rounded-full uppercase shrink-0">
                               {homeSettings.featuredProductIds.length} Products / {effectiveMagCards.length} Magazine Cards
                             </span>
                           </div>
 
-                          {/* Active Order Manager (Chosen items + Magazine cards interleaved) */}
+                          {/* 3-A. Active Order Manager (Chosen items + Magazine cards interleaved) */}
                           {homeSettings.featuredProductIds.length > 0 && (
                             <div className="space-y-3 bg-white p-4 border border-black/10 shadow-sm">
                               <div className="flex justify-between items-center">
@@ -2706,26 +2688,26 @@ export default function Admin() {
                                           {/* Order buttons (Up/Down) & Remove */}
                                           <div className="flex items-center gap-1 shrink-0">
                                             <button 
-                                              type="button"
+                                              type="button" 
                                               disabled={index === 0} 
                                               onClick={() => {
                                                 const next = [...homeSettings.featuredProductIds];
                                                 [next[index], next[index - 1]] = [next[index - 1], next[index]];
                                                 setHomeSettings({...homeSettings, featuredProductIds: next});
-                                              }}
+                                              }} 
                                               className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5"
                                               title="Move Up"
                                             >
                                               <ChevronUp size={14}/>
                                             </button>
                                             <button 
-                                              type="button"
+                                              type="button" 
                                               disabled={index === homeSettings.featuredProductIds.length - 1} 
                                               onClick={() => {
                                                 const next = [...homeSettings.featuredProductIds];
                                                 [next[index], next[index + 1]] = [next[index + 1], next[index]];
                                                 setHomeSettings({...homeSettings, featuredProductIds: next});
-                                              }}
+                                              }} 
                                               className="text-ink/30 hover:text-cobalt disabled:opacity-20 cursor-pointer p-0.5"
                                               title="Move Down"
                                             >
@@ -2770,28 +2752,28 @@ export default function Admin() {
                                           {/* Up/Down buttons for interactive position reordering */}
                                           <div className="flex items-center gap-1 shrink-0">
                                             <button 
-                                              type="button"
+                                              type="button" 
                                               disabled={mag.insertAfterIndex <= 1} 
                                               onClick={() => {
                                                 const current = [...effectiveMagCards];
                                                 const targetPos = Math.max(1, mag.insertAfterIndex - 1);
                                                 current[magCardIndex] = { ...current[magCardIndex], insertAfterIndex: targetPos };
                                                 setHomeSettings({ ...homeSettings, magazineCards: current });
-                                              }}
+                                              }} 
                                               className="text-orange/60 hover:text-orange disabled:opacity-20 cursor-pointer p-0.5"
                                               title="Move Up (제품 1개 앞으로 이동)"
                                             >
                                               <ChevronUp size={14}/>
                                             </button>
                                             <button 
-                                              type="button"
+                                              type="button" 
                                               disabled={mag.insertAfterIndex >= homeSettings.featuredProductIds.length} 
                                               onClick={() => {
                                                 const current = [...effectiveMagCards];
                                                 const targetPos = Math.min(homeSettings.featuredProductIds.length, mag.insertAfterIndex + 1);
                                                 current[magCardIndex] = { ...current[magCardIndex], insertAfterIndex: targetPos };
                                                 setHomeSettings({ ...homeSettings, magazineCards: current });
-                                              }}
+                                              }} 
                                               className="text-orange/60 hover:text-orange disabled:opacity-20 cursor-pointer p-0.5"
                                               title="Move Down (제품 1개 뒤로 이동)"
                                             >
@@ -2812,7 +2794,7 @@ export default function Admin() {
                             </div>
                           )}
 
-                          {/* Checkbox grid for adding/removing items */}
+                          {/* 3-B. Checkbox grid for adding/removing items */}
                           <div>
                             <h4 className="text-[10px] font-black uppercase text-ink/60 tracking-wider mb-3">
                               Toggle Products to Add/Remove
@@ -2829,7 +2811,7 @@ export default function Admin() {
                                         const current = homeSettings.featuredProductIds || [];
                                         const next = e.target.checked ? [...current, p.id] : current.filter(id => id !== p.id);
                                         setHomeSettings({...homeSettings, featuredProductIds: next});
-                                      }}
+                                      }} 
                                       className="w-4 h-4 rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
                                     />
                                     <div className="flex items-center gap-2.5 overflow-hidden">
@@ -2844,119 +2826,119 @@ export default function Admin() {
                               })}
                             </div>
                           </div>
-                        </div>
 
-                        {/* Unlimited Magazine Cards Manager */}
-                        <div className="bg-black/5 p-3.5 sm:p-6 md:p-8 rounded-none border border-black/5 shadow-sm space-y-6 min-w-0 w-full max-w-full overflow-hidden">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="font-bold text-xs uppercase text-cobalt flex items-center gap-2">
-                                <span>Magazine Cards (Home Grid Interleaving)</span>
-                              </h3>
-                              <p className="text-[10px] text-ink/50 mt-1 font-sans">
-                                매거진 카드를 제한 없이 추가하고, Selected Works 제품 몇 번째 뒤에 끼워 노출할지 배치 위치를 자유롭게 지정합니다. (선택된 제품 수: {homeSettings.featuredProductIds.length}개)
-                              </p>
+                          {/* 3-C. Magazine Cards List Manager */}
+                          <div className="pt-6 border-t border-black/10 space-y-6">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="text-[11px] font-black uppercase text-ink tracking-wider">
+                                  Magazine Cards List (매거진 인용구 카드 생성 및 배치)
+                                </h4>
+                                <p className="text-[10px] text-ink/50 mt-0.5 font-sans">
+                                  매거진 카드를 제한 없이 추가하고, Selected Works 제품 몇 번째 뒤에 끼워 노출할지 배치 위치를 지정합니다.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentCards = effectiveMagCards;
+                                  const maxAllowed = Math.max(1, homeSettings.featuredProductIds.length);
+                                  const newCard: MagazineCard = {
+                                    id: `mag-${Date.now()}`,
+                                    title: 'Design Philosophy',
+                                    quote: 'Good design is as little design as possible.',
+                                    author: 'AMPH STUDIO',
+                                    insertAfterIndex: Math.min(maxAllowed, (currentCards.length + 1) * 2),
+                                    image: ''
+                                  };
+                                  setHomeSettings({ ...homeSettings, magazineCards: [...currentCards, newCard] });
+                                }}
+                                className="bg-ink text-white px-4 py-2 font-black uppercase text-[10px] tracking-wider hover:bg-cobalt transition-colors cursor-pointer rounded-none"
+                              >
+                                + Add Magazine Card
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const currentCards = effectiveMagCards;
-                                const maxAllowed = Math.max(1, homeSettings.featuredProductIds.length);
-                                const newCard: MagazineCard = {
-                                  id: `mag-${Date.now()}`,
-                                  title: 'Design Philosophy',
-                                  quote: 'Good design is as little design as possible.',
-                                  author: 'AMPH STUDIO',
-                                  insertAfterIndex: Math.min(maxAllowed, (currentCards.length + 1) * 2),
-                                  image: ''
-                                };
-                                setHomeSettings({ ...homeSettings, magazineCards: [...currentCards, newCard] });
-                              }}
-                              className="bg-ink text-white px-4 py-2 font-black uppercase text-[10px] tracking-wider hover:bg-cobalt transition-colors cursor-pointer rounded-none"
-                            >
-                              + Add Magazine Card
-                            </button>
-                          </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {effectiveMagCards.map((card, idx) => {
-                              const dimMode = (card.overlayMode || 'DARK').toUpperCase();
-                              const isLightMode = dimMode === 'LIGHT';
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {effectiveMagCards.map((card, idx) => {
+                                const dimMode = (card.overlayMode || 'DARK').toUpperCase();
+                                const isLightMode = dimMode === 'LIGHT';
 
-                              return (
-                                <div key={card.id || idx} className="p-3.5 bg-white rounded-none border border-black/10 shadow-xs space-y-3 relative group">
-                                  <div className="flex items-center justify-between border-b border-black/5 pb-1.5">
-                                    <span className="text-[10px] font-black uppercase text-orange">
-                                      Magazine Card #{idx + 1}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const current = effectiveMagCards;
-                                        const updated = current.filter((_, i) => i !== idx);
-                                        setHomeSettings({ ...homeSettings, magazineCards: updated });
-                                      }}
-                                      className="text-ink/20 hover:text-orange transition-colors p-1 cursor-pointer"
-                                      title="Delete Card"
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
-                                  </div>
-
-                                  {/* 4:5 Aspect Ratio Integrated Media Drag & Live Card Simulator (4:5 일체형 렌더링 시뮬레이터) */}
-                                  <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                      <label className="block text-[9px] font-black uppercase text-cobalt tracking-wider">
-                                        4:5 Cover Media & Live Simulator (미디어 드래그 & 라이브 시뮬레이터)
-                                      </label>
-                                      <span className="text-[8px] text-ink/40 font-bold uppercase">4:5 Aspect Ratio</span>
+                                return (
+                                  <div key={card.id || idx} className="p-3.5 bg-white rounded-none border border-black/10 shadow-xs space-y-3 relative group">
+                                    <div className="flex items-center justify-between border-b border-black/5 pb-1.5">
+                                      <span className="text-[10px] font-black uppercase text-orange">
+                                        Magazine Card #{idx + 1}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const current = effectiveMagCards;
+                                          const updated = current.filter((_, i) => i !== idx);
+                                          setHomeSettings({ ...homeSettings, magazineCards: updated });
+                                        }}
+                                        className="text-ink/20 hover:text-orange transition-colors p-1 cursor-pointer"
+                                        title="Delete Card"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
                                     </div>
-                                    <div 
-                                      className="aspect-[4/5] w-full p-4 relative overflow-hidden border border-black/20 flex flex-col justify-between shadow-inner group/sim"
-                                      style={{ backgroundColor: card.bgColor || '#1c1c1c' }}
-                                    >
-                                      {/* Background Image & Dimming Overlay (DARK, LIGHT, OFF) */}
-                                      {card.image && (
-                                        <div className="absolute inset-0 w-full h-full z-0">
-                                          <MediaRenderer src={card.image} alt="Cover Preview" className="w-full h-full object-cover" />
-                                          {dimMode === 'DARK' && <div className="absolute inset-0 bg-black/60" />}
-                                          {dimMode === 'LIGHT' && <div className="absolute inset-0 bg-white/80" />}
-                                        </div>
-                                      )}
 
-                                      {/* Actual Font Shape Simulator Overlay (실제 피드와 동일한 대형 볼드 타이틀 폰트) */}
-                                      <div className="relative z-10 flex flex-col justify-between h-full min-h-0 pointer-events-none">
-                                        <span className={`text-[8.5px] uppercase tracking-[0.2em] font-black block truncate ${
-                                          isLightMode ? 'text-ink/60' : 'text-white/60'
-                                        }`}>
-                                          {card.title || 'CARD TITLE PREVIEW'}
-                                        </span>
-                                        <div className="my-auto overflow-hidden py-1">
-                                          <p className={`text-base sm:text-lg md:text-xl font-sans font-black uppercase tracking-tighter leading-[1.05] break-words line-clamp-4 ${
-                                            isLightMode ? 'text-ink' : 'text-white'
+                                    {/* 4:5 Aspect Ratio Integrated Media Drag & Live Card Simulator */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-[9px] font-black uppercase text-cobalt tracking-wider">
+                                          4:5 Cover Media & Live Simulator (미디어 드래그 & 라이브 시뮬레이터)
+                                        </label>
+                                        <span className="text-[8px] text-ink/40 font-bold uppercase">4:5 Aspect Ratio</span>
+                                      </div>
+                                      <div 
+                                        className="aspect-[4/5] w-full p-4 relative overflow-hidden border border-black/20 flex flex-col justify-between shadow-inner group/sim"
+                                        style={{ backgroundColor: card.bgColor || '#1c1c1c' }}
+                                      >
+                                        {/* Background Image & Dimming Overlay */}
+                                        {card.image && (
+                                          <div className="absolute inset-0 w-full h-full z-0">
+                                            <MediaRenderer src={card.image} alt="Cover Preview" className="w-full h-full object-cover" />
+                                            {dimMode === 'DARK' && <div className="absolute inset-0 bg-black/60" />}
+                                            {dimMode === 'LIGHT' && <div className="absolute inset-0 bg-white/80" />}
+                                          </div>
+                                        )}
+
+                                        {/* Actual Font Shape Simulator Overlay */}
+                                        <div className="relative z-10 flex flex-col justify-between h-full min-h-0 pointer-events-none">
+                                          <span className={`text-[8.5px] uppercase tracking-[0.2em] font-black block truncate ${
+                                            isLightMode ? 'text-ink/60' : 'text-white/60'
                                           }`}>
-                                            "{card.quote || 'DESIGN PHILOSOPHY CONTENT'}"
-                                          </p>
+                                            {card.title || 'CARD TITLE PREVIEW'}
+                                          </span>
+                                          <div className="my-auto overflow-hidden py-1">
+                                            <p className={`text-base sm:text-lg md:text-xl font-sans font-black uppercase tracking-tighter leading-[1.05] break-words line-clamp-4 ${
+                                              isLightMode ? 'text-ink' : 'text-white'
+                                            }`}>
+                                              "{card.quote || 'DESIGN PHILOSOPHY CONTENT'}"
+                                            </p>
+                                          </div>
+                                          <span className={`text-[8px] uppercase tracking-widest font-bold block truncate ${
+                                            isLightMode ? 'text-ink/40' : 'text-white/40'
+                                          }`}>
+                                            {card.author || '// AMPH STUDIO'}
+                                          </span>
                                         </div>
-                                        <span className={`text-[8px] uppercase tracking-widest font-bold block truncate ${
-                                          isLightMode ? 'text-ink/40' : 'text-white/40'
-                                        }`}>
-                                          {card.author || '// AMPH STUDIO'}
-                                        </span>
-                                      </div>
 
-                                      {/* Floating Quick Media Action Overlay on hover */}
-                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/sim:opacity-100 transition-opacity z-20 flex flex-col items-center justify-center p-3 gap-2 backdrop-blur-[1px]">
-                                        <span className="text-[9px] text-white font-black uppercase tracking-widest">
-                                          {card.image ? 'Change Media' : 'Drag & Drop Media'}
-                                        </span>
+                                        {/* Floating Quick Media Action Overlay on hover */}
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/sim:opacity-100 transition-opacity z-20 flex flex-col items-center justify-center p-3 gap-2 backdrop-blur-[1px]">
+                                          <span className="text-[9px] text-white font-black uppercase tracking-widest">
+                                            {card.image ? 'Replace Image' : 'Drop or Select Media'}
+                                          </span>
+                                        </div>
                                       </div>
                                     </div>
-                                    
-                                    {/* Media URL Input Controls */}
-                                    <div className="mt-1.5">
+
+                                    {/* Inputs */}
+                                    <div className="space-y-2">
                                       <MediaUploadInput
-                                        label="Cover Media Image URL"
+                                        label="Card Background Image (Optional)"
                                         value={card.image || ''}
                                         onChange={val => {
                                           const current = [...effectiveMagCards];
@@ -2964,148 +2946,412 @@ export default function Admin() {
                                           setHomeSettings({ ...homeSettings, magazineCards: current });
                                         }}
                                       />
+
+                                      <div>
+                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-0.5">Title Header</label>
+                                        <input
+                                          value={card.title || ''}
+                                          onChange={e => {
+                                            const current = [...effectiveMagCards];
+                                            current[idx] = { ...current[idx], title: e.target.value };
+                                            setHomeSettings({ ...homeSettings, magazineCards: current });
+                                          }}
+                                          className="w-full border border-black/10 p-1.5 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans text-ink"
+                                        />
+                                      </div>
+
+                                      <div>
+                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-0.5">Quote / Philosophy</label>
+                                        <textarea
+                                          value={card.quote || ''}
+                                          onChange={e => {
+                                            const current = [...effectiveMagCards];
+                                            current[idx] = { ...current[idx], quote: e.target.value };
+                                            setHomeSettings({ ...homeSettings, magazineCards: current });
+                                          }}
+                                          className="w-full border border-black/10 p-1.5 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans resize-none overflow-hidden text-ink min-h-[60px]"
+                                          rows={2}
+                                        />
+                                      </div>
+
+                                      <div>
+                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-0.5">Author / Subtitle</label>
+                                        <input
+                                          value={card.author || ''}
+                                          onChange={e => {
+                                            const current = [...effectiveMagCards];
+                                            current[idx] = { ...current[idx], author: e.target.value };
+                                            setHomeSettings({ ...homeSettings, magazineCards: current });
+                                          }}
+                                          className="w-full border border-black/10 p-1.5 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans text-ink"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    {/* Card Background Color Picker & Dimming Option */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-black/5">
+                                      <div>
+                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">
+                                          Card Bg Color (단색 배경)
+                                        </label>
+                                        <div className="flex gap-1.5 items-center">
+                                          <input 
+                                            type="color"
+                                            value={card.bgColor || '#1c1c1c'}
+                                            onChange={e => {
+                                              const current = [...effectiveMagCards];
+                                              current[idx] = { ...current[idx], bgColor: e.target.value };
+                                              setHomeSettings({ ...homeSettings, magazineCards: current });
+                                            }}
+                                            className="w-6 h-6 border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
+                                          />
+                                          <input 
+                                            type="text"
+                                            value={card.bgColor || ''}
+                                            onChange={e => {
+                                              const current = [...effectiveMagCards];
+                                              current[idx] = { ...current[idx], bgColor: e.target.value };
+                                              setHomeSettings({ ...homeSettings, magazineCards: current });
+                                            }}
+                                            placeholder="#1C1C1C"
+                                            className="w-full border border-black/10 p-1 text-[11px] outline-none focus:border-cobalt rounded-none bg-white font-mono text-ink"
+                                          />
+                                        </div>
+                                      </div>
+
+                                      <div>
+                                        <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">
+                                          Overlay Dimming
+                                        </label>
+                                        <div className="grid grid-cols-3 gap-1">
+                                          {[
+                                            { mode: 'DARK', label: 'DARK' },
+                                            { mode: 'LIGHT', label: 'LIGHT' },
+                                            { mode: 'OFF', label: 'OFF' }
+                                          ].map(opt => {
+                                            const isSelected = dimMode === opt.mode;
+                                            return (
+                                              <button
+                                                key={opt.mode}
+                                                type="button"
+                                                onClick={() => {
+                                                  const current = [...effectiveMagCards];
+                                                  current[idx] = { ...current[idx], overlayMode: opt.mode as any };
+                                                  setHomeSettings({ ...homeSettings, magazineCards: current });
+                                                }}
+                                                className={`py-1 border text-center transition-all cursor-pointer rounded-none ${
+                                                  isSelected 
+                                                    ? 'bg-cobalt text-white border-cobalt font-black' 
+                                                    : 'bg-white text-ink border-black/15 hover:border-black/30'
+                                                }`}
+                                              >
+                                                <span className="block text-[9px] font-black uppercase">{opt.label}</span>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
 
-                                  {/* Insertion Position Setting */}
-                                  <div className="bg-cobalt/5 p-2.5 border border-cobalt/20 space-y-1">
-                                    <label className="block text-[9.5px] font-black uppercase text-cobalt">
-                                      Insert Position (배치 위치 지정: Max {Math.max(1, homeSettings.featuredProductIds.length)})
+                        {/* 4. Full-Bleed Interactive Pin Showcase Settings Card (신규 쇼케이스 관리) */}
+                        <div className="bg-black/5 p-3.5 sm:p-6 md:p-8 rounded-none border border-black/5 shadow-sm space-y-6 min-w-0 w-full max-w-full overflow-hidden">
+                          <div className="flex justify-between items-center border-b border-black/10 pb-4">
+                            <div>
+                              <h3 className="font-bold text-xs uppercase text-cobalt flex items-center gap-2">
+                                <Sparkles size={14} />
+                                <span>Full-Bleed Interactive Pin Showcase (풀블리드 인터랙티브 핀 쇼케이스)</span>
+                              </h3>
+                              <p className="text-[10px] text-ink/50 mt-1 font-sans">
+                                홈 화면 중간에 노출되는 공간 & 인터랙티브 핀 룩북 쇼케이스를 활성화하고 연동할 공간 또는 커스텀 핀을 지정합니다.
+                              </p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer select-none">
+                              <input 
+                                type="checkbox" 
+                                checked={isShowcaseEnabled} 
+                                onChange={e => {
+                                  setHomeSettings({
+                                    ...homeSettings,
+                                    showcase: {
+                                      ...(homeSettings.showcase || defaultHomeSettings.showcase),
+                                      enabled: e.target.checked
+                                    }
+                                  });
+                                }} 
+                                className="sr-only peer"
+                              />
+                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cobalt"></div>
+                            </label>
+                          </div>
+
+                          {isShowcaseEnabled && (
+                            <div className="space-y-6 animate-in fade-in duration-300">
+                              {/* Source Selection Mode */}
+                              <div className="bg-white p-5 rounded-none border border-black/10 space-y-4">
+                                <label className="block text-[10px] font-black uppercase text-ink/70 tracking-wider">
+                                  Showcase Content Source (쇼케이스 콘텐츠 소스 선택)
+                                </label>
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <label className={`p-4 border cursor-pointer flex flex-col justify-between transition-all ${
+                                    showcaseData.spaceId 
+                                      ? 'border-cobalt bg-cobalt/5 shadow-xs' 
+                                      : 'border-black/10 hover:border-black/30 bg-white'
+                                  }`}>
+                                    <div className="flex items-center gap-2.5 mb-2">
+                                      <input 
+                                        type="radio" 
+                                        name="showcaseMode" 
+                                        checked={!!showcaseData.spaceId} 
+                                        onChange={() => {
+                                          const defaultId = spaces[0]?.id || '';
+                                          setHomeSettings({
+                                            ...homeSettings,
+                                            showcase: {
+                                              ...(homeSettings.showcase || defaultHomeSettings.showcase),
+                                              spaceId: defaultId
+                                            }
+                                          });
+                                        }}
+                                        className="text-cobalt focus:ring-cobalt"
+                                      />
+                                      <span className="text-xs font-bold uppercase text-ink">
+                                        기존 등록 공간(Space) 연동
+                                      </span>
+                                    </div>
+                                    <p className="text-[10px] text-ink/50">
+                                      등록된 Space 데이터(이미지 + 핫스팟 핀)를 그대로 가져와 홈 쇼케이스로 자동 연동합니다.
+                                    </p>
+                                  </label>
+
+                                  <label className={`p-4 border cursor-pointer flex flex-col justify-between transition-all ${
+                                    !showcaseData.spaceId 
+                                      ? 'border-cobalt bg-cobalt/5 shadow-xs' 
+                                      : 'border-black/10 hover:border-black/30 bg-white'
+                                  }`}>
+                                    <div className="flex items-center gap-2.5 mb-2">
+                                      <input 
+                                        type="radio" 
+                                        name="showcaseMode" 
+                                        checked={!showcaseData.spaceId} 
+                                        onChange={() => {
+                                          setHomeSettings({
+                                            ...homeSettings,
+                                            showcase: {
+                                              ...(homeSettings.showcase || defaultHomeSettings.showcase),
+                                              spaceId: ''
+                                            }
+                                          });
+                                        }}
+                                        className="text-cobalt focus:ring-cobalt"
+                                      />
+                                      <span className="text-xs font-bold uppercase text-ink">
+                                        홈 전용 커스텀 쇼케이스
+                                      </span>
+                                    </div>
+                                    <p className="text-[10px] text-ink/50">
+                                      홈 화면만을 위한 독립 이미지와 텍스트를 등록하고 핫스팟 핀을 직접 추가/배치합니다.
+                                    </p>
+                                  </label>
+                                </div>
+
+                                {showcaseData.spaceId ? (
+                                  <div className="pt-2">
+                                    <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">
+                                      Select Space (연동할 공간 선택)
                                     </label>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[8.5px] uppercase text-ink/60 font-bold">Selected Work 제품</span>
-                                      <input
-                                        type="number"
-                                        min={1}
-                                        max={Math.max(1, homeSettings.featuredProductIds.length)}
-                                        value={Math.min(card.insertAfterIndex || (idx + 1) * 2, Math.max(1, homeSettings.featuredProductIds.length))}
-                                        onChange={e => {
-                                          const maxVal = Math.max(1, homeSettings.featuredProductIds.length);
-                                          const val = Math.min(maxVal, Math.max(1, Number(e.target.value)));
-                                          const current = [...effectiveMagCards];
-                                          current[idx] = { ...current[idx], insertAfterIndex: val };
-                                          setHomeSettings({ ...homeSettings, magazineCards: current });
-                                        }}
-                                        className="w-14 border border-black/20 p-1 text-xs text-center font-bold bg-white outline-none focus:border-cobalt rounded-none text-ink"
-                                      />
-                                      <span className="text-[8.5px] uppercase text-ink/60 font-bold">번째 뒤에 노출</span>
-                                    </div>
+                                    <select
+                                      value={showcaseData.spaceId}
+                                      onChange={e => {
+                                        setHomeSettings({
+                                          ...homeSettings,
+                                          showcase: {
+                                            ...(homeSettings.showcase || defaultHomeSettings.showcase),
+                                            spaceId: e.target.value
+                                          }
+                                        });
+                                      }}
+                                      className="w-full border border-black/15 p-2.5 bg-white text-xs outline-none focus:border-cobalt font-medium"
+                                    >
+                                      {spaces.map(s => (
+                                        <option key={s.id} value={s.id}>
+                                          {s.title} ({s.hotspots?.length || 0} Pins)
+                                        </option>
+                                      ))}
+                                    </select>
                                   </div>
-
-                                  {/* Text Fields (Title, Quote, Author) */}
-                                  <div className="space-y-2">
-                                    <div>
-                                      <label className="block text-[9px] font-bold uppercase text-ink/50 mb-0.5">Title</label>
-                                      <input
-                                        value={card.title || ''}
-                                        onChange={e => {
-                                          const current = [...effectiveMagCards];
-                                          current[idx] = { ...current[idx], title: e.target.value };
-                                          setHomeSettings({ ...homeSettings, magazineCards: current });
-                                        }}
-                                        className="w-full border border-black/10 p-1.5 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans text-ink"
-                                      />
-                                    </div>
-
-                                    <div>
-                                      <label className="block text-[9px] font-bold uppercase text-ink/50 mb-0.5">Quote / Content</label>
-                                      <textarea
-                                        value={card.quote || ''}
-                                        onChange={e => {
-                                          const current = [...effectiveMagCards];
-                                          current[idx] = { ...current[idx], quote: e.target.value };
-                                          setHomeSettings({ ...homeSettings, magazineCards: current });
-                                        }}
-                                        onInput={(e: any) => {
-                                          e.target.style.height = 'auto';
-                                          e.target.style.height = `${e.target.scrollHeight}px`;
-                                        }}
-                                        className="w-full border border-black/10 p-1.5 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans resize-none overflow-hidden text-ink min-h-[60px]"
-                                        rows={2}
-                                      />
-                                    </div>
-
-                                    <div>
-                                      <label className="block text-[9px] font-bold uppercase text-ink/50 mb-0.5">Author / Subtitle</label>
-                                      <input
-                                        value={card.author || ''}
-                                        onChange={e => {
-                                          const current = [...effectiveMagCards];
-                                          current[idx] = { ...current[idx], author: e.target.value };
-                                          setHomeSettings({ ...homeSettings, magazineCards: current });
-                                        }}
-                                        className="w-full border border-black/10 p-1.5 text-xs outline-none focus:border-cobalt rounded-none bg-white font-sans text-ink"
-                                      />
-                                    </div>
+                                ) : (
+                                  <div className="pt-2 space-y-4">
+                                    <MediaUploadInput
+                                      label="Showcase Background Image (쇼케이스 배경 미디어)"
+                                      value={showcaseData.image || ''}
+                                      onChange={val => {
+                                        setHomeSettings({
+                                          ...homeSettings,
+                                          showcase: {
+                                            ...(homeSettings.showcase || defaultHomeSettings.showcase),
+                                            image: val
+                                          }
+                                        });
+                                      }}
+                                    />
+                                    
+                                    {showcaseData.image && (
+                                      <div className="flex justify-between items-center bg-off-white p-3 border border-black/10">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs font-bold uppercase text-ink">Interactive Pins:</span>
+                                          <span className="text-[10px] font-black text-cobalt bg-cobalt/10 px-2 py-0.5 rounded-full">
+                                            {(showcaseData.hotspots || []).length} Pins Registered
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setHotspotEditorTarget({
+                                              imageSrc: showcaseData.image || '',
+                                              title: 'Home Showcase Interactive Pins Editor',
+                                              hotspots: showcaseData.hotspots || [],
+                                              onSave: (updated) => {
+                                                setHomeSettings({
+                                                  ...homeSettings,
+                                                  showcase: {
+                                                    ...(homeSettings.showcase || defaultHomeSettings.showcase),
+                                                    hotspots: updated
+                                                  }
+                                                });
+                                                setHotspotEditorTarget(null);
+                                              }
+                                            });
+                                          }}
+                                          className="bg-cobalt text-white px-4 py-1.5 text-[10px] font-black uppercase tracking-wider hover:bg-ink transition-colors cursor-pointer rounded-none"
+                                        >
+                                          Manage Pins (핀 편집기 열기)
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
+                                )}
+                              </div>
 
-                                  {/* Card Background Color Picker & Dimming Option */}
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-black/5">
-                                    <div>
-                                      <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">
-                                        Card Bg Color (단색 배경)
-                                      </label>
-                                      <div className="flex gap-1.5 items-center">
-                                        <input 
-                                          type="color"
-                                          value={card.bgColor || '#1c1c1c'}
-                                          onChange={e => {
-                                            const current = [...effectiveMagCards];
-                                            current[idx] = { ...current[idx], bgColor: e.target.value };
-                                            setHomeSettings({ ...homeSettings, magazineCards: current });
-                                          }}
-                                          className="w-6 h-6 border border-black/10 p-0 bg-transparent cursor-pointer flex-shrink-0"
-                                        />
-                                        <input 
-                                          type="text"
-                                          value={card.bgColor || ''}
-                                          onChange={e => {
-                                            const current = [...effectiveMagCards];
-                                            current[idx] = { ...current[idx], bgColor: e.target.value };
-                                            setHomeSettings({ ...homeSettings, magazineCards: current });
-                                          }}
-                                          placeholder="#1C1C1C"
-                                          className="w-full border border-black/10 p-1 text-[11px] outline-none focus:border-cobalt rounded-none bg-white font-mono text-ink"
-                                        />
-                                      </div>
-                                    </div>
+                              {/* Title / Slogan Overrides */}
+                              <div className="bg-white p-5 rounded-none border border-black/10 space-y-3">
+                                <h4 className="text-[10px] font-black uppercase text-ink/70 tracking-wider">
+                                  Showcase Typography & Headings (쇼케이스 텍스트 문구)
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">Subtitle / Category Slogan</label>
+                                    <input 
+                                      value={showcaseData.subtitle || 'Spatial Curation'} 
+                                      onChange={e => {
+                                        setHomeSettings({
+                                          ...homeSettings,
+                                          showcase: {
+                                            ...(homeSettings.showcase || defaultHomeSettings.showcase),
+                                            subtitle: e.target.value
+                                          }
+                                        });
+                                      }}
+                                      className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none" 
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">Main Heading Title</label>
+                                    <input 
+                                      value={showcaseData.title || 'Shop The Space'} 
+                                      onChange={e => {
+                                        setHomeSettings({
+                                          ...homeSettings,
+                                          showcase: {
+                                            ...(homeSettings.showcase || defaultHomeSettings.showcase),
+                                            title: e.target.value
+                                          }
+                                        });
+                                      }}
+                                      className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none" 
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">Description</label>
+                                  <textarea 
+                                    value={showcaseData.description || 'Explore objects placed in real architectural context. Hover or tap the interactive pins to preview details.'} 
+                                    onChange={e => {
+                                      setHomeSettings({
+                                        ...homeSettings,
+                                        showcase: {
+                                          ...(homeSettings.showcase || defaultHomeSettings.showcase),
+                                          description: e.target.value
+                                        }
+                                      });
+                                    }}
+                                    className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt rounded-none resize-none"
+                                    rows={2}
+                                  />
+                                </div>
+                              </div>
 
-                                    <div>
-                                      <label className="block text-[9px] font-bold uppercase text-ink/50 mb-1">
-                                        Overlay Dimming
-                                      </label>
-                                      <div className="grid grid-cols-3 gap-1">
-                                        {[
-                                          { mode: 'DARK', label: 'DARK' },
-                                          { mode: 'LIGHT', label: 'LIGHT' },
-                                          { mode: 'OFF', label: 'OFF' }
-                                        ].map(opt => {
-                                          const isSelected = dimMode === opt.mode;
-                                          return (
-                                            <button
-                                              key={opt.mode}
-                                              type="button"
-                                              onClick={() => {
-                                                const current = [...effectiveMagCards];
-                                                current[idx] = { ...current[idx], overlayMode: opt.mode as any };
-                                                setHomeSettings({ ...homeSettings, magazineCards: current });
-                                              }}
-                                              className={`py-1 border text-center transition-all cursor-pointer rounded-none ${
-                                                isSelected 
-                                                  ? 'bg-cobalt text-white border-cobalt font-black' 
-                                                  : 'bg-white text-ink border-black/15 hover:border-black/30'
-                                              }`}
-                                            >
-                                              <span className="block text-[9px] font-black uppercase">{opt.label}</span>
-                                            </button>
-                                          );
-                                        })}
-                                      </div>
+                              {/* Live Mini Preview */}
+                              {showcaseImg && (
+                                <div className="bg-white p-4 border border-black/10 space-y-2">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-black uppercase text-ink/60 tracking-wider">
+                                      Showcase Live Preview ({currentShowcaseHotspots.length} Pins)
+                                    </span>
+                                    <span className="text-[9px] text-cobalt font-bold uppercase font-mono">
+                                      {showcaseData.spaceId ? `Space: ${selectedSpace?.title || showcaseData.spaceId}` : 'Custom Home Image'}
+                                    </span>
+                                  </div>
+                                  <div className="w-full h-40 bg-black relative overflow-hidden border border-black/10">
+                                    <MediaRenderer src={showcaseImg} className="w-full h-full object-cover opacity-85" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
+                                      <span className="text-[10px] font-black uppercase text-white font-mono tracking-wider">
+                                        LOOKBOOK // {showcaseData.title || selectedSpace?.title || 'Shop The Space'}
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
-                              );
-                            })}
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 5. Category Banners (Collection / Space / Journal) - Placed at Bottom */}
+                        <div className="bg-black/5 p-3.5 sm:p-6 md:p-8 rounded-none border border-black/5 shadow-sm min-w-0 w-full max-w-full overflow-hidden">
+                          <h3 className="font-bold text-xs uppercase text-cobalt mb-6">Category Banners (Curated Gallery Intros)</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {(['collection', 'space', 'journal'] as const).map(cat => (
+                              <div key={cat} className="p-4 bg-white rounded-none border border-black/5 shadow-sm space-y-4">
+                                <span className="text-[10px] font-black uppercase text-orange">{cat} Intro</span>
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Title</label>
+                                  <input value={homeSettings.intros?.[cat]?.title || ''} onChange={e => {
+                                    const next = { ...(homeSettings.intros || {}) };
+                                    next[cat] = { ...next[cat], title: e.target.value };
+                                    setHomeSettings({...homeSettings, intros: next as any});
+                                  }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase text-ink/50 mb-1">Description</label>
+                                  <textarea value={homeSettings.intros?.[cat]?.description || ''} onChange={e => {
+                                    const next = { ...(homeSettings.intros || {}) };
+                                    next[cat] = { ...next[cat], description: e.target.value };
+                                    setHomeSettings({...homeSettings, intros: next as any});
+                                  }} className="w-full border border-black/10 p-2 text-xs outline-none focus:border-cobalt" rows={2} />
+                                </div>
+                                <MediaUploadInput label="Banner Media" value={homeSettings.intros?.[cat]?.image || ''} onChange={val => {
+                                  const next = { ...(homeSettings.intros || {}) };
+                                  next[cat] = { ...next[cat], image: val };
+                                  setHomeSettings({...homeSettings, intros: next as any});
+                                }} />
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </>

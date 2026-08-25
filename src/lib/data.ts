@@ -355,6 +355,16 @@ export const defaultColorAssets: ColorOption[] = [
   { name: 'Natural', hex: '#e8d8c1' }
 ];
 
+export interface HomeShowcaseSettings {
+  enabled?: boolean;
+  spaceId?: string;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  image?: string;
+  hotspots?: HotspotPin[];
+}
+
 export interface HomeSettings {
   logoType?: 'text' | 'image';
   logoImage?: string;
@@ -368,6 +378,7 @@ export interface HomeSettings {
   marquee: string;
   colorAssets?: ColorOption[];
   magazineCards?: MagazineCard[];
+  showcase?: HomeShowcaseSettings;
   intros: {
     collection: CategoryIntro;
     space: CategoryIntro;
@@ -395,6 +406,15 @@ export const defaultHomeSettings: HomeSettings = {
   marquee: 'Amplify Your Ordinary',
   colorAssets: defaultColorAssets,
   magazineCards: [],
+  showcase: {
+    enabled: true,
+    spaceId: '',
+    title: 'Shop The Space',
+    subtitle: 'Spatial Curation',
+    description: 'Explore objects placed in real architectural context. Hover or tap the interactive pins to preview details.',
+    image: '',
+    hotspots: []
+  },
   intros: {
     collection: { title: '', description: '', image: '' },
     space: { title: '', description: '', image: '' },
@@ -439,6 +459,7 @@ const revalidateHomeSettings = async (): Promise<HomeSettings> => {
       cachedHomeSettings = { 
         ...defaultHomeSettings, 
         ...data,
+        showcase: { ...defaultHomeSettings.showcase, ...(data.showcase || {}) },
         intros: { ...defaultHomeSettings.intros, ...(data.intros || {}) },
         hubSettings: { ...defaultHomeSettings.hubSettings, ...(data.hubSettings || {}) },
         philosophy1: { ...defaultHomeSettings.philosophy1, ...(data.philosophy1 || {}) },
