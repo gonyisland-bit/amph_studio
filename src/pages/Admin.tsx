@@ -23,7 +23,7 @@ const emptyJournal: Omit<JournalArticle, 'id'> = {
   ]
 };
 const emptySpace: Omit<SpaceModel, 'id'> = {
-  title: '', description: '', images: [''], appliedProductIds: [], contentBlocks: [
+  title: '', description: '', images: [], appliedProductIds: [], contentBlocks: [
     { id: 'block-0', type: 'image', value: '' },
     { id: 'block-1', type: 'image', value: '' },
     { id: 'block-2', type: 'image', value: '' },
@@ -2667,14 +2667,14 @@ export default function Admin() {
                         const sp = spaces.find(s => s.id === targetId);
                         if (sp) {
                           // 1. Cover image
-                          const cover = isValidCandidateImg(sp.image) ? sp.image : (sp.images || []).find(isValidCandidateImg);
-                          if (isValidCandidateImg(cover)) {
+                          const cover = isValidCandidateImg(sp.image) ? sp.image : undefined;
+                          if (cover) {
                             list.push({ url: cover, label: 'Main Cover', pinCount: (sp.hotspots || []).length, hotspots: sp.hotspots || [] });
                           }
-                          // 2. Story content blocks (images with their specific block hotspots)
+                          // 2. Story content blocks (strictly valid story images in contentBlocks)
                           let storyIdx = 0;
                           (sp.contentBlocks || []).forEach((b) => {
-                            if ((b.type === 'image' || !b.type) && isValidCandidateImg(b.value)) {
+                            if (b.type === 'image' && isValidCandidateImg(b.value)) {
                               storyIdx++;
                               const bPins = b.hotspots || [];
                               const existing = list.find(x => x.url === b.value);
@@ -2691,12 +2691,6 @@ export default function Admin() {
                               }
                             }
                           });
-                          // 3. Gallery images in sp.images
-                          (sp.images || []).forEach((img, i) => {
-                            if (isValidCandidateImg(img) && !list.some(x => x.url === img)) {
-                              list.push({ url: img, label: `Gallery #${i + 1}`, pinCount: 0, hotspots: [] });
-                            }
-                          });
                         }
                       } else if (sourceType === 'journal' && targetId) {
                         const jn = journals.find(j => j.id === targetId);
@@ -2708,7 +2702,7 @@ export default function Admin() {
                           // 2. Story content blocks
                           let storyIdx = 0;
                           (jn.contentBlocks || []).forEach((b) => {
-                            if ((b.type === 'image' || !b.type) && isValidCandidateImg(b.value)) {
+                            if (b.type === 'image' && isValidCandidateImg(b.value)) {
                               storyIdx++;
                               const bPins = b.hotspots || [];
                               const existing = list.find(x => x.url === b.value);
