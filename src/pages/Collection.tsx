@@ -5,7 +5,7 @@ import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 import { resolveColorHex } from "../lib/colorUtils";
 import { useWishlist } from "../lib/wishlist";
-import { LayoutGrid, Grid2X2, List, ArrowRight, SlidersHorizontal, ChevronDown, ChevronUp, X, RotateCcw, Bookmark } from "lucide-react";
+import { LayoutGrid, Columns2, List, ArrowRight, SlidersHorizontal, ChevronDown, ChevronUp, X, RotateCcw, Bookmark } from "lucide-react";
 
 const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
 const CATEGORY_LABELS: Record<string, string> = {
@@ -231,67 +231,67 @@ export default function Collection() {
             <p className="text-lg md:text-xl font-serif italic text-ink/60 max-w-2xl">{settings.hubSettings?.collection?.description}</p>
           </div>
 
-          {/* Action Group: View Mode Toggle & Filter Toggle Button */}
-          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+          {/* Action Group: View Mode Toggle & Filter Toggle Button (Single-line on mobile & desktop) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 self-start md:self-auto w-full md:w-auto justify-between md:justify-end shrink-0">
             {/* Filter Toggle Button */}
             <button
               type="button"
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-widest border transition-all cursor-pointer ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest border transition-all cursor-pointer shrink-0 ${
                 isFilterOpen || activeFilterCount > 0
                   ? 'bg-ink text-white border-ink shadow-xs'
                   : 'bg-black/5 text-ink/70 border-black/10 hover:bg-black/10'
               }`}
             >
-              <SlidersHorizontal size={13} />
+              <SlidersHorizontal size={12} className="sm:w-[13px] sm:h-[13px]" />
               <span>Filters</span>
               {activeFilterCount > 0 && (
-                <span className="bg-cobalt text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-mono">
+                <span className="bg-cobalt text-white text-[7.5px] sm:text-[8px] w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center font-mono">
                   {activeFilterCount}
                 </span>
               )}
-              {isFilterOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              {isFilterOpen ? <ChevronUp size={11} className="sm:w-3 sm:h-3" /> : <ChevronDown size={11} className="sm:w-3 sm:h-3" />}
             </button>
 
             {/* View Mode Toggle Controls */}
-            <div className="flex items-center gap-1 bg-black/5 p-1 rounded-none border border-black/10">
+            <div className="flex items-center gap-0.5 sm:gap-1 bg-black/5 p-0.5 sm:p-1 rounded-none border border-black/10 shrink-0">
               <button
                 type="button"
                 onClick={() => handleViewModeChange('grid4')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer rounded-none ${
+                className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-[8.5px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest transition-all cursor-pointer rounded-none ${
                   viewMode === 'grid4'
                     ? 'bg-cobalt text-white shadow-xs'
                     : 'text-ink/60 hover:text-ink hover:bg-black/5'
                 }`}
-                title="4-Column Grid View"
+                title="Grid View (모바일 2열 / 데스크탑 4열)"
               >
-                <LayoutGrid size={13} />
-                <span>4-GRID</span>
+                <LayoutGrid size={11} className="sm:w-[13px] sm:h-[13px]" />
+                <span>GRID</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleViewModeChange('grid2')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer rounded-none ${
+                className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-[8.5px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest transition-all cursor-pointer rounded-none ${
                   viewMode === 'grid2'
                     ? 'bg-cobalt text-white shadow-xs'
                     : 'text-ink/60 hover:text-ink hover:bg-black/5'
                 }`}
-                title="2-Column Large View"
+                title="Wide View (2-Wide)"
               >
-                <Grid2X2 size={13} />
-                <span>2-LARGE</span>
+                <Columns2 size={11} className="sm:w-[13px] sm:h-[13px]" />
+                <span>WIDE</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleViewModeChange('list')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer rounded-none ${
+                className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-[8.5px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest transition-all cursor-pointer rounded-none ${
                   viewMode === 'list'
                     ? 'bg-cobalt text-white shadow-xs'
                     : 'text-ink/60 hover:text-ink hover:bg-black/5'
                 }`}
                 title="List View"
               >
-                <List size={13} />
+                <List size={11} className="sm:w-[13px] sm:h-[13px]" />
                 <span>LIST</span>
               </button>
             </div>
@@ -457,11 +457,11 @@ export default function Collection() {
         </div>
       )}
 
-      {/* 1. 4-GRID & 2-LARGE GRID VIEW MODES */}
+      {/* 1. 4-GRID & 2-LARGE (WIDE) GRID VIEW MODES */}
       {(viewMode === 'grid4' || viewMode === 'grid2') && (
         <div 
           key={`grid-${viewMode}-${activeCategory}`}
-          className={`grid ${viewMode === 'grid2' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'} border-t border-l border-black/10 auto-rows-fr`}
+          className={`grid ${viewMode === 'grid2' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'} border-t border-l border-black/10 auto-rows-fr`}
         >
           {filteredProducts.map((product) => (
             <Link 
@@ -470,8 +470,8 @@ export default function Collection() {
               className={`group border-b border-r border-black/10 ${viewMode === 'grid2' ? 'aspect-[16/11] md:aspect-[4/3]' : 'aspect-[4/5]'} relative overflow-hidden flex flex-col reveal`}
             >
               {/* Category tag overlap on top-left */}
-              <div className="absolute top-6 left-6 z-20 pointer-events-none">
-                <span className="text-[9px] uppercase font-bold tracking-widest text-white/90 px-3 py-1 bg-black/30 backdrop-blur-md rounded-full border border-white/10">
+              <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 pointer-events-none">
+                <span className="text-[8px] sm:text-[9px] uppercase font-bold tracking-widest text-white/90 px-2.5 sm:px-3 py-0.5 sm:py-1 bg-black/30 backdrop-blur-md rounded-full border border-white/10">
                   {product.category}
                 </span>
               </div>
@@ -484,20 +484,20 @@ export default function Collection() {
                   e.stopPropagation();
                   toggleWishlist(product.id);
                 }}
-                className={`absolute top-5 right-5 z-30 p-2 rounded-full backdrop-blur-md transition-all duration-300 cursor-pointer ${
+                className={`absolute top-3 right-3 sm:top-5 sm:right-5 z-30 p-1.5 sm:p-2 rounded-full backdrop-blur-md transition-all duration-300 cursor-pointer ${
                   isSaved(product.id)
                     ? 'bg-cobalt text-white shadow-md'
-                    : 'bg-black/30 text-white/80 hover:text-white hover:bg-black/60 border border-white/10 opacity-0 group-hover:opacity-100'
+                    : 'bg-black/30 text-white/80 hover:text-white hover:bg-black/60 border border-white/10 opacity-80 sm:opacity-0 group-hover:opacity-100'
                 }`}
                 title={isSaved(product.id) ? "Remove from Saved" : "Save to Wishlist"}
                 aria-label="Save to Wishlist"
               >
-                <Bookmark size={13} className={isSaved(product.id) ? "fill-current" : ""} />
+                <Bookmark size={12} className={isSaved(product.id) ? "fill-current" : ""} />
               </button>
 
               {/* Product Name & Subtitle on bottom-left */}
-              <div className="absolute bottom-6 left-6 right-6 z-20 pointer-events-none">
-                <h2 className="text-base sm:text-lg md:text-xl font-bold font-sans tracking-tight leading-tight text-white drop-shadow-md group-hover:text-cobalt transition-colors">
+              <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-20 pointer-events-none">
+                <h2 className="text-sm sm:text-base md:text-xl font-bold font-sans tracking-tight leading-tight text-white drop-shadow-md group-hover:text-cobalt transition-colors truncate">
                   {product.name}
                 </h2>
                 {viewMode === 'grid2' && product.subTitle && (
@@ -539,69 +539,13 @@ export default function Collection() {
       {viewMode === 'list' && (
         <div className="flex flex-col border-t border-black/10 divide-y divide-black/10 bg-white">
           {filteredProducts.map((product, idx) => (
-            <Link
-              key={product.id}
-              to={`/product/${product.id}`}
-              className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 hover:bg-off-white transition-colors duration-200 reveal gap-4 relative"
-            >
-              {/* Left info & media */}
-              <div className="flex items-center gap-4 sm:gap-6 min-w-0 flex-1">
-                <span className="text-[10px] font-mono font-bold text-cobalt tracking-widest shrink-0 w-8">
-                  0{idx + 1}
-                </span>
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-silver/10 overflow-hidden flex-shrink-0 border border-black/5 relative">
-                  <MediaRenderer
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-3 mb-1">
-                    <h2 className="text-base sm:text-xl font-bold font-sans tracking-tight text-ink group-hover:text-cobalt transition-colors truncate">
-                      {product.name}
-                    </h2>
-                    <span className="caption-nano text-orange px-2 py-0.5 border border-orange/30 rounded-full font-bold shrink-0">
-                      {product.category}
-                    </span>
-                  </div>
-                  {product.subTitle && (
-                    <p className="text-xs font-serif italic text-ink/50 truncate max-w-md">
-                      {product.subTitle}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Right Details & Action */}
-              <div className="flex items-center gap-4 sm:gap-8 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-black/5 pt-3 sm:pt-0">
-                <div className="flex items-center gap-2">
-                  {renderChips(product)}
-                </div>
-                
-                {/* Wishlist button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleWishlist(product.id);
-                  }}
-                  className={`p-2 transition-colors rounded-none cursor-pointer ${
-                    isSaved(product.id) ? 'text-cobalt' : 'text-ink/30 hover:text-cobalt'
-                  }`}
-                  title={isSaved(product.id) ? "Remove from Saved" : "Save to Wishlist"}
-                  aria-label="Save to Wishlist"
-                >
-                  <Bookmark size={15} className={isSaved(product.id) ? "fill-cobalt" : ""} />
-                </button>
-
-                <div className="flex items-center gap-2 text-ink/40 group-hover:text-cobalt text-[10px] uppercase font-black tracking-widest shrink-0">
-                  <span>View Object</span>
-                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
+            <ProductListItem 
+              key={product.id} 
+              product={product} 
+              idx={idx} 
+              isSavedProduct={isSaved(product.id)}
+              onToggleWishlist={() => toggleWishlist(product.id)}
+            />
           ))}
         </div>
       )}
@@ -609,63 +553,150 @@ export default function Collection() {
   );
 }
 
-// Option Color & Material Chips helper
-function renderChips(product: Product) {
-  const chips: React.ReactNode[] = [];
-  
-  // 1. Material chips (Oak, Steel, Ash, etc.)
-  if (product.material) {
-    const materials = product.material.split(',').map(m => m.trim()).filter(Boolean);
-    materials.forEach(mat => {
-      chips.push(
-        <span key={`mat-${mat}`} className="text-[9px] font-sans font-bold tracking-wider uppercase bg-ink/5 text-ink/60 px-2 py-0.5 rounded-[2px] border border-black/5">
-          {mat}
-        </span>
-      );
-    });
-  }
+// Subcomponent: ProductListItem with Expandable Options Accordion & Fixed Right Arrow Action
+function ProductListItem({ 
+  product, 
+  idx, 
+  isSavedProduct, 
+  onToggleWishlist 
+}: { 
+  product: Product; 
+  idx: number; 
+  isSavedProduct: boolean; 
+  onToggleWishlist: () => void;
+}) {
+  const [isOptionsExpanded, setIsOptionsExpanded] = useState(false);
 
-  // 2. Color chips (from bodyColors, fabricColors, or legacy color)
-  const colorItems: { name: string; hex: string }[] = [];
-  const seenNames = new Set<string>();
+  // Extract materials
+  const materials = React.useMemo(() => {
+    if (!product.material) return [];
+    return product.material.split(',').map(m => m.trim()).filter(Boolean);
+  }, [product.material]);
 
-  const processColor = (c: any) => {
-    if (!c) return;
-    const name = typeof c === 'string' ? c.trim() : c.name?.trim();
-    if (!name) return;
-    const key = name.toLowerCase();
-    if (seenNames.has(key)) return;
-    seenNames.add(key);
+  // Extract unique colors
+  const colorItems = React.useMemo(() => {
+    const items: { name: string; hex: string }[] = [];
+    const seen = new Set<string>();
 
-    const customHex = typeof c === 'object' ? c.hex : undefined;
-    const hex = resolveColorHex(name, customHex);
-    colorItems.push({ name, hex });
-  };
+    const addCol = (c: any) => {
+      if (!c) return;
+      const name = typeof c === 'string' ? c.trim() : c.name?.trim();
+      if (!name) return;
+      const key = name.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      const customHex = typeof c === 'object' ? c.hex : undefined;
+      items.push({ name, hex: resolveColorHex(name, customHex) });
+    };
 
-  if (product.bodyColors && Array.isArray(product.bodyColors)) {
-    product.bodyColors.forEach(processColor);
-  }
-  if (product.fabricColors && Array.isArray(product.fabricColors)) {
-    product.fabricColors.forEach(processColor);
-  }
-  if (product.color) {
-    if (Array.isArray(product.color)) {
-      product.color.forEach(processColor);
-    } else if (typeof product.color === 'string') {
-      product.color.split(',').forEach(processColor);
+    if (product.bodyColors && Array.isArray(product.bodyColors)) product.bodyColors.forEach(addCol);
+    if (product.fabricColors && Array.isArray(product.fabricColors)) product.fabricColors.forEach(addCol);
+    if (product.color) {
+      if (Array.isArray(product.color)) product.color.forEach(addCol);
+      else if (typeof product.color === 'string') product.color.split(',').forEach(addCol);
     }
-  }
+    return items;
+  }, [product.bodyColors, product.fabricColors, product.color]);
 
-  colorItems.forEach(c => {
-    chips.push(
-      <div 
-        key={`col-${c.name}`} 
-        className="w-3 h-3 rounded-full border border-black/15 shadow-sm shrink-0" 
-        style={{ backgroundColor: c.hex }} 
-        title={c.name}
-      />
-    );
-  });
+  const totalOptions = materials.length + colorItems.length;
+  const shouldShowAccordion = totalOptions > 3;
 
-  return chips.length > 0 ? chips : <span className="text-[9px] text-ink/30 italic">Standard options</span>;
+  return (
+    <Link
+      to={`/product/${product.id}`}
+      className="group flex flex-row items-center justify-between p-3.5 sm:p-6 hover:bg-off-white transition-colors duration-200 reveal gap-3 sm:gap-6 relative"
+    >
+      {/* Left Column: Number, Thumbnail, Name, Category, Subtitle */}
+      <div className="flex items-center gap-3 sm:gap-6 min-w-0 flex-1">
+        <span className="text-[9.5px] sm:text-[10px] font-mono font-bold text-cobalt tracking-widest shrink-0 w-6 sm:w-8">
+          {String(idx + 1).padStart(2, '0')}
+        </span>
+        <div className="w-14 h-14 sm:w-20 sm:h-20 bg-silver/10 overflow-hidden shrink-0 border border-black/5 relative">
+          <MediaRenderer
+            src={product.images[0]}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          />
+        </div>
+        <div className="min-w-0 flex-1 pr-1">
+          <div className="flex items-center gap-2 mb-0.5 sm:mb-1 flex-wrap">
+            <h2 className="text-sm sm:text-xl font-bold font-sans tracking-tight text-ink group-hover:text-cobalt transition-colors truncate max-w-[200px] sm:max-w-md">
+              {product.name}
+            </h2>
+            <span className="caption-nano text-orange px-1.5 sm:px-2 py-0.5 border border-orange/30 rounded-full font-bold shrink-0 text-[7.5px] sm:text-[9px]">
+              {product.category}
+            </span>
+          </div>
+          {product.subTitle && (
+            <p className="text-[11px] sm:text-xs font-serif italic text-ink/50 truncate max-w-xs sm:max-w-md">
+              {product.subTitle}
+            </p>
+          )}
+
+          {/* Inline Options (Materials & Colors) with Accordion Expansion */}
+          {totalOptions > 0 && (
+            <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 flex-wrap">
+              {/* Materials */}
+              {(isOptionsExpanded ? materials : materials.slice(0, 2)).map(mat => (
+                <span key={`mat-${mat}`} className="text-[8px] sm:text-[9px] font-sans font-bold tracking-wider uppercase bg-ink/5 text-ink/60 px-1.5 sm:px-2 py-0.5 rounded-[2px] border border-black/5">
+                  {mat}
+                </span>
+              ))}
+
+              {/* Colors */}
+              {(isOptionsExpanded ? colorItems : colorItems.slice(0, materials.length > 0 ? 2 : 4)).map(c => (
+                <div 
+                  key={`col-${c.name}`} 
+                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border border-black/15 shadow-2xs shrink-0" 
+                  style={{ backgroundColor: c.hex }} 
+                  title={c.name}
+                />
+              ))}
+
+              {/* Accordion Toggle Button for Many Options */}
+              {shouldShowAccordion && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsOptionsExpanded(!isOptionsExpanded);
+                  }}
+                  className="text-[8px] sm:text-[9px] font-mono font-bold uppercase text-cobalt hover:underline px-1 py-0.5 cursor-pointer shrink-0"
+                >
+                  {isOptionsExpanded ? '[- 접기]' : `[+${totalOptions - 2} more]`}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right Column: Always Fixed Position (Wishlist + View Arrow) */}
+      <div className="shrink-0 ml-auto self-center flex items-center gap-1.5 sm:gap-4 pl-2">
+        {/* Wishlist button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleWishlist();
+          }}
+          className={`p-1.5 sm:p-2 transition-colors rounded-none cursor-pointer ${
+            isSavedProduct ? 'text-cobalt' : 'text-ink/30 hover:text-cobalt'
+          }`}
+          title={isSavedProduct ? "Remove from Saved" : "Save to Wishlist"}
+          aria-label="Save to Wishlist"
+        >
+          <Bookmark size={15} className={isSavedProduct ? "fill-cobalt" : ""} />
+        </button>
+
+        {/* View Action (On desktop: "View Object ->", On mobile: only "->") */}
+        <div className="flex items-center gap-1.5 text-ink/40 group-hover:text-cobalt text-[10px] uppercase font-black tracking-widest shrink-0">
+          <span className="hidden sm:inline">View Object</span>
+          <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+        </div>
+      </div>
+    </Link>
+  );
 }
