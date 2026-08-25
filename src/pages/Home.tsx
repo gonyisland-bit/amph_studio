@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getProducts, Product, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
-import { ArrowRight, MoveRight } from "lucide-react";
+import { getProducts, getSpaces, Product, SpaceModel, getHomeSettings, HomeSettings, defaultHomeSettings } from "../lib/data";
+import { ArrowRight, MoveRight, Bookmark } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
+import { ImageHotspots } from "../components/ImageHotspots";
+import { useWishlist } from "../lib/wishlist";
 import { useScrollReveal } from "../lib/useScrollReveal";
 import { APP_VERSION } from "../lib/version";
 
@@ -10,8 +12,10 @@ let hasShownSplash = false;
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [spaces, setSpaces] = useState<SpaceModel[]>([]);
   const [settings, setSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
+  const { toggle: toggleWishlist, isSaved } = useWishlist();
 
   const [showSplash, setShowSplash] = useState(() => {
     if ((window as any).__triggerSplash) {
@@ -22,10 +26,11 @@ export default function Home() {
   });
   const [fadeSplash, setFadeSplash] = useState(false);
 
-  useScrollReveal();
+  useScrollReveal([products, spaces, settings]);
 
   useEffect(() => {
     getProducts().then(setProducts);
+    getSpaces().then(setSpaces);
     getHomeSettings().then(setSettings);
     document.title = "Home — Amph";
     
@@ -135,15 +140,7 @@ export default function Home() {
       {isAuth && null}
 
       {/* 1. Hero Section: Editorial Slideshow (Split-screen on desktop) */}
-      <section 
-        className="relative w-full h-[80vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10 select-none group/hero"
-        onPointerEnter={(e) => {
-          if (e.pointerType === 'mouse') setIsHeroHovered(true);
-        }}
-        onPointerLeave={(e) => {
-          if (e.pointerType === 'mouse') setIsHeroHovered(false);
-        }}
-      >
+      <section className="relative w-full h-[80vh] md:h-[90vh] overflow-hidden bg-off-white flex flex-col md:flex-row border-b border-black/10 select-none group/hero">
         {settings.heroSlides?.map((slide, idx) => {
           const isActive = idx === activeSlide;
           return (
@@ -179,8 +176,16 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Right Column / Background: Media Container (Takes full width on mobile, 55% on desktop) */}
-              <div className="w-full md:w-[55%] h-full relative overflow-hidden bg-black ml-auto">
+              {/* Right Column / Background: Media Container (Takes full width on mobile, 55% on desktop - Hover pause scoped here) */}
+              <div 
+                className="w-full md:w-[55%] h-full relative overflow-hidden bg-black ml-auto"
+                onPointerEnter={(e) => {
+                  if (e.pointerType === 'mouse') setIsHeroHovered(true);
+                }}
+                onPointerLeave={(e) => {
+                  if (e.pointerType === 'mouse') setIsHeroHovered(false);
+                }}
+              >
                 {slide.image && (
                   <MediaRenderer 
                     src={slide.image} 
@@ -297,6 +302,25 @@ export default function Home() {
                     </span>
                   </div>
 
+                  {/* Wishlist Bookmark Button on top-right */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleWishlist(product.id);
+                    }}
+                    className={`absolute top-5 right-5 z-30 p-2 rounded-full backdrop-blur-md transition-all duration-300 cursor-pointer ${
+                      isSaved(product.id)
+                        ? 'bg-cobalt text-white shadow-md opacity-100'
+                        : 'bg-black/30 text-white/80 hover:text-white hover:bg-black/60 border border-white/10 opacity-0 group-hover:opacity-100'
+                    }`}
+                    title={isSaved(product.id) ? "Remove from Saved" : "Save to Wishlist"}
+                    aria-label="Save to Wishlist"
+                  >
+                    <Bookmark size={13} className={isSaved(product.id) ? "fill-current" : ""} />
+                  </button>
+
                   <div className="absolute bottom-6 left-6 z-20 pointer-events-none">
                     <h2 className="text-sm md:text-base font-bold font-sans tracking-tight leading-tight text-white drop-shadow-md group-hover:text-cobalt transition-colors">
                       {product.name}
@@ -397,6 +421,58 @@ export default function Home() {
           })()}
         </div>
       </section>
+
+      {/* 2.5. Interactive Lookbook Showcase (Shop the Space) */}
+      {(() => {
+        const featuredSpace = spaces.find(s => s.hotspots && s.hotspots.length > 0) || spaces[0];
+        if (!featuredSpace) return null;
+
+        return (
+          <section className="bg-white border-t border-black/10 flex flex-col">
+            <div className="px-8 md:px-20 py-20 md:py-28 flex flex-col md:flex-row justify-between items-baseline gap-6">
+              <div>
+                <span className="caption-nano text-cobalt mb-3 block font-bold tracking-[0.3em]">
+                  Spatial Curation
+                </span>
+                <h2 className="text-3xl md:text-5xl font-medium tracking-tighter uppercase leading-[0.9]">
+                  Shop The Space
+                </h2>
+              </div>
+              <p className="text-sm font-serif italic text-ink/60 max-w-md leading-relaxed">
+                Explore objects placed in real architectural context. Hover or tap the interactive pins to preview details.
+              </p>
+            </div>
+
+            {/* Immersive Hotspot Space Showcase */}
+            <div className="w-full border-t border-black/10 bg-black relative">
+              <div className="w-full h-[55vh] sm:h-[65vh] md:h-[80vh] relative overflow-hidden">
+                <ImageHotspots 
+                  src={featuredSpace.image}
+                  alt={featuredSpace.title}
+                  hotspots={featuredSpace.hotspots || []}
+                  products={products}
+                  className="w-full h-full"
+                  imageClassName="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-700"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
+                <div className="absolute bottom-6 left-6 md:bottom-12 md:left-16 z-20 pointer-events-none">
+                  <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-white/70 block mb-2 font-mono drop-shadow-sm">
+                    LOOKBOOK // {featuredSpace.title}
+                  </span>
+                  <Link
+                    to={`/space/${featuredSpace.id}`}
+                    className="inline-flex items-center gap-3 px-5 py-2.5 bg-white text-ink text-[10px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all pointer-events-auto rounded-none shadow-lg group/space-btn"
+                  >
+                    <span>Explore Full Space</span>
+                    <ArrowRight size={12} className="group-hover/space-btn:translate-x-1 transition-transform" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* 3. Curated Gallery / Magazine Intros - Placed after Selected Works, border-aligned & padding-optimized */}
       <section className="flex flex-col bg-white border-t border-black/10 px-0 py-0">
