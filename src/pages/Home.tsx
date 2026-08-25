@@ -325,22 +325,6 @@ export default function Home() {
             })}
           </div>
         )}
-
-        {/* Scroll Down Pulse Indicator (Center Aligned on Hero) */}
-        <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center">
-          <button
-            type="button"
-            onClick={handleScrollNext}
-            className="group flex flex-col items-center gap-1 text-white cursor-pointer select-none transition-all duration-300 hover:scale-110 active:scale-95"
-            title="Scroll to Selected Works"
-            aria-label="Scroll to next section"
-          >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/40 hover:bg-cobalt backdrop-blur-md border border-white/30 flex items-center justify-center shadow-lg transition-colors relative">
-              <span className="absolute inset-0 rounded-full border border-white/50 animate-ping opacity-60 pointer-events-none" />
-              <ChevronDown size={20} className="text-white drop-shadow-md group-hover:translate-y-0.5 transition-transform" />
-            </div>
-          </button>
-        </div>
       </section>
 
       {/* 2. Selected Works (Featured Products) - Now directly after Hero slider */}
@@ -797,11 +781,11 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Floating Smart Section Navigator (Active below Hero) */}
-      {activeSectionIdx > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-3 duration-300 pointer-events-auto">
-          <div className="flex items-center gap-1.5 p-1.5 bg-black/80 hover:bg-black/90 backdrop-blur-md border border-white/20 rounded-full shadow-2xl transition-all select-none">
-            {/* Up Arrow: Moves to previous section */}
+      {/* Floating Smart Section Navigator (Unified across all sections) */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-3 duration-300 pointer-events-auto">
+        <div className="flex items-center gap-1.5 p-1.5 bg-black/80 hover:bg-black/90 backdrop-blur-md border border-white/20 rounded-full shadow-2xl transition-all select-none">
+          {/* Up Arrow: Moves to previous section (hidden on Hero/top) */}
+          {activeSectionIdx > 0 && (
             <button
               type="button"
               onClick={handleScrollPrev}
@@ -811,40 +795,42 @@ export default function Home() {
             >
               <ChevronUp size={18} />
             </button>
+          )}
 
-            {/* Section Progress Dots */}
-            <div className="flex items-center gap-1 px-1.5">
-              {sectionIds.map((_, sIdx) => (
-                <button
-                  key={sIdx}
-                  type="button"
-                  onClick={() => scrollToSectionIndex(sIdx)}
-                  className={`transition-all rounded-full cursor-pointer p-0 border-0 outline-none ${
-                    sIdx === activeSectionIdx 
-                      ? 'w-4 h-1.5 bg-cobalt' 
-                      : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'
-                  }`}
-                  title={`Section ${sIdx + 1}`}
-                  aria-label={`Go to section ${sIdx + 1}`}
-                />
-              ))}
-            </div>
-
-            {/* Down Arrow: Moves to next section (hidden on bottom-most section) */}
-            {!isAtBottom && activeSectionIdx < sectionIds.length - 1 && (
+          {/* Section Progress Dots */}
+          <div className="flex items-center gap-1 px-1.5">
+            {sectionIds.map((_, sIdx) => (
               <button
+                key={sIdx}
                 type="button"
-                onClick={handleScrollNext}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-cobalt text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95 group/down"
-                title="다음 섹션으로 이동"
-                aria-label="Next section"
-              >
-                <ChevronDown size={18} className="group-hover/down:translate-y-0.5 transition-transform" />
-              </button>
-            )}
+                onClick={() => scrollToSectionIndex(sIdx)}
+                className={`transition-all rounded-full cursor-pointer p-0 border-0 outline-none ${
+                  sIdx === activeSectionIdx 
+                    ? 'w-4 h-1.5 bg-cobalt' 
+                    : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'
+                }`}
+                title={`Section ${sIdx + 1}`}
+                aria-label={`Go to section ${sIdx + 1}`}
+              />
+            ))}
           </div>
+
+          {/* Down Arrow: Moves to next section (hidden on bottom-most section) */}
+          {!isAtBottom && activeSectionIdx < sectionIds.length - 1 && (
+            <button
+              type="button"
+              onClick={handleScrollNext}
+              className={`w-8 h-8 rounded-full bg-white/10 hover:bg-cobalt text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95 group/down ${
+                activeSectionIdx === 0 ? 'bg-cobalt/80 hover:bg-cobalt ring-2 ring-white/30' : ''
+              }`}
+              title="다음 섹션으로 이동"
+              aria-label="Next section"
+            >
+              <ChevronDown size={18} className="group-hover/down:translate-y-0.5 transition-transform" />
+            </button>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Settings } from "lucide-react";
+import { Edit3 } from "lucide-react";
 
 export function FloatingEditButton() {
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
@@ -42,10 +42,11 @@ export function FloatingEditButton() {
   return (
     <Link 
       to={adminLink} 
-      className="fixed bottom-8 left-8 z-[100] bg-cobalt text-white px-5 py-3 rounded-none font-black text-[9px] uppercase tracking-widest shadow-2xl hover:bg-orange hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 border border-white/10"
+      className="fixed bottom-6 left-6 z-[150] w-13 h-13 sm:w-14 sm:h-14 rounded-full shadow-2xl bg-ink hover:bg-cobalt text-white flex flex-col items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20 group/editbtn"
+      title="Edit Page Content (수정 모드 진입)"
     >
-      <Settings size={12} className="animate-spin-slow" />
-      Edit Page Content
+      <Edit3 size={16} className="group-hover/editbtn:rotate-12 transition-transform" />
+      <span className="text-[8px] font-black uppercase tracking-wider mt-0.5 font-mono">EDIT</span>
     </Link>
   );
 }
