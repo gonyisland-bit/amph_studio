@@ -29,9 +29,79 @@ export function AdminHotspotEditor({
   const [draggingPinId, setDraggingPinId] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState("");
   const [aspectMode, setAspectMode] = useState<'story' | 'hero' | 'natural'>(initialAspectMode);
+  const [naturalAspect, setNaturalAspect] = useState<number | null>(null);
   
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef<boolean>(false);
+
+  // Load natural aspect ratio of the underlying image
+  useEffect(() => {
+    if (!imageSrc) return;
+    const img = new window.Image();
+    img.src = imageSrc;
+    img.onload = () => {
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+        setNaturalAspect(img.naturalWidth / img.naturalHeight);
+      }
+    };
+  }, [imageSrc]);
+
+  // Convert canonical natural image coordinates (0% ~ 100%) to display coordinates on the cropped canvas box
+  const getDisplayCoords = (canonicalX: number, canonicalY: number) => {
+    if (aspectMode === 'natural' || !naturalAspect) {
+      return { displayX: canonicalX, displayY: canonicalY, isVisible: true };
+    }
+    const aImg = naturalAspect;
+    const aBox = aspectMode === 'story' ? (4 / 3) : (16 / 9);
+
+    let dX = canonicalX;
+    let dY = canonicalY;
+
+    if (aBox < aImg) {
+      // Container is narrower than image: left/right are cropped in object-cover
+      dX = 50 + (canonicalX - 50) * (aImg / aBox);
+      dY = canonicalY;
+    } else if (aBox > aImg) {
+      // Container is wider than image: top/bottom are cropped in object-cover
+      dX = canonicalX;
+      dY = 50 + (canonicalY - 50) * (aBox / aImg);
+    }
+
+    const isVisible = dX >= -3 && dX <= 103 && dY >= -3 && dY <= 103;
+    return { 
+      displayX: Math.max(0, Math.min(100, dX)), 
+      displayY: Math.max(0, Math.min(100, dY)), 
+      isVisible 
+    };
+  };
+
+  // Convert click/drag percentage on the cropped canvas box back to canonical natural image coordinates
+  const getCanonicalCoords = (clickPercentX: number, clickPercentY: number) => {
+    if (aspectMode === 'natural' || !naturalAspect) {
+      return { 
+        canonicalX: Math.max(0, Math.min(100, Math.round(clickPercentX * 10) / 10)), 
+        canonicalY: Math.max(0, Math.min(100, Math.round(clickPercentY * 10) / 10)) 
+      };
+    }
+    const aImg = naturalAspect;
+    const aBox = aspectMode === 'story' ? (4 / 3) : (16 / 9);
+
+    let cX = clickPercentX;
+    let cY = clickPercentY;
+
+    if (aBox < aImg) {
+      cX = 50 + (clickPercentX - 50) * (aBox / aImg);
+      cY = clickPercentY;
+    } else if (aBox > aImg) {
+      cX = clickPercentX;
+      cY = 50 + (clickPercentY - 50) * (aImg / aBox);
+    }
+
+    return { 
+      canonicalX: Math.max(0, Math.min(100, Math.round(cX * 10) / 10)), 
+      canonicalY: Math.max(0, Math.min(100, Math.round(cY * 10) / 10)) 
+    };
+  };
 
   // Global mousemove and mouseup listeners for smooth pin dragging
   useEffect(() => {
@@ -41,10 +111,12 @@ export function AdminHotspotEditor({
       if (!container) return;
 
       const rect = container.getBoundingClientRect();
-      const percentX = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10));
-      const percentY = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10));
+      const clickPercentX = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+      const clickPercentY = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
 
-      setPins(prev => prev.map(p => p.id === draggingPinId ? { ...p, x: percentX, y: percentY } : p));
+      const { canonicalX, canonicalY } = getCanonicalCoords(clickPercentX, clickPercentY);
+
+      setPins(prev => prev.map(p => p.id === draggingPinId ? { ...p, x: canonicalX, y: canonicalY } : p));
     };
 
     const handleMouseUp = () => {
@@ -62,7 +134,7 @@ export function AdminHotspotEditor({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [draggingPinId]);
+  }, [draggingPinId, aspectMode, naturalAspect]);
 
   if (!isOpen) return null;
 
@@ -74,17 +146,16 @@ export function AdminHotspotEditor({
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+    const clickPercentX = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const clickPercentY = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
 
-    const percentX = Math.max(0, Math.min(100, Math.round((clickX / rect.width) * 1000) / 10));
-    const percentY = Math.max(0, Math.min(100, Math.round((clickY / rect.height) * 1000) / 10));
+    const { canonicalX, canonicalY } = getCanonicalCoords(clickPercentX, clickPercentY);
 
     const newPin: HotspotPin = {
       id: `pin-${Date.now()}`,
       productId: products[0]?.id || "",
-      x: percentX,
-      y: percentY,
+      x: canonicalX,
+      y: canonicalY,
       label: ""
     };
 
@@ -134,6 +205,12 @@ export function AdminHotspotEditor({
   );
 
   const selectedPin = pins.find(p => p.id === selectedPinId);
+
+  // Calculate 4:3 Safe Zone bounding box for wide images
+  const aImg = naturalAspect || (16 / 9);
+  const isWideImage = aImg > (4 / 3);
+  const safeZoneWidthPercent = isWideImage ? ((4 / 3) / aImg) * 100 : 100;
+  const safeZoneLeftPercent = isWideImage ? (100 - safeZoneWidthPercent) / 2 : 0;
 
   // Aspect ratio container styles matching public pages
   let aspectContainerClass = "aspect-[4/3] w-full max-w-2xl";
@@ -238,11 +315,24 @@ export function AdminHotspotEditor({
                 className={`w-full h-full ${aspectMode === 'natural' ? 'object-contain' : 'object-cover'} block pointer-events-none`}
               />
 
-              {/* Pins on top of Image (Draggable) */}
+              {/* 4:3 Story Crop Safe Zone Guide Overlay on Wide / Original screens */}
+              {isWideImage && (aspectMode === 'natural' || aspectMode === 'hero') && (
+                <div 
+                  className="absolute inset-y-0 border-x-2 border-dashed border-cobalt/60 pointer-events-none z-10 bg-cobalt/[0.03]"
+                  style={{ left: `${safeZoneLeftPercent}%`, width: `${safeZoneWidthPercent}%` }}
+                >
+                  <span className="absolute top-2 left-2 bg-cobalt/85 text-white text-[7.5px] font-mono font-bold px-1.5 py-0.5 rounded-none shadow-xs tracking-wider">
+                    4:3 Story Safe Zone (스토리 크롭 유효 영역)
+                  </span>
+                </div>
+              )}
+
+              {/* Pins on top of Image (Draggable & Calibrated) */}
               {pins.map((pin, idx) => {
                 const isSelected = selectedPinId === pin.id;
                 const isDragging = draggingPinId === pin.id;
                 const prod = products.find(p => p.id === pin.productId);
+                const { displayX, displayY, isVisible } = getDisplayCoords(pin.x, pin.y);
 
                 return (
                   <div
@@ -254,8 +344,8 @@ export function AdminHotspotEditor({
                     }}
                     className={`absolute -translate-x-1/2 -translate-y-1/2 group/pin z-20 transition-transform ${
                       isDragging ? 'cursor-grabbing scale-125 z-40' : 'cursor-grab hover:scale-115'
-                    }`}
-                    style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
+                    } ${!isVisible ? 'opacity-40' : 'opacity-100'}`}
+                    style={{ left: `${displayX}%`, top: `${displayY}%` }}
                   >
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black font-mono transition-all duration-150 shadow-xl border-2 select-none ${
                       isDragging 

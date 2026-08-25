@@ -399,9 +399,10 @@ export default function Admin() {
   const [originalForm, setOriginalForm] = useState<any>(null);
   const [originalHomeSettings, setOriginalHomeSettings] = useState<any>(null);
   const [pendingNavigation, setPendingNavigation] = useState<{
-    type: 'tab' | 'edit' | 'router';
+    type: 'tab' | 'edit' | 'router' | 'url';
     targetTab?: 'home'|'journal'|'space'|'collection'|'colorAssets'|'orders'|'users';
     targetItem?: any;
+    targetUrl?: string;
   } | null>(null);
 
   // Outside click & ESC key handlers for Live Preview Hamburger Menu Popup
@@ -5151,6 +5152,8 @@ export default function Admin() {
                         }
                       } else if (nav && nav.type === 'edit' && nav.targetItem) {
                         proceedEdit(nav.targetItem);
+                      } else if (nav && nav.type === 'url' && nav.targetUrl) {
+                        navigate(nav.targetUrl);
                       }
                     }, 300);
                   } else {
@@ -5191,6 +5194,8 @@ export default function Admin() {
                     }
                   } else if (nav && nav.type === 'edit' && nav.targetItem) {
                     proceedEdit(nav.targetItem);
+                  } else if (nav && nav.type === 'url' && nav.targetUrl) {
+                    navigate(nav.targetUrl);
                   }
                 }}
                 className="bg-ink text-white py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-orange transition-colors rounded-none w-full cursor-pointer disabled:opacity-50"
@@ -5279,15 +5284,22 @@ export default function Admin() {
               )}
             </button>
 
-            {/* View Page Return Button */}
-            <Link
-              to={targetViewUrl}
+            {/* View Page Return Button with Unsaved Changes Interception */}
+            <button
+              type="button"
+              onClick={() => {
+                if (isDirty) {
+                  setPendingNavigation({ type: 'url', targetUrl: targetViewUrl });
+                } else {
+                  navigate(targetViewUrl);
+                }
+              }}
               className="w-13 h-13 sm:w-14 sm:h-14 rounded-full shadow-2xl bg-white hover:bg-off-white text-ink border-2 border-black/15 hover:border-cobalt hover:text-cobalt flex flex-col items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer group/viewbtn"
               title="Return to Page View (페이지 뷰로 돌아가기)"
             >
               <RotateCcw size={16} className="text-current group-hover/viewbtn:-rotate-45 transition-transform" />
               <span className="text-[8px] font-black uppercase tracking-wider mt-0.5 font-mono">VIEW</span>
-            </Link>
+            </button>
           </div>
         );
       })()}
