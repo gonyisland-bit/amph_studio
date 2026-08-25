@@ -10,6 +10,7 @@ import { resolveColorHex } from "../lib/colorUtils";
 import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Star, Lock, Save, MoreVertical, MapPin, Sparkles, ArrowLeft, RotateCcw, Eye } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 import { AdminHotspotEditor } from "../components/AdminHotspotEditor";
+import { ImageHotspots } from "../components/ImageHotspots";
 
 const emptyProduct: Omit<Product, 'id'> = {
   name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: ['', '', ''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []
@@ -3281,7 +3282,27 @@ export default function Admin() {
                             const targetId = item.targetId || '';
                             const candidateImages = getCandidateImages(source, targetId);
                             const selectedImgUrl = item.selectedImage || (source === 'custom' ? item.image : candidateImages[0]?.url) || '';
-                            const currentHotspots = item.hotspots || [];
+
+                            // Inherit registered hotspots from the selected Space or Journal if item.hotspots is not explicitly set
+                            const inheritedHotspots: HotspotPin[] = source === 'space'
+                              ? (() => {
+                                  const sp = spaces.find(s => s.id === targetId) || spaces[0];
+                                  if (!sp) return [];
+                                  const matchBlock = (sp.contentBlocks || []).find((b: any) => b.value === selectedImgUrl && b.hotspots && b.hotspots.length > 0);
+                                  return (matchBlock?.hotspots || (selectedImgUrl === sp.image ? (sp.hotspots || []) : (sp.hotspots || []))) as HotspotPin[];
+                                })()
+                              : source === 'journal'
+                              ? (() => {
+                                  const jn = journals.find(j => j.id === targetId) || journals[0];
+                                  if (!jn) return [];
+                                  const matchBlock = (jn.contentBlocks || []).find((b: any) => b.value === selectedImgUrl && b.hotspots && b.hotspots.length > 0);
+                                  return (matchBlock?.hotspots || (selectedImgUrl === jn.image ? (jn.hotspots || []) : (jn.hotspots || []))) as HotspotPin[];
+                                })()
+                              : [];
+
+                            const currentHotspots: HotspotPin[] = (item.hotspots && item.hotspots.length > 0)
+                              ? item.hotspots
+                              : inheritedHotspots;
 
                             const updateItem = (updates: Partial<HomeShowcaseItem>) => {
                               const updated = [...showcaseItems];
@@ -3743,37 +3764,25 @@ export default function Admin() {
                                             }
                                           });
                                         }}
-                                        className="w-full min-h-[220px] max-h-[460px] bg-black/95 relative overflow-hidden border border-black/15 group/preview cursor-pointer flex items-center justify-center"
+                                        className="w-full aspect-[16/10] max-h-[460px] bg-black/95 relative overflow-hidden border border-black/15 group/preview cursor-pointer"
                                         title="Click to open Interactive Pin Editor"
                                       >
-                                        <MediaRenderer src={selectedImgUrl} className="w-full h-auto max-h-[460px] object-contain" />
-                                        
-                                        {/* Visual Pins Overlay on the Preview Image */}
-                                        {currentHotspots.map((pin, pIdx) => {
-                                          const prod = products.find(p => p.id === pin.productId);
-                                          return (
-                                            <div
-                                              key={pin.id || pIdx}
-                                              style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
-                                              className="absolute -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none flex flex-col items-center"
-                                            >
-                                              <span className="w-5 h-5 rounded-full bg-cobalt text-white text-[9px] font-black flex items-center justify-center shadow-md border-2 border-white animate-pulse">
-                                                {pIdx + 1}
-                                              </span>
-                                              <span className="mt-1 bg-black/80 text-white text-[7.5px] font-bold px-1.5 py-0.5 rounded-none whitespace-nowrap shadow-xs backdrop-blur-xs">
-                                                {prod?.name || pin.label || `Pin #${pIdx + 1}`}
-                                              </span>
-                                            </div>
-                                          );
-                                        })}
+                                        <ImageHotspots 
+                                          src={selectedImgUrl} 
+                                          alt={`Lookbook #${itemIdx + 1} preview`}
+                                          hotspots={currentHotspots}
+                                          products={products}
+                                          className="w-full h-full pointer-events-none"
+                                          imageClassName="w-full h-full object-cover"
+                                        />
 
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center pointer-events-none z-30">
                                           <span className="bg-cobalt text-white px-4 py-2 text-[10px] font-black uppercase tracking-wider shadow-lg">
                                             Click Image to Edit Hotspots ({currentHotspots.length} Active Pins)
                                           </span>
                                         </div>
 
-                                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end justify-between p-3 pointer-events-none">
+                                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end justify-between p-3 pointer-events-none z-20">
                                           <div>
                                             <span className="text-[8px] font-bold uppercase text-white/70 block tracking-widest font-mono">
                                               LOOKBOOK #{itemIdx + 1} // {source.toUpperCase()}
