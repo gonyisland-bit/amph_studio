@@ -2576,7 +2576,7 @@ export default function Admin() {
                                     : 'text-ink/60 hover:text-ink'
                                 }`}
                               >
-                                {level === 'light' ? 'Light (은은하게)' : level === 'medium' ? 'Medium (기본)' : 'Dark (선명하게)'}
+                                {level === 'light' ? 'Light (10%)' : level === 'medium' ? 'Medium (30%)' : 'Dark (50%)'}
                               </button>
                             ))}
                           </div>
@@ -3376,7 +3376,7 @@ export default function Admin() {
                                             : 'text-ink/60 hover:text-ink'
                                         }`}
                                       >
-                                        {level === 'light' ? 'Light (은은하게)' : level === 'medium' ? 'Medium (기본)' : 'Dark (선명하게)'}
+                                        {level === 'light' ? 'Light (10%)' : level === 'medium' ? 'Medium (30%)' : 'Dark (50%)'}
                                       </button>
                                     ))}
                                   </div>

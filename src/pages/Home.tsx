@@ -262,16 +262,16 @@ export default function Home() {
                     playing={isActive}
                   />
                 )}
-                {/* Overlay for mobile readability & visual tone tuning (Controlled by settings.heroGradientEnabled) */}
+                {/* Overlay for mobile readability & visual tone tuning (Controlled by settings.heroGradientEnabled - Lower 35% portion only) */}
                 {Boolean(settings.heroGradientEnabled) && (() => {
                   const intensity = settings.heroGradientIntensity || 'medium';
                   const gradientClass = intensity === 'light'
-                    ? 'bg-gradient-to-t from-black/45 via-transparent to-transparent md:bg-black/5'
+                    ? 'from-black/10 via-transparent to-transparent'
                     : intensity === 'dark'
-                    ? 'bg-gradient-to-t from-black/90 via-black/45 to-black/20 md:bg-black/20 md:mix-blend-multiply'
-                    : 'bg-gradient-to-t from-black/85 via-black/35 to-black/10 md:bg-black/5 md:mix-blend-multiply';
+                    ? 'from-black/50 via-black/20 to-transparent'
+                    : 'from-black/30 via-black/10 to-transparent';
 
-                  return <div className={`absolute inset-0 ${gradientClass} transition-all pointer-events-none`}></div>;
+                  return <div className={`absolute bottom-0 inset-x-0 h-1/3 sm:h-2/5 bg-gradient-to-t ${gradientClass} transition-all pointer-events-none`}></div>;
                 })()}
               </div>
 
@@ -647,17 +647,17 @@ export default function Home() {
                   loading="lazy"
                 />
                 
-                {/* Showcase Dark Gradient Overlay (Controlled by showcaseConfig?.gradientEnabled) */}
+                {/* Showcase Dark Gradient Overlay (Controlled by showcaseConfig?.gradientEnabled - Lower 35% portion only) */}
                 {Boolean(showcaseConfig?.gradientEnabled) && (() => {
                   const intensity = showcaseConfig?.gradientIntensity || 'medium';
                   const gradientClass = intensity === 'light'
-                    ? 'from-black/35 via-transparent to-black/10'
+                    ? 'from-black/10 to-transparent'
                     : intensity === 'dark'
-                    ? 'from-black/85 via-black/30 to-black/30'
-                    : 'from-black/70 via-transparent to-black/20';
+                    ? 'from-black/50 via-black/20 to-transparent'
+                    : 'from-black/30 via-black/10 to-transparent';
 
                   return (
-                    <div className={`absolute inset-0 bg-gradient-to-t ${gradientClass} pointer-events-none transition-all`} />
+                    <div className={`absolute bottom-0 inset-x-0 h-1/3 sm:h-2/5 bg-gradient-to-t ${gradientClass} pointer-events-none transition-all`} />
                   );
                 })()}
                 
