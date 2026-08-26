@@ -1181,7 +1181,7 @@ export default function ProductDetail() {
             {/* 16:9 Full-Bleed Interactive Hotspot Showcase Container */}
             <div 
               key={`spatial-shot-${activeShot.id}-${safeIdx}`}
-              className="w-full aspect-[16/9] md:aspect-[16/9] max-h-[85vh] relative overflow-hidden bg-black animate-in fade-in duration-500"
+              className="w-full aspect-[16/9] md:aspect-[16/9] relative overflow-hidden bg-black animate-in fade-in duration-500"
             >
               <ImageHotspots 
                 src={activeShot.image}
