@@ -270,71 +270,63 @@ const getFormattedShipping = (shipping?: string) => {
 const renderColorBadge = (colorVal: any, foundProd?: any, colorOptionsList?: any[]) => {
   if (!colorVal) return <span>Color: -</span>;
 
-  // Normalize the input - extract name and hex
   let colorName: string = '';
   let colorHex: string | null = null;
 
-  // Build list of all known color definitions to match against
   let allColors: any[] = [];
-  if (colorOptionsList && Array.isArray(colorOptionsList)) {
+  if (Array.isArray(colorOptionsList)) {
     allColors.push(...colorOptionsList.filter(Boolean));
   }
   if (foundProd?.color) {
     let prodColors = foundProd.color;
-    if (typeof prodColors === 'string' && prodColors.trim().startsWith('[')) {
-      try { prodColors = JSON.parse(prodColors); } catch(e) {}
-    } else if (typeof prodColors === 'string' && prodColors.trim().startsWith('{')) {
-      try { prodColors = JSON.parse(prodColors); } catch(e) {}
+    if (typeof prodColors === 'string') {
+      const trimmed = prodColors.trim();
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        try { prodColors = JSON.parse(trimmed); } catch(e) {}
+      }
     }
     if (Array.isArray(prodColors)) allColors.push(...prodColors.filter(Boolean));
     else if (typeof prodColors === 'object' && prodColors !== null) allColors.push(prodColors);
   }
 
-  // Parse the color value
   if (typeof colorVal === 'string') {
     const trimmed = colorVal.trim();
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-      // It's a JSON string
       try {
         const parsed = JSON.parse(trimmed);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Array of color objects - take first
-          colorName = parsed[0]?.name || '';
+          colorName = String(parsed[0]?.name || '');
           colorHex = parsed[0]?.hex || null;
-        } else if (typeof parsed === 'object') {
-          colorName = parsed.name || parsed.hex || '';
+        } else if (typeof parsed === 'object' && parsed !== null) {
+          colorName = String(parsed.name || parsed.hex || '');
           colorHex = parsed.hex || null;
         }
       } catch(e) {
         colorName = trimmed;
       }
     } else if (trimmed.startsWith('#')) {
-      // Hex code directly
       colorHex = trimmed;
-      // Try to find name from allColors
-      const m = allColors.find((c: any) => (c.hex || '').toLowerCase() === trimmed.toLowerCase());
+      const m = allColors.find((c: any) => String(c?.hex || '').toLowerCase() === trimmed.toLowerCase());
       colorName = m?.name || trimmed;
     } else {
-      // Plain name
       colorName = trimmed;
-      // Try to find hex from allColors
-      const m = allColors.find((c: any) => (c.name || '').toLowerCase() === trimmed.toLowerCase());
+      const m = allColors.find((c: any) => String(c?.name || '').toLowerCase() === trimmed.toLowerCase());
       colorHex = m?.hex || null;
     }
   } else if (Array.isArray(colorVal) && colorVal.length > 0) {
-    // Array of color objects
-    colorName = colorVal[0]?.name || colorVal.map((c: any) => c.name || c).join(', ');
+    colorName = colorVal[0]?.name 
+      ? String(colorVal[0].name) 
+      : colorVal.map((c: any) => (typeof c === 'string' ? c : (c?.name || ''))).filter(Boolean).join(', ');
     colorHex = colorVal[0]?.hex || null;
   } else if (typeof colorVal === 'object' && colorVal !== null) {
-    colorName = colorVal.name || '';
+    colorName = String(colorVal.name || '');
     colorHex = colorVal.hex || null;
   }
 
   if (!colorName && !colorHex) return <span>Color: -</span>;
 
-  // If still no hex, search allColors by name
   if (!colorHex && colorName) {
-    const m = allColors.find((c: any) => (c.name || '').toLowerCase() === colorName.toLowerCase());
+    const m = allColors.find((c: any) => String(c?.name || '').toLowerCase() === colorName.toLowerCase());
     colorHex = m?.hex || null;
   }
 
@@ -808,10 +800,49 @@ export default function Admin() {
     return resultProd;
   };
 
+  const normalizeFormItem = (item: any, tab: string) => {
+    if (!item || typeof item !== 'object') return item;
+    const cloned = JSON.parse(JSON.stringify(item));
+
+    const ensureArray = (val: any) => {
+      if (Array.isArray(val)) return val;
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            return Array.isArray(parsed) ? parsed : [parsed];
+          } catch(e) {
+            return [];
+          }
+        }
+        if (trimmed) return [trimmed];
+      }
+      return [];
+    };
+
+    cloned.images = ensureArray(cloned.images);
+    cloned.hoverImages = ensureArray(cloned.hoverImages);
+    cloned.portraitImages = ensureArray(cloned.portraitImages);
+    cloned.contentBlocks = ensureArray(cloned.contentBlocks);
+    cloned.relatedProductIds = ensureArray(cloned.relatedProductIds);
+    cloned.relatedSpaceIds = ensureArray(cloned.relatedSpaceIds);
+    cloned.relatedJournalIds = ensureArray(cloned.relatedJournalIds);
+    cloned.appliedProductIds = ensureArray(cloned.appliedProductIds);
+    cloned.bodyColors = ensureArray(cloned.bodyColors);
+    cloned.fabricColors = ensureArray(cloned.fabricColors);
+    cloned.hotspots = ensureArray(cloned.hotspots);
+
+    if (tab === 'collection') {
+      return normalizeProductColors(cloned);
+    }
+    return cloned;
+  };
+
   useEffect(() => {
     if (activeTab === 'collection' && form) {
       const normalized = normalizeProductColors(form);
-      setColorOptions([...(normalized.bodyColors || []), ...(normalized.fabricColors || [])]);
+      setColorOptions([...(normalized?.bodyColors || []), ...(normalized?.fabricColors || [])]);
     } else {
       setColorOptions([]);
     }
@@ -867,14 +898,17 @@ export default function Admin() {
       const updatedAssets = [...currentAssets, newSwatchItem];
       const nextSettings = { ...homeSettings, colorAssets: updatedAssets };
       setHomeSettings(nextSettings);
-      updateHomeSettings(nextSettings)
-        .then(() => setOriginalHomeSettings(JSON.parse(JSON.stringify(nextSettings))))
-        .catch(console.error);
+      fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nextSettings)
+      }).catch(err => console.error("Auto-sync settings failed", err));
     }
 
-    // Attach to active target slot
+    // Attach to current active target slot (body or fabric)
     handleToggleColorForTarget(newSwatchItem);
     setNewCustomColorName("");
+    showToast(`Added '${colorNameTrimmed}' to ${activeColorTarget.toUpperCase()}`, 'success');
   };
 
   const handleReorderColorOption = (index: number, direction: 'up' | 'down') => {
@@ -1424,12 +1458,12 @@ export default function Admin() {
     setEditingId(item.id);
     const cloned = JSON.parse(JSON.stringify(item));
     if (activeTab === 'collection') {
-      const autoSpaces = spaces.filter(s => s.appliedProductIds?.includes(item.id)).map(s => s.id);
-      const autoJournals = journals.filter(j => j.appliedProductIds?.includes(item.id)).map(j => j.id);
-      cloned.relatedSpaceIds = Array.from(new Set([...(cloned.relatedSpaceIds || []), ...autoSpaces]));
-      cloned.relatedJournalIds = Array.from(new Set([...(cloned.relatedJournalIds || []), ...autoJournals]));
+      const autoSpaces = spaces.filter(s => Array.isArray(s.appliedProductIds) && s.appliedProductIds.includes(item.id)).map(s => s.id);
+      const autoJournals = journals.filter(j => Array.isArray(j.appliedProductIds) && j.appliedProductIds.includes(item.id)).map(j => j.id);
+      cloned.relatedSpaceIds = Array.from(new Set([...(Array.isArray(cloned.relatedSpaceIds) ? cloned.relatedSpaceIds : []), ...autoSpaces]));
+      cloned.relatedJournalIds = Array.from(new Set([...(Array.isArray(cloned.relatedJournalIds) ? cloned.relatedJournalIds : []), ...autoJournals]));
     }
-    const normalizedCloned = activeTab === 'collection' ? normalizeProductColors(cloned) : cloned;
+    const normalizedCloned = normalizeFormItem(cloned, activeTab);
     setForm(normalizedCloned);
     setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
     setIsDirty(false);
@@ -1493,9 +1527,9 @@ export default function Admin() {
 
   const renderContentBlocksEditor = () => {
     const isProduct = activeTab === 'collection';
-    const contentBlocksWithIds = (form.contentBlocks || []).map((cb: ContentBlock, idx: number) => ({
+    const contentBlocksWithIds = (Array.isArray(form?.contentBlocks) ? form.contentBlocks : []).map((cb: ContentBlock, idx: number) => ({
       ...cb,
-      id: cb.id || `block-${idx}-${Math.random().toString(36).substring(2, 9)}`
+      id: cb?.id || `block-${idx}-${Math.random().toString(36).substring(2, 9)}`
     }));
 
     const moveBlock = (fromIndex: number, toIndex: number) => {
@@ -4077,14 +4111,14 @@ export default function Admin() {
                       </span>
                     </div>
 
-                    {(form.images || []).filter(Boolean).length > 0 ? (
+                    {(Array.isArray(form?.images) ? form.images : []).filter(Boolean).length > 0 ? (
                       <div className="grid grid-cols-2 gap-2 bg-black/10 p-1">
                         {(() => {
-                          const originalImages = (form.images || []).filter(Boolean);
-                          const portraitList = form.portraitImages || [];
-                          const hoverList = form.hoverImages || [];
+                          const originalImages = (Array.isArray(form?.images) ? form.images : []).filter(Boolean);
+                          const portraitList = Array.isArray(form?.portraitImages) ? form.portraitImages : [];
+                          const hoverList = Array.isArray(form?.hoverImages) ? form.hoverImages : [];
 
-                          return originalImages.map((img, realIdx) => {
+                          return originalImages.map((img: string, realIdx: number) => {
                             const normImg = normalizeMediaUrl(img);
                             const normalizedPortraitList = portraitList.map(normalizeMediaUrl);
                             const isForcedPortrait = normalizedPortraitList.includes(normImg) || portraitList.includes(img);
@@ -4847,9 +4881,9 @@ export default function Admin() {
                               <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
                                 <input 
                                   type="checkbox" 
-                                  checked={form.relatedProductIds?.includes(p.id)} 
+                                  checked={Array.isArray(form.relatedProductIds) && form.relatedProductIds.includes(p.id)} 
                                   onChange={(e) => {
-                                    const current = form.relatedProductIds || [];
+                                    const current = Array.isArray(form.relatedProductIds) ? form.relatedProductIds : [];
                                     const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
                                     setForm({...form, relatedProductIds: next});
                                   }}
@@ -4868,9 +4902,9 @@ export default function Admin() {
                               <label key={s.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
                                 <input 
                                   type="checkbox" 
-                                  checked={form.relatedSpaceIds?.includes(s.id)} 
+                                  checked={Array.isArray(form.relatedSpaceIds) && form.relatedSpaceIds.includes(s.id)} 
                                   onChange={(e) => {
-                                    const current = form.relatedSpaceIds || [];
+                                    const current = Array.isArray(form.relatedSpaceIds) ? form.relatedSpaceIds : [];
                                     const next = e.target.checked ? [...current, s.id] : current.filter((id:string) => id !== s.id);
                                     setForm({...form, relatedSpaceIds: next});
                                   }}
@@ -4889,9 +4923,9 @@ export default function Admin() {
                               <label key={j.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
                                 <input 
                                   type="checkbox" 
-                                  checked={form.relatedJournalIds?.includes(j.id)} 
+                                  checked={Array.isArray(form.relatedJournalIds) && form.relatedJournalIds.includes(j.id)} 
                                   onChange={(e) => {
-                                    const current = form.relatedJournalIds || [];
+                                    const current = Array.isArray(form.relatedJournalIds) ? form.relatedJournalIds : [];
                                     const next = e.target.checked ? [...current, j.id] : current.filter((id:string) => id !== j.id);
                                     setForm({...form, relatedJournalIds: next});
                                   }}
@@ -4933,9 +4967,9 @@ export default function Admin() {
                             <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
                               <input 
                                 type="checkbox" 
-                                checked={form.appliedProductIds?.includes(p.id)} 
+                                checked={Array.isArray(form.appliedProductIds) && form.appliedProductIds.includes(p.id)} 
                                 onChange={(e) => {
-                                  const current = form.appliedProductIds || [];
+                                  const current = Array.isArray(form.appliedProductIds) ? form.appliedProductIds : [];
                                   const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
                                   setForm({...form, appliedProductIds: next});
                                 }}

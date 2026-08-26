@@ -53,13 +53,30 @@ export default async function handler(req: any, res: any) {
         result = await sql`SELECT * FROM spaces ORDER BY id DESC`;
       }
       
+      const safeParse = (val: any) => {
+        if (Array.isArray(val)) return val;
+        if (typeof val === 'string') {
+          const trimmed = val.trim();
+          if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            try {
+              const res = JSON.parse(trimmed);
+              return Array.isArray(res) ? res : [res];
+            } catch(e) {
+              return [];
+            }
+          }
+          if (trimmed) return [trimmed];
+        }
+        return [];
+      };
+
       const parsedRows = result.rows.map(r => ({
         ...r,
         featured: Boolean(r.featured),
-        images: typeof r.images === 'string' ? JSON.parse(r.images) : (r.images || []),
-        appliedProductIds: typeof r.appliedProductIds === 'string' ? JSON.parse(r.appliedProductIds) : (r.appliedProductIds || []),
-        contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
-        hotspots: typeof r.hotspots === 'string' ? JSON.parse(r.hotspots) : (r.hotspots || [])
+        images: safeParse(r.images),
+        appliedProductIds: safeParse(r.appliedProductIds),
+        contentBlocks: safeParse(r.contentBlocks),
+        hotspots: safeParse(r.hotspots)
       }));
       return res.status(200).json(parsedRows);
     } catch (error) {

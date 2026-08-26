@@ -44,6 +44,23 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'GET') {
     try {
+      const safeParse = (val: any) => {
+        if (Array.isArray(val)) return val;
+        if (typeof val === 'string') {
+          const trimmed = val.trim();
+          if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            try {
+              const res = JSON.parse(trimmed);
+              return Array.isArray(res) ? res : [res];
+            } catch(e) {
+              return [];
+            }
+          }
+          if (trimmed) return [trimmed];
+        }
+        return [];
+      };
+
       const { rows } = await sql`SELECT * FROM products ORDER BY "createdAt" DESC`;
       const parsedRows = rows.map(r => {
         let colorParsed = r.color || '';
@@ -56,17 +73,17 @@ export default async function handler(req: any, res: any) {
         }
         return {
           ...r,
-          images: typeof r.images === 'string' ? JSON.parse(r.images) : (r.images || []),
-          hoverImages: typeof r.hoverImages === 'string' ? JSON.parse(r.hoverImages) : (r.hoverImages || []),
-          contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
+          images: safeParse(r.images),
+          hoverImages: safeParse(r.hoverImages),
+          contentBlocks: safeParse(r.contentBlocks),
           color: colorParsed,
-          bodyColors: typeof r.bodyColors === 'string' ? (() => { try { return JSON.parse(r.bodyColors); } catch(e) { return []; } })() : (r.bodyColors || []),
-          fabricColors: typeof r.fabricColors === 'string' ? (() => { try { return JSON.parse(r.fabricColors); } catch(e) { return []; } })() : (r.fabricColors || []),
+          bodyColors: safeParse(r.bodyColors),
+          fabricColors: safeParse(r.fabricColors),
           cartEnabled: r.cartEnabled !== false,
-          portraitImages: typeof r.portraitImages === 'string' ? JSON.parse(r.portraitImages) : (r.portraitImages || []),
-          relatedProductIds: typeof r.relatedProductIds === 'string' ? JSON.parse(r.relatedProductIds) : (r.relatedProductIds || []),
-          relatedSpaceIds: typeof r.relatedSpaceIds === 'string' ? JSON.parse(r.relatedSpaceIds) : (r.relatedSpaceIds || []),
-          relatedJournalIds: typeof r.relatedJournalIds === 'string' ? JSON.parse(r.relatedJournalIds) : (r.relatedJournalIds || []),
+          portraitImages: safeParse(r.portraitImages),
+          relatedProductIds: safeParse(r.relatedProductIds),
+          relatedSpaceIds: safeParse(r.relatedSpaceIds),
+          relatedJournalIds: safeParse(r.relatedJournalIds),
           lookbookTitle: r.lookbookTitle || '',
           lookbookSubtitle: r.lookbookSubtitle || '',
           lookbookEnabled: r.lookbookEnabled !== false
