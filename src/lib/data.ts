@@ -45,6 +45,8 @@ export interface Product {
   relatedProductIds?: string[];
   relatedSpaceIds?: string[];
   relatedJournalIds?: string[];
+  lookbookTitle?: string;
+  lookbookSubtitle?: string;
 }
 
 export const generateProductCode = (category: string, name: string): string => {

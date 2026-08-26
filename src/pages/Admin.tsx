@@ -4298,6 +4298,7 @@ export default function Admin() {
                         
                         <EditorInput label="Sub Title" required value={form.subTitle || ''} onChange={val => setForm({...form, subTitle: val})} />
                         <EditorInput label="Overview Description" required rows={3} value={form.description || ''} onChange={val => setForm({...form, description: val})} />
+                        <EditorInput label="Spatial Lookbook Title (Optional)" placeholder="Seen in Architectural Context" value={form.lookbookTitle || ''} onChange={val => setForm({...form, lookbookTitle: val})} />
                       </div>
                     )}
                   </div>

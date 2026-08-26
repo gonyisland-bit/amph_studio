@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getProductById, getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, ColorOption, generateProductCode, HotspotPin } from "../lib/data";
+import { getProductById, getProducts, getSpaces, getJournals, updateProduct, Product, SpaceModel, JournalArticle, ColorOption, generateProductCode, HotspotPin } from "../lib/data";
 import { resolveColorHex } from "../lib/colorUtils";
 import { useWishlist } from "../lib/wishlist";
-import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight, Bookmark, Sparkles, Copy, Check } from "lucide-react";
+import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight, Bookmark, Sparkles, Copy, Check, Edit3 } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 import { ImageHotspots } from "../components/ImageHotspots";
 import { useScrollReveal } from "../lib/useScrollReveal";
@@ -29,6 +29,8 @@ export default function ProductDetail() {
   const [linkedJournals, setLinkedJournals] = useState<JournalArticle[]>([]);
   const [spatialLookbookShots, setSpatialLookbookShots] = useState<SpatialLookbookShot[]>([]);
   const [activeLookbookIdx, setActiveLookbookIdx] = useState(0);
+  const [isEditingLookbookTitle, setIsEditingLookbookTitle] = useState(false);
+  const [lookbookTitleInput, setLookbookTitleInput] = useState('');
   const [copiedSpecs, setCopiedSpecs] = useState(false);
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
   const [selectedColor, setSelectedColor] = useState("");
@@ -116,6 +118,18 @@ export default function ProductDetail() {
         setCopiedSpecs(true);
         setTimeout(() => setCopiedSpecs(false), 2500);
       });
+    }
+  };
+
+  const handleSaveLookbookTitle = async () => {
+    if (!product) return;
+    const titleVal = lookbookTitleInput.trim();
+    const updated = await updateProduct(product.id, { lookbookTitle: titleVal || undefined });
+    if (updated) {
+      setProduct(updated);
+      setIsEditingLookbookTitle(false);
+      setToastMessage("Lookbook title updated");
+      setTimeout(() => setToastMessage(null), 2500);
     }
   };
 
@@ -260,7 +274,7 @@ export default function ProductDetail() {
           // Collect all spatial lookbook shots containing this product
           Promise.all([getSpaces(), getJournals()]).then(([allSpaces, allJournals]) => {
             const shots: SpatialLookbookShot[] = [];
-            const shotKeys = new Set<string>();
+            const seenImages = new Set<string>();
 
             // 1. From Spaces
             allSpaces.forEach(s => {
@@ -268,34 +282,35 @@ export default function ProductDetail() {
               
               // Story blocks with pins
               (s.contentBlocks || []).forEach((b: any, bIdx: number) => {
-                if (b.type === 'image' && b.value && b.hotspots && b.hotspots.length > 0) {
-                  const hasProductPin = b.hotspots.some((h: any) => h.productId === p.id);
-                  if (hasProductPin || (isApplied && shots.filter(shot => shot.sourceId === s.id).length === 0)) {
-                    const shotKey = `${s.id}-block-${bIdx}`;
-                    if (!shotKeys.has(shotKey)) {
-                      shotKeys.add(shotKey);
+                if (b.type === 'image' && b.value) {
+                  const normUrl = normalizeMediaUrl(b.value);
+                  const hasProductPin = b.hotspots && b.hotspots.some((h: any) => h.productId === p.id);
+                  if (hasProductPin) {
+                    if (!seenImages.has(normUrl)) {
+                      seenImages.add(normUrl);
                       shots.push({
-                        id: shotKey,
+                        id: `${s.id}-block-${bIdx}`,
                         sourceType: 'space',
                         sourceId: s.id,
                         sourceTitle: s.title,
                         image: b.value,
                         title: b.title || s.title,
                         description: b.caption || s.description,
-                        hotspots: b.hotspots
+                        hotspots: b.hotspots || []
                       });
                     }
                   }
                 }
               });
 
-              // Space main image if it has hotspots or space is applied
-              if (s.image && ((s.hotspots && s.hotspots.some(h => h.productId === p.id)) || (isApplied && shots.filter(shot => shot.sourceId === s.id).length === 0))) {
-                const shotKey = `${s.id}-main`;
-                if (!shotKeys.has(shotKey)) {
-                  shotKeys.add(shotKey);
+              // Space main image if it has pin on main image
+              if (s.image) {
+                const normUrl = normalizeMediaUrl(s.image);
+                const hasProductPin = s.hotspots && s.hotspots.some((h: any) => h.productId === p.id);
+                if (hasProductPin && !seenImages.has(normUrl)) {
+                  seenImages.add(normUrl);
                   shots.push({
-                    id: shotKey,
+                    id: `${s.id}-main`,
                     sourceType: 'space',
                     sourceId: s.id,
                     sourceTitle: s.title,
@@ -306,6 +321,27 @@ export default function ProductDetail() {
                   });
                 }
               }
+
+              // Fallback: If space is applied but no shots were added for it, add at most 1 scene
+              if (isApplied && shots.filter(shot => shot.sourceId === s.id).length === 0) {
+                const fallbackImg = s.image || (s.contentBlocks || []).find((b: any) => b.type === 'image')?.value;
+                if (fallbackImg) {
+                  const normUrl = normalizeMediaUrl(fallbackImg);
+                  if (!seenImages.has(normUrl)) {
+                    seenImages.add(normUrl);
+                    shots.push({
+                      id: `${s.id}-fallback`,
+                      sourceType: 'space',
+                      sourceId: s.id,
+                      sourceTitle: s.title,
+                      image: fallbackImg,
+                      title: s.title,
+                      description: s.description,
+                      hotspots: s.hotspots || []
+                    });
+                  }
+                }
+              }
             });
 
             // 2. From Journals
@@ -314,33 +350,34 @@ export default function ProductDetail() {
               
               // Story blocks with pins
               (j.contentBlocks || []).forEach((b: any, bIdx: number) => {
-                if (b.type === 'image' && b.value && b.hotspots && b.hotspots.length > 0) {
-                  const hasProductPin = b.hotspots.some((h: any) => h.productId === p.id);
-                  if (hasProductPin || (isApplied && shots.filter(shot => shot.sourceId === j.id).length === 0)) {
-                    const shotKey = `${j.id}-block-${bIdx}`;
-                    if (!shotKeys.has(shotKey)) {
-                      shotKeys.add(shotKey);
+                if (b.type === 'image' && b.value) {
+                  const normUrl = normalizeMediaUrl(b.value);
+                  const hasProductPin = b.hotspots && b.hotspots.some((h: any) => h.productId === p.id);
+                  if (hasProductPin) {
+                    if (!seenImages.has(normUrl)) {
+                      seenImages.add(normUrl);
                       shots.push({
-                        id: shotKey,
+                        id: `${j.id}-block-${bIdx}`,
                         sourceType: 'journal',
                         sourceId: j.id,
                         sourceTitle: j.title,
                         image: b.value,
                         title: b.title || j.title,
                         description: b.caption || j.description,
-                        hotspots: b.hotspots
+                        hotspots: b.hotspots || []
                       });
                     }
                   }
                 }
               });
 
-              if (j.image && ((j.hotspots && j.hotspots.some(h => h.productId === p.id)) || (isApplied && shots.filter(shot => shot.sourceId === j.id).length === 0))) {
-                const shotKey = `${j.id}-main`;
-                if (!shotKeys.has(shotKey)) {
-                  shotKeys.add(shotKey);
+              if (j.image) {
+                const normUrl = normalizeMediaUrl(j.image);
+                const hasProductPin = j.hotspots && j.hotspots.some((h: any) => h.productId === p.id);
+                if (hasProductPin && !seenImages.has(normUrl)) {
+                  seenImages.add(normUrl);
                   shots.push({
-                    id: shotKey,
+                    id: `${j.id}-main`,
                     sourceType: 'journal',
                     sourceId: j.id,
                     sourceTitle: j.title,
@@ -349,6 +386,27 @@ export default function ProductDetail() {
                     description: j.description,
                     hotspots: j.hotspots || []
                   });
+                }
+              }
+
+              // Fallback for journal
+              if (isApplied && shots.filter(shot => shot.sourceId === j.id).length === 0) {
+                const fallbackImg = j.image || (j.contentBlocks || []).find((b: any) => b.type === 'image')?.value;
+                if (fallbackImg) {
+                  const normUrl = normalizeMediaUrl(fallbackImg);
+                  if (!seenImages.has(normUrl)) {
+                    seenImages.add(normUrl);
+                    shots.push({
+                      id: `${j.id}-fallback`,
+                      sourceType: 'journal',
+                      sourceId: j.id,
+                      sourceTitle: j.title,
+                      image: fallbackImg,
+                      title: j.title,
+                      description: j.description,
+                      hotspots: j.hotspots || []
+                    });
+                  }
                 }
               }
             });
@@ -1036,9 +1094,58 @@ export default function ProductDetail() {
                     SPATIAL CONTEXT // {activeShot.sourceType.toUpperCase()}
                   </span>
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tight font-sans">
-                  Seen in Architectural Context
-                </h3>
+                {isEditingLookbookTitle ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="text"
+                      value={lookbookTitleInput}
+                      onChange={(e) => setLookbookTitleInput(e.target.value)}
+                      placeholder="Seen in Architectural Context"
+                      className="bg-white/10 text-white border border-cobalt px-3 py-1 text-sm font-sans font-bold uppercase focus:outline-none focus:ring-1 focus:ring-cobalt min-w-[260px] sm:min-w-[320px]"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveLookbookTitle();
+                        if (e.key === 'Escape') setIsEditingLookbookTitle(false);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveLookbookTitle}
+                      className="px-3 py-1 bg-cobalt text-white text-[10px] font-black uppercase tracking-wider hover:bg-white hover:text-ink transition-colors cursor-pointer"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingLookbookTitle(false);
+                        setLookbookTitleInput(product?.lookbookTitle || "Seen in Architectural Context");
+                      }}
+                      className="px-2 py-1 text-white/50 hover:text-white text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 group/title">
+                    <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tight font-sans">
+                      {product?.lookbookTitle || "Seen in Architectural Context"}
+                    </h3>
+                    {isAuth && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLookbookTitleInput(product?.lookbookTitle || "Seen in Architectural Context");
+                          setIsEditingLookbookTitle(true);
+                        }}
+                        className="opacity-40 group-hover/title:opacity-100 hover:text-cobalt text-white/80 transition-opacity p-1 cursor-pointer"
+                        title="Edit Spatial Lookbook Title"
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Switcher & Counter (If multiple shots) */}
