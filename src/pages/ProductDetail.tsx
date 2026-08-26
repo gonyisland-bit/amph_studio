@@ -323,18 +323,15 @@ export default function ProductDetail() {
             const seenImages = new Set<string>();
             const prodImagesNorm = (p.images || []).map(normalizeMediaUrl);
 
-            // 1. From Spaces: Check all story media blocks and cover
+            // 1. From Spaces: Strictly collect story media blocks that have a pin for this product
             allSpaces.forEach(s => {
-              const isSpaceLinked = (p.relatedSpaceIds || []).includes(s.id) || (s.appliedProductIds || []).some(isMatchingProduct);
-
-              // Story blocks with pins
               (s.contentBlocks || []).forEach((b: any, bIdx: number) => {
                 const blockImg = b.value || b.url || b.src || b.image;
-                if (blockImg) {
-                  const hasPin = b.hotspots && b.hotspots.some(isMatchingProduct);
-                  if (hasPin) {
+                if (blockImg && Array.isArray(b.hotspots)) {
+                  const matchingPins = b.hotspots.filter(isMatchingProduct);
+                  if (matchingPins.length > 0) {
                     const normUrl = normalizeMediaUrl(blockImg);
-                    if (!seenImages.has(normUrl)) {
+                    if (!seenImages.has(normUrl) && !prodImagesNorm.includes(normUrl)) {
                       seenImages.add(normUrl);
                       shots.push({
                         id: `${s.id}-block-${b.id || bIdx}`,
@@ -351,13 +348,13 @@ export default function ProductDetail() {
                 }
               });
 
-              // Space main image / cover if it has pin
+              // Space main image / cover ONLY if it explicitly has a matching pin
               const spaceCover = s.image || s.images?.[0];
-              if (spaceCover) {
-                const hasPin = s.hotspots && s.hotspots.some(isMatchingProduct);
-                if (hasPin) {
+              if (spaceCover && Array.isArray(s.hotspots)) {
+                const matchingPins = s.hotspots.filter(isMatchingProduct);
+                if (matchingPins.length > 0) {
                   const normUrl = normalizeMediaUrl(spaceCover);
-                  if (!seenImages.has(normUrl)) {
+                  if (!seenImages.has(normUrl) && !prodImagesNorm.includes(normUrl)) {
                     seenImages.add(normUrl);
                     shots.push({
                       id: `${s.id}-main`,
@@ -372,43 +369,17 @@ export default function ProductDetail() {
                   }
                 }
               }
-
-              // If space is linked but no specific block matched, look for story blocks in this space
-              if (isSpaceLinked && shots.filter(shot => shot.sourceId === s.id).length === 0) {
-                (s.contentBlocks || []).forEach((b: any, bIdx: number) => {
-                  const blockImg = b.value || b.url || b.src || b.image;
-                  if (blockImg && !prodImagesNorm.includes(normalizeMediaUrl(blockImg))) {
-                    const normUrl = normalizeMediaUrl(blockImg);
-                    if (!seenImages.has(normUrl)) {
-                      seenImages.add(normUrl);
-                      shots.push({
-                        id: `${s.id}-block-${b.id || bIdx}`,
-                        sourceType: 'space',
-                        sourceId: s.id,
-                        sourceTitle: s.title,
-                        image: blockImg,
-                        title: b.title || s.title,
-                        description: b.caption || s.description,
-                        hotspots: b.hotspots || s.hotspots || []
-                      });
-                    }
-                  }
-                });
-              }
             });
 
-            // 2. From Journals: Check all story media blocks and cover
+            // 2. From Journals: Strictly collect story media blocks that have a pin for this product
             allJournals.forEach(j => {
-              const isJournalLinked = (p.relatedJournalIds || []).includes(j.id) || (j.appliedProductIds || []).some(isMatchingProduct);
-
-              // Story blocks with pins
               (j.contentBlocks || []).forEach((b: any, bIdx: number) => {
                 const blockImg = b.value || b.url || b.src || b.image;
-                if (blockImg) {
-                  const hasPin = b.hotspots && b.hotspots.some(isMatchingProduct);
-                  if (hasPin) {
+                if (blockImg && Array.isArray(b.hotspots)) {
+                  const matchingPins = b.hotspots.filter(isMatchingProduct);
+                  if (matchingPins.length > 0) {
                     const normUrl = normalizeMediaUrl(blockImg);
-                    if (!seenImages.has(normUrl)) {
+                    if (!seenImages.has(normUrl) && !prodImagesNorm.includes(normUrl)) {
                       seenImages.add(normUrl);
                       shots.push({
                         id: `${j.id}-block-${b.id || bIdx}`,
@@ -425,13 +396,13 @@ export default function ProductDetail() {
                 }
               });
 
-              // Journal main image if it has pin
+              // Journal main image ONLY if it explicitly has a matching pin
               const journalCover = j.image || (j.contentBlocks || []).find((b: any) => b.type === 'image')?.value;
-              if (journalCover) {
-                const hasPin = j.hotspots && j.hotspots.some(isMatchingProduct);
-                if (hasPin) {
+              if (journalCover && Array.isArray(j.hotspots)) {
+                const matchingPins = j.hotspots.filter(isMatchingProduct);
+                if (matchingPins.length > 0) {
                   const normUrl = normalizeMediaUrl(journalCover);
-                  if (!seenImages.has(normUrl)) {
+                  if (!seenImages.has(normUrl) && !prodImagesNorm.includes(normUrl)) {
                     seenImages.add(normUrl);
                     shots.push({
                       id: `${j.id}-main`,
@@ -445,28 +416,6 @@ export default function ProductDetail() {
                     });
                   }
                 }
-              }
-
-              if (isJournalLinked && shots.filter(shot => shot.sourceId === j.id).length === 0) {
-                (j.contentBlocks || []).forEach((b: any, bIdx: number) => {
-                  const blockImg = b.value || b.url || b.src || b.image;
-                  if (blockImg && !prodImagesNorm.includes(normalizeMediaUrl(blockImg))) {
-                    const normUrl = normalizeMediaUrl(blockImg);
-                    if (!seenImages.has(normUrl)) {
-                      seenImages.add(normUrl);
-                      shots.push({
-                        id: `${j.id}-block-${b.id || bIdx}`,
-                        sourceType: 'journal',
-                        sourceId: j.id,
-                        sourceTitle: j.title,
-                        image: blockImg,
-                        title: b.title || j.title,
-                        description: b.caption || j.description,
-                        hotspots: b.hotspots || j.hotspots || []
-                      });
-                    }
-                  }
-                });
               }
             });
 
