@@ -797,13 +797,14 @@ export default function Admin() {
       }
     }
 
-    return {
+    const resultProd = {
       ...prod,
       bodyColors: bodyList,
       fabricColors: fabricList,
-      upholsteryColors: fabricList,
       color: [...bodyList, ...fabricList]
     };
+    delete (resultProd as any).upholsteryColors;
+    return resultProd;
   };
 
   useEffect(() => {
@@ -813,7 +814,7 @@ export default function Admin() {
     } else {
       setColorOptions([]);
     }
-  }, [form?.id, form?.bodyColors, form?.fabricColors, form?.upholsteryColors, activeTab]);
+  }, [form?.id, form?.bodyColors, form?.fabricColors, activeTab]);
 
   // Toggle Swatch for currently Active Target Slot (Body vs Fabric)
   const handleToggleColorForTarget = (asset: { name: string; hex: string }) => {
@@ -1332,13 +1333,88 @@ export default function Admin() {
       setSaveStatus('saved');
       showToast('Saved successfully!', 'success');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       setSaveStatus('idle');
-      showToast('Failed to save. Please try again.', 'error');
+      showToast(error?.message || 'Failed to save. Please try again.', 'error');
       return false;
     }
   };
+
+  const handleModalSaveAndProceed = async () => {
+    if (modalSaveStatus === 'saving') return;
+    setModalSaveStatus('saving');
+    const success = await handleSave();
+    if (success) {
+      setModalSaveStatus('saved');
+      setTimeout(() => {
+        const nav = pendingNavigation;
+        setModalSaveStatus('idle');
+        setPendingNavigation(null);
+        if (nav && nav.type === 'tab' && nav.targetTab) {
+          if (nav.targetTab === activeTab) {
+            proceedCancelEdit();
+          } else {
+            proceedTab(nav.targetTab);
+          }
+        } else if (nav && nav.type === 'edit' && nav.targetItem) {
+          proceedEdit(nav.targetItem);
+        } else if (nav && nav.type === 'url' && nav.targetUrl) {
+          navigate(nav.targetUrl);
+        }
+      }, 300);
+    } else {
+      setModalSaveStatus('idle');
+    }
+  };
+
+  const handleModalDiscardAndProceed = () => {
+    if (modalSaveStatus === 'saving') return;
+    const nav = pendingNavigation;
+    setIsDirty(false);
+    setPendingNavigation(null);
+    if (nav && nav.type === 'tab' && nav.targetTab) {
+      if (nav.targetTab === activeTab) {
+        proceedCancelEdit();
+      } else {
+        proceedTab(nav.targetTab);
+      }
+    } else if (nav && nav.type === 'edit' && nav.targetItem) {
+      proceedEdit(nav.targetItem);
+    } else if (nav && nav.type === 'url' && nav.targetUrl) {
+      navigate(nav.targetUrl);
+    }
+  };
+
+  // Global Keyboard shortcuts for Unsaved Changes Modal (Y: Yes/Save, N: No/Discard, Esc: Cancel)
+  useEffect(() => {
+    if (!pendingNavigation) return;
+    const handleModalKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setPendingNavigation(null);
+        return;
+      }
+
+      if (isInput) return;
+
+      if ((e.key === 'y' || e.key === 'Y') && modalSaveStatus !== 'saving') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleModalSaveAndProceed();
+      } else if ((e.key === 'n' || e.key === 'N') && modalSaveStatus !== 'saving') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleModalDiscardAndProceed();
+      }
+    };
+    window.addEventListener('keydown', handleModalKeyDown, true);
+    return () => window.removeEventListener('keydown', handleModalKeyDown, true);
+  }, [pendingNavigation, modalSaveStatus]);
 
   const proceedEdit = (item: any) => {
     setEditingId(item.id);
@@ -5305,32 +5381,9 @@ export default function Admin() {
             </p>
             <div className="w-full flex flex-col gap-2">
               <button 
+                type="button"
                 disabled={modalSaveStatus === 'saving'}
-                onClick={async () => {
-                  setModalSaveStatus('saving');
-                  const success = await handleSave();
-                  if (success) {
-                    setModalSaveStatus('saved');
-                    setTimeout(() => {
-                      const nav = pendingNavigation;
-                      setModalSaveStatus('idle');
-                      setPendingNavigation(null);
-                      if (nav && nav.type === 'tab' && nav.targetTab) {
-                        if (nav.targetTab === activeTab) {
-                          proceedCancelEdit();
-                        } else {
-                          proceedTab(nav.targetTab);
-                        }
-                      } else if (nav && nav.type === 'edit' && nav.targetItem) {
-                        proceedEdit(nav.targetItem);
-                      } else if (nav && nav.type === 'url' && nav.targetUrl) {
-                        navigate(nav.targetUrl);
-                      }
-                    }, 300);
-                  } else {
-                    setModalSaveStatus('idle');
-                  }
-                }}
+                onClick={handleModalSaveAndProceed}
                 className={`py-2.5 text-[9px] font-black uppercase tracking-widest transition-all rounded-none w-full cursor-pointer flex items-center justify-center gap-1.5 shadow-xs ${
                   modalSaveStatus === 'saving' ? 'bg-cobalt text-white opacity-80 cursor-wait pointer-events-none' :
                   modalSaveStatus === 'saved' ? 'bg-emerald-600 text-white' :
@@ -5348,39 +5401,26 @@ export default function Admin() {
                     <span>SAVED</span>
                   </>
                 ) : (
-                  <span>Save</span>
+                  <span><span className="underline font-black">Y</span>es (Save)</span>
                 )}
               </button>
               <button 
+                type="button"
                 disabled={modalSaveStatus === 'saving'}
-                onClick={() => {
-                  const nav = pendingNavigation;
-                  setIsDirty(false);
-                  setPendingNavigation(null);
-                  if (nav && nav.type === 'tab' && nav.targetTab) {
-                    if (nav.targetTab === activeTab) {
-                      proceedCancelEdit();
-                    } else {
-                      proceedTab(nav.targetTab);
-                    }
-                  } else if (nav && nav.type === 'edit' && nav.targetItem) {
-                    proceedEdit(nav.targetItem);
-                  } else if (nav && nav.type === 'url' && nav.targetUrl) {
-                    navigate(nav.targetUrl);
-                  }
-                }}
+                onClick={handleModalDiscardAndProceed}
                 className="bg-ink text-white py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-orange transition-colors rounded-none w-full cursor-pointer disabled:opacity-50"
               >
-                Discard
+                <span><span className="underline font-black">N</span>o (Discard)</span>
               </button>
               <button 
+                type="button"
                 disabled={modalSaveStatus === 'saving'}
                 onClick={() => {
                   setPendingNavigation(null);
                 }}
                 className="bg-black/5 text-ink/60 border border-black/5 py-2.5 text-[9px] font-black uppercase tracking-widest hover:bg-black/10 transition-colors rounded-none w-full cursor-pointer disabled:opacity-50"
               >
-                Cancel
+                Cancel (Esc)
               </button>
             </div>
           </div>

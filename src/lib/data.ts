@@ -159,7 +159,14 @@ export const addProduct = async (product: Product): Promise<Product> => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(product)
   });
-  if (!res.ok) throw new Error('Failed to add product');
+  if (!res.ok) {
+    let errMsg = 'Failed to add product';
+    try {
+      const errData = await res.json();
+      if (errData?.error) errMsg = `Failed to add product: ${errData.error}`;
+    } catch(e) {}
+    throw new Error(errMsg);
+  }
   if (cachedProducts) cachedProducts = [product, ...cachedProducts];
   return product;
 };
@@ -170,7 +177,14 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates)
   });
-  if (!res.ok) throw new Error('Failed to update product');
+  if (!res.ok) {
+    let errMsg = 'Failed to update product';
+    try {
+      const errData = await res.json();
+      if (errData?.error) errMsg = `Failed to update product: ${errData.error}`;
+    } catch(e) {}
+    throw new Error(errMsg);
+  }
   if (cachedProducts) cachedProducts = cachedProducts.map(p => p.id === id ? { ...p, ...updates } : p);
   return { id, ...updates } as Product;
 };
