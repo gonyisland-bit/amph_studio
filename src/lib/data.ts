@@ -98,24 +98,44 @@ export interface SpaceModel {
   hotspots?: HotspotPin[];
 }
 
-// Global cache and fetch promises
-let cachedProducts: Product[] | null = null;
+// Helper to safely load from localStorage
+const loadLocalCache = <T>(key: string): T | null => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    }
+  } catch (e) {}
+  return null;
+};
+
+// Helper to safely save to localStorage
+const saveLocalCache = <T>(key: string, data: T) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+  } catch (e) {}
+};
+
+// Global cache initialized immediately from localStorage for instant 0ms render
+let cachedProducts: Product[] | null = loadLocalCache<Product[]>('amph_cache_products');
 let productsFetchPromise: Promise<Product[]> | null = null;
 
-let cachedSpaces: SpaceModel[] | null = null;
+let cachedSpaces: SpaceModel[] | null = loadLocalCache<SpaceModel[]>('amph_cache_spaces');
 let spacesFetchPromise: Promise<SpaceModel[]> | null = null;
 
-let cachedJournals: JournalArticle[] | null = null;
+let cachedJournals: JournalArticle[] | null = loadLocalCache<JournalArticle[]>('amph_cache_journals');
 let journalsFetchPromise: Promise<JournalArticle[]> | null = null;
 
-// Helper to handle revalidation pattern
+// SWR pattern: always return cached value immediately if available, while revalidating in background
 const handleGet = async <T>(
   cached: T | null,
   fetchPromise: Promise<T> | null,
   revalidateFn: () => Promise<T>
 ): Promise<T> => {
-  if (cached) {
-    revalidateFn(); // Trigger background fetch
+  if (cached && Array.isArray(cached) && cached.length > 0) {
+    revalidateFn(); // Trigger background fetch without blocking UI
     return cached;
   }
   return revalidateFn();
@@ -136,10 +156,10 @@ const revalidateProducts = async (): Promise<Product[]> => {
       if (!res.ok) throw new Error('Network response was not ok');
       const data = await res.json();
       cachedProducts = data;
+      saveLocalCache('amph_cache_products', data);
       return [...cachedProducts!];
     } catch (error) {
       console.error("Failed to fetch products:", error);
-      // Don't set cachedProducts to [] if it was null, to allow retries
       return cachedProducts || [];
     } finally {
       productsFetchPromise = null;
@@ -216,6 +236,7 @@ const revalidateSpaces = async (): Promise<SpaceModel[]> => {
       if (!res.ok) throw new Error('API failed');
       const data = await res.json();
       cachedSpaces = data;
+      saveLocalCache('amph_cache_spaces', data);
       return [...data];
     } catch (err) {
       console.error("Failed to fetch spaces:", err);
@@ -280,6 +301,7 @@ const revalidateJournals = async (): Promise<JournalArticle[]> => {
       if (!res.ok) throw new Error('API failed');
       const data = await res.json();
       cachedJournals = data;
+      saveLocalCache('amph_cache_journals', data);
       return [...data];
     } catch (err) {
       console.error("Failed to fetch journals:", err);

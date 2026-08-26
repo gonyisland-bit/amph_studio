@@ -1,59 +1,7 @@
 import { sql } from '@vercel/postgres';
 
-let isProductsSchemaInitialized = false;
-
-async function ensureProductsSchema() {
-  if (isProductsSchemaInitialized) return;
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS products (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        category TEXT,
-        description TEXT,
-        "subTitle" TEXT,
-        material TEXT,
-        price NUMERIC,
-        images TEXT,
-        "hoverImages" TEXT,
-        "contentBlocks" TEXT,
-        "isFeatured" BOOLEAN DEFAULT FALSE,
-        dimensions TEXT,
-        shipping TEXT,
-        sku TEXT,
-        color TEXT,
-        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
-
-    const productCols = [
-      'subTitle', 'dimensions', 'shipping', 'sku', 'color', 'cartEnabled',
-      'portraitImages', 'relatedProductIds', 'relatedSpaceIds', 'relatedJournalIds',
-      'bodyColors', 'fabricColors', 'lookbookTitle', 'lookbookSubtitle', 'lookbookEnabled',
-      'name', 'category', 'description', 'material', 'images', 'hoverImages', 'contentBlocks'
-    ];
-
-    for (const col of productCols) {
-      if (col === 'cartEnabled' || col === 'lookbookEnabled') {
-        try { await sql.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS "${col}" BOOLEAN DEFAULT TRUE`); } catch(e) {}
-      } else {
-        try { await sql.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS "${col}" TEXT DEFAULT ''`); } catch(e) {}
-        try { await sql.query(`ALTER TABLE products ALTER COLUMN "${col}" TYPE TEXT`); } catch(e) {}
-      }
-    }
-    isProductsSchemaInitialized = true;
-  } catch (e) {
-    // Retry on next request if initialization failed
-  }
-}
-
 export default async function handler(req: any, res: any) {
   const { id } = req.query;
-
-  // Run schema initialization only once
-  if (!isProductsSchemaInitialized) {
-    await ensureProductsSchema();
-  }
 
   if (req.method === 'GET') {
     try {

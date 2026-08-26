@@ -1,57 +1,7 @@
 import { sql } from '@vercel/postgres';
 
-let isSpacesSchemaInitialized = false;
-
-async function ensureSpacesSchema() {
-  if (isSpacesSchemaInitialized) return;
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS spaces (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        description TEXT,
-        images TEXT,
-        featured BOOLEAN DEFAULT false,
-        "appliedProductIds" TEXT,
-        location TEXT DEFAULT '',
-        address TEXT DEFAULT '',
-        hours TEXT DEFAULT '',
-        image TEXT DEFAULT '',
-        "contentBlocks" TEXT,
-        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
-    const columns = [
-      { name: 'contentBlocks', type: 'TEXT' },
-      { name: 'featured', type: 'BOOLEAN DEFAULT false' },
-      { name: 'appliedProductIds', type: 'TEXT' },
-      { name: 'images', type: 'TEXT' },
-      { name: 'location', type: 'TEXT DEFAULT \'\'' },
-      { name: 'address', type: 'TEXT DEFAULT \'\'' },
-      { name: 'hours', type: 'TEXT DEFAULT \'\'' },
-      { name: 'image', type: 'TEXT DEFAULT \'\'' },
-      { name: 'hotspots', type: 'TEXT' }
-    ];
-    for (const col of columns) {
-      try {
-        await sql.query(`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "${col.name}" ${col.type}`);
-      } catch (e) {
-        try { await sql.query(`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`); } catch(e2) {}
-      }
-      if (col.name !== 'featured') {
-        try { await sql.query(`ALTER TABLE spaces ALTER COLUMN "${col.name}" TYPE TEXT`); } catch(e) {}
-      }
-    }
-    isSpacesSchemaInitialized = true;
-  } catch (e) {}
-}
-
 export default async function handler(req: any, res: any) {
   const { id } = req.query;
-
-  if (!isSpacesSchemaInitialized) {
-    await ensureSpacesSchema();
-  }
 
   if (req.method === 'GET') {
     try {

@@ -1,53 +1,7 @@
 import { sql } from '@vercel/postgres';
 
-let isJournalsSchemaInitialized = false;
-
-async function ensureJournalsSchema() {
-  if (isJournalsSchemaInitialized) return;
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS journals (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        description TEXT,
-        category TEXT,
-        date TEXT,
-        image TEXT,
-        featured BOOLEAN DEFAULT false,
-        "relatedJournalIds" TEXT,
-        "appliedProductIds" TEXT,
-        "contentBlocks" TEXT,
-        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
-    const columns = [
-      { name: 'description', type: 'TEXT' },
-      { name: 'featured', type: 'BOOLEAN DEFAULT false' },
-      { name: 'relatedJournalIds', type: 'TEXT' },
-      { name: 'appliedProductIds', type: 'TEXT' },
-      { name: 'contentBlocks', type: 'TEXT' },
-      { name: 'hotspots', type: 'TEXT' }
-    ];
-    for (const col of columns) {
-      try {
-        await sql.query(`ALTER TABLE journals ADD COLUMN IF NOT EXISTS "${col.name}" ${col.type}`);
-      } catch (e) {
-        try { await sql.query(`ALTER TABLE journals ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`); } catch(e2) {}
-      }
-      if (col.name !== 'featured') {
-        try { await sql.query(`ALTER TABLE journals ALTER COLUMN "${col.name}" TYPE TEXT`); } catch(e) {}
-      }
-    }
-    isJournalsSchemaInitialized = true;
-  } catch (e) {}
-}
-
 export default async function handler(req: any, res: any) {
   const { id } = req.query;
-
-  if (!isJournalsSchemaInitialized) {
-    await ensureJournalsSchema();
-  }
 
   if (req.method === 'GET') {
     try {
