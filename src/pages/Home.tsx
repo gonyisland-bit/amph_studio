@@ -634,7 +634,7 @@ export default function Home() {
             <div className="w-full bg-black relative">
               <div 
                 key={`home-showcase-${currentItem.id}-${currentIdx}-${currentItem.image}`}
-                className="w-full aspect-[16/9] md:aspect-[16/9] max-h-[85vh] relative overflow-hidden animate-in fade-in duration-500"
+                className="w-full aspect-[16/9] md:aspect-[16/9] max-h-[78vh] relative overflow-hidden animate-in fade-in duration-500"
               >
                 <ImageHotspots 
                   src={currentItem.image}
@@ -660,19 +660,19 @@ export default function Home() {
                   );
                 })()}
                 
-                {/* Floating Bottom Info & Full Page CTA */}
-                <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 md:bottom-12 md:left-16 z-20 pointer-events-none">
-                  <span className="text-[8px] sm:text-[10px] uppercase font-bold tracking-widest text-white/70 block mb-1.5 sm:mb-2 font-mono drop-shadow-sm">
+                {/* Floating Bottom Info & Full Page CTA (Optimized for Mobile) */}
+                <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 md:bottom-12 md:left-16 z-20 pointer-events-none">
+                  <span className="text-[7.5px] sm:text-[9.5px] uppercase font-bold tracking-widest text-white/80 block mb-1 sm:mb-1.5 font-mono drop-shadow-md">
                     LOOKBOOK // {currentItem.title}
                   </span>
                   <Link
                     to={currentItem.targetLink}
-                    className="inline-flex items-center gap-2 sm:gap-3 px-3.5 sm:px-5 py-2 sm:py-2.5 bg-white text-ink text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all pointer-events-auto rounded-none shadow-lg group/space-btn"
+                    className="inline-flex items-center gap-1.5 sm:gap-2.5 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-white/95 hover:bg-cobalt text-ink hover:text-white text-[8px] sm:text-[9.5px] font-black uppercase tracking-wider transition-all pointer-events-auto rounded-none shadow-md backdrop-blur-xs group/space-btn"
                   >
                     <span>
-                      {currentItem.sourceType === 'journal' ? 'Read Full Story' : 'Explore Full Space'}
+                      {currentItem.sourceType === 'journal' ? 'Read Story' : 'View Space'}
                     </span>
-                    <ArrowRight size={11} className="group-hover/space-btn:translate-x-1 transition-transform" />
+                    <ArrowRight size={10} className="group-hover/space-btn:translate-x-0.5 transition-transform shrink-0" />
                   </Link>
                 </div>
 

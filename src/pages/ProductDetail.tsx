@@ -1178,10 +1178,10 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* 16:9 Full-Bleed Interactive Hotspot Showcase Container */}
+            {/* 16:9 Full-Bleed Interactive Hotspot Showcase Container (Harmonized with Home Showcase) */}
             <div 
               key={`spatial-shot-${activeShot.id}-${safeIdx}`}
-              className="w-full aspect-[16/9] md:aspect-[16/9] relative overflow-hidden bg-black animate-in fade-in duration-500"
+              className="w-full aspect-[16/9] md:aspect-[16/9] max-h-[78vh] relative overflow-hidden bg-black animate-in fade-in duration-500"
             >
               <ImageHotspots 
                 src={activeShot.image}
@@ -1193,17 +1193,17 @@ export default function ProductDetail() {
                 loading="lazy"
               />
 
-              {/* Floating Bottom Info & Full Space Link */}
-              <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 md:bottom-10 md:left-12 z-20 pointer-events-none">
-                <span className="text-[8.5px] sm:text-[9.5px] uppercase font-mono font-bold tracking-widest text-white/70 block mb-2 drop-shadow-md">
+              {/* Floating Bottom Info & Full Space Link (Optimized for Mobile) */}
+              <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 md:bottom-10 md:left-12 z-20 pointer-events-none">
+                <span className="text-[7.5px] sm:text-[9.5px] uppercase font-mono font-bold tracking-widest text-white/80 block mb-1 sm:mb-1.5 drop-shadow-md">
                   {activeShot.sourceType.toUpperCase()} // {activeShot.sourceTitle}
                 </span>
                 <Link
                   to={activeShot.sourceType === 'space' ? `/space/${activeShot.sourceId}` : `/journal/${activeShot.sourceId}`}
-                  className="inline-flex items-center gap-2 sm:gap-3 px-4 py-2.5 bg-white text-ink text-[9.5px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all rounded-none shadow-xl group/btn pointer-events-auto"
+                  className="inline-flex items-center gap-1.5 sm:gap-2.5 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-white/95 hover:bg-cobalt text-ink hover:text-white text-[8px] sm:text-[9.5px] font-black uppercase tracking-wider transition-all rounded-none shadow-md backdrop-blur-xs group/btn pointer-events-auto"
                 >
-                  <span>Explore Full {activeShot.sourceType === 'space' ? 'Space' : 'Journal'}</span>
-                  <MoveRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />
+                  <span>{activeShot.sourceType === 'journal' ? 'Read Story' : 'View Space'}</span>
+                  <MoveRight size={10} className="group-hover/btn:translate-x-0.5 transition-transform shrink-0" />
                 </Link>
               </div>
             </div>
