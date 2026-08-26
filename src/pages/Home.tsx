@@ -262,8 +262,17 @@ export default function Home() {
                     playing={isActive}
                   />
                 )}
-                {/* Overlay for mobile readability & visual tone tuning */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 md:bg-black/5 md:mix-blend-multiply transition-all"></div>
+                {/* Overlay for mobile readability & visual tone tuning (Controlled by settings.heroGradientEnabled) */}
+                {Boolean(settings.heroGradientEnabled) && (() => {
+                  const intensity = settings.heroGradientIntensity || 'medium';
+                  const gradientClass = intensity === 'light'
+                    ? 'bg-gradient-to-t from-black/45 via-transparent to-transparent md:bg-black/5'
+                    : intensity === 'dark'
+                    ? 'bg-gradient-to-t from-black/90 via-black/45 to-black/20 md:bg-black/20 md:mix-blend-multiply'
+                    : 'bg-gradient-to-t from-black/85 via-black/35 to-black/10 md:bg-black/5 md:mix-blend-multiply';
+
+                  return <div className={`absolute inset-0 ${gradientClass} transition-all pointer-events-none`}></div>;
+                })()}
               </div>
 
               {/* Mobile Slogan Overlay (only visible on mobile) */}
@@ -626,7 +635,7 @@ export default function Home() {
             <div className="w-full bg-black relative">
               <div 
                 key={`home-showcase-${currentItem.id}-${currentIdx}-${currentItem.image}`}
-                className="w-full aspect-[4/3] sm:aspect-[16/10] md:h-[75vh] lg:h-[80vh] relative overflow-hidden animate-in fade-in duration-500"
+                className="w-full aspect-[16/9] md:aspect-[16/9] max-h-[85vh] relative overflow-hidden animate-in fade-in duration-500"
               >
                 <ImageHotspots 
                   src={currentItem.image}
@@ -634,10 +643,23 @@ export default function Home() {
                   hotspots={currentItem.hotspots}
                   products={products}
                   className="w-full h-full"
-                  imageClassName="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-700"
+                  imageClassName="w-full h-full object-cover transition-opacity duration-700"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
+                
+                {/* Showcase Dark Gradient Overlay (Controlled by showcaseConfig?.gradientEnabled) */}
+                {Boolean(showcaseConfig?.gradientEnabled) && (() => {
+                  const intensity = showcaseConfig?.gradientIntensity || 'medium';
+                  const gradientClass = intensity === 'light'
+                    ? 'from-black/35 via-transparent to-black/10'
+                    : intensity === 'dark'
+                    ? 'from-black/85 via-black/30 to-black/30'
+                    : 'from-black/70 via-transparent to-black/20';
+
+                  return (
+                    <div className={`absolute inset-0 bg-gradient-to-t ${gradientClass} pointer-events-none transition-all`} />
+                  );
+                })()}
                 
                 {/* Floating Bottom Info & Full Page CTA */}
                 <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 md:bottom-12 md:left-16 z-20 pointer-events-none">

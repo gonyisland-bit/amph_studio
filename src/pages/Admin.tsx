@@ -2519,15 +2519,71 @@ export default function Admin() {
                     </div>
                   </div>
 
-                  {/* Hero Slides */}
-                  <div className="bg-black/5 p-6 rounded-none border border-black/5">
-                    <h3 className="font-bold text-xs uppercase text-cobalt mb-6 flex items-center justify-between">
-                      <span>Hero Slides</span>
-                      <button type="button" onClick={() => {
-                        const newSlides = [...(homeSettings.heroSlides || []), { id: Date.now().toString(), title: '', subtitle: '', image: '' }];
-                        setHomeSettings({...homeSettings, heroSlides: newSlides});
-                      }} className="bg-ink text-white px-3.5 py-1.5 rounded-none text-[9px] font-black uppercase tracking-wider hover:bg-cobalt transition-colors cursor-pointer">+ Add Slide</button>
-                    </h3>
+                  {/* Hero Slides & Gradient Section */}
+                  <div className="bg-black/5 p-6 rounded-none border border-black/5 space-y-6">
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-black/10 pb-4">
+                      <div>
+                        <h3 className="font-bold text-xs uppercase text-cobalt flex items-center gap-2">
+                          <span>Hero Slides & Transition</span>
+                        </h3>
+                        <p className="text-[10px] text-ink/50 font-serif italic mt-0.5">
+                          홈 상단 히어로 슬라이드, 전환 속도, 미디어 다크 그라데이션 오버레이를 설정합니다.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button type="button" onClick={() => {
+                          const newSlides = [...(homeSettings.heroSlides || []), { id: Date.now().toString(), title: '', subtitle: '', image: '' }];
+                          setHomeSettings({...homeSettings, heroSlides: newSlides});
+                        }} className="bg-ink text-white px-3.5 py-1.5 rounded-none text-[9px] font-black uppercase tracking-wider hover:bg-cobalt transition-colors cursor-pointer">+ Add Slide</button>
+                      </div>
+                    </div>
+
+                    {/* Hero Dark Gradient Overlay Customizer */}
+                    <div className="p-4 bg-white border border-black/10 shadow-xs flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-ink block">
+                          Hero Media Dark Gradient Overlay (히어로 다크 그라데이션)
+                        </span>
+                        <span className="text-[8.5px] text-ink/50 font-sans block mt-0.5">
+                          미디어 위의 어두운 그라데이션을 켜거나 끄고, 텍스트 가독성에 맞게 강도를 조절합니다.
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {/* Toggle ON/OFF */}
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input 
+                            type="checkbox"
+                            checked={Boolean(homeSettings.heroGradientEnabled)}
+                            onChange={e => setHomeSettings({ ...homeSettings, heroGradientEnabled: e.target.checked })}
+                            className="accent-cobalt w-4 h-4 cursor-pointer"
+                          />
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-ink font-mono">
+                            {homeSettings.heroGradientEnabled ? 'Gradient ON (활성)' : 'Gradient OFF (제거)'}
+                          </span>
+                        </label>
+
+                        {/* Intensity selector */}
+                        {homeSettings.heroGradientEnabled && (
+                          <div className="flex items-center gap-1 bg-black/5 p-1 border border-black/10">
+                            {(['light', 'medium', 'dark'] as const).map(level => (
+                              <button
+                                key={level}
+                                type="button"
+                                onClick={() => setHomeSettings({ ...homeSettings, heroGradientIntensity: level })}
+                                className={`px-2.5 py-1 text-[8.5px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                  (homeSettings.heroGradientIntensity || 'medium') === level 
+                                    ? 'bg-cobalt text-white shadow-xs' 
+                                    : 'text-ink/60 hover:text-ink'
+                                }`}
+                              >
+                                {level === 'light' ? 'Light (은은하게)' : level === 'medium' ? 'Medium (기본)' : 'Dark (선명하게)'}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {(homeSettings.heroSlides || []).map((slide, idx) => (
                         <div key={slide.id} className="p-4 bg-white rounded-none border border-black/10 shadow-sm space-y-4 relative group">
@@ -3271,6 +3327,64 @@ export default function Admin() {
                             </div>
                           </div>
 
+                          {/* Showcase Dark Gradient Overlay Customizer */}
+                          {isShowcaseEnabled && (
+                            <div className="p-4 bg-white border border-black/10 shadow-xs flex flex-wrap items-center justify-between gap-4">
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-ink block">
+                                  Showcase Dark Gradient Overlay (쇼케이스 다크 그라데이션)
+                                </span>
+                                <span className="text-[8.5px] text-ink/50 font-sans block mt-0.5">
+                                  쇼케이스 미디어 위의 어두운 그라데이션을 켜거나 끄고, 텍스트 가독성에 맞게 강도를 조절합니다.
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <label className="flex items-center gap-2 cursor-pointer select-none">
+                                  <input 
+                                    type="checkbox"
+                                    checked={Boolean(showcaseData.gradientEnabled)}
+                                    onChange={e => setHomeSettings({
+                                      ...homeSettings,
+                                      showcase: {
+                                        ...showcaseData,
+                                        gradientEnabled: e.target.checked
+                                      }
+                                    })}
+                                    className="accent-cobalt w-4 h-4 cursor-pointer"
+                                  />
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink font-mono">
+                                    {showcaseData.gradientEnabled ? 'Gradient ON (활성)' : 'Gradient OFF (제거)'}
+                                  </span>
+                                </label>
+
+                                {showcaseData.gradientEnabled && (
+                                  <div className="flex items-center gap-1 bg-black/5 p-1 border border-black/10">
+                                    {(['light', 'medium', 'dark'] as const).map(level => (
+                                      <button
+                                        key={level}
+                                        type="button"
+                                        onClick={() => setHomeSettings({
+                                          ...homeSettings,
+                                          showcase: {
+                                            ...showcaseData,
+                                            gradientIntensity: level
+                                          }
+                                        })}
+                                        className={`px-2.5 py-1 text-[8.5px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                          (showcaseData.gradientIntensity || 'medium') === level 
+                                            ? 'bg-cobalt text-white shadow-xs' 
+                                            : 'text-ink/60 hover:text-ink'
+                                        }`}
+                                      >
+                                        {level === 'light' ? 'Light (은은하게)' : level === 'medium' ? 'Medium (기본)' : 'Dark (선명하게)'}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           {isShowcaseEnabled && (() => {
                             const safeActiveTab = Math.min(Math.max(0, activeShowcaseEditTab), Math.max(0, showcaseItems.length - 1));
                             const item = showcaseItems[safeActiveTab] || showcaseItems[0];
@@ -3764,7 +3878,7 @@ export default function Admin() {
                                             }
                                           });
                                         }}
-                                        className="w-full aspect-[16/10] max-h-[460px] bg-black/95 relative overflow-hidden border border-black/15 group/preview cursor-pointer"
+                                        className="w-full aspect-[16/9] max-h-[480px] bg-black/95 relative overflow-hidden border border-black/15 group/preview cursor-pointer"
                                         title="Click to open Interactive Pin Editor"
                                       >
                                         <ImageHotspots 

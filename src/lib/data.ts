@@ -376,6 +376,8 @@ export interface HomeShowcaseSettings {
   description?: string;
   image?: string;
   hotspots?: HotspotPin[];
+  gradientEnabled?: boolean;
+  gradientIntensity?: 'light' | 'medium' | 'dark';
 }
 
 export interface HomeSettings {
@@ -388,6 +390,8 @@ export interface HomeSettings {
   journalOrder: string[];
   heroSlides: HeroSlide[];
   heroTransitionSpeed: number;
+  heroGradientEnabled?: boolean;
+  heroGradientIntensity?: 'light' | 'medium' | 'dark';
   marquee: string;
   colorAssets?: ColorOption[];
   magazineCards?: MagazineCard[];
@@ -414,6 +418,8 @@ export const defaultHomeSettings: HomeSettings = {
   membersOnly: false,
   heroSlides: [],
   heroTransitionSpeed: 5,
+  heroGradientEnabled: false,
+  heroGradientIntensity: 'medium',
   spaceOrder: [],
   journalOrder: [],
   marquee: 'Amplify Your Ordinary',
@@ -427,7 +433,9 @@ export const defaultHomeSettings: HomeSettings = {
     subtitle: 'Spatial Curation',
     description: 'Explore objects placed in real architectural context. Hover or tap the interactive pins to preview details.',
     image: '',
-    hotspots: []
+    hotspots: [],
+    gradientEnabled: false,
+    gradientIntensity: 'medium'
   },
   intros: {
     collection: { title: '', description: '', image: '' },
