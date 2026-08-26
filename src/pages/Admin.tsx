@@ -442,7 +442,7 @@ export default function Admin() {
         }));
       };
     });
-  }, [form.images]);
+  }, [form?.images]);
 
   const [homeSettings, setHomeSettings] = useState<HomeSettings>(defaultHomeSettings);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -704,7 +704,7 @@ export default function Admin() {
   const [activeShowcaseEditTab, setActiveShowcaseEditTab] = useState(0);
 
   const normalizeProductColors = (prod: any) => {
-    if (!prod) return prod;
+    if (!prod || typeof prod !== 'object') return prod;
 
     const bodyList: ColorOption[] = [];
     const fabricList: ColorOption[] = [];
@@ -720,29 +720,30 @@ export default function Admin() {
             if (Array.isArray(parsedObj)) {
               parsedObj.forEach(sub => {
                 const subParsed = parseItem(sub, defaultGroup);
-                if (subParsed) {
-                  if (subParsed.group === 'fabric') {
-                    if (!fabricList.some(x => x.name.toLowerCase() === subParsed.name.toLowerCase())) fabricList.push(subParsed);
-                  } else {
-                    if (!bodyList.some(x => x.name.toLowerCase() === subParsed.name.toLowerCase())) bodyList.push(subParsed);
+                if (subParsed && subParsed.name) {
+                  const targetList = subParsed.group === 'fabric' ? fabricList : bodyList;
+                  if (!targetList.some(x => String(x.name || '').toLowerCase() === String(subParsed.name || '').toLowerCase())) {
+                    targetList.push(subParsed);
                   }
                 }
               });
               return null;
-            } else if (typeof parsedObj === 'object' && parsedObj.name) {
-              const hex = resolveColorHex(parsedObj.name, parsedObj.hex);
+            } else if (typeof parsedObj === 'object' && parsedObj?.name) {
+              const name = String(parsedObj.name).trim();
+              const hex = resolveColorHex(name, parsedObj.hex);
               const group = parsedObj.group === 'fabric' || parsedObj.group === 'upholstery' ? 'fabric' : (parsedObj.group || defaultGroup);
-              return { name: parsedObj.name, hex, group };
+              return { name, hex, group };
             }
           } catch(e) {}
         }
         const hex = resolveColorHex(trimmed);
         return { name: trimmed, hex, group: defaultGroup };
       }
-      if (typeof item === 'object' && item.name) {
-        const hex = resolveColorHex(item.name, item.hex);
+      if (typeof item === 'object' && item?.name) {
+        const name = String(item.name).trim();
+        const hex = resolveColorHex(name, item.hex);
         const group = item.group === 'fabric' || item.group === 'upholstery' ? 'fabric' : (item.group || defaultGroup);
-        return { name: item.name, hex, group };
+        return { name, hex, group };
       }
       return null;
     };
@@ -754,7 +755,7 @@ export default function Admin() {
     if (rawBody && Array.isArray(rawBody)) {
       rawBody.forEach((b: any) => {
         const parsed = parseItem(b, 'body');
-        if (parsed && !bodyList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
+        if (parsed && parsed.name && !bodyList.some(x => String(x.name || '').toLowerCase() === String(parsed.name || '').toLowerCase())) {
           bodyList.push(parsed);
         }
       });
@@ -767,7 +768,7 @@ export default function Admin() {
     if (rawFabric && Array.isArray(rawFabric)) {
       rawFabric.forEach((f: any) => {
         const parsed = parseItem(f, 'fabric');
-        if (parsed && !fabricList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
+        if (parsed && parsed.name && !fabricList.some(x => String(x.name || '').toLowerCase() === String(parsed.name || '').toLowerCase())) {
           fabricList.push(parsed);
         }
       });
@@ -786,10 +787,10 @@ export default function Admin() {
       if (Array.isArray(rawColor)) {
         rawColor.forEach((c: any) => {
           const parsed = parseItem(c, 'body');
-          if (parsed) {
-            if (parsed.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === parsed.name.toLowerCase())) {
+          if (parsed && parsed.name) {
+            if (parsed.group === 'body' && !bodyList.some(b => String(b.name || '').toLowerCase() === String(parsed.name || '').toLowerCase())) {
               bodyList.push(parsed);
-            } else if (parsed.group === 'fabric' && !fabricList.some(f => f.name.toLowerCase() === parsed.name.toLowerCase())) {
+            } else if (parsed.group === 'fabric' && !fabricList.some(f => String(f.name || '').toLowerCase() === String(parsed.name || '').toLowerCase())) {
               fabricList.push(parsed);
             }
           }
@@ -824,7 +825,10 @@ export default function Admin() {
 
     const isBody = activeColorTarget === 'body';
     const targetList = isBody ? currentBodyList : currentFabricList;
-    const existsIndex = targetList.findIndex((c: any) => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
+    const existsIndex = targetList.findIndex((c: any) => {
+      const cName = typeof c === 'string' ? c : c?.name;
+      return String(cName || '').toLowerCase() === String(asset?.name || '').toLowerCase();
+    });
 
     let updatedTargetList: ColorOption[];
     if (existsIndex > -1) {
@@ -4632,8 +4636,8 @@ export default function Admin() {
                                       }`}
                                       title="Drag to reorder body color"
                                     >
-                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c.hex || '#888') }} />
-                                      {typeof c === 'string' ? c : c.name}
+                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c?.hex || '#888') }} />
+                                      {typeof c === 'string' ? c : (c?.name || '')}
                                     </span>
                                   ));
                                 })()}
@@ -4696,8 +4700,8 @@ export default function Admin() {
                                       }`}
                                       title="Drag to reorder fabric color"
                                     >
-                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c.hex || '#888') }} />
-                                      {typeof c === 'string' ? c : c.name}
+                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeof c === 'string' ? '#888' : (c?.hex || '#888') }} />
+                                      {typeof c === 'string' ? c : (c?.name || '')}
                                     </span>
                                   ));
                                 })()}
@@ -4727,7 +4731,10 @@ export default function Admin() {
                                 ? (Array.isArray(form.bodyColors) ? form.bodyColors : [])
                                 : (Array.isArray(form.fabricColors) ? form.fabricColors : []);
 
-                              const isAttached = currentList.some((c: any) => (typeof c === 'string' ? c : c.name).toLowerCase() === asset.name.toLowerCase());
+                              const isAttached = currentList.some((c: any) => {
+                                const cName = typeof c === 'string' ? c : c?.name;
+                                return String(cName || '').toLowerCase() === String(asset?.name || '').toLowerCase();
+                              });
 
                               return (
                                 <button
