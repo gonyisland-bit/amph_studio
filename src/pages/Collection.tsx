@@ -527,8 +527,6 @@ export default function Collection() {
                     nopin="nopin"
                   />
                 )}
-                {/* Refined gradient for 100% crystal-clear text contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent z-10 pointer-events-none" />
               </div>
             </Link>
           ))}
