@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getProductById, getProducts, getSpaces, getJournals, updateProduct, Product, SpaceModel, JournalArticle, ColorOption, generateProductCode, HotspotPin } from "../lib/data";
+import { getProductById, getProducts, getSpaces, getJournals, getHomeSettings, updateProduct, Product, SpaceModel, JournalArticle, ColorOption, generateProductCode, HotspotPin } from "../lib/data";
 import { resolveColorHex } from "../lib/colorUtils";
 import { useWishlist } from "../lib/wishlist";
-import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight, Bookmark, Sparkles, Copy, Check, Edit3 } from "lucide-react";
+import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight, Bookmark, Sparkles, Copy, Check, Edit3, Eye, EyeOff } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 import { ImageHotspots } from "../components/ImageHotspots";
 import { useScrollReveal } from "../lib/useScrollReveal";
@@ -129,6 +129,17 @@ export default function ProductDetail() {
       setProduct(updated);
       setIsEditingLookbookTitle(false);
       setToastMessage("Lookbook title updated");
+      setTimeout(() => setToastMessage(null), 2500);
+    }
+  };
+
+  const handleToggleLookbookEnabled = async () => {
+    if (!product) return;
+    const nextVal = product.lookbookEnabled === false ? true : false;
+    const updated = await updateProduct(product.id, { lookbookEnabled: nextVal });
+    if (updated) {
+      setProduct(updated);
+      setToastMessage(nextVal ? "Spatial Lookbook section enabled" : "Spatial Lookbook section hidden");
       setTimeout(() => setToastMessage(null), 2500);
     }
   };
@@ -272,109 +283,107 @@ export default function ProductDetail() {
           });
 
           // Collect all spatial lookbook shots containing this product
-          Promise.all([getSpaces(), getJournals()]).then(([allSpaces, allJournals]) => {
+          Promise.all([getHomeSettings(), getSpaces(), getJournals()]).then(([homeSettings, allSpaces, allJournals]) => {
             const shots: SpatialLookbookShot[] = [];
             const seenImages = new Set<string>();
 
-            // 1. From Spaces
+            const isPinForThisProduct = (pin: any) => {
+              if (!pin || !pin.productId) return false;
+              return String(pin.productId).trim().toLowerCase() === String(p.id).trim().toLowerCase();
+            };
+
+            const prodImagesNorm = (p.images || []).map(normalizeMediaUrl);
+
+            // 1. From Home Showcase Items (Direct showcase configured in Admin)
+            const showcaseItems = homeSettings?.showcase?.items || [];
+            showcaseItems.forEach((item, idx) => {
+              const itemImg = item.image || item.selectedImage;
+              if (itemImg && item.hotspots && item.hotspots.some(isPinForThisProduct)) {
+                const normUrl = normalizeMediaUrl(itemImg);
+                if (!seenImages.has(normUrl)) {
+                  seenImages.add(normUrl);
+                  shots.push({
+                    id: `home-showcase-${item.id || idx}`,
+                    sourceType: (item.sourceType as 'space' | 'journal') || 'space',
+                    sourceId: item.targetId || `showcase-${idx}`,
+                    sourceTitle: item.title || 'Studio Showcase',
+                    image: itemImg,
+                    title: item.title || 'Studio Showcase',
+                    description: item.description || item.subtitle,
+                    hotspots: item.hotspots || []
+                  });
+                }
+              }
+            });
+
+            // 2. From Spaces
             allSpaces.forEach(s => {
-              const isApplied = (s.appliedProductIds || []).includes(p.id) || (p.relatedSpaceIds || []).includes(s.id);
-              
               // Story blocks with pins
               (s.contentBlocks || []).forEach((b: any, bIdx: number) => {
-                if (b.type === 'image' && b.value) {
+                if (b && b.value && b.hotspots && b.hotspots.some(isPinForThisProduct)) {
                   const normUrl = normalizeMediaUrl(b.value);
-                  const hasProductPin = b.hotspots && b.hotspots.some((h: any) => h.productId === p.id);
-                  if (hasProductPin) {
-                    if (!seenImages.has(normUrl)) {
-                      seenImages.add(normUrl);
-                      shots.push({
-                        id: `${s.id}-block-${bIdx}`,
-                        sourceType: 'space',
-                        sourceId: s.id,
-                        sourceTitle: s.title,
-                        image: b.value,
-                        title: b.title || s.title,
-                        description: b.caption || s.description,
-                        hotspots: b.hotspots || []
-                      });
-                    }
+                  if (!seenImages.has(normUrl)) {
+                    seenImages.add(normUrl);
+                    shots.push({
+                      id: `${s.id}-block-${bIdx}`,
+                      sourceType: 'space',
+                      sourceId: s.id,
+                      sourceTitle: s.title,
+                      image: b.value,
+                      title: b.title || s.title,
+                      description: b.caption || s.description,
+                      hotspots: b.hotspots || []
+                    });
                   }
                 }
               });
 
-              // Space main image if it has pin on main image
-              if (s.image) {
-                const normUrl = normalizeMediaUrl(s.image);
-                const hasProductPin = s.hotspots && s.hotspots.some((h: any) => h.productId === p.id);
-                if (hasProductPin && !seenImages.has(normUrl)) {
+              // Space main image / cover if it has pin
+              const spaceCover = s.image || s.images?.[0];
+              if (spaceCover && s.hotspots && s.hotspots.some(isPinForThisProduct)) {
+                const normUrl = normalizeMediaUrl(spaceCover);
+                if (!seenImages.has(normUrl)) {
                   seenImages.add(normUrl);
                   shots.push({
                     id: `${s.id}-main`,
                     sourceType: 'space',
                     sourceId: s.id,
                     sourceTitle: s.title,
-                    image: s.image,
+                    image: spaceCover,
                     title: s.title,
                     description: s.description,
                     hotspots: s.hotspots || []
                   });
                 }
               }
+            });
 
-              // Fallback: If space is applied but no shots were added for it, add at most 1 scene
-              if (isApplied && shots.filter(shot => shot.sourceId === s.id).length === 0) {
-                const fallbackImg = s.image || (s.contentBlocks || []).find((b: any) => b.type === 'image')?.value;
-                if (fallbackImg) {
-                  const normUrl = normalizeMediaUrl(fallbackImg);
+            // 3. From Journals
+            allJournals.forEach(j => {
+              // Story blocks with pins
+              (j.contentBlocks || []).forEach((b: any, bIdx: number) => {
+                if (b && b.value && b.hotspots && b.hotspots.some(isPinForThisProduct)) {
+                  const normUrl = normalizeMediaUrl(b.value);
                   if (!seenImages.has(normUrl)) {
                     seenImages.add(normUrl);
                     shots.push({
-                      id: `${s.id}-fallback`,
-                      sourceType: 'space',
-                      sourceId: s.id,
-                      sourceTitle: s.title,
-                      image: fallbackImg,
-                      title: s.title,
-                      description: s.description,
-                      hotspots: s.hotspots || []
+                      id: `${j.id}-block-${bIdx}`,
+                      sourceType: 'journal',
+                      sourceId: j.id,
+                      sourceTitle: j.title,
+                      image: b.value,
+                      title: b.title || j.title,
+                      description: b.caption || j.description,
+                      hotspots: b.hotspots || []
                     });
-                  }
-                }
-              }
-            });
-
-            // 2. From Journals
-            allJournals.forEach(j => {
-              const isApplied = (j.appliedProductIds || []).includes(p.id) || (p.relatedJournalIds || []).includes(j.id);
-              
-              // Story blocks with pins
-              (j.contentBlocks || []).forEach((b: any, bIdx: number) => {
-                if (b.type === 'image' && b.value) {
-                  const normUrl = normalizeMediaUrl(b.value);
-                  const hasProductPin = b.hotspots && b.hotspots.some((h: any) => h.productId === p.id);
-                  if (hasProductPin) {
-                    if (!seenImages.has(normUrl)) {
-                      seenImages.add(normUrl);
-                      shots.push({
-                        id: `${j.id}-block-${bIdx}`,
-                        sourceType: 'journal',
-                        sourceId: j.id,
-                        sourceTitle: j.title,
-                        image: b.value,
-                        title: b.title || j.title,
-                        description: b.caption || j.description,
-                        hotspots: b.hotspots || []
-                      });
-                    }
                   }
                 }
               });
 
-              if (j.image) {
+              // Journal main image if it has pin
+              if (j.image && j.hotspots && j.hotspots.some(isPinForThisProduct)) {
                 const normUrl = normalizeMediaUrl(j.image);
-                const hasProductPin = j.hotspots && j.hotspots.some((h: any) => h.productId === p.id);
-                if (hasProductPin && !seenImages.has(normUrl)) {
+                if (!seenImages.has(normUrl)) {
                   seenImages.add(normUrl);
                   shots.push({
                     id: `${j.id}-main`,
@@ -388,28 +397,34 @@ export default function ProductDetail() {
                   });
                 }
               }
+            });
 
-              // Fallback for journal
-              if (isApplied && shots.filter(shot => shot.sourceId === j.id).length === 0) {
-                const fallbackImg = j.image || (j.contentBlocks || []).find((b: any) => b.type === 'image')?.value;
-                if (fallbackImg) {
-                  const normUrl = normalizeMediaUrl(fallbackImg);
-                  if (!seenImages.has(normUrl)) {
-                    seenImages.add(normUrl);
-                    shots.push({
-                      id: `${j.id}-fallback`,
-                      sourceType: 'journal',
-                      sourceId: j.id,
-                      sourceTitle: j.title,
-                      image: fallbackImg,
-                      title: j.title,
-                      description: j.description,
-                      hotspots: j.hotspots || []
-                    });
+            // 4. Fallback only if 0 pinned shots found across entire catalog:
+            if (shots.length === 0) {
+              allSpaces.forEach(s => {
+                const isApplied = (s.appliedProductIds || []).includes(p.id) || (p.relatedSpaceIds || []).includes(s.id);
+                if (isApplied && shots.filter(shot => shot.sourceId === s.id).length === 0) {
+                  const candidateImg = (s.contentBlocks || []).find((b: any) => b.type === 'image' && b.value)?.value || s.image || s.images?.[0];
+                  if (candidateImg) {
+                    const normUrl = normalizeMediaUrl(candidateImg);
+                    // Crucial: Reject candidate if it is the product's own hero or image!
+                    if (!prodImagesNorm.includes(normUrl) && !seenImages.has(normUrl)) {
+                      seenImages.add(normUrl);
+                      shots.push({
+                        id: `${s.id}-applied`,
+                        sourceType: 'space',
+                        sourceId: s.id,
+                        sourceTitle: s.title,
+                        image: candidateImg,
+                        title: s.title,
+                        description: s.description,
+                        hotspots: s.hotspots || []
+                      });
+                    }
                   }
                 }
-              }
-            });
+              });
+            }
 
             setSpatialLookbookShots(shots);
             setActiveLookbookIdx(0);
@@ -739,7 +754,7 @@ export default function ProductDetail() {
             <p className="text-xs text-ink/40 tracking-wider mb-4 font-sans uppercase font-normal">{product.subTitle}</p>
             
             {/* Spatial Lookbook Shortcut Badge */}
-            {spatialLookbookShots.length > 0 && (
+            {product?.lookbookEnabled !== false && spatialLookbookShots.length > 0 && (
               <div className="mb-8">
                 <button
                   type="button"
@@ -1079,12 +1094,29 @@ export default function ProductDetail() {
       })()}
 
       {/* Spatial Lookbook Showcase (Full-Bleed Interactive Hotspot Pins & Architectural Context) */}
-      {spatialLookbookShots.length > 0 && (() => {
+      {(product?.lookbookEnabled !== false || isAuth) && spatialLookbookShots.length > 0 && (() => {
         const safeIdx = Math.min(Math.max(0, activeLookbookIdx), spatialLookbookShots.length - 1);
         const activeShot = spatialLookbookShots[safeIdx] || spatialLookbookShots[0];
         
         return (
           <div id="spatial-lookbook-section" className="w-full bg-black text-white border-t border-black/10 reveal relative overflow-hidden">
+            {/* Admin Hidden Notice Banner */}
+            {product?.lookbookEnabled === false && isAuth && (
+              <div className="bg-orange/20 border-b border-orange/30 px-6 py-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-orange">
+                <span className="flex items-center gap-1.5">
+                  <EyeOff size={12} />
+                  <span>Spatial Lookbook is currently hidden from public visitors</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={handleToggleLookbookEnabled}
+                  className="px-2.5 py-0.5 bg-orange text-white text-[9px] font-black uppercase hover:bg-white hover:text-orange transition-colors cursor-pointer"
+                >
+                  Enable & Show
+                </button>
+              </div>
+            )}
+
             {/* Header Bar with Counter */}
             <div className="w-full px-6 md:px-12 py-5 sm:py-6 flex flex-wrap items-end justify-between gap-4 border-b border-white/10 bg-black/95">
               <div>
@@ -1127,22 +1159,42 @@ export default function ProductDetail() {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 group/title">
+                  <div className="flex items-center gap-2.5 group/title">
                     <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tight font-sans">
                       {product?.lookbookTitle || "Seen in Architectural Context"}
                     </h3>
                     {isAuth && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLookbookTitleInput(product?.lookbookTitle || "Seen in Architectural Context");
-                          setIsEditingLookbookTitle(true);
-                        }}
-                        className="opacity-40 group-hover/title:opacity-100 hover:text-cobalt text-white/80 transition-opacity p-1 cursor-pointer"
-                        title="Edit Spatial Lookbook Title"
-                      >
-                        <Edit3 size={14} />
-                      </button>
+                      <div className="flex items-center gap-1.5 opacity-60 group-hover/title:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLookbookTitleInput(product?.lookbookTitle || "Seen in Architectural Context");
+                            setIsEditingLookbookTitle(true);
+                          }}
+                          className="hover:text-cobalt text-white/80 p-1 cursor-pointer"
+                          title="Edit Spatial Lookbook Title"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleToggleLookbookEnabled}
+                          className="text-[9px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 border border-white/20 hover:border-white text-white/70 hover:text-white flex items-center gap-1 transition-colors cursor-pointer ml-1"
+                          title={product?.lookbookEnabled === false ? "Enable Lookbook for visitors" : "Hide Lookbook from visitors"}
+                        >
+                          {product?.lookbookEnabled === false ? (
+                            <>
+                              <EyeOff size={11} className="text-orange" />
+                              <span>Hidden</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye size={11} className="text-emerald-400" />
+                              <span>Visible</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}

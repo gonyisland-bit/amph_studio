@@ -45,6 +45,7 @@ export interface Product {
   relatedProductIds?: string[];
   relatedSpaceIds?: string[];
   relatedJournalIds?: string[];
+  lookbookEnabled?: boolean;
   lookbookTitle?: string;
   lookbookSubtitle?: string;
 }

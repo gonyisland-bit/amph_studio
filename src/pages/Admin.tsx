@@ -4298,7 +4298,33 @@ export default function Admin() {
                         
                         <EditorInput label="Sub Title" required value={form.subTitle || ''} onChange={val => setForm({...form, subTitle: val})} />
                         <EditorInput label="Overview Description" required rows={3} value={form.description || ''} onChange={val => setForm({...form, description: val})} />
-                        <EditorInput label="Spatial Lookbook Title (Optional)" placeholder="Seen in Architectural Context" value={form.lookbookTitle || ''} onChange={val => setForm({...form, lookbookTitle: val})} />
+                        
+                        {/* Spatial Lookbook Configuration */}
+                        <div className="border-t border-black/5 pt-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="block text-xs font-bold uppercase text-ink">Spatial Lookbook Section</span>
+                              <span className="text-[10px] text-ink/50">Show real architectural space lookbook with interactive pins</span>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                checked={form.lookbookEnabled !== false} 
+                                onChange={e => setForm({...form, lookbookEnabled: e.target.checked})}
+                                className="sr-only peer"
+                              />
+                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cobalt"></div>
+                            </label>
+                          </div>
+                          {form.lookbookEnabled !== false && (
+                            <EditorInput 
+                              label="Lookbook Custom Title" 
+                              placeholder="Seen in Architectural Context" 
+                              value={form.lookbookTitle || ''} 
+                              onChange={val => setForm({...form, lookbookTitle: val})} 
+                            />
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
