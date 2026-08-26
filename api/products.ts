@@ -71,14 +71,26 @@ export default async function handler(req: any, res: any) {
             colorParsed = r.color;
           }
         }
+
+        let bodyColors = safeParse(r.bodyColors);
+        let fabricColors = safeParse(r.fabricColors);
+
+        // Dual Recovery Fallback: If bodyColors or fabricColors are empty, recover from color list
+        if ((!bodyColors || bodyColors.length === 0) && Array.isArray(colorParsed)) {
+          bodyColors = colorParsed.filter((c: any) => c && (c.group === 'body' || (!c.group && !c.type)));
+        }
+        if ((!fabricColors || fabricColors.length === 0) && Array.isArray(colorParsed)) {
+          fabricColors = colorParsed.filter((c: any) => c && (c.group === 'fabric' || c.group === 'upholstery'));
+        }
+
         return {
           ...r,
           images: safeParse(r.images),
           hoverImages: safeParse(r.hoverImages),
           contentBlocks: safeParse(r.contentBlocks),
           color: colorParsed,
-          bodyColors: safeParse(r.bodyColors),
-          fabricColors: safeParse(r.fabricColors),
+          bodyColors: bodyColors,
+          fabricColors: fabricColors,
           cartEnabled: r.cartEnabled !== false,
           portraitImages: safeParse(r.portraitImages),
           relatedProductIds: safeParse(r.relatedProductIds),
@@ -90,9 +102,9 @@ export default async function handler(req: any, res: any) {
         };
       });
       return res.status(200).json(parsedRows);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      return res.status(500).json({ error: 'Failed to fetch' });
+      return res.status(500).json({ error: error?.message || 'Failed to fetch' });
     }
   }
 
@@ -113,9 +125,14 @@ export default async function handler(req: any, res: any) {
       const dimensions = b.dimensions || '';
       const shipping = b.shipping || '';
       const sku = b.sku || '';
-      const color = b.color !== undefined ? (typeof b.color === 'string' ? b.color : JSON.stringify(b.color)) : '[]';
-      const bodyColors = Array.isArray(b.bodyColors) ? b.bodyColors : [];
-      const fabricColors = Array.isArray(b.fabricColors) ? b.fabricColors : [];
+
+      // Normalize color lists strictly with respective groups
+      const rawBody = Array.isArray(b.bodyColors) ? b.bodyColors : [];
+      const rawFabric = Array.isArray(b.fabricColors) ? b.fabricColors : [];
+      const bodyColors = rawBody.map((c: any) => typeof c === 'string' ? { name: c, hex: '#888888', group: 'body' } : { name: c?.name || '', hex: c?.hex || '#888888', group: 'body' }).filter((c: any) => c.name);
+      const fabricColors = rawFabric.map((c: any) => typeof c === 'string' ? { name: c, hex: '#888888', group: 'fabric' } : { name: c?.name || '', hex: c?.hex || '#888888', group: 'fabric' }).filter((c: any) => c.name);
+      const color = JSON.stringify([...bodyColors, ...fabricColors]);
+
       const cartEnabled = b.cartEnabled !== false;
       const portraitImages = Array.isArray(b.portraitImages) ? b.portraitImages : [];
       const relatedProductIds = Array.isArray(b.relatedProductIds) ? b.relatedProductIds : [];
@@ -176,9 +193,9 @@ export default async function handler(req: any, res: any) {
           "lookbookEnabled" = EXCLUDED."lookbookEnabled"
       `;
       return res.status(201).json({ success: true, id: newId });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      return res.status(500).json({ error: 'Failed to insert' });
+      return res.status(500).json({ error: error?.message || 'Failed to insert' });
     }
   }
 
@@ -199,9 +216,14 @@ export default async function handler(req: any, res: any) {
       const dimensions = b.dimensions || '';
       const shipping = b.shipping || '';
       const sku = b.sku || '';
-      const color = b.color !== undefined ? (typeof b.color === 'string' ? b.color : JSON.stringify(b.color)) : '[]';
-      const bodyColors = Array.isArray(b.bodyColors) ? b.bodyColors : [];
-      const fabricColors = Array.isArray(b.fabricColors) ? b.fabricColors : [];
+
+      // Normalize color lists strictly with respective groups
+      const rawBody = Array.isArray(b.bodyColors) ? b.bodyColors : [];
+      const rawFabric = Array.isArray(b.fabricColors) ? b.fabricColors : [];
+      const bodyColors = rawBody.map((c: any) => typeof c === 'string' ? { name: c, hex: '#888888', group: 'body' } : { name: c?.name || '', hex: c?.hex || '#888888', group: 'body' }).filter((c: any) => c.name);
+      const fabricColors = rawFabric.map((c: any) => typeof c === 'string' ? { name: c, hex: '#888888', group: 'fabric' } : { name: c?.name || '', hex: c?.hex || '#888888', group: 'fabric' }).filter((c: any) => c.name);
+      const color = JSON.stringify([...bodyColors, ...fabricColors]);
+
       const cartEnabled = b.cartEnabled !== false;
       const portraitImages = Array.isArray(b.portraitImages) ? b.portraitImages : [];
       const relatedProductIds = Array.isArray(b.relatedProductIds) ? b.relatedProductIds : [];
@@ -240,9 +262,9 @@ export default async function handler(req: any, res: any) {
         WHERE id = ${id}
       `;
       return res.status(200).json({ success: true, id });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      return res.status(500).json({ error: 'Failed to update' });
+      return res.status(500).json({ error: error?.message || 'Failed to update' });
     }
   }
 

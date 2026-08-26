@@ -703,89 +703,86 @@ export default function Admin() {
     const bodyList: ColorOption[] = [];
     const fabricList: ColorOption[] = [];
 
-    const parseItem = (item: any, defaultGroup: 'body' | 'fabric'): ColorOption | null => {
+    const parseSingleItem = (item: any, assignedGroup: 'body' | 'fabric'): ColorOption | null => {
       if (!item) return null;
+      let name = '';
+      let hex = '';
+
       if (typeof item === 'string') {
         const trimmed = item.trim();
         if (!trimmed) return null;
-        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        if (trimmed.startsWith('{')) {
           try {
-            const parsedObj = JSON.parse(trimmed);
-            if (Array.isArray(parsedObj)) {
-              parsedObj.forEach(sub => {
-                const subParsed = parseItem(sub, defaultGroup);
-                if (subParsed && subParsed.name) {
-                  const targetList = subParsed.group === 'fabric' ? fabricList : bodyList;
-                  if (!targetList.some(x => String(x.name || '').toLowerCase() === String(subParsed.name || '').toLowerCase())) {
-                    targetList.push(subParsed);
-                  }
-                }
-              });
-              return null;
-            } else if (typeof parsedObj === 'object' && parsedObj?.name) {
-              const name = String(parsedObj.name).trim();
-              const hex = resolveColorHex(name, parsedObj.hex);
-              const group = parsedObj.group === 'fabric' || parsedObj.group === 'upholstery' ? 'fabric' : (parsedObj.group || defaultGroup);
-              return { name, hex, group };
-            }
-          } catch(e) {}
+            const parsed = JSON.parse(trimmed);
+            name = String(parsed?.name || '').trim();
+            hex = resolveColorHex(name, parsed?.hex);
+          } catch(e) {
+            name = trimmed;
+            hex = resolveColorHex(trimmed);
+          }
+        } else {
+          name = trimmed;
+          hex = resolveColorHex(trimmed);
         }
-        const hex = resolveColorHex(trimmed);
-        return { name: trimmed, hex, group: defaultGroup };
+      } else if (typeof item === 'object' && item !== null) {
+        name = String(item.name || '').trim();
+        hex = resolveColorHex(name, item.hex);
       }
-      if (typeof item === 'object' && item?.name) {
-        const name = String(item.name).trim();
-        const hex = resolveColorHex(name, item.hex);
-        const group = item.group === 'fabric' || item.group === 'upholstery' ? 'fabric' : (item.group || defaultGroup);
-        return { name, hex, group };
-      }
-      return null;
+
+      if (!name) return null;
+      return { name, hex, group: assignedGroup };
     };
 
+    // 1. Process Body Colors (Strictly independent)
     let rawBody = prod.bodyColors;
     if (typeof rawBody === 'string' && rawBody.trim().startsWith('[')) {
       try { rawBody = JSON.parse(rawBody); } catch(e) {}
     }
-    if (rawBody && Array.isArray(rawBody)) {
+    if (Array.isArray(rawBody)) {
       rawBody.forEach((b: any) => {
-        const parsed = parseItem(b, 'body');
-        if (parsed && parsed.name && !bodyList.some(x => String(x.name || '').toLowerCase() === String(parsed.name || '').toLowerCase())) {
+        const parsed = parseSingleItem(b, 'body');
+        if (parsed && !bodyList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
           bodyList.push(parsed);
         }
       });
     }
 
+    // 2. Process Fabric Colors (Strictly independent)
     let rawFabric = prod.fabricColors || prod.upholsteryColors;
     if (typeof rawFabric === 'string' && rawFabric.trim().startsWith('[')) {
       try { rawFabric = JSON.parse(rawFabric); } catch(e) {}
     }
-    if (rawFabric && Array.isArray(rawFabric)) {
+    if (Array.isArray(rawFabric)) {
       rawFabric.forEach((f: any) => {
-        const parsed = parseItem(f, 'fabric');
-        if (parsed && parsed.name && !fabricList.some(x => String(x.name || '').toLowerCase() === String(parsed.name || '').toLowerCase())) {
+        const parsed = parseSingleItem(f, 'fabric');
+        if (parsed && !fabricList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
           fabricList.push(parsed);
         }
       });
     }
 
-    // Only fallback to legacy prod.color if neither bodyColors nor fabricColors were defined/populated
+    // 3. Dual Recovery Fallback from prod.color if both are empty
     if (bodyList.length === 0 && fabricList.length === 0 && prod.color) {
       let rawColor = prod.color;
-      if (typeof rawColor === 'string') {
-        if (rawColor.trim().startsWith('[')) {
-          try { rawColor = JSON.parse(rawColor); } catch(e) {}
-        } else {
-          rawColor = rawColor.split(',').map((s: string) => s.trim()).filter(Boolean);
-        }
+      if (typeof rawColor === 'string' && rawColor.trim().startsWith('[')) {
+        try { rawColor = JSON.parse(rawColor); } catch(e) {}
       }
       if (Array.isArray(rawColor)) {
         rawColor.forEach((c: any) => {
-          const parsed = parseItem(c, 'body');
-          if (parsed && parsed.name) {
-            if (parsed.group === 'body' && !bodyList.some(b => String(b.name || '').toLowerCase() === String(parsed.name || '').toLowerCase())) {
+          if (c && typeof c === 'object') {
+            const isFabric = c.group === 'fabric' || c.group === 'upholstery';
+            const parsed = parseSingleItem(c, isFabric ? 'fabric' : 'body');
+            if (parsed) {
+              if (parsed.group === 'fabric' && !fabricList.some(f => f.name.toLowerCase() === parsed.name.toLowerCase())) {
+                fabricList.push(parsed);
+              } else if (parsed.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === parsed.name.toLowerCase())) {
+                bodyList.push(parsed);
+              }
+            }
+          } else if (typeof c === 'string') {
+            const parsed = parseSingleItem(c, 'body');
+            if (parsed && !bodyList.some(b => b.name.toLowerCase() === parsed.name.toLowerCase())) {
               bodyList.push(parsed);
-            } else if (parsed.group === 'fabric' && !fabricList.some(f => String(f.name || '').toLowerCase() === String(parsed.name || '').toLowerCase())) {
-              fabricList.push(parsed);
             }
           }
         });
@@ -823,21 +820,31 @@ export default function Admin() {
       return [];
     };
 
-    cloned.images = ensureArray(cloned.images);
-    cloned.hoverImages = ensureArray(cloned.hoverImages);
-    cloned.portraitImages = ensureArray(cloned.portraitImages);
-    cloned.contentBlocks = ensureArray(cloned.contentBlocks);
-    cloned.relatedProductIds = ensureArray(cloned.relatedProductIds);
-    cloned.relatedSpaceIds = ensureArray(cloned.relatedSpaceIds);
-    cloned.relatedJournalIds = ensureArray(cloned.relatedJournalIds);
-    cloned.appliedProductIds = ensureArray(cloned.appliedProductIds);
-    cloned.bodyColors = ensureArray(cloned.bodyColors);
-    cloned.fabricColors = ensureArray(cloned.fabricColors);
-    cloned.hotspots = ensureArray(cloned.hotspots);
-
     if (tab === 'collection') {
-      return normalizeProductColors(cloned);
+      const normalizedColors = normalizeProductColors(cloned);
+      cloned.bodyColors = normalizedColors.bodyColors;
+      cloned.fabricColors = normalizedColors.fabricColors;
+      cloned.color = normalizedColors.color;
+      cloned.images = ensureArray(cloned.images);
+      cloned.hoverImages = ensureArray(cloned.hoverImages);
+      cloned.portraitImages = ensureArray(cloned.portraitImages);
+      cloned.contentBlocks = ensureArray(cloned.contentBlocks);
+      cloned.relatedProductIds = ensureArray(cloned.relatedProductIds);
+      cloned.relatedSpaceIds = ensureArray(cloned.relatedSpaceIds);
+      cloned.relatedJournalIds = ensureArray(cloned.relatedJournalIds);
+    } else if (tab === 'space') {
+      cloned.images = ensureArray(cloned.images);
+      cloned.appliedProductIds = ensureArray(cloned.appliedProductIds);
+      cloned.relatedSpaceIds = ensureArray(cloned.relatedSpaceIds);
+      cloned.contentBlocks = ensureArray(cloned.contentBlocks);
+      cloned.hotspots = ensureArray(cloned.hotspots);
+    } else if (tab === 'journal') {
+      cloned.appliedProductIds = ensureArray(cloned.appliedProductIds);
+      cloned.relatedJournalIds = ensureArray(cloned.relatedJournalIds);
+      cloned.contentBlocks = ensureArray(cloned.contentBlocks);
+      cloned.hotspots = ensureArray(cloned.hotspots);
     }
+
     return cloned;
   };
 
@@ -850,13 +857,12 @@ export default function Admin() {
     }
   }, [form?.id, form?.bodyColors, form?.fabricColors, activeTab]);
 
-  // Toggle Swatch for currently Active Target Slot (Body vs Fabric)
+  // Toggle Swatch for currently Active Target Slot (Body vs Fabric) with zero interference
   const handleToggleColorForTarget = (asset: { name: string; hex: string }) => {
-    const norm = normalizeProductColors(form || {});
-    const currentBodyList: ColorOption[] = Array.isArray(norm?.bodyColors) ? [...norm.bodyColors] : [];
-    const currentFabricList: ColorOption[] = Array.isArray(norm?.fabricColors) ? [...norm.fabricColors] : [];
-
     const isBody = activeColorTarget === 'body';
+    const currentBodyList: ColorOption[] = Array.isArray(form?.bodyColors) ? [...form.bodyColors] : [];
+    const currentFabricList: ColorOption[] = Array.isArray(form?.fabricColors) ? [...form.fabricColors] : [];
+
     const targetList = isBody ? currentBodyList : currentFabricList;
     const existsIndex = targetList.findIndex((c: any) => {
       const cName = typeof c === 'string' ? c : c?.name;
@@ -1166,15 +1172,21 @@ export default function Admin() {
         const currentBody = Array.isArray(norm.bodyColors) ? norm.bodyColors : [];
         const currentFabric = Array.isArray(norm.fabricColors) ? norm.fabricColors : [];
 
-        // Clean each color object to ensure proper { name, hex, group } structure without cyclic/corrupt properties
-        const cleanColorList = (list: any[], defaultGroup: 'body' | 'fabric'): ColorOption[] => {
+        // Clean each color object strictly as pure { name, hex, group }
+        const cleanColorList = (list: any[], assignedGroup: 'body' | 'fabric'): ColorOption[] => {
           const result: ColorOption[] = [];
           list.forEach((c: any) => {
-            const name = typeof c === 'string' ? c.trim() : (c?.name || '').trim();
+            let name = '';
+            let customHex: string | undefined = undefined;
+            if (typeof c === 'string') {
+              name = c.trim();
+            } else if (typeof c === 'object' && c !== null) {
+              name = String(c.name || '').trim();
+              customHex = c.hex;
+            }
             if (name && !result.some(x => x.name.toLowerCase() === name.toLowerCase())) {
-              const hex = resolveColorHex(name, typeof c === 'object' ? c?.hex : undefined);
-              const group = typeof c === 'object' && (c?.group === 'fabric' || c?.group === 'body') ? c.group : defaultGroup;
-              result.push({ name, hex, group });
+              const hex = resolveColorHex(name, customHex);
+              result.push({ name, hex, group: assignedGroup });
             }
           });
           return result;
