@@ -264,11 +264,44 @@ export default function ProductDetail() {
             setRecommendations([...related, ...featured, ...sameCategory, ...others]);
           });
 
+          const cleanStr = (str: any) => String(str || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+          const pIdClean = cleanStr(p.id);
+          const pNameClean = cleanStr(p.name);
+          const pSkuClean = cleanStr(p.sku);
+
+          const isMatchingProduct = (target: any) => {
+            if (!target) return false;
+            if (typeof target === 'object') {
+              const pinProd = cleanStr(target.productId);
+              const pinLabel = cleanStr(target.label);
+              
+              if (pinProd) {
+                if (pinProd === pIdClean || pinProd === pNameClean || (pSkuClean && pinProd === pSkuClean)) return true;
+                if (pinProd.length >= 3 && (pNameClean.includes(pinProd) || pinProd.includes(pNameClean))) return true;
+                if (pinProd.length >= 3 && (pIdClean.includes(pinProd) || pinProd.includes(pIdClean))) return true;
+              }
+              if (pinLabel) {
+                if (pinLabel === pIdClean || pinLabel === pNameClean || (pSkuClean && pinLabel === pSkuClean)) return true;
+                if (pinLabel.length >= 3 && (pNameClean.includes(pinLabel) || pinLabel.includes(pNameClean))) return true;
+              }
+              return false;
+            }
+
+            const strClean = cleanStr(target);
+            if (!strClean) return false;
+            if (strClean === pIdClean || strClean === pNameClean || (pSkuClean && strClean === pSkuClean)) return true;
+            if (strClean.length >= 3 && (pNameClean.includes(strClean) || strClean.includes(pNameClean))) return true;
+            if (strClean.length >= 3 && (pIdClean.includes(strClean) || strClean.includes(pIdClean))) return true;
+            return false;
+          };
+
           // Bidirectional auto-linking for Spaces
           getSpaces().then(allSpaces => {
             const matches = allSpaces.filter(s => 
               (p.relatedSpaceIds || []).includes(s.id) ||
-              (s.appliedProductIds || []).includes(p.id)
+              (s.appliedProductIds || []).some(isMatchingProduct) ||
+              (s.hotspots || []).some(isMatchingProduct) ||
+              (s.contentBlocks || []).some((b: any) => (b.hotspots || []).some(isMatchingProduct))
             );
             setLinkedSpaces(matches);
           });
@@ -277,154 +310,165 @@ export default function ProductDetail() {
           getJournals().then(allJournals => {
             const matches = allJournals.filter(j => 
               (p.relatedJournalIds || []).includes(j.id) ||
-              (j.appliedProductIds || j.relatedJournalIds || []).includes(p.id)
+              (j.appliedProductIds || []).some(isMatchingProduct) ||
+              (j.hotspots || []).some(isMatchingProduct) ||
+              (j.contentBlocks || []).some((b: any) => (b.hotspots || []).some(isMatchingProduct))
             );
             setLinkedJournals(matches);
           });
 
-          // Collect all spatial lookbook shots containing this product
-          Promise.all([getHomeSettings(), getSpaces(), getJournals()]).then(([homeSettings, allSpaces, allJournals]) => {
+          // Collect all spatial lookbook shots containing this product from Spaces & Journals
+          Promise.all([getSpaces(), getJournals()]).then(([allSpaces, allJournals]) => {
             const shots: SpatialLookbookShot[] = [];
             const seenImages = new Set<string>();
-
-            const isPinForThisProduct = (pin: any) => {
-              if (!pin || !pin.productId) return false;
-              return String(pin.productId).trim().toLowerCase() === String(p.id).trim().toLowerCase();
-            };
-
             const prodImagesNorm = (p.images || []).map(normalizeMediaUrl);
 
-            // 1. From Home Showcase Items (Direct showcase configured in Admin)
-            const showcaseItems = homeSettings?.showcase?.items || [];
-            showcaseItems.forEach((item, idx) => {
-              const itemImg = item.image || item.selectedImage;
-              if (itemImg && item.hotspots && item.hotspots.some(isPinForThisProduct)) {
-                const normUrl = normalizeMediaUrl(itemImg);
-                if (!seenImages.has(normUrl)) {
-                  seenImages.add(normUrl);
-                  shots.push({
-                    id: `home-showcase-${item.id || idx}`,
-                    sourceType: (item.sourceType as 'space' | 'journal') || 'space',
-                    sourceId: item.targetId || `showcase-${idx}`,
-                    sourceTitle: item.title || 'Studio Showcase',
-                    image: itemImg,
-                    title: item.title || 'Studio Showcase',
-                    description: item.description || item.subtitle,
-                    hotspots: item.hotspots || []
-                  });
-                }
-              }
-            });
-
-            // 2. From Spaces
+            // 1. From Spaces: Check all story media blocks and cover
             allSpaces.forEach(s => {
+              const isSpaceLinked = (p.relatedSpaceIds || []).includes(s.id) || (s.appliedProductIds || []).some(isMatchingProduct);
+
               // Story blocks with pins
               (s.contentBlocks || []).forEach((b: any, bIdx: number) => {
-                if (b && b.value && b.hotspots && b.hotspots.some(isPinForThisProduct)) {
-                  const normUrl = normalizeMediaUrl(b.value);
-                  if (!seenImages.has(normUrl)) {
-                    seenImages.add(normUrl);
-                    shots.push({
-                      id: `${s.id}-block-${bIdx}`,
-                      sourceType: 'space',
-                      sourceId: s.id,
-                      sourceTitle: s.title,
-                      image: b.value,
-                      title: b.title || s.title,
-                      description: b.caption || s.description,
-                      hotspots: b.hotspots || []
-                    });
+                const blockImg = b.value || b.url || b.src || b.image;
+                if (blockImg) {
+                  const hasPin = b.hotspots && b.hotspots.some(isMatchingProduct);
+                  if (hasPin) {
+                    const normUrl = normalizeMediaUrl(blockImg);
+                    if (!seenImages.has(normUrl)) {
+                      seenImages.add(normUrl);
+                      shots.push({
+                        id: `${s.id}-block-${b.id || bIdx}`,
+                        sourceType: 'space',
+                        sourceId: s.id,
+                        sourceTitle: s.title,
+                        image: blockImg,
+                        title: b.title || s.title,
+                        description: b.caption || s.description,
+                        hotspots: b.hotspots || []
+                      });
+                    }
                   }
                 }
               });
 
               // Space main image / cover if it has pin
               const spaceCover = s.image || s.images?.[0];
-              if (spaceCover && s.hotspots && s.hotspots.some(isPinForThisProduct)) {
-                const normUrl = normalizeMediaUrl(spaceCover);
-                if (!seenImages.has(normUrl)) {
-                  seenImages.add(normUrl);
-                  shots.push({
-                    id: `${s.id}-main`,
-                    sourceType: 'space',
-                    sourceId: s.id,
-                    sourceTitle: s.title,
-                    image: spaceCover,
-                    title: s.title,
-                    description: s.description,
-                    hotspots: s.hotspots || []
-                  });
-                }
-              }
-            });
-
-            // 3. From Journals
-            allJournals.forEach(j => {
-              // Story blocks with pins
-              (j.contentBlocks || []).forEach((b: any, bIdx: number) => {
-                if (b && b.value && b.hotspots && b.hotspots.some(isPinForThisProduct)) {
-                  const normUrl = normalizeMediaUrl(b.value);
+              if (spaceCover) {
+                const hasPin = s.hotspots && s.hotspots.some(isMatchingProduct);
+                if (hasPin) {
+                  const normUrl = normalizeMediaUrl(spaceCover);
                   if (!seenImages.has(normUrl)) {
                     seenImages.add(normUrl);
                     shots.push({
-                      id: `${j.id}-block-${bIdx}`,
-                      sourceType: 'journal',
-                      sourceId: j.id,
-                      sourceTitle: j.title,
-                      image: b.value,
-                      title: b.title || j.title,
-                      description: b.caption || j.description,
-                      hotspots: b.hotspots || []
+                      id: `${s.id}-main`,
+                      sourceType: 'space',
+                      sourceId: s.id,
+                      sourceTitle: s.title,
+                      image: spaceCover,
+                      title: s.title,
+                      description: s.description,
+                      hotspots: s.hotspots || []
                     });
                   }
                 }
-              });
-
-              // Journal main image if it has pin
-              if (j.image && j.hotspots && j.hotspots.some(isPinForThisProduct)) {
-                const normUrl = normalizeMediaUrl(j.image);
-                if (!seenImages.has(normUrl)) {
-                  seenImages.add(normUrl);
-                  shots.push({
-                    id: `${j.id}-main`,
-                    sourceType: 'journal',
-                    sourceId: j.id,
-                    sourceTitle: j.title,
-                    image: j.image,
-                    title: j.title,
-                    description: j.description,
-                    hotspots: j.hotspots || []
-                  });
-                }
               }
-            });
 
-            // 4. Fallback only if 0 pinned shots found across entire catalog:
-            if (shots.length === 0) {
-              allSpaces.forEach(s => {
-                const isApplied = (s.appliedProductIds || []).includes(p.id) || (p.relatedSpaceIds || []).includes(s.id);
-                if (isApplied && shots.filter(shot => shot.sourceId === s.id).length === 0) {
-                  const candidateImg = (s.contentBlocks || []).find((b: any) => b.type === 'image' && b.value)?.value || s.image || s.images?.[0];
-                  if (candidateImg) {
-                    const normUrl = normalizeMediaUrl(candidateImg);
-                    // Crucial: Reject candidate if it is the product's own hero or image!
-                    if (!prodImagesNorm.includes(normUrl) && !seenImages.has(normUrl)) {
+              // If space is linked but no specific block matched, look for story blocks in this space
+              if (isSpaceLinked && shots.filter(shot => shot.sourceId === s.id).length === 0) {
+                (s.contentBlocks || []).forEach((b: any, bIdx: number) => {
+                  const blockImg = b.value || b.url || b.src || b.image;
+                  if (blockImg && !prodImagesNorm.includes(normalizeMediaUrl(blockImg))) {
+                    const normUrl = normalizeMediaUrl(blockImg);
+                    if (!seenImages.has(normUrl)) {
                       seenImages.add(normUrl);
                       shots.push({
-                        id: `${s.id}-applied`,
+                        id: `${s.id}-block-${b.id || bIdx}`,
                         sourceType: 'space',
                         sourceId: s.id,
                         sourceTitle: s.title,
-                        image: candidateImg,
-                        title: s.title,
-                        description: s.description,
-                        hotspots: s.hotspots || []
+                        image: blockImg,
+                        title: b.title || s.title,
+                        description: b.caption || s.description,
+                        hotspots: b.hotspots || s.hotspots || []
+                      });
+                    }
+                  }
+                });
+              }
+            });
+
+            // 2. From Journals: Check all story media blocks and cover
+            allJournals.forEach(j => {
+              const isJournalLinked = (p.relatedJournalIds || []).includes(j.id) || (j.appliedProductIds || []).some(isMatchingProduct);
+
+              // Story blocks with pins
+              (j.contentBlocks || []).forEach((b: any, bIdx: number) => {
+                const blockImg = b.value || b.url || b.src || b.image;
+                if (blockImg) {
+                  const hasPin = b.hotspots && b.hotspots.some(isMatchingProduct);
+                  if (hasPin) {
+                    const normUrl = normalizeMediaUrl(blockImg);
+                    if (!seenImages.has(normUrl)) {
+                      seenImages.add(normUrl);
+                      shots.push({
+                        id: `${j.id}-block-${b.id || bIdx}`,
+                        sourceType: 'journal',
+                        sourceId: j.id,
+                        sourceTitle: j.title,
+                        image: blockImg,
+                        title: b.title || j.title,
+                        description: b.caption || j.description,
+                        hotspots: b.hotspots || []
                       });
                     }
                   }
                 }
               });
-            }
+
+              // Journal main image if it has pin
+              const journalCover = j.image || (j.contentBlocks || []).find((b: any) => b.type === 'image')?.value;
+              if (journalCover) {
+                const hasPin = j.hotspots && j.hotspots.some(isMatchingProduct);
+                if (hasPin) {
+                  const normUrl = normalizeMediaUrl(journalCover);
+                  if (!seenImages.has(normUrl)) {
+                    seenImages.add(normUrl);
+                    shots.push({
+                      id: `${j.id}-main`,
+                      sourceType: 'journal',
+                      sourceId: j.id,
+                      sourceTitle: j.title,
+                      image: journalCover,
+                      title: j.title,
+                      description: j.description,
+                      hotspots: j.hotspots || []
+                    });
+                  }
+                }
+              }
+
+              if (isJournalLinked && shots.filter(shot => shot.sourceId === j.id).length === 0) {
+                (j.contentBlocks || []).forEach((b: any, bIdx: number) => {
+                  const blockImg = b.value || b.url || b.src || b.image;
+                  if (blockImg && !prodImagesNorm.includes(normalizeMediaUrl(blockImg))) {
+                    const normUrl = normalizeMediaUrl(blockImg);
+                    if (!seenImages.has(normUrl)) {
+                      seenImages.add(normUrl);
+                      shots.push({
+                        id: `${j.id}-block-${b.id || bIdx}`,
+                        sourceType: 'journal',
+                        sourceId: j.id,
+                        sourceTitle: j.title,
+                        image: blockImg,
+                        title: b.title || j.title,
+                        description: b.caption || j.description,
+                        hotspots: b.hotspots || j.hotspots || []
+                      });
+                    }
+                  }
+                });
+              }
+            });
 
             setSpatialLookbookShots(shots);
             setActiveLookbookIdx(0);
