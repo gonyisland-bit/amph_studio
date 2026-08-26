@@ -712,8 +712,32 @@ export default function Admin() {
     const parseItem = (item: any, defaultGroup: 'body' | 'fabric'): ColorOption | null => {
       if (!item) return null;
       if (typeof item === 'string') {
-        const hex = resolveColorHex(item);
-        return { name: item, hex, group: defaultGroup };
+        const trimmed = item.trim();
+        if (!trimmed) return null;
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          try {
+            const parsedObj = JSON.parse(trimmed);
+            if (Array.isArray(parsedObj)) {
+              parsedObj.forEach(sub => {
+                const subParsed = parseItem(sub, defaultGroup);
+                if (subParsed) {
+                  if (subParsed.group === 'fabric') {
+                    if (!fabricList.some(x => x.name.toLowerCase() === subParsed.name.toLowerCase())) fabricList.push(subParsed);
+                  } else {
+                    if (!bodyList.some(x => x.name.toLowerCase() === subParsed.name.toLowerCase())) bodyList.push(subParsed);
+                  }
+                }
+              });
+              return null;
+            } else if (typeof parsedObj === 'object' && parsedObj.name) {
+              const hex = resolveColorHex(parsedObj.name, parsedObj.hex);
+              const group = parsedObj.group === 'fabric' || parsedObj.group === 'upholstery' ? 'fabric' : (parsedObj.group || defaultGroup);
+              return { name: parsedObj.name, hex, group };
+            }
+          } catch(e) {}
+        }
+        const hex = resolveColorHex(trimmed);
+        return { name: trimmed, hex, group: defaultGroup };
       }
       if (typeof item === 'object' && item.name) {
         const hex = resolveColorHex(item.name, item.hex);
@@ -723,8 +747,12 @@ export default function Admin() {
       return null;
     };
 
-    if (prod.bodyColors && Array.isArray(prod.bodyColors)) {
-      prod.bodyColors.forEach((b: any) => {
+    let rawBody = prod.bodyColors;
+    if (typeof rawBody === 'string' && rawBody.trim().startsWith('[')) {
+      try { rawBody = JSON.parse(rawBody); } catch(e) {}
+    }
+    if (rawBody && Array.isArray(rawBody)) {
+      rawBody.forEach((b: any) => {
         const parsed = parseItem(b, 'body');
         if (parsed && !bodyList.some(x => x.name.toLowerCase() === parsed.name.toLowerCase())) {
           bodyList.push(parsed);
@@ -732,7 +760,10 @@ export default function Admin() {
       });
     }
 
-    const rawFabric = prod.fabricColors || prod.upholsteryColors;
+    let rawFabric = prod.fabricColors || prod.upholsteryColors;
+    if (typeof rawFabric === 'string' && rawFabric.trim().startsWith('[')) {
+      try { rawFabric = JSON.parse(rawFabric); } catch(e) {}
+    }
     if (rawFabric && Array.isArray(rawFabric)) {
       rawFabric.forEach((f: any) => {
         const parsed = parseItem(f, 'fabric');
@@ -742,18 +773,28 @@ export default function Admin() {
       });
     }
 
-    // Only fallback to legacy prod.color if neither bodyColors nor fabricColors were defined on prod
-    if (prod.bodyColors === undefined && prod.fabricColors === undefined && prod.color && Array.isArray(prod.color)) {
-      prod.color.forEach((c: any) => {
-        const parsed = parseItem(c, 'body');
-        if (parsed) {
-          if (parsed.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === parsed.name.toLowerCase())) {
-            bodyList.push(parsed);
-          } else if (parsed.group === 'fabric' && !fabricList.some(f => f.name.toLowerCase() === parsed.name.toLowerCase())) {
-            fabricList.push(parsed);
-          }
+    // Only fallback to legacy prod.color if neither bodyColors nor fabricColors were defined/populated
+    if (bodyList.length === 0 && fabricList.length === 0 && prod.color) {
+      let rawColor = prod.color;
+      if (typeof rawColor === 'string') {
+        if (rawColor.trim().startsWith('[')) {
+          try { rawColor = JSON.parse(rawColor); } catch(e) {}
+        } else {
+          rawColor = rawColor.split(',').map((s: string) => s.trim()).filter(Boolean);
         }
-      });
+      }
+      if (Array.isArray(rawColor)) {
+        rawColor.forEach((c: any) => {
+          const parsed = parseItem(c, 'body');
+          if (parsed) {
+            if (parsed.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === parsed.name.toLowerCase())) {
+              bodyList.push(parsed);
+            } else if (parsed.group === 'fabric' && !fabricList.some(f => f.name.toLowerCase() === parsed.name.toLowerCase())) {
+              fabricList.push(parsed);
+            }
+          }
+        });
+      }
     }
 
     return {
@@ -767,45 +808,8 @@ export default function Admin() {
 
   useEffect(() => {
     if (activeTab === 'collection' && form) {
-      const bodyList: ColorOption[] = [];
-      const fabricList: ColorOption[] = [];
-
-      if (form.bodyColors && Array.isArray(form.bodyColors)) {
-        form.bodyColors.forEach((b: any) => {
-          const name = typeof b === 'string' ? b : b?.name;
-          const hex = resolveColorHex(name || '', typeof b === 'object' ? b?.hex : undefined);
-          if (name && !bodyList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-            bodyList.push({ name, hex, group: 'body' });
-          }
-        });
-      }
-
-      const rawFabric = form.fabricColors || form.upholsteryColors;
-      if (rawFabric && Array.isArray(rawFabric)) {
-        rawFabric.forEach((f: any) => {
-          const name = typeof f === 'string' ? f : f?.name;
-          const hex = resolveColorHex(name || '', typeof f === 'object' ? f?.hex : undefined);
-          if (name && !fabricList.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-            fabricList.push({ name, hex, group: 'fabric' });
-          }
-        });
-      }
-
-      // Legacy fallback parsing into colorOptions list ONLY if bodyColors and fabricColors were undefined
-      if (form.bodyColors === undefined && form.fabricColors === undefined && form.color && Array.isArray(form.color)) {
-        form.color.forEach((c: any) => {
-          if (c && c.name) {
-            const hex = resolveColorHex(c.name, c.hex);
-            if (c.group === 'body' && !bodyList.some(b => b.name.toLowerCase() === c.name.toLowerCase())) {
-              bodyList.push({ ...c, hex, group: 'body' });
-            } else if ((c.group === 'fabric' || c.group === 'upholstery') && !fabricList.some(f => f.name.toLowerCase() === c.name.toLowerCase())) {
-              fabricList.push({ ...c, hex, group: 'fabric' });
-            }
-          }
-        });
-      }
-
-      setColorOptions([...bodyList, ...fabricList]);
+      const normalized = normalizeProductColors(form);
+      setColorOptions([...(normalized.bodyColors || []), ...(normalized.fabricColors || [])]);
     } else {
       setColorOptions([]);
     }
@@ -813,8 +817,9 @@ export default function Admin() {
 
   // Toggle Swatch for currently Active Target Slot (Body vs Fabric)
   const handleToggleColorForTarget = (asset: { name: string; hex: string }) => {
-    const currentBodyList: ColorOption[] = Array.isArray(form?.bodyColors) ? [...form.bodyColors] : [];
-    const currentFabricList: ColorOption[] = Array.isArray(form?.fabricColors) ? [...form.fabricColors] : [];
+    const norm = normalizeProductColors(form || {});
+    const currentBodyList: ColorOption[] = Array.isArray(norm?.bodyColors) ? [...norm.bodyColors] : [];
+    const currentFabricList: ColorOption[] = Array.isArray(norm?.fabricColors) ? [...norm.fabricColors] : [];
 
     const isBody = activeColorTarget === 'body';
     const targetList = isBody ? currentBodyList : currentFabricList;
@@ -1144,15 +1149,34 @@ export default function Admin() {
         const cleanedBlocks = (form.contentBlocks || [])
           .filter((b: any) => b && typeof b.value === 'string' && b.value.trim().length > 0)
           .map((b: any, idx: number) => ({ ...b, id: b.id || `block-${idx}` }));
-        const currentBody = Array.isArray(form.bodyColors) ? form.bodyColors : [];
-        const currentFabric = Array.isArray(form.fabricColors) ? form.fabricColors : [];
+        const norm = normalizeProductColors(form);
+        const currentBody = Array.isArray(norm.bodyColors) ? norm.bodyColors : [];
+        const currentFabric = Array.isArray(norm.fabricColors) ? norm.fabricColors : [];
+
+        // Clean each color object to ensure proper { name, hex, group } structure without cyclic/corrupt properties
+        const cleanColorList = (list: any[], defaultGroup: 'body' | 'fabric'): ColorOption[] => {
+          const result: ColorOption[] = [];
+          list.forEach((c: any) => {
+            const name = typeof c === 'string' ? c.trim() : (c?.name || '').trim();
+            if (name && !result.some(x => x.name.toLowerCase() === name.toLowerCase())) {
+              const hex = resolveColorHex(name, typeof c === 'object' ? c?.hex : undefined);
+              const group = typeof c === 'object' && (c?.group === 'fabric' || c?.group === 'body') ? c.group : defaultGroup;
+              result.push({ name, hex, group });
+            }
+          });
+          return result;
+        };
+
+        const cleanBodyColors = cleanColorList(currentBody, 'body');
+        const cleanFabricColors = cleanColorList(currentFabric, 'fabric');
+
         const cleanedForm = { 
           ...form, 
           images: cleanedImages, 
           contentBlocks: cleanedBlocks,
-          bodyColors: currentBody, 
-          fabricColors: currentFabric,
-          color: [...currentBody, ...currentFabric]
+          bodyColors: cleanBodyColors, 
+          fabricColors: cleanFabricColors,
+          color: [...cleanBodyColors, ...cleanFabricColors]
         };
         if (editingId) {
           await updateProduct(editingId, cleanedForm);
@@ -1172,7 +1196,7 @@ export default function Admin() {
           await updateHomeSettings(updatedSettings);
         }
 
-        // Bi-directional cross-save with Promise.all (초고속 병렬 비동기 처리)
+        // Bi-directional cross-save with Promise.allSettled (안전한 비동기 동기화)
         const prodId = savedData.id;
         const currentSpaceIds: string[] = cleanedForm.relatedSpaceIds || [];
         const currentJournalIds: string[] = cleanedForm.relatedJournalIds || [];
@@ -1220,7 +1244,11 @@ export default function Admin() {
         }
 
         if (syncPromises.length > 0) {
-          await Promise.all(syncPromises);
+          try {
+            await Promise.allSettled(syncPromises);
+          } catch (syncErr) {
+            console.warn("Cross-sync warning:", syncErr);
+          }
         }
       } else if (activeTab === 'journal') {
         const cleanedBlocks = (form.contentBlocks || [])

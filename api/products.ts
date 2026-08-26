@@ -37,6 +37,9 @@ export default async function handler(req: any, res: any) {
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "relatedJournalIds" TEXT DEFAULT '[]'`; } catch(e) {}
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "bodyColors" TEXT DEFAULT '[]'`; } catch(e) {}
     try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "fabricColors" TEXT DEFAULT '[]'`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "lookbookTitle" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "lookbookSubtitle" TEXT DEFAULT ''`; } catch(e) {}
+    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "lookbookEnabled" BOOLEAN DEFAULT TRUE`; } catch(e) {}
   } catch (e) {}
 
   if (req.method === 'GET') {
@@ -57,13 +60,16 @@ export default async function handler(req: any, res: any) {
           hoverImages: typeof r.hoverImages === 'string' ? JSON.parse(r.hoverImages) : (r.hoverImages || []),
           contentBlocks: typeof r.contentBlocks === 'string' ? JSON.parse(r.contentBlocks) : (r.contentBlocks || []),
           color: colorParsed,
-          bodyColors: typeof r.bodyColors === 'string' ? JSON.parse(r.bodyColors) : (r.bodyColors || []),
-          fabricColors: typeof r.fabricColors === 'string' ? JSON.parse(r.fabricColors) : (r.fabricColors || []),
+          bodyColors: typeof r.bodyColors === 'string' ? (() => { try { return JSON.parse(r.bodyColors); } catch(e) { return []; } })() : (r.bodyColors || []),
+          fabricColors: typeof r.fabricColors === 'string' ? (() => { try { return JSON.parse(r.fabricColors); } catch(e) { return []; } })() : (r.fabricColors || []),
           cartEnabled: r.cartEnabled !== false,
           portraitImages: typeof r.portraitImages === 'string' ? JSON.parse(r.portraitImages) : (r.portraitImages || []),
           relatedProductIds: typeof r.relatedProductIds === 'string' ? JSON.parse(r.relatedProductIds) : (r.relatedProductIds || []),
           relatedSpaceIds: typeof r.relatedSpaceIds === 'string' ? JSON.parse(r.relatedSpaceIds) : (r.relatedSpaceIds || []),
-          relatedJournalIds: typeof r.relatedJournalIds === 'string' ? JSON.parse(r.relatedJournalIds) : (r.relatedJournalIds || [])
+          relatedJournalIds: typeof r.relatedJournalIds === 'string' ? JSON.parse(r.relatedJournalIds) : (r.relatedJournalIds || []),
+          lookbookTitle: r.lookbookTitle || '',
+          lookbookSubtitle: r.lookbookSubtitle || '',
+          lookbookEnabled: r.lookbookEnabled !== false
         };
       });
       return res.status(200).json(parsedRows);
@@ -98,10 +104,13 @@ export default async function handler(req: any, res: any) {
       const relatedProductIds = Array.isArray(b.relatedProductIds) ? b.relatedProductIds : [];
       const relatedSpaceIds = Array.isArray(b.relatedSpaceIds) ? b.relatedSpaceIds : [];
       const relatedJournalIds = Array.isArray(b.relatedJournalIds) ? b.relatedJournalIds : [];
+      const lookbookTitle = b.lookbookTitle || '';
+      const lookbookSubtitle = b.lookbookSubtitle || '';
+      const lookbookEnabled = b.lookbookEnabled !== false;
 
       await sql`
         INSERT INTO products (
-          id, name, category, description, "subTitle", material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color, "bodyColors", "fabricColors", "cartEnabled", "portraitImages", "relatedProductIds", "relatedSpaceIds", "relatedJournalIds"
+          id, name, category, description, "subTitle", material, price, images, "hoverImages", "contentBlocks", "isFeatured", dimensions, shipping, sku, color, "bodyColors", "fabricColors", "cartEnabled", "portraitImages", "relatedProductIds", "relatedSpaceIds", "relatedJournalIds", "lookbookTitle", "lookbookSubtitle", "lookbookEnabled"
         ) VALUES (
           ${newId}, ${name}, ${category}, ${description}, ${subTitle}, ${material}, ${price}, 
           ${JSON.stringify(images)}, 
@@ -118,7 +127,10 @@ export default async function handler(req: any, res: any) {
           ${JSON.stringify(portraitImages)},
           ${JSON.stringify(relatedProductIds)},
           ${JSON.stringify(relatedSpaceIds)},
-          ${JSON.stringify(relatedJournalIds)}
+          ${JSON.stringify(relatedJournalIds)},
+          ${lookbookTitle},
+          ${lookbookSubtitle},
+          ${lookbookEnabled}
         )
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
@@ -141,7 +153,10 @@ export default async function handler(req: any, res: any) {
           "portraitImages" = EXCLUDED."portraitImages",
           "relatedProductIds" = EXCLUDED."relatedProductIds",
           "relatedSpaceIds" = EXCLUDED."relatedSpaceIds",
-          "relatedJournalIds" = EXCLUDED."relatedJournalIds"
+          "relatedJournalIds" = EXCLUDED."relatedJournalIds",
+          "lookbookTitle" = EXCLUDED."lookbookTitle",
+          "lookbookSubtitle" = EXCLUDED."lookbookSubtitle",
+          "lookbookEnabled" = EXCLUDED."lookbookEnabled"
       `;
       return res.status(201).json({ success: true, id: newId });
     } catch (error) {
@@ -175,6 +190,9 @@ export default async function handler(req: any, res: any) {
       const relatedProductIds = Array.isArray(b.relatedProductIds) ? b.relatedProductIds : [];
       const relatedSpaceIds = Array.isArray(b.relatedSpaceIds) ? b.relatedSpaceIds : [];
       const relatedJournalIds = Array.isArray(b.relatedJournalIds) ? b.relatedJournalIds : [];
+      const lookbookTitle = b.lookbookTitle || '';
+      const lookbookSubtitle = b.lookbookSubtitle || '';
+      const lookbookEnabled = b.lookbookEnabled !== false;
 
       await sql`
         UPDATE products SET 
@@ -198,7 +216,10 @@ export default async function handler(req: any, res: any) {
           "portraitImages" = ${JSON.stringify(portraitImages)},
           "relatedProductIds" = ${JSON.stringify(relatedProductIds)},
           "relatedSpaceIds" = ${JSON.stringify(relatedSpaceIds)},
-          "relatedJournalIds" = ${JSON.stringify(relatedJournalIds)}
+          "relatedJournalIds" = ${JSON.stringify(relatedJournalIds)},
+          "lookbookTitle" = ${lookbookTitle},
+          "lookbookSubtitle" = ${lookbookSubtitle},
+          "lookbookEnabled" = ${lookbookEnabled}
         WHERE id = ${id}
       `;
       return res.status(200).json({ success: true, id });
