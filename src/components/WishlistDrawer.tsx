@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { getProducts, Product } from "../lib/data";
 import { useWishlist } from "../lib/wishlist";
 import { MediaRenderer } from "./MediaRenderer";
-import { X, Bookmark, ArrowRight, ShoppingBag, Trash2, Check } from "lucide-react";
+import { X, Bookmark, ArrowRight, ShoppingBag, Trash2, Check, Share2, Copy } from "lucide-react";
 
 interface WishlistDrawerProps {
   isOpen: boolean;
@@ -14,6 +14,8 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
   const { wishlist, toggle, clear } = useWishlist();
   const [products, setProducts] = useState<Product[]>([]);
   const [addedIds, setAddedIds] = useState<Record<string, boolean>>({});
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
+  const [allAdded, setAllAdded] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -35,6 +37,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
   if (!isOpen) return null;
 
   const savedProducts = products.filter(p => wishlist.includes(p.id));
+  const estimatedTotal = savedProducts.reduce((acc, p) => acc + (Number(p.price) || 0), 0);
 
   const addProductToCart = (product: Product) => {
     const cartStr = localStorage.getItem("cart") || "[]";
@@ -90,7 +93,24 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
     savedProducts.forEach(product => {
       addProductToCart(product);
     });
-    clear();
+    setAllAdded(true);
+    setTimeout(() => {
+      setAllAdded(false);
+      clear();
+    }, 1200);
+  };
+
+  const handleShareWishlist = () => {
+    if (savedProducts.length === 0) return;
+    const ids = savedProducts.map(p => p.id).join(',');
+    const shareUrl = `${window.location.origin}/collection?wishlist=${encodeURIComponent(ids)}`;
+    
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        setCopiedShareLink(true);
+        setTimeout(() => setCopiedShareLink(false), 2500);
+      });
+    }
   };
 
   return (
@@ -111,14 +131,36 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
               Saved Objects ({savedProducts.length})
             </h2>
           </div>
-          <button 
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-ink/50 hover:text-ink hover:bg-black/5 transition-colors rounded-none cursor-pointer"
-            aria-label="Close saved drawer"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            {savedProducts.length > 0 && (
+              <button
+                type="button"
+                onClick={handleShareWishlist}
+                className="p-1.5 text-ink/60 hover:text-cobalt hover:bg-black/5 transition-colors rounded-none cursor-pointer flex items-center gap-1 text-[9px] uppercase font-mono font-bold"
+                title="Share Wishlist Link"
+              >
+                {copiedShareLink ? (
+                  <>
+                    <Check size={13} className="text-emerald-600" />
+                    <span className="text-emerald-600">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 size={13} />
+                    <span>Share</span>
+                  </>
+                )}
+              </button>
+            )}
+            <button 
+              type="button"
+              onClick={onClose}
+              className="p-1.5 text-ink/50 hover:text-ink hover:bg-black/5 transition-colors rounded-none cursor-pointer"
+              aria-label="Close saved drawer"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Content Area */}
@@ -214,24 +256,61 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
           )}
         </div>
 
-        {/* Footer Actions */}
+        {/* Footer Actions & Summary */}
         {savedProducts.length > 0 && (
-          <div className="p-6 md:p-8 bg-white border-t border-black/10 space-y-3">
-            <button
-              type="button"
-              onClick={handleMoveAllToBag}
-              className="w-full bg-cobalt text-white py-3.5 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-ink transition-colors flex items-center justify-center gap-2 rounded-none shadow-md cursor-pointer"
-            >
-              <ShoppingBag size={14} />
-              <span>Move All to Bag ({savedProducts.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={clear}
-              className="w-full text-center text-[9px] font-black uppercase tracking-widest text-ink/40 hover:text-orange transition-colors cursor-pointer py-1"
-            >
-              Clear Saved Archive
-            </button>
+          <div className="p-6 md:p-8 bg-white border-t border-black/10 space-y-4">
+            {/* Estimated Total Summary */}
+            <div className="flex items-center justify-between pb-2 border-b border-black/5">
+              <span className="text-[10px] uppercase font-bold tracking-widest text-ink/50 font-mono">
+                Estimated Total ({savedProducts.length} items)
+              </span>
+              <span className="text-sm font-black font-mono text-ink">
+                ${estimatedTotal.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleMoveAllToBag}
+                disabled={allAdded}
+                className={`w-full py-3.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 rounded-none shadow-md cursor-pointer ${
+                  allAdded
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-cobalt text-white hover:bg-ink'
+                }`}
+              >
+                {allAdded ? (
+                  <>
+                    <Check size={14} />
+                    <span>All Items Added to Bag!</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag size={14} />
+                    <span>Add All to Bag ({savedProducts.length})</span>
+                  </>
+                )}
+              </button>
+              
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={handleShareWishlist}
+                  className="text-[9px] font-bold uppercase tracking-wider text-ink/60 hover:text-cobalt transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Share2 size={11} />
+                  <span>{copiedShareLink ? 'Share Link Copied!' : 'Share Wishlist'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={clear}
+                  className="text-[9px] font-bold uppercase tracking-wider text-ink/40 hover:text-orange transition-colors cursor-pointer"
+                >
+                  Clear Archive
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

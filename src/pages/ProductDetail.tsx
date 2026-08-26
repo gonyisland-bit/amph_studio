@@ -1,19 +1,35 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getProductById, getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, ColorOption, generateProductCode } from "../lib/data";
+import { getProductById, getProducts, getSpaces, getJournals, Product, SpaceModel, JournalArticle, ColorOption, generateProductCode, HotspotPin } from "../lib/data";
 import { resolveColorHex } from "../lib/colorUtils";
 import { useWishlist } from "../lib/wishlist";
-import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight, Bookmark } from "lucide-react";
+import { MoveRight, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ArrowUpRight, Bookmark, Sparkles, Copy, Check } from "lucide-react";
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
+import { ImageHotspots } from "../components/ImageHotspots";
 import { useScrollReveal } from "../lib/useScrollReveal";
 import { ReadingProgressBar } from "../components/ReadingProgressBar";
+
+export interface SpatialLookbookShot {
+  id: string;
+  sourceType: 'space' | 'journal';
+  sourceId: string;
+  sourceTitle: string;
+  image: string;
+  title: string;
+  description?: string;
+  hotspots: HotspotPin[];
+}
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [linkedSpaces, setLinkedSpaces] = useState<SpaceModel[]>([]);
   const [linkedJournals, setLinkedJournals] = useState<JournalArticle[]>([]);
+  const [spatialLookbookShots, setSpatialLookbookShots] = useState<SpatialLookbookShot[]>([]);
+  const [activeLookbookIdx, setActiveLookbookIdx] = useState(0);
+  const [copiedSpecs, setCopiedSpecs] = useState(false);
   const [isAuth, setIsAuth] = useState(localStorage.getItem('admin_auth') === 'true');
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedMaterial, setSelectedMaterial] = useState("");
@@ -82,8 +98,25 @@ export default function ProductDetail() {
     localStorage.setItem('cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cart_change'));
     
-    setToastMessage("Added to Cart");
-    setTimeout(() => setToastMessage(null), 2000);
+    setToastMessage(`Added "${product.name}" to cart`);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
+
+  const handleCopySpecs = () => {
+    if (!product) return;
+    const colorText = product.color 
+      ? (Array.isArray(product.color) ? product.color.map(c => c.name).join(', ') : product.color)
+      : '-';
+    const specText = `[AMPH STUDIO OBJECT SPECIFICATION]\nName: ${product.name} ${product.subTitle ? `(${product.subTitle})` : ''}\nCategory: ${product.category}\nDimensions: ${product.dimensions || 'Standard Dimensions'}\nMaterial: ${product.material || 'Standard'}\nColors: ${colorText}\nProduct Code: ${product.sku || generateProductCode(product.category, product.name)}\nShipping: ${getFormattedShipping(product.shipping)}\nURL: ${window.location.href}`;
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(specText).then(() => {
+        setCopiedSpecs(true);
+        setTimeout(() => setCopiedSpecs(false), 2500);
+      });
+    }
   };
 
   // Grid orientation detection
@@ -202,6 +235,7 @@ export default function ProductDetail() {
               !sameCategory.some(c => c.id === prod.id)
             );
 
+            setAllProducts(allProds);
             setRecommendations([...related, ...featured, ...sameCategory, ...others]);
           });
 
@@ -221,6 +255,106 @@ export default function ProductDetail() {
               (j.appliedProductIds || j.relatedJournalIds || []).includes(p.id)
             );
             setLinkedJournals(matches);
+          });
+
+          // Collect all spatial lookbook shots containing this product
+          Promise.all([getSpaces(), getJournals()]).then(([allSpaces, allJournals]) => {
+            const shots: SpatialLookbookShot[] = [];
+            const shotKeys = new Set<string>();
+
+            // 1. From Spaces
+            allSpaces.forEach(s => {
+              const isApplied = (s.appliedProductIds || []).includes(p.id) || (p.relatedSpaceIds || []).includes(s.id);
+              
+              // Story blocks with pins
+              (s.contentBlocks || []).forEach((b: any, bIdx: number) => {
+                if (b.type === 'image' && b.value && b.hotspots && b.hotspots.length > 0) {
+                  const hasProductPin = b.hotspots.some((h: any) => h.productId === p.id);
+                  if (hasProductPin || (isApplied && shots.filter(shot => shot.sourceId === s.id).length === 0)) {
+                    const shotKey = `${s.id}-block-${bIdx}`;
+                    if (!shotKeys.has(shotKey)) {
+                      shotKeys.add(shotKey);
+                      shots.push({
+                        id: shotKey,
+                        sourceType: 'space',
+                        sourceId: s.id,
+                        sourceTitle: s.title,
+                        image: b.value,
+                        title: b.title || s.title,
+                        description: b.caption || s.description,
+                        hotspots: b.hotspots
+                      });
+                    }
+                  }
+                }
+              });
+
+              // Space main image if it has hotspots or space is applied
+              if (s.image && ((s.hotspots && s.hotspots.some(h => h.productId === p.id)) || (isApplied && shots.filter(shot => shot.sourceId === s.id).length === 0))) {
+                const shotKey = `${s.id}-main`;
+                if (!shotKeys.has(shotKey)) {
+                  shotKeys.add(shotKey);
+                  shots.push({
+                    id: shotKey,
+                    sourceType: 'space',
+                    sourceId: s.id,
+                    sourceTitle: s.title,
+                    image: s.image,
+                    title: s.title,
+                    description: s.description,
+                    hotspots: s.hotspots || []
+                  });
+                }
+              }
+            });
+
+            // 2. From Journals
+            allJournals.forEach(j => {
+              const isApplied = (j.appliedProductIds || []).includes(p.id) || (p.relatedJournalIds || []).includes(j.id);
+              
+              // Story blocks with pins
+              (j.contentBlocks || []).forEach((b: any, bIdx: number) => {
+                if (b.type === 'image' && b.value && b.hotspots && b.hotspots.length > 0) {
+                  const hasProductPin = b.hotspots.some((h: any) => h.productId === p.id);
+                  if (hasProductPin || (isApplied && shots.filter(shot => shot.sourceId === j.id).length === 0)) {
+                    const shotKey = `${j.id}-block-${bIdx}`;
+                    if (!shotKeys.has(shotKey)) {
+                      shotKeys.add(shotKey);
+                      shots.push({
+                        id: shotKey,
+                        sourceType: 'journal',
+                        sourceId: j.id,
+                        sourceTitle: j.title,
+                        image: b.value,
+                        title: b.title || j.title,
+                        description: b.caption || j.description,
+                        hotspots: b.hotspots
+                      });
+                    }
+                  }
+                }
+              });
+
+              if (j.image && ((j.hotspots && j.hotspots.some(h => h.productId === p.id)) || (isApplied && shots.filter(shot => shot.sourceId === j.id).length === 0))) {
+                const shotKey = `${j.id}-main`;
+                if (!shotKeys.has(shotKey)) {
+                  shotKeys.add(shotKey);
+                  shots.push({
+                    id: shotKey,
+                    sourceType: 'journal',
+                    sourceId: j.id,
+                    sourceTitle: j.title,
+                    image: j.image,
+                    title: j.title,
+                    description: j.description,
+                    hotspots: j.hotspots || []
+                  });
+                }
+              }
+            });
+
+            setSpatialLookbookShots(shots);
+            setActiveLookbookIdx(0);
           });
         }
       });
@@ -544,7 +678,24 @@ export default function ProductDetail() {
           <div className="md:sticky md:top-28 h-fit">
             <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-orange mb-2 block">{product.category}</span>
             <h2 className="text-3xl md:text-4xl font-medium uppercase tracking-tighter mb-2 text-ink font-sans leading-tight">{product.name}</h2>
-            <p className="text-xs text-ink/40 tracking-wider mb-8 font-sans uppercase font-normal">{product.subTitle}</p>
+            <p className="text-xs text-ink/40 tracking-wider mb-4 font-sans uppercase font-normal">{product.subTitle}</p>
+            
+            {/* Spatial Lookbook Shortcut Badge */}
+            {spatialLookbookShots.length > 0 && (
+              <div className="mb-8">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('spatial-lookbook-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-cobalt/10 hover:bg-cobalt hover:text-white text-cobalt border border-cobalt/25 transition-all text-[9px] font-black uppercase tracking-wider rounded-none cursor-pointer group"
+                >
+                  <Sparkles size={11} className="text-cobalt group-hover:text-white shrink-0" />
+                  <span>Styled in {spatialLookbookShots.length} Architectural {spatialLookbookShots.length === 1 ? 'Lookbook' : 'Lookbooks'} ↓</span>
+                </button>
+              </div>
+            )}
             
             <span className="caption-nano text-cobalt mb-3 block font-black">Product Overview</span>
             <p className="text-sm md:text-base leading-relaxed mb-10 text-ink/80 font-sans font-normal reveal">{product.description}</p>
@@ -732,6 +883,28 @@ export default function ProductDetail() {
                   </tr>
                 </tbody>
               </table>
+
+              {/* Quick Spec Sheet Copy Action */}
+              <div className="flex justify-end pt-3">
+                <button
+                  type="button"
+                  onClick={handleCopySpecs}
+                  className="text-[9px] font-bold uppercase font-mono tracking-wider text-ink/50 hover:text-cobalt flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Copy formatted object specifications"
+                >
+                  {copiedSpecs ? (
+                    <>
+                      <Check size={12} className="text-emerald-600" />
+                      <span className="text-emerald-600 font-bold">Specs Copied to Clipboard!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={12} />
+                      <span>Copy Full Spec Sheet</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
             
             {/* Purchase CTA & Wishlist Bookmark */}
@@ -842,6 +1015,95 @@ export default function ProductDetail() {
 
                 return null;
               })}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Spatial Lookbook Showcase (Home-like Interactive Hotspot Pins & Architectural Context) */}
+      {spatialLookbookShots.length > 0 && (() => {
+        const safeIdx = Math.min(Math.max(0, activeLookbookIdx), spatialLookbookShots.length - 1);
+        const activeShot = spatialLookbookShots[safeIdx] || spatialLookbookShots[0];
+        
+        return (
+          <div id="spatial-lookbook-section" className="w-full bg-black text-white py-16 md:py-24 border-t border-black/10 reveal relative overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 space-y-6">
+              {/* Header & Lookbook Switcher */}
+              <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/15 pb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Sparkles size={13} className="text-cobalt" />
+                    <span className="text-[10px] uppercase font-black tracking-[0.25em] text-cobalt font-mono">
+                      SPATIAL CONTEXT // {activeShot.sourceType.toUpperCase()}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-bold uppercase tracking-tight font-sans">
+                    Seen in Architectural Context
+                  </h3>
+                  <p className="text-xs font-serif italic text-white/60 mt-1 max-w-xl">
+                    Discover how the {product.name} is curated and styled in real architectural space. Hover or tap the interactive pins to preview objects.
+                  </p>
+                </div>
+
+                {/* Switcher & Counter (If multiple shots) */}
+                <div className="flex items-center gap-4">
+                  {spatialLookbookShots.length > 1 && (
+                    <div className="flex items-center gap-3 bg-white/10 px-3 py-1.5 border border-white/15">
+                      <button
+                        type="button"
+                        onClick={() => setActiveLookbookIdx(prev => Math.max(0, prev - 1))}
+                        disabled={safeIdx === 0}
+                        className="text-white/60 hover:text-white disabled:opacity-20 cursor-pointer"
+                        title="Previous Spatial Shot"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <span className="text-[10px] font-mono font-bold tracking-widest text-white/90">
+                        {String(safeIdx + 1).padStart(2, '0')} / {String(spatialLookbookShots.length).padStart(2, '0')}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveLookbookIdx(prev => Math.min(spatialLookbookShots.length - 1, prev + 1))}
+                        disabled={safeIdx === spatialLookbookShots.length - 1}
+                        className="text-white/60 hover:text-white disabled:opacity-20 cursor-pointer"
+                        title="Next Spatial Shot"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 16:9 Interactive Hotspot Showcase Container */}
+              <div 
+                key={`spatial-shot-${activeShot.id}-${safeIdx}`}
+                className="w-full aspect-[16/9] md:aspect-[16/9] max-h-[75vh] relative overflow-hidden bg-neutral-900 border border-white/10 animate-in fade-in duration-500 shadow-2xl"
+              >
+                <ImageHotspots 
+                  src={activeShot.image}
+                  alt={activeShot.title}
+                  hotspots={activeShot.hotspots}
+                  products={allProducts}
+                  className="w-full h-full"
+                  imageClassName="w-full h-full object-cover transition-opacity duration-700"
+                  loading="lazy"
+                />
+
+                {/* Floating Bottom Info & Full Space Link */}
+                <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 md:bottom-8 md:left-8 z-20">
+                  <span className="text-[9px] uppercase font-mono font-bold tracking-widest text-white/70 block mb-1.5 drop-shadow-sm">
+                    {activeShot.sourceType.toUpperCase()} // {activeShot.sourceTitle}
+                  </span>
+                  <Link
+                    to={activeShot.sourceType === 'space' ? `/space/${activeShot.sourceId}` : `/journal/${activeShot.sourceId}`}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white text-ink text-[9.5px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all rounded-none shadow-lg group/btn"
+                  >
+                    <span>Explore Full {activeShot.sourceType === 'space' ? 'Space' : 'Journal'}</span>
+                    <MoveRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         );

@@ -36,6 +36,8 @@ export default function Collection() {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search');
   const categoryQuery = searchParams.get('category');
+  const wishlistQuery = searchParams.get('wishlist');
+  const wishlistIds = React.useMemo(() => wishlistQuery ? wishlistQuery.split(',').filter(Boolean) : [], [wishlistQuery]);
 
   useEffect(() => {
     getProducts().then(setProducts);
@@ -161,6 +163,9 @@ export default function Collection() {
   }, [categoryQuery]);
 
   const filteredProducts = products.filter(p => {
+    // 0. Shared Wishlist filter (if url has ?wishlist=id1,id2)
+    if (wishlistIds.length > 0 && !wishlistIds.includes(p.id)) return false;
+
     // 1. Category filter
     const cat = (p.category as string) === 'Tables' ? 'Furniture' : p.category;
     const categoryMatches = activeCategory === 'All' || cat === activeCategory;
@@ -448,12 +453,45 @@ export default function Collection() {
               <X size={10} />
             </button>
           )}
-          <button
-            onClick={handleResetFilters}
-            className="text-[9px] uppercase font-bold text-ink/40 hover:text-orange ml-2 tracking-wider underline cursor-pointer"
-          >
-            Clear All
-          </button>
+          {activeFilterCount > 0 && (
+            <button
+              onClick={handleResetFilters}
+              className="text-[9px] font-mono text-ink/40 hover:text-orange underline uppercase tracking-wider ml-2"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Shared Wishlist Notification Banner (When ?wishlist=id1,id2 is active) */}
+      {wishlistIds.length > 0 && (
+        <div className="bg-cobalt/10 border-b border-cobalt/20 px-6 md:px-12 py-3 flex items-center justify-between flex-wrap gap-3 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <Bookmark size={14} className="text-cobalt fill-cobalt" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-cobalt">
+              Shared Wishlist Archive // Showing {filteredProducts.length} curated objects
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                wishlistIds.forEach(id => {
+                  if (!isSaved(id)) toggleWishlist(id);
+                });
+              }}
+              className="px-3 py-1 bg-cobalt text-white text-[9px] font-black uppercase tracking-wider hover:bg-ink transition-colors cursor-pointer"
+            >
+              + Save All to My Archive
+            </button>
+            <Link
+              to="/collection"
+              className="text-[9px] font-bold uppercase tracking-wider text-ink/50 hover:text-ink underline"
+            >
+              View Full Collection
+            </Link>
+          </div>
         </div>
       )}
 
