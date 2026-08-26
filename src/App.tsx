@@ -18,6 +18,7 @@ import Catalogue from "./pages/Catalogue";
 import Checkout from "./pages/Checkout";
 import { FloatingEditButton } from "./components/FloatingEditButton";
 import { MembersOnlyGate } from "./components/MembersOnlyGate";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 export default function App() {
   return (
@@ -28,21 +29,23 @@ export default function App() {
       <div className="flex flex-col min-h-screen bg-off-white text-ink font-sans selection:bg-cobalt selection:text-white antialiased w-full overflow-x-clip">
         <Navigation />
         <main className="flex-grow flex flex-col bg-off-white w-full min-h-screen">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/collection" element={<Collection />} />
-            <Route path="/catalogue" element={<Catalogue />} />
-            <Route path="/catalog" element={<Catalogue />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/journal" element={<Journal />} />
-            <Route path="/journal/:id" element={<JournalDetail />} />
-            <Route path="/space" element={<Space />} />
-            <Route path="/space/:id" element={<SpaceDetail />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/checkout" element={<Checkout />} />
-          </Routes>
+          <ErrorBoundary fallbackTitle="Page Load Error">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/collection" element={<Collection />} />
+              <Route path="/catalogue" element={<Catalogue />} />
+              <Route path="/catalog" element={<Catalogue />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/journal" element={<Journal />} />
+              <Route path="/journal/:id" element={<JournalDetail />} />
+              <Route path="/space" element={<Space />} />
+              <Route path="/space/:id" element={<SpaceDetail />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/checkout" element={<Checkout />} />
+            </Routes>
+          </ErrorBoundary>
         </main>
         <Footer />
         <ScrollToTopButton />

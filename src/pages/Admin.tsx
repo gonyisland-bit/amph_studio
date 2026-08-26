@@ -1008,11 +1008,11 @@ export default function Admin() {
       const found = products.find(p => p.id === editId);
       if (found) {
         const cloned = JSON.parse(JSON.stringify(found));
-        const autoSpaces = spaces.filter(s => s.appliedProductIds?.includes(found.id)).map(s => s.id);
-        const autoJournals = journals.filter(j => j.appliedProductIds?.includes(found.id)).map(j => j.id);
-        cloned.relatedSpaceIds = Array.from(new Set([...(cloned.relatedSpaceIds || []), ...autoSpaces]));
-        cloned.relatedJournalIds = Array.from(new Set([...(cloned.relatedJournalIds || []), ...autoJournals]));
-        const normalizedCloned = normalizeProductColors(cloned);
+        const autoSpaces = spaces.filter(s => Array.isArray(s.appliedProductIds) && s.appliedProductIds.includes(found.id)).map(s => s.id);
+        const autoJournals = journals.filter(j => Array.isArray(j.appliedProductIds) && j.appliedProductIds.includes(found.id)).map(j => j.id);
+        cloned.relatedSpaceIds = Array.from(new Set([...(Array.isArray(cloned.relatedSpaceIds) ? cloned.relatedSpaceIds : []), ...autoSpaces]));
+        cloned.relatedJournalIds = Array.from(new Set([...(Array.isArray(cloned.relatedJournalIds) ? cloned.relatedJournalIds : []), ...autoJournals]));
+        const normalizedCloned = normalizeFormItem(cloned, 'collection');
         setEditingId(found.id);
         setForm(normalizedCloned);
         setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
@@ -1022,18 +1022,20 @@ export default function Admin() {
       const found = spaces.find(s => s.id === editId);
       if (found) {
         const cloned = JSON.parse(JSON.stringify(found));
+        const normalizedCloned = normalizeFormItem(cloned, 'space');
         setEditingId(found.id);
-        setForm(cloned);
-        setOriginalForm(JSON.parse(JSON.stringify(cloned)));
+        setForm(normalizedCloned);
+        setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
         setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
       }
     } else if (targetTab === 'journal' && journals.length > 0) {
       const found = journals.find(j => j.id === editId);
       if (found) {
         const cloned = JSON.parse(JSON.stringify(found));
+        const normalizedCloned = normalizeFormItem(cloned, 'journal');
         setEditingId(found.id);
-        setForm(cloned);
-        setOriginalForm(JSON.parse(JSON.stringify(cloned)));
+        setForm(normalizedCloned);
+        setOriginalForm(JSON.parse(JSON.stringify(normalizedCloned)));
         setActiveSections({ basic: true, specs: true, options: true, media: true, story: true });
       }
     }
@@ -1075,32 +1077,6 @@ export default function Admin() {
     window.dispatchEvent(new Event('admin_auth_change'));
     navigate('/');
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center flex-grow bg-off-white font-sans p-6">
-        <div className="w-full max-w-md bg-white p-12 rounded-none shadow-xl border border-black/5">
-          <h1 className="text-3xl font-bold mb-8 tracking-tighter uppercase">Admin Access</h1>
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-[10px] font-bold uppercase text-ink/50 mb-2">Password</label>
-              <input 
-                type="password" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)}
-                className="w-full border-b-2 border-black/10 focus:border-cobalt outline-none py-3 text-xl transition-colors bg-transparent"
-                placeholder="••••••••"
-                autoFocus
-              />
-            </div>
-            <button type="submit" className="w-full bg-ink text-white py-4 rounded-none font-bold uppercase tracking-widest text-xs hover:bg-cobalt transition-colors">
-              Enter Dashboard
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   const handleReorder = async (type: 'collection' | 'space' | 'journal', id: string, direction: 'up' | 'down') => {
     let orderKey: 'globalProductOrder' | 'spaceOrder' | 'journalOrder';
@@ -1775,6 +1751,32 @@ export default function Admin() {
       </div>
     );
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center flex-grow bg-off-white font-sans p-6">
+        <div className="w-full max-w-md bg-white p-12 rounded-none shadow-xl border border-black/5">
+          <h1 className="text-3xl font-bold mb-8 tracking-tighter uppercase">Admin Access</h1>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-ink/50 mb-2">Password</label>
+              <input 
+                type="password" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)}
+                className="w-full border-b-2 border-black/10 focus:border-cobalt outline-none py-3 text-xl transition-colors bg-transparent"
+                placeholder="••••••••"
+                autoFocus
+              />
+            </div>
+            <button type="submit" className="w-full bg-ink text-white py-4 rounded-none font-bold uppercase tracking-widest text-xs hover:bg-cobalt transition-colors">
+              Enter Dashboard
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-grow px-3 py-4 sm:px-6 md:px-12 md:py-12 max-w-[1400px] mx-auto w-full font-sans min-w-0 overflow-x-hidden">
