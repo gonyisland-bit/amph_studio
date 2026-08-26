@@ -37,8 +37,11 @@ export default async function handler(req: any, res: any) {
       try {
         await sql.query(`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS "${col.name}" ${col.type}`);
       } catch (e) {
-        // Column might already exist or name might not need quotes, try without quotes if it fails
         try { await sql.query(`ALTER TABLE spaces ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`); } catch(e2) {}
+      }
+      if (col.name !== 'featured') {
+        try { await sql.query(`ALTER TABLE spaces ALTER COLUMN "${col.name}" TYPE TEXT`); } catch(e) {}
+        try { await sql.query(`ALTER TABLE spaces ALTER COLUMN ${col.name} TYPE TEXT`); } catch(e2) {}
       }
     }
   } catch (e) {}

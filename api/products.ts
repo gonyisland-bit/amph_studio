@@ -3,7 +3,7 @@ import { sql } from '@vercel/postgres';
 export default async function handler(req: any, res: any) {
   const { id } = req.query;
 
-  // Auto-setup
+  // Auto-setup & Schema Migration (Migrate all VARCHAR(255) columns to TEXT)
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS products (
@@ -25,21 +25,24 @@ export default async function handler(req: any, res: any) {
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "subTitle" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "dimensions" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "shipping" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "sku" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "color" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "cartEnabled" BOOLEAN DEFAULT TRUE`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "portraitImages" TEXT DEFAULT '[]'`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "relatedProductIds" TEXT DEFAULT '[]'`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "relatedSpaceIds" TEXT DEFAULT '[]'`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "relatedJournalIds" TEXT DEFAULT '[]'`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "bodyColors" TEXT DEFAULT '[]'`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "fabricColors" TEXT DEFAULT '[]'`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "lookbookTitle" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "lookbookSubtitle" TEXT DEFAULT ''`; } catch(e) {}
-    try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS "lookbookEnabled" BOOLEAN DEFAULT TRUE`; } catch(e) {}
+
+    const productCols = [
+      'subTitle', 'dimensions', 'shipping', 'sku', 'color', 'cartEnabled',
+      'portraitImages', 'relatedProductIds', 'relatedSpaceIds', 'relatedJournalIds',
+      'bodyColors', 'fabricColors', 'lookbookTitle', 'lookbookSubtitle', 'lookbookEnabled',
+      'name', 'category', 'description', 'material', 'images', 'hoverImages', 'contentBlocks'
+    ];
+
+    for (const col of productCols) {
+      if (col === 'cartEnabled' || col === 'lookbookEnabled') {
+        try { await sql.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS "${col}" BOOLEAN DEFAULT TRUE`); } catch(e) {}
+      } else {
+        try { await sql.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS "${col}" TEXT DEFAULT ''`); } catch(e) {}
+        // Explicitly alter existing column type to TEXT to eliminate VARCHAR(255) limit
+        try { await sql.query(`ALTER TABLE products ALTER COLUMN "${col}" TYPE TEXT`); } catch(e) {}
+        try { await sql.query(`ALTER TABLE products ALTER COLUMN ${col} TYPE TEXT`); } catch(e) {}
+      }
+    }
   } catch (e) {}
 
   if (req.method === 'GET') {

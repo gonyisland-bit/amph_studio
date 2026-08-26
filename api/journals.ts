@@ -34,6 +34,10 @@ export default async function handler(req: any, res: any) {
       } catch (e) {
         try { await sql.query(`ALTER TABLE journals ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`); } catch(e2) {}
       }
+      if (col.name !== 'featured') {
+        try { await sql.query(`ALTER TABLE journals ALTER COLUMN "${col.name}" TYPE TEXT`); } catch(e) {}
+        try { await sql.query(`ALTER TABLE journals ALTER COLUMN ${col.name} TYPE TEXT`); } catch(e2) {}
+      }
     }
   } catch (e) {}
 
