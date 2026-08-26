@@ -349,6 +349,8 @@ export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const [autoSavedTime, setAutoSavedTime] = useState<string | null>(null);
   
   const [activeTab, setActiveTab] = useState<'home'|'journal'|'space'|'collection'|'colorAssets'|'orders'|'users'>('collection');
   const [orderFilter, setOrderFilter] = useState<'active' | 'completed' | 'all'>('active');
@@ -926,16 +928,12 @@ export default function Admin() {
     setForm((prev: any) => ({ ...prev, color: updated }));
   };
 
-  const location = useLocation();
-
   useEffect(() => {
     const savedAuth = localStorage.getItem('admin_auth');
     if (savedAuth === 'true') setIsAuthenticated(true);
   }, []);
 
   // 60-second Auto-Save timer when form has unsaved changes
-  const [autoSavedTime, setAutoSavedTime] = useState<string | null>(null);
-
   useEffect(() => {
     if (!isDirty || !editingId || activeTab === 'home' || activeTab === 'orders' || activeTab === 'users') {
       return;
