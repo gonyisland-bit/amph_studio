@@ -180,16 +180,56 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (visibleItems.length === 0) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSearchSubmit();
+      }
+      return;
+    }
+
+    const isTwoCol = typeof window !== 'undefined' && window.innerWidth >= 640;
+    const step = isTwoCol ? 2 : 1;
+
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      if (visibleItems.length > 0) {
-        setSelectedIndex(prev => (prev + 1) % visibleItems.length);
-      }
+      setSelectedIndex(prev => {
+        if (prev === -1) return 0;
+        const next = prev + step;
+        if (next >= visibleItems.length) {
+          // If beyond bottom, wrap to top of same column or cycle
+          return prev % step;
+        }
+        return next;
+      });
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      if (visibleItems.length > 0) {
-        setSelectedIndex(prev => (prev - 1 + visibleItems.length) % visibleItems.length);
-      }
+      setSelectedIndex(prev => {
+        if (prev === -1) return visibleItems.length - 1;
+        const next = prev - step;
+        if (next < 0) {
+          // Wrap to bottom of same column
+          const col = prev % step;
+          let lastInCol = col;
+          while (lastInCol + step < visibleItems.length) {
+            lastInCol += step;
+          }
+          return lastInCol;
+        }
+        return next;
+      });
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setSelectedIndex(prev => {
+        if (prev === -1) return 0;
+        return (prev + 1) % visibleItems.length;
+      });
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setSelectedIndex(prev => {
+        if (prev === -1) return visibleItems.length - 1;
+        return (prev - 1 + visibleItems.length) % visibleItems.length;
+      });
     } else if (e.key === 'Enter') {
       e.preventDefault();
       handleSearchSubmit();
@@ -514,7 +554,11 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <span className="px-1 py-0.5 border border-black/15 bg-white text-[8px]">↑</span>
-              <span className="px-1 py-0.5 border border-black/15 bg-white text-[8px]">↓</span> Navigate
+              <span className="px-1 py-0.5 border border-black/15 bg-white text-[8px]">↓</span> Rows
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="px-1 py-0.5 border border-black/15 bg-white text-[8px]">←</span>
+              <span className="px-1 py-0.5 border border-black/15 bg-white text-[8px]">→</span> Cols
             </span>
             <span className="flex items-center gap-1">
               <CornerDownLeft size={10} /> Select

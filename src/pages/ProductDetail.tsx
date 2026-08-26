@@ -1020,89 +1020,84 @@ export default function ProductDetail() {
         );
       })()}
 
-      {/* Spatial Lookbook Showcase (Home-like Interactive Hotspot Pins & Architectural Context) */}
+      {/* Spatial Lookbook Showcase (Full-Bleed Interactive Hotspot Pins & Architectural Context) */}
       {spatialLookbookShots.length > 0 && (() => {
         const safeIdx = Math.min(Math.max(0, activeLookbookIdx), spatialLookbookShots.length - 1);
         const activeShot = spatialLookbookShots[safeIdx] || spatialLookbookShots[0];
         
         return (
-          <div id="spatial-lookbook-section" className="w-full bg-black text-white py-16 md:py-24 border-t border-black/10 reveal relative overflow-hidden">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 space-y-6">
-              {/* Header & Lookbook Switcher */}
-              <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/15 pb-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Sparkles size={13} className="text-cobalt" />
-                    <span className="text-[10px] uppercase font-black tracking-[0.25em] text-cobalt font-mono">
-                      SPATIAL CONTEXT // {activeShot.sourceType.toUpperCase()}
-                    </span>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold uppercase tracking-tight font-sans">
-                    Seen in Architectural Context
-                  </h3>
-                  <p className="text-xs font-serif italic text-white/60 mt-1 max-w-xl">
-                    Discover how the {product.name} is curated and styled in real architectural space. Hover or tap the interactive pins to preview objects.
-                  </p>
+          <div id="spatial-lookbook-section" className="w-full bg-black text-white border-t border-black/10 reveal relative overflow-hidden">
+            {/* Header Bar with Counter */}
+            <div className="w-full px-6 md:px-12 py-5 sm:py-6 flex flex-wrap items-end justify-between gap-4 border-b border-white/10 bg-black/95">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles size={13} className="text-cobalt" />
+                  <span className="text-[10px] uppercase font-black tracking-[0.25em] text-cobalt font-mono">
+                    SPATIAL CONTEXT // {activeShot.sourceType.toUpperCase()}
+                  </span>
                 </div>
-
-                {/* Switcher & Counter (If multiple shots) */}
-                <div className="flex items-center gap-4">
-                  {spatialLookbookShots.length > 1 && (
-                    <div className="flex items-center gap-3 bg-white/10 px-3 py-1.5 border border-white/15">
-                      <button
-                        type="button"
-                        onClick={() => setActiveLookbookIdx(prev => Math.max(0, prev - 1))}
-                        disabled={safeIdx === 0}
-                        className="text-white/60 hover:text-white disabled:opacity-20 cursor-pointer"
-                        title="Previous Spatial Shot"
-                      >
-                        <ChevronLeft size={16} />
-                      </button>
-                      <span className="text-[10px] font-mono font-bold tracking-widest text-white/90">
-                        {String(safeIdx + 1).padStart(2, '0')} / {String(spatialLookbookShots.length).padStart(2, '0')}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setActiveLookbookIdx(prev => Math.min(spatialLookbookShots.length - 1, prev + 1))}
-                        disabled={safeIdx === spatialLookbookShots.length - 1}
-                        className="text-white/60 hover:text-white disabled:opacity-20 cursor-pointer"
-                        title="Next Spatial Shot"
-                      >
-                        <ChevronRight size={16} />
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <h3 className="text-xl md:text-2xl font-bold uppercase tracking-tight font-sans">
+                  Seen in Architectural Context
+                </h3>
               </div>
 
-              {/* 16:9 Interactive Hotspot Showcase Container */}
-              <div 
-                key={`spatial-shot-${activeShot.id}-${safeIdx}`}
-                className="w-full aspect-[16/9] md:aspect-[16/9] max-h-[75vh] relative overflow-hidden bg-neutral-900 border border-white/10 animate-in fade-in duration-500 shadow-2xl"
-              >
-                <ImageHotspots 
-                  src={activeShot.image}
-                  alt={activeShot.title}
-                  hotspots={activeShot.hotspots}
-                  products={allProducts}
-                  className="w-full h-full"
-                  imageClassName="w-full h-full object-cover transition-opacity duration-700"
-                  loading="lazy"
-                />
+              {/* Switcher & Counter (If multiple shots) */}
+              <div className="flex items-center gap-4">
+                {spatialLookbookShots.length > 1 && (
+                  <div className="flex items-center gap-3 bg-white/10 px-3 py-1.5 border border-white/15">
+                    <button
+                      type="button"
+                      onClick={() => setActiveLookbookIdx(prev => Math.max(0, prev - 1))}
+                      disabled={safeIdx === 0}
+                      className="text-white/60 hover:text-white disabled:opacity-20 cursor-pointer"
+                      title="Previous Spatial Shot"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span className="text-[10px] font-mono font-bold tracking-widest text-white/90">
+                      {String(safeIdx + 1).padStart(2, '0')} / {String(spatialLookbookShots.length).padStart(2, '0')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveLookbookIdx(prev => Math.min(spatialLookbookShots.length - 1, prev + 1))}
+                      disabled={safeIdx === spatialLookbookShots.length - 1}
+                      className="text-white/60 hover:text-white disabled:opacity-20 cursor-pointer"
+                      title="Next Spatial Shot"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
 
-                {/* Floating Bottom Info & Full Space Link */}
-                <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 md:bottom-8 md:left-8 z-20">
-                  <span className="text-[9px] uppercase font-mono font-bold tracking-widest text-white/70 block mb-1.5 drop-shadow-sm">
-                    {activeShot.sourceType.toUpperCase()} // {activeShot.sourceTitle}
-                  </span>
-                  <Link
-                    to={activeShot.sourceType === 'space' ? `/space/${activeShot.sourceId}` : `/journal/${activeShot.sourceId}`}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white text-ink text-[9.5px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all rounded-none shadow-lg group/btn"
-                  >
-                    <span>Explore Full {activeShot.sourceType === 'space' ? 'Space' : 'Journal'}</span>
-                    <MoveRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
+            {/* 16:9 Full-Bleed Interactive Hotspot Showcase Container */}
+            <div 
+              key={`spatial-shot-${activeShot.id}-${safeIdx}`}
+              className="w-full aspect-[16/9] md:aspect-[16/9] max-h-[85vh] relative overflow-hidden bg-black animate-in fade-in duration-500"
+            >
+              <ImageHotspots 
+                src={activeShot.image}
+                alt={activeShot.title}
+                hotspots={activeShot.hotspots}
+                products={allProducts}
+                className="w-full h-full"
+                imageClassName="w-full h-full object-cover transition-opacity duration-700"
+                loading="lazy"
+              />
+
+              {/* Floating Bottom Info & Full Space Link */}
+              <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 md:bottom-10 md:left-12 z-20 pointer-events-none">
+                <span className="text-[8.5px] sm:text-[9.5px] uppercase font-mono font-bold tracking-widest text-white/70 block mb-2 drop-shadow-md">
+                  {activeShot.sourceType.toUpperCase()} // {activeShot.sourceTitle}
+                </span>
+                <Link
+                  to={activeShot.sourceType === 'space' ? `/space/${activeShot.sourceId}` : `/journal/${activeShot.sourceId}`}
+                  className="inline-flex items-center gap-2 sm:gap-3 px-4 py-2.5 bg-white text-ink text-[9.5px] font-black uppercase tracking-widest hover:bg-cobalt hover:text-white transition-all rounded-none shadow-xl group/btn pointer-events-auto"
+                >
+                  <span>Explore Full {activeShot.sourceType === 'space' ? 'Space' : 'Journal'}</span>
+                  <MoveRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />
+                </Link>
               </div>
             </div>
           </div>

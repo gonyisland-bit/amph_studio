@@ -30,7 +30,7 @@ export function ScrollToTopButton() {
     <button
       type="button"
       onClick={scrollToTop}
-      className="fixed bottom-6 right-6 z-40 bg-white/90 hover:bg-cobalt text-ink hover:text-white border border-black/10 hover:border-cobalt px-3 py-2 text-[9px] font-mono font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-lg backdrop-blur-xs transition-all duration-300 animate-in fade-in slide-in-from-bottom-3 cursor-pointer group"
+      className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 md:bottom-20 md:right-8 z-40 bg-white/95 hover:bg-cobalt text-ink hover:text-white border border-black/10 hover:border-cobalt px-3 py-2 text-[9px] font-mono font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-xl backdrop-blur-xs transition-all duration-300 animate-in fade-in slide-in-from-bottom-3 cursor-pointer group"
       aria-label="Scroll to top"
     >
       <ArrowUp size={12} className="group-hover:-translate-y-0.5 transition-transform" />
