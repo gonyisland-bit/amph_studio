@@ -1,9 +1,9 @@
 import { sql } from '@vercel/postgres';
 
-export default async function handler(req: any, res: any) {
-  const { id } = req.query;
+let isProductsSchemaInitialized = false;
 
-  // Auto-setup & Schema Migration (Migrate all VARCHAR(255) columns to TEXT)
+async function ensureProductsSchema() {
+  if (isProductsSchemaInitialized) return;
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS products (
@@ -38,12 +38,22 @@ export default async function handler(req: any, res: any) {
         try { await sql.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS "${col}" BOOLEAN DEFAULT TRUE`); } catch(e) {}
       } else {
         try { await sql.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS "${col}" TEXT DEFAULT ''`); } catch(e) {}
-        // Explicitly alter existing column type to TEXT to eliminate VARCHAR(255) limit
         try { await sql.query(`ALTER TABLE products ALTER COLUMN "${col}" TYPE TEXT`); } catch(e) {}
-        try { await sql.query(`ALTER TABLE products ALTER COLUMN ${col} TYPE TEXT`); } catch(e) {}
       }
     }
-  } catch (e) {}
+    isProductsSchemaInitialized = true;
+  } catch (e) {
+    // Retry on next request if initialization failed
+  }
+}
+
+export default async function handler(req: any, res: any) {
+  const { id } = req.query;
+
+  // Run schema initialization only once
+  if (!isProductsSchemaInitialized) {
+    await ensureProductsSchema();
+  }
 
   if (req.method === 'GET') {
     try {

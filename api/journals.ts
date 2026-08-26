@@ -1,9 +1,9 @@
 import { sql } from '@vercel/postgres';
 
-export default async function handler(req: any, res: any) {
-  const { id } = req.query;
+let isJournalsSchemaInitialized = false;
 
-  // Auto-setup table & migrations
+async function ensureJournalsSchema() {
+  if (isJournalsSchemaInitialized) return;
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS journals (
@@ -36,10 +36,18 @@ export default async function handler(req: any, res: any) {
       }
       if (col.name !== 'featured') {
         try { await sql.query(`ALTER TABLE journals ALTER COLUMN "${col.name}" TYPE TEXT`); } catch(e) {}
-        try { await sql.query(`ALTER TABLE journals ALTER COLUMN ${col.name} TYPE TEXT`); } catch(e2) {}
       }
     }
+    isJournalsSchemaInitialized = true;
   } catch (e) {}
+}
+
+export default async function handler(req: any, res: any) {
+  const { id } = req.query;
+
+  if (!isJournalsSchemaInitialized) {
+    await ensureJournalsSchema();
+  }
 
   if (req.method === 'GET') {
     try {

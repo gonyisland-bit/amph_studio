@@ -39,10 +39,14 @@ export function useScrollReveal(deps: any[] = []) {
       });
     };
 
+    // Run immediately for instant render
+    runReveal();
     const frameId = requestAnimationFrame(runReveal);
+    const timeoutId = setTimeout(runReveal, 50);
 
     return () => {
       cancelAnimationFrame(frameId);
+      clearTimeout(timeoutId);
       if (observer) {
         document.querySelectorAll('.reveal').forEach((el) => observer?.unobserve(el));
       }

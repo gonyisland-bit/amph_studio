@@ -276,7 +276,7 @@ export default function JournalDetail() {
         <ImageHotspots 
           src={article.image} 
           alt={article.title} 
-          hotspots={article.hotspots || []}
+          hotspots={[]}
           products={allProducts}
           className="w-full h-full cursor-zoom-in"
           imageClassName="w-full h-full opacity-80 group-hover:scale-105 transition-transform duration-1000 object-cover"

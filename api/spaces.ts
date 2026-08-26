@@ -1,9 +1,9 @@
 import { sql } from '@vercel/postgres';
 
-export default async function handler(req: any, res: any) {
-  const { id } = req.query;
+let isSpacesSchemaInitialized = false;
 
-  // Auto-setup table
+async function ensureSpacesSchema() {
+  if (isSpacesSchemaInitialized) return;
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS spaces (
@@ -21,7 +21,6 @@ export default async function handler(req: any, res: any) {
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
-    // Comprehensive Migration: ensure all possible columns exist to prevent save failures
     const columns = [
       { name: 'contentBlocks', type: 'TEXT' },
       { name: 'featured', type: 'BOOLEAN DEFAULT false' },
@@ -41,10 +40,18 @@ export default async function handler(req: any, res: any) {
       }
       if (col.name !== 'featured') {
         try { await sql.query(`ALTER TABLE spaces ALTER COLUMN "${col.name}" TYPE TEXT`); } catch(e) {}
-        try { await sql.query(`ALTER TABLE spaces ALTER COLUMN ${col.name} TYPE TEXT`); } catch(e2) {}
       }
     }
+    isSpacesSchemaInitialized = true;
   } catch (e) {}
+}
+
+export default async function handler(req: any, res: any) {
+  const { id } = req.query;
+
+  if (!isSpacesSchemaInitialized) {
+    await ensureSpacesSchema();
+  }
 
   if (req.method === 'GET') {
     try {
