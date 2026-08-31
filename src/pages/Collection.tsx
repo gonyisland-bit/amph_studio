@@ -590,8 +590,8 @@ export default function Collection() {
       )}
       </div>
 
-      {/* Floating Smart Section Navigator */}
-      <FloatingSectionNavigator sectionIds={['collection-header', 'collection-grid']} />
+      {/* Floating Smart Sub Navigator (Viewport Grid Paging) */}
+      <FloatingSectionNavigator mode="viewport" />
     </div>
   );
 }

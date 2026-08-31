@@ -180,8 +180,8 @@ export default function Space() {
          <div className="p-24 text-center text-ink/40 text-sm font-semibold italic font-serif">No spaces recorded in our physical world yet.</div>
       )}
 
-      {/* Floating Smart Section Navigator */}
-      <FloatingSectionNavigator sectionIds={['space-header', 'space-list']} />
+      {/* Floating Smart Sub Navigator (Viewport Grid Paging) */}
+      <FloatingSectionNavigator mode="viewport" />
     </div>
   );
 }

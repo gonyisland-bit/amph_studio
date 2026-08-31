@@ -33,6 +33,33 @@ const emptySpace: Omit<SpaceModel, 'id'> = {
   ]
 };
 
+// Safe helper to extract thumbnail image across Products, Spaces, and Journals
+const getSafeItemImage = (item: any): string => {
+  if (!item) return '';
+  let raw = '';
+  if (typeof item.image === 'string' && item.image.trim()) {
+    raw = item.image.trim();
+  } else if (Array.isArray(item.images) && item.images.length > 0) {
+    raw = typeof item.images[0] === 'string' ? item.images[0] : '';
+  } else if (typeof item.images === 'string' && item.images.trim()) {
+    try {
+      const parsed = JSON.parse(item.images);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        raw = typeof parsed[0] === 'string' ? parsed[0] : '';
+      }
+    } catch (e) {
+      if (!item.images.startsWith('[')) raw = item.images;
+    }
+  }
+  if (!raw && Array.isArray(item.contentBlocks)) {
+    const imgBlock = item.contentBlocks.find((b: any) => b && (b.type === 'image' || (typeof b.value === 'string' && b.value.length > 0)));
+    if (imgBlock && typeof imgBlock.value === 'string') {
+      raw = imgBlock.value;
+    }
+  }
+  return normalizeMediaUrl(raw);
+};
+
 // Premium form input helper
 const EditorInput = ({ label, required, value, onChange, placeholder, type = "text", rows }: { label: string, required?: boolean, value: string | number, onChange: (val: any) => void, placeholder?: string, type?: string, rows?: number }) => {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -4893,7 +4920,7 @@ export default function Admin() {
                             id: p.id,
                             title: p.name,
                             subtitle: p.category,
-                            image: p.images?.[0]
+                            image: getSafeItemImage(p)
                           }))}
                           selectedIds={Array.isArray(form.relatedProductIds) ? form.relatedProductIds : []}
                           onChange={(next) => setForm({ ...form, relatedProductIds: next })}
@@ -4906,7 +4933,7 @@ export default function Admin() {
                             id: s.id,
                             title: s.title,
                             subtitle: s.location || 'Space',
-                            image: s.image || s.images?.[0]
+                            image: getSafeItemImage(s)
                           }))}
                           selectedIds={Array.isArray(form.relatedSpaceIds) ? form.relatedSpaceIds : []}
                           onChange={(next) => setForm({ ...form, relatedSpaceIds: next })}
@@ -4919,7 +4946,7 @@ export default function Admin() {
                             id: j.id,
                             title: j.title,
                             subtitle: j.category || 'Journal',
-                            image: j.image
+                            image: getSafeItemImage(j)
                           }))}
                           selectedIds={Array.isArray(form.relatedJournalIds) ? form.relatedJournalIds : []}
                           onChange={(next) => setForm({ ...form, relatedJournalIds: next })}
@@ -4957,7 +4984,7 @@ export default function Admin() {
                               id: p.id,
                               title: p.name,
                               subtitle: p.category,
-                              image: p.images?.[0]
+                              image: getSafeItemImage(p)
                             }))}
                             selectedIds={Array.isArray(form.appliedProductIds) ? form.appliedProductIds : []}
                             onChange={(next) => setForm({ ...form, appliedProductIds: next })}
@@ -4970,7 +4997,7 @@ export default function Admin() {
                               id: j.id,
                               title: j.title,
                               subtitle: j.category || 'Journal',
-                              image: j.image
+                              image: getSafeItemImage(j)
                             }))}
                             selectedIds={Array.isArray(form.relatedJournalIds) ? form.relatedJournalIds : []}
                             onChange={(next) => setForm({ ...form, relatedJournalIds: next })}
@@ -5009,7 +5036,7 @@ export default function Admin() {
                               id: p.id,
                               title: p.name,
                               subtitle: p.category,
-                              image: p.images?.[0]
+                              image: getSafeItemImage(p)
                             }))}
                             selectedIds={Array.isArray(form.appliedProductIds) ? form.appliedProductIds : []}
                             onChange={(next) => setForm({ ...form, appliedProductIds: next })}
@@ -5022,7 +5049,7 @@ export default function Admin() {
                               id: s.id,
                               title: s.title,
                               subtitle: s.location || 'Space',
-                              image: s.image || s.images?.[0]
+                              image: getSafeItemImage(s)
                             }))}
                             selectedIds={Array.isArray(form.relatedSpaceIds) ? form.relatedSpaceIds : []}
                             onChange={(next) => setForm({ ...form, relatedSpaceIds: next })}

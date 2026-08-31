@@ -151,11 +151,12 @@ export function RelatedContentPicker({
               <label
                 key={item.id}
                 onClick={() => handleToggle(item.id)}
-                className={`flex items-center gap-2.5 p-2 border transition-all cursor-pointer group ${
+                className={`flex items-center gap-2 p-1.5 border transition-all cursor-pointer group ${
                   isSelected
                     ? 'border-cobalt/70 bg-cobalt/[0.06] shadow-xs'
                     : 'border-black/5 bg-white hover:border-black/20 hover:bg-black/[0.02]'
                 }`}
+                title={item.title}
               >
                 {/* Checkbox indicator */}
                 <input
@@ -165,8 +166,8 @@ export function RelatedContentPicker({
                   className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt cursor-pointer shrink-0"
                 />
 
-                {/* Visual Thumbnail (Still Frame for Video) */}
-                <div className="w-11 h-11 bg-black/5 border border-black/10 overflow-hidden relative shrink-0 flex items-center justify-center">
+                {/* Compact Visual Thumbnail (Still Frame for Video) */}
+                <div className="w-8 h-8 bg-black/5 border border-black/10 overflow-hidden relative shrink-0 flex items-center justify-center rounded-[2px]">
                   {item.image ? (
                     isVideo ? (
                       <>
@@ -178,7 +179,7 @@ export function RelatedContentPicker({
                           className="w-full h-full object-cover pointer-events-none"
                         />
                         <div className="absolute top-0.5 right-0.5 bg-black/70 text-white p-0.5 rounded-none pointer-events-none">
-                          <Video size={8} />
+                          <Video size={7} />
                         </div>
                       </>
                     ) : (
@@ -187,24 +188,28 @@ export function RelatedContentPicker({
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
+                        onError={(e) => {
+                          // Hide broken image and fallback to placeholder
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                        }}
                       />
                     )
                   ) : (
-                    <span className="text-[10px] font-bold text-ink/30 font-mono">
+                    <span className="text-[9px] font-bold text-ink/30 font-mono">
                       {item.title.charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
 
-                {/* Info Text */}
-                <div className="flex-grow min-w-0">
-                  <p className={`text-[10px] font-bold uppercase truncate transition-colors ${
+                {/* Expanded Info Text to Prevent Truncation */}
+                <div className="flex-1 min-w-0 pr-0.5">
+                  <p className={`text-[10px] leading-tight font-bold uppercase truncate transition-colors ${
                     isSelected ? 'text-cobalt' : 'text-ink group-hover:text-cobalt'
                   }`}>
                     {item.title}
                   </p>
                   {(item.category || item.subtitle) && (
-                    <p className="text-[8.5px] text-ink/50 truncate font-mono">
+                    <p className="text-[8px] leading-none text-ink/45 truncate font-mono mt-0.5">
                       {item.category || item.subtitle}
                     </p>
                   )}

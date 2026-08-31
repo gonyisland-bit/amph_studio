@@ -212,8 +212,8 @@ export default function Catalogue() {
         </div>
       )}
 
-      {/* Floating Smart Section Navigator */}
-      <FloatingSectionNavigator sectionIds={['catalogue-header', 'catalogue-content']} />
+      {/* Floating Smart Sub Navigator (Viewport Grid Paging) */}
+      <FloatingSectionNavigator mode="viewport" />
     </div>
   );
 }

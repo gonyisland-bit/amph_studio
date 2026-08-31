@@ -196,8 +196,8 @@ export default function Journal() {
         </div>
       </div>
 
-      {/* Floating Smart Section Navigator */}
-      <FloatingSectionNavigator sectionIds={['journal-header', 'journal-list', 'journal-newsletter']} />
+      {/* Floating Smart Sub Navigator (Viewport Grid Paging) */}
+      <FloatingSectionNavigator mode="viewport" />
     </div>
   );
 }
