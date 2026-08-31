@@ -11,6 +11,7 @@ import { Plus, Trash2, Copy, LogOut, CheckCircle2, ChevronUp, ChevronDown, Chevr
 import { MediaRenderer, normalizeMediaUrl } from "../components/MediaRenderer";
 import { AdminHotspotEditor } from "../components/AdminHotspotEditor";
 import { ImageHotspots } from "../components/ImageHotspots";
+import { RelatedContentPicker } from "../components/RelatedContentPicker";
 
 const emptyProduct: Omit<Product, 'id'> = {
   name: '', category: 'Chairs', description: '', subTitle: '', material: '', price: 0, images: ['', '', ''], hoverImages: [''], contentBlocks: [], color: '', dimensions: '', shipping: 'Delivery (Free)', sku: '', cartEnabled: true, portraitImages: []
@@ -4886,68 +4887,44 @@ export default function Admin() {
                     });
                     return (
                       <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden space-y-4 p-6">
-                        <div>
-                          <h3 className="font-bold text-[10px] uppercase mb-3 text-cobalt">Related Products (하단 연관 추천 상품 선택)</h3>
-                          <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                            {sortedProducts.filter(p => p.id !== form.id).map(p => (
-                              <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                                <input 
-                                  type="checkbox" 
-                                  checked={Array.isArray(form.relatedProductIds) && form.relatedProductIds.includes(p.id)} 
-                                  onChange={(e) => {
-                                    const current = Array.isArray(form.relatedProductIds) ? form.relatedProductIds : [];
-                                    const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
-                                    setForm({...form, relatedProductIds: next});
-                                  }}
-                                  className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                                />
-                                <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
+                        <RelatedContentPicker
+                          title="Related Products (하단 연관 추천 상품 선택)"
+                          items={sortedProducts.filter(p => p.id !== form.id).map(p => ({
+                            id: p.id,
+                            title: p.name,
+                            subtitle: p.category,
+                            image: p.images?.[0]
+                          }))}
+                          selectedIds={Array.isArray(form.relatedProductIds) ? form.relatedProductIds : []}
+                          onChange={(next) => setForm({ ...form, relatedProductIds: next })}
+                          searchPlaceholder="제품명, 카테고리 검색..."
+                        />
 
-                        <div>
-                          <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Linked Spaces (연결된 공간 스페이스 선택)</h3>
-                          <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                            {spaces.map(s => (
-                              <label key={s.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                                <input 
-                                  type="checkbox" 
-                                  checked={Array.isArray(form.relatedSpaceIds) && form.relatedSpaceIds.includes(s.id)} 
-                                  onChange={(e) => {
-                                    const current = Array.isArray(form.relatedSpaceIds) ? form.relatedSpaceIds : [];
-                                    const next = e.target.checked ? [...current, s.id] : current.filter((id:string) => id !== s.id);
-                                    setForm({...form, relatedSpaceIds: next});
-                                  }}
-                                  className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                                />
-                                <span className="text-[9px] font-bold uppercase truncate">{s.title}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
+                        <RelatedContentPicker
+                          title="Linked Spaces (연결된 공간 스페이스 선택)"
+                          items={spaces.map(s => ({
+                            id: s.id,
+                            title: s.title,
+                            subtitle: s.location || 'Space',
+                            image: s.image || s.images?.[0]
+                          }))}
+                          selectedIds={Array.isArray(form.relatedSpaceIds) ? form.relatedSpaceIds : []}
+                          onChange={(next) => setForm({ ...form, relatedSpaceIds: next })}
+                          searchPlaceholder="스페이스 제목, 위치 검색..."
+                        />
 
-                        <div>
-                          <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Linked Journal Stories (연결된 저널 선택)</h3>
-                          <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                            {journals.map(j => (
-                              <label key={j.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                                <input 
-                                  type="checkbox" 
-                                  checked={Array.isArray(form.relatedJournalIds) && form.relatedJournalIds.includes(j.id)} 
-                                  onChange={(e) => {
-                                    const current = Array.isArray(form.relatedJournalIds) ? form.relatedJournalIds : [];
-                                    const next = e.target.checked ? [...current, j.id] : current.filter((id:string) => id !== j.id);
-                                    setForm({...form, relatedJournalIds: next});
-                                  }}
-                                  className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                                />
-                                <span className="text-[9px] font-bold uppercase truncate">{j.title}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
+                        <RelatedContentPicker
+                          title="Linked Journal Stories (연결된 저널 선택)"
+                          items={journals.map(j => ({
+                            id: j.id,
+                            title: j.title,
+                            subtitle: j.category || 'Journal',
+                            image: j.image
+                          }))}
+                          selectedIds={Array.isArray(form.relatedJournalIds) ? form.relatedJournalIds : []}
+                          onChange={(next) => setForm({ ...form, relatedJournalIds: next })}
+                          searchPlaceholder="저널 제목, 카테고리 검색..."
+                        />
                       </div>
                     );
                   })()}
@@ -4963,57 +4940,45 @@ export default function Admin() {
                   {renderContentBlocksEditor()}
 
                   <div className="border-t border-black/10 pt-4 mt-4 space-y-4">
-                    <div>
-                      <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Amplify with (Linked Products)</h3>
-                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                        {(() => {
-                          const sortedProducts = [...products].sort((a, b) => {
-                            const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
-                            const bIdx = (homeSettings.globalProductOrder || []).indexOf(b.id);
-                            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-                            if (aIdx !== -1) return 1;
-                            if (bIdx !== -1) return -1;
-                            return 0;
-                          });
-                          return sortedProducts.map(p => (
-                            <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                checked={Array.isArray(form.appliedProductIds) && form.appliedProductIds.includes(p.id)} 
-                                onChange={(e) => {
-                                  const current = Array.isArray(form.appliedProductIds) ? form.appliedProductIds : [];
-                                  const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
-                                  setForm({...form, appliedProductIds: next});
-                                }}
-                                className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                              />
-                              <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
-                            </label>
-                          ));
-                        })()}
-                      </div>
-                    </div>
+                    {(() => {
+                      const sortedProducts = [...products].sort((a, b) => {
+                        const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
+                        const bIdx = (homeSettings.globalProductOrder || []).indexOf(b.id);
+                        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                        if (aIdx !== -1) return 1;
+                        if (bIdx !== -1) return -1;
+                        return 0;
+                      });
+                      return (
+                        <>
+                          <RelatedContentPicker
+                            title="Amplify with (Linked Products - 연관 제품 선택)"
+                            items={sortedProducts.map(p => ({
+                              id: p.id,
+                              title: p.name,
+                              subtitle: p.category,
+                              image: p.images?.[0]
+                            }))}
+                            selectedIds={Array.isArray(form.appliedProductIds) ? form.appliedProductIds : []}
+                            onChange={(next) => setForm({ ...form, appliedProductIds: next })}
+                            searchPlaceholder="연결할 제품 검색..."
+                          />
 
-                    <div>
-                      <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Related Journal Articles (하단 연관 저널 선택)</h3>
-                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                        {journals.filter(j => j.id !== form.id).map(j => (
-                          <label key={j.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={form.relatedJournalIds?.includes(j.id)} 
-                              onChange={(e) => {
-                                const current = form.relatedJournalIds || [];
-                                const next = e.target.checked ? [...current, j.id] : current.filter((id:string) => id !== j.id);
-                                setForm({...form, relatedJournalIds: next});
-                              }}
-                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                            />
-                            <span className="text-[9px] font-bold uppercase truncate">{j.title}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
+                          <RelatedContentPicker
+                            title="Related Journal Articles (하단 연관 저널 선택)"
+                            items={journals.filter(j => j.id !== form.id).map(j => ({
+                              id: j.id,
+                              title: j.title,
+                              subtitle: j.category || 'Journal',
+                              image: j.image
+                            }))}
+                            selectedIds={Array.isArray(form.relatedJournalIds) ? form.relatedJournalIds : []}
+                            onChange={(next) => setForm({ ...form, relatedJournalIds: next })}
+                            searchPlaceholder="연관 저널 검색..."
+                          />
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
@@ -5027,57 +4992,45 @@ export default function Admin() {
                   {renderContentBlocksEditor()}
 
                   <div className="border-t border-black/10 pt-4 mt-4 space-y-4">
-                    <div>
-                      <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Amplify with (Linked Products)</h3>
-                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                        {(() => {
-                          const sortedProducts = [...products].sort((a, b) => {
-                            const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
-                            const bIdx = (homeSettings.globalProductOrder || []).indexOf(b.id);
-                            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-                            if (aIdx !== -1) return 1;
-                            if (bIdx !== -1) return -1;
-                            return 0;
-                          });
-                          return sortedProducts.map(p => (
-                            <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                checked={form.appliedProductIds?.includes(p.id)} 
-                                onChange={(e) => {
-                                  const current = form.appliedProductIds || [];
-                                  const next = e.target.checked ? [...current, p.id] : current.filter((id:string) => id !== p.id);
-                                  setForm({...form, appliedProductIds: next});
-                                }}
-                                className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                              />
-                              <span className="text-[9px] font-bold uppercase truncate">{p.name}</span>
-                            </label>
-                          ));
-                        })()}
-                      </div>
-                    </div>
+                    {(() => {
+                      const sortedProducts = [...products].sort((a, b) => {
+                        const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
+                        const bIdx = (homeSettings.globalProductOrder || []).indexOf(b.id);
+                        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                        if (aIdx !== -1) return 1;
+                        if (bIdx !== -1) return -1;
+                        return 0;
+                      });
+                      return (
+                        <>
+                          <RelatedContentPicker
+                            title="Amplify with (Linked Products - 연관 제품 선택)"
+                            items={sortedProducts.map(p => ({
+                              id: p.id,
+                              title: p.name,
+                              subtitle: p.category,
+                              image: p.images?.[0]
+                            }))}
+                            selectedIds={Array.isArray(form.appliedProductIds) ? form.appliedProductIds : []}
+                            onChange={(next) => setForm({ ...form, appliedProductIds: next })}
+                            searchPlaceholder="연결할 제품 검색..."
+                          />
 
-                    <div>
-                      <h3 className="font-bold text-[10px] uppercase mb-2 text-cobalt">Related Spaces (하단 연관 스페이스 선택)</h3>
-                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-black/10 p-3 bg-black/5 rounded-none">
-                        {spaces.filter(s => s.id !== form.id).map(s => (
-                          <label key={s.id} className="flex items-center gap-2 p-2 bg-white rounded-none border border-black/5 hover:bg-silver/10 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={form.relatedSpaceIds?.includes(s.id)} 
-                              onChange={(e) => {
-                                const current = form.relatedSpaceIds || [];
-                                const next = e.target.checked ? [...current, s.id] : current.filter((id:string) => id !== s.id);
-                                setForm({...form, relatedSpaceIds: next});
-                              }}
-                              className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt"
-                            />
-                            <span className="text-[9px] font-bold uppercase truncate">{s.title}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
+                          <RelatedContentPicker
+                            title="Related Spaces (하단 연관 스페이스 선택)"
+                            items={spaces.filter(s => s.id !== form.id).map(s => ({
+                              id: s.id,
+                              title: s.title,
+                              subtitle: s.location || 'Space',
+                              image: s.image || s.images?.[0]
+                            }))}
+                            selectedIds={Array.isArray(form.relatedSpaceIds) ? form.relatedSpaceIds : []}
+                            onChange={(next) => setForm({ ...form, relatedSpaceIds: next })}
+                            searchPlaceholder="연관 스페이스 검색..."
+                          />
+                        </>
+                      );
+                    })()}
                   </div>
                 </>
               )}

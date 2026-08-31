@@ -6,6 +6,7 @@ import { useScrollReveal } from "../lib/useScrollReveal";
 import { resolveColorHex } from "../lib/colorUtils";
 import { useWishlist } from "../lib/wishlist";
 import { LayoutGrid, Columns2, List, ArrowRight, SlidersHorizontal, ChevronDown, ChevronUp, X, RotateCcw, Bookmark } from "lucide-react";
+import { FloatingSectionNavigator } from "../components/FloatingSectionNavigator";
 
 const CATEGORIES: Category[] = ['Chairs', 'Furniture', 'Lighting', 'Objects'];
 const CATEGORY_LABELS: Record<string, string> = {
@@ -227,7 +228,7 @@ export default function Collection() {
   return (
     <div className="flex flex-col flex-grow">
       {/* Header & View Mode Switcher */}
-      <div className="px-6 md:px-12 pt-12 md:pt-24 pb-8 border-b border-black/10 bg-off-white">
+      <div id="collection-header" className="px-6 md:px-12 pt-12 md:pt-24 pb-8 border-b border-black/10 bg-off-white">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="max-w-4xl">
             <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase font-sans leading-[0.9] mb-4 md:mb-6">
@@ -495,8 +496,10 @@ export default function Collection() {
         </div>
       )}
 
-      {/* 1. 4-GRID & 2-LARGE (WIDE) GRID VIEW MODES */}
-      {(viewMode === 'grid4' || viewMode === 'grid2') && (
+      {/* Main Collection Product Grid / List Section */}
+      <div id="collection-grid" className="w-full">
+        {/* 1. 4-GRID & 2-LARGE (WIDE) GRID VIEW MODES */}
+        {(viewMode === 'grid4' || viewMode === 'grid2') && (
         <div 
           key={`grid-${viewMode}-${activeCategory}`}
           className={`grid ${viewMode === 'grid2' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'} border-t border-l border-black/10 auto-rows-fr`}
@@ -585,6 +588,10 @@ export default function Collection() {
           ))}
         </div>
       )}
+      </div>
+
+      {/* Floating Smart Section Navigator */}
+      <FloatingSectionNavigator sectionIds={['collection-header', 'collection-grid']} />
     </div>
   );
 }

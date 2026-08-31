@@ -5,6 +5,7 @@ import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
 import { useWishlist } from "../lib/wishlist";
 import { Bookmark } from "lucide-react";
+import { FloatingSectionNavigator } from "../components/FloatingSectionNavigator";
 
 export default function Catalogue() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -44,7 +45,7 @@ export default function Catalogue() {
   return (
     <div className="flex flex-col flex-grow bg-white font-sans text-ink">
       {/* Catalogue Intro Header — Aligned with Collection & Space Header layout */}
-      <div className="px-6 md:px-12 pt-12 md:pt-24 pb-8 md:pb-12 border-b border-black/10 bg-off-white">
+      <div id="catalogue-header" className="px-6 md:px-12 pt-12 md:pt-24 pb-8 md:pb-12 border-b border-black/10 bg-off-white">
         <div className="max-w-4xl mb-8 md:mb-12">
           <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] mb-4 md:mb-6 font-sans">
             Catalogue
@@ -104,7 +105,7 @@ export default function Catalogue() {
           <p className="text-xs uppercase tracking-widest text-ink/40 font-mono">No catalogue entries match your search criteria.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 border-b border-black/10 bg-black/[0.03] gap-px">
+        <div id="catalogue-content" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 border-b border-black/10 bg-black/[0.03] gap-px">
           {filteredProducts.map(p => (
             <Link
               key={p.id}
@@ -210,6 +211,9 @@ export default function Catalogue() {
           ))}
         </div>
       )}
+
+      {/* Floating Smart Section Navigator */}
+      <FloatingSectionNavigator sectionIds={['catalogue-header', 'catalogue-content']} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { getJournals, JournalArticle, getHomeSettings, HomeSettings, defaultHome
 import { MoveRight, LayoutGrid, Rows } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
+import { FloatingSectionNavigator } from "../components/FloatingSectionNavigator";
 
 export default function Journal() {
   const [articles, setArticles] = useState<JournalArticle[]>([]);
@@ -37,7 +38,7 @@ export default function Journal() {
   return (
     <div className="flex flex-col flex-grow bg-white">
       {/* Header & View Mode Switcher */}
-      <div className="px-6 md:px-12 pt-12 md:pt-24 pb-8 md:pb-12 border-b border-black/10 bg-off-white flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div id="journal-header" className="px-6 md:px-12 pt-12 md:pt-24 pb-8 md:pb-12 border-b border-black/10 bg-off-white flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] mb-4 md:mb-6">
             {settings.hubSettings?.journal?.title || 'Journal'}
@@ -76,8 +77,10 @@ export default function Journal() {
         </div>
       </div>
 
-      {/* MAGAZINE VIEW MODE (2-Column Alternating Editorial Strip) */}
-      {viewMode === 'magazine' && (
+      {/* Journal Content Section */}
+      <div id="journal-list" className="flex flex-col flex-grow">
+        {/* MAGAZINE VIEW MODE (2-Column Alternating Editorial Strip) */}
+        {viewMode === 'magazine' && (
         <div className="flex flex-col">
           {sortedArticles.map((article, i) => {
             const mediaUrl = article.image || '';
@@ -175,13 +178,14 @@ export default function Journal() {
           </div>
         </div>
       )}
+      </div>
       
       {articles.length === 0 && (
          <div className="p-24 text-center text-ink/40 text-sm font-semibold italic font-serif">No journal stories published yet.</div>
       )}
 
       {/* Newsletter Subscription Footer Section */}
-      <div className="w-full h-[30vh] bg-off-white relative flex items-center justify-center text-center p-6 border-t border-black/10">
+      <div id="journal-newsletter" className="w-full h-[30vh] bg-off-white relative flex items-center justify-center text-center p-6 border-t border-black/10">
         <div className="relative z-10">
           <span className="text-xs uppercase tracking-widest font-bold text-cobalt mb-4 block">Subscribe</span>
           <h3 className="text-3xl md:text-5xl font-bold font-sans tracking-tight mb-8">Letters on Amplified Living</h3>
@@ -191,6 +195,9 @@ export default function Journal() {
           </div>
         </div>
       </div>
+
+      {/* Floating Smart Section Navigator */}
+      <FloatingSectionNavigator sectionIds={['journal-header', 'journal-list', 'journal-newsletter']} />
     </div>
   );
 }

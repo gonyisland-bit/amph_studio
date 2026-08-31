@@ -4,6 +4,7 @@ import { getSpaces, SpaceModel, getHomeSettings, HomeSettings, defaultHomeSettin
 import { MoveRight, LayoutGrid, Rows } from "lucide-react";
 import { MediaRenderer } from "../components/MediaRenderer";
 import { useScrollReveal } from "../lib/useScrollReveal";
+import { FloatingSectionNavigator } from "../components/FloatingSectionNavigator";
 
 export default function Space() {
   const [spaces, setSpaces] = useState<SpaceModel[]>([]);
@@ -37,7 +38,7 @@ export default function Space() {
   return (
     <div className="flex flex-col flex-grow bg-white">
       {/* Header & View Mode Switcher */}
-      <div className="px-6 md:px-12 pt-12 md:pt-24 pb-8 md:pb-12 border-b border-black/10 bg-off-white flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div id="space-header" className="px-6 md:px-12 pt-12 md:pt-24 pb-8 md:pb-12 border-b border-black/10 bg-off-white flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl md:text-6xl font-medium tracking-tighter uppercase leading-[0.9] mb-4 md:mb-6">
             {settings.hubSettings?.space?.title || 'Space'}
@@ -76,8 +77,10 @@ export default function Space() {
         </div>
       </div>
 
-      {/* MAGAZINE VIEW MODE (2-Column Alternating Editorial Strip) */}
-      {viewMode === 'magazine' && (
+      {/* Space Content Section */}
+      <div id="space-list" className="flex flex-col flex-grow">
+        {/* MAGAZINE VIEW MODE (2-Column Alternating Editorial Strip) */}
+        {viewMode === 'magazine' && (
         <div className="flex flex-col">
           {sortedSpaces.map((space, i) => {
             const mediaUrl = space.images?.[0] || '';
@@ -171,10 +174,14 @@ export default function Space() {
           </div>
         </div>
       )}
+      </div>
       
       {spaces.length === 0 && (
          <div className="p-24 text-center text-ink/40 text-sm font-semibold italic font-serif">No spaces recorded in our physical world yet.</div>
       )}
+
+      {/* Floating Smart Section Navigator */}
+      <FloatingSectionNavigator sectionIds={['space-header', 'space-list']} />
     </div>
   );
 }
