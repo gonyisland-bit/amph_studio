@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Check, Video, CheckSquare, Square, X } from 'lucide-react';
+import { Search, Video, X } from 'lucide-react';
 
 export interface PickerItem {
   id: string;
@@ -38,11 +38,14 @@ export function RelatedContentPicker({
   // Safe array
   const safeSelectedIds = useMemo(() => Array.isArray(selectedIds) ? selectedIds : [], [selectedIds]);
 
+  // If showOnlySelected is active but user clears all items, reset back to show all
+  const effectiveShowOnlySelected = showOnlySelected && safeSelectedIds.length > 0;
+
   // Filter items based on search query and showOnlySelected toggle
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return items.filter(item => {
-      if (showOnlySelected && !safeSelectedIds.includes(item.id)) {
+      if (effectiveShowOnlySelected && !safeSelectedIds.includes(item.id)) {
         return false;
       }
       if (!q) return true;
@@ -51,7 +54,7 @@ export function RelatedContentPicker({
       const matchCategory = item.category?.toLowerCase().includes(q);
       return matchTitle || matchSubtitle || matchCategory;
     });
-  }, [items, searchQuery, showOnlySelected, safeSelectedIds]);
+  }, [items, searchQuery, effectiveShowOnlySelected, safeSelectedIds]);
 
   const handleToggle = (id: string) => {
     if (safeSelectedIds.includes(id)) {
@@ -72,46 +75,63 @@ export function RelatedContentPicker({
   };
 
   return (
-    <div className={`border border-black/10 bg-black/[0.02] p-4 rounded-none space-y-3 select-none ${className}`}>
-      {/* Top Header: Title & Selected Count */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/5 pb-2.5">
+    <div className={`border border-black/10 bg-black/[0.02] p-3 sm:p-4 rounded-none space-y-3 select-none ${className}`}>
+      {/* Top Header: Title & Constant Position Segmented Control to Prevent Any Layout Shifts */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-black/5 pb-2.5 min-h-[34px]">
+        {/* Title */}
         <div className="flex items-center gap-2">
-          <h3 className="font-bold text-[10px] uppercase tracking-wider text-cobalt">{title}</h3>
-          <span className="text-[9px] font-mono font-bold px-2 py-0.5 bg-cobalt/10 text-cobalt border border-cobalt/20 rounded-full">
-            {safeSelectedIds.length} / {items.length} Selected
-          </span>
+          <h3 className="font-bold text-[10.5px] uppercase tracking-wider text-cobalt">{title}</h3>
         </div>
 
-        {/* Quick Batch Actions */}
-        <div className="flex items-center gap-2 text-[9px] font-mono">
-          {safeSelectedIds.length > 0 && (
+        {/* Action Bar with FIXED Width/Position Segmented Filter & Batch Controls */}
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 text-[9px] font-mono shrink-0">
+          {/* Constant 2-Option Segmented Filter (Never pops in/out, preventing line wrap shifts) */}
+          <div className="inline-flex items-center bg-black/5 p-0.5 border border-black/10 rounded-[2px] shrink-0">
             <button
               type="button"
-              onClick={() => setShowOnlySelected(!showOnlySelected)}
-              className={`px-2 py-0.5 font-bold uppercase transition-colors border cursor-pointer ${
-                showOnlySelected
-                  ? 'bg-cobalt text-white border-cobalt'
-                  : 'bg-white text-ink/70 border-black/10 hover:bg-black/5'
+              onClick={() => setShowOnlySelected(false)}
+              className={`px-2 py-0.5 font-bold uppercase transition-all cursor-pointer rounded-[2px] ${
+                !effectiveShowOnlySelected
+                  ? 'bg-white text-cobalt shadow-2xs'
+                  : 'text-ink/50 hover:text-ink'
               }`}
             >
-              {showOnlySelected ? 'Show All' : 'Only Selected'}
+              All ({items.length})
             </button>
-          )}
-          <button
-            type="button"
-            onClick={handleSelectAllFiltered}
-            className="text-ink/60 hover:text-cobalt underline cursor-pointer"
-          >
-            Check All
-          </button>
-          <span className="text-black/20">|</span>
-          <button
-            type="button"
-            onClick={handleDeselectAllFiltered}
-            className="text-ink/60 hover:text-red-500 underline cursor-pointer"
-          >
-            Clear
-          </button>
+            <button
+              type="button"
+              disabled={safeSelectedIds.length === 0}
+              onClick={() => setShowOnlySelected(true)}
+              className={`px-2 py-0.5 font-bold uppercase transition-all rounded-[2px] ${
+                effectiveShowOnlySelected
+                  ? 'bg-cobalt text-white shadow-2xs'
+                  : safeSelectedIds.length === 0
+                    ? 'text-ink/30 cursor-not-allowed'
+                    : 'text-ink/60 hover:text-cobalt cursor-pointer'
+              }`}
+            >
+              Selected ({safeSelectedIds.length})
+            </button>
+          </div>
+
+          {/* Fixed Batch Text Buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleSelectAllFiltered}
+              className="text-ink/60 hover:text-cobalt underline cursor-pointer px-1 py-0.5"
+            >
+              Select All
+            </button>
+            <span className="text-black/20">|</span>
+            <button
+              type="button"
+              onClick={handleDeselectAllFiltered}
+              className="text-ink/60 hover:text-red-500 underline cursor-pointer px-1 py-0.5"
+            >
+              Clear
+            </button>
+          </div>
         </div>
       </div>
 
@@ -136,8 +156,8 @@ export function RelatedContentPicker({
         )}
       </div>
 
-      {/* Items Grid with Visual Still Thumbnails */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-56 overflow-y-auto p-1 border border-black/10 bg-white/70">
+      {/* Items Grid: 2-Column Wide Grid for Generous Title Width without Truncation */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto p-1 border border-black/10 bg-white/70">
         {filteredItems.length === 0 ? (
           <div className="col-span-full py-8 text-center text-ink/40 text-xs font-mono">
             {searchQuery ? `No matches found for "${searchQuery}"` : "No items available"}
@@ -151,9 +171,9 @@ export function RelatedContentPicker({
               <label
                 key={item.id}
                 onClick={() => handleToggle(item.id)}
-                className={`flex items-center gap-2 p-1.5 border transition-all cursor-pointer group ${
+                className={`flex items-center gap-2.5 p-2 border transition-all cursor-pointer group rounded-[2px] ${
                   isSelected
-                    ? 'border-cobalt/70 bg-cobalt/[0.06] shadow-xs'
+                    ? 'border-cobalt/70 bg-cobalt/[0.06] shadow-xs ring-1 ring-cobalt/30'
                     : 'border-black/5 bg-white hover:border-black/20 hover:bg-black/[0.02]'
                 }`}
                 title={item.title}
@@ -166,7 +186,7 @@ export function RelatedContentPicker({
                   className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt cursor-pointer shrink-0"
                 />
 
-                {/* Compact Visual Thumbnail (Still Frame for Video) */}
+                {/* Compact Still Thumbnail */}
                 <div className="w-8 h-8 bg-black/5 border border-black/10 overflow-hidden relative shrink-0 flex items-center justify-center rounded-[2px]">
                   {item.image ? (
                     isVideo ? (
@@ -189,7 +209,6 @@ export function RelatedContentPicker({
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                         onError={(e) => {
-                          // Hide broken image and fallback to placeholder
                           (e.currentTarget as HTMLElement).style.display = 'none';
                         }}
                       />
@@ -201,15 +220,17 @@ export function RelatedContentPicker({
                   )}
                 </div>
 
-                {/* Expanded Info Text to Prevent Truncation */}
-                <div className="flex-1 min-w-0 pr-0.5">
-                  <p className={`text-[10px] leading-tight font-bold uppercase truncate transition-colors ${
-                    isSelected ? 'text-cobalt' : 'text-ink group-hover:text-cobalt'
-                  }`}>
+                {/* Generous Text Area: 2-column gives ample horizontal room */}
+                <div className="flex-1 min-w-0 pr-1">
+                  <p 
+                    className={`text-[11px] leading-tight font-bold uppercase line-clamp-2 transition-colors break-words ${
+                      isSelected ? 'text-cobalt' : 'text-ink group-hover:text-cobalt'
+                    }`}
+                  >
                     {item.title}
                   </p>
                   {(item.category || item.subtitle) && (
-                    <p className="text-[8px] leading-none text-ink/45 truncate font-mono mt-0.5">
+                    <p className="text-[8.5px] leading-tight text-ink/45 truncate font-mono mt-0.5">
                       {item.category || item.subtitle}
                     </p>
                   )}
