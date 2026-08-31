@@ -471,7 +471,7 @@ export default function Admin() {
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const [activeSections, setActiveSections] = useState<Record<string, boolean>>({ basic: true, specs: false, options: false, media: false, story: false });
+  const [activeSections, setActiveSections] = useState<Record<string, boolean>>({ basic: true, specs: false, options: false, media: false, story: false, linked: false });
 
   // Unified isDirty tracking for homeSettings and item forms (collection, space, journal)
   useEffect(() => {
@@ -1168,7 +1168,7 @@ export default function Admin() {
     setOriginalForm(freshEmpty);
     setIsDirty(false);
     setSaveStatus('idle');
-    setActiveSections({ basic: true, specs: false, options: false, media: false, story: false });
+    setActiveSections({ basic: true, specs: false, options: false, media: false, story: false, linked: false });
     
     // Clear ?edit= from URL when switching tabs to prevent auto-reloading previous item
     const params = new URLSearchParams(window.location.search);
@@ -4902,7 +4902,7 @@ export default function Admin() {
                     )}
                   </div>
 
-                  {/* Card 5: Related Products & Linked Spaces/Journals */}
+                  {/* Card 5: Linked contents (Accordion) */}
                   {(() => {
                     const sortedProducts = [...products].sort((a, b) => {
                       const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
@@ -4912,46 +4912,68 @@ export default function Admin() {
                       if (bIdx !== -1) return -1;
                       return 0;
                     });
+                    const totalSelected = (form.relatedProductIds?.length || 0) + (form.relatedSpaceIds?.length || 0) + (form.relatedJournalIds?.length || 0);
+
                     return (
-                      <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden space-y-4 p-6">
-                        <RelatedContentPicker
-                          title="Related Products (하단 연관 추천 상품 선택)"
-                          items={sortedProducts.filter(p => p.id !== form.id).map(p => ({
-                            id: p.id,
-                            title: p.name,
-                            subtitle: p.category,
-                            image: getSafeItemImage(p)
-                          }))}
-                          selectedIds={Array.isArray(form.relatedProductIds) ? form.relatedProductIds : []}
-                          onChange={(next) => setForm({ ...form, relatedProductIds: next })}
-                          searchPlaceholder="제품명, 카테고리 검색..."
-                        />
+                      <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
+                        <button 
+                          type="button"
+                          onClick={() => toggleSection('linked')}
+                          className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5 cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black uppercase text-cobalt tracking-wider">Linked contents</span>
+                            {totalSelected > 0 && (
+                              <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-cobalt/10 text-cobalt border border-cobalt/20 rounded-full">
+                                {totalSelected}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-ink/30">{activeSections.linked ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                        </button>
 
-                        <RelatedContentPicker
-                          title="Linked Spaces (연결된 공간 스페이스 선택)"
-                          items={spaces.map(s => ({
-                            id: s.id,
-                            title: s.title,
-                            subtitle: s.location || 'Space',
-                            image: getSafeItemImage(s)
-                          }))}
-                          selectedIds={Array.isArray(form.relatedSpaceIds) ? form.relatedSpaceIds : []}
-                          onChange={(next) => setForm({ ...form, relatedSpaceIds: next })}
-                          searchPlaceholder="스페이스 제목, 위치 검색..."
-                        />
+                        {activeSections.linked && (
+                          <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <RelatedContentPicker
+                              title="Linked Collection"
+                              items={sortedProducts.filter(p => p.id !== form.id).map(p => ({
+                                id: p.id,
+                                title: p.name,
+                                subtitle: p.category,
+                                image: getSafeItemImage(p)
+                              }))}
+                              selectedIds={Array.isArray(form.relatedProductIds) ? form.relatedProductIds : []}
+                              onChange={(next) => setForm({ ...form, relatedProductIds: next })}
+                              searchPlaceholder="Search products..."
+                            />
 
-                        <RelatedContentPicker
-                          title="Linked Journal Stories (연결된 저널 선택)"
-                          items={journals.map(j => ({
-                            id: j.id,
-                            title: j.title,
-                            subtitle: j.category || 'Journal',
-                            image: getSafeItemImage(j)
-                          }))}
-                          selectedIds={Array.isArray(form.relatedJournalIds) ? form.relatedJournalIds : []}
-                          onChange={(next) => setForm({ ...form, relatedJournalIds: next })}
-                          searchPlaceholder="저널 제목, 카테고리 검색..."
-                        />
+                            <RelatedContentPicker
+                              title="Linked Spaces"
+                              items={spaces.map(s => ({
+                                id: s.id,
+                                title: s.title,
+                                subtitle: s.location || 'Space',
+                                image: getSafeItemImage(s)
+                              }))}
+                              selectedIds={Array.isArray(form.relatedSpaceIds) ? form.relatedSpaceIds : []}
+                              onChange={(next) => setForm({ ...form, relatedSpaceIds: next })}
+                              searchPlaceholder="Search spaces..."
+                            />
+
+                            <RelatedContentPicker
+                              title="Linked Journals"
+                              items={journals.map(j => ({
+                                id: j.id,
+                                title: j.title,
+                                subtitle: j.category || 'Journal',
+                                image: getSafeItemImage(j)
+                              }))}
+                              selectedIds={Array.isArray(form.relatedJournalIds) ? form.relatedJournalIds : []}
+                              onChange={(next) => setForm({ ...form, relatedJournalIds: next })}
+                              searchPlaceholder="Search journals..."
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
@@ -4966,7 +4988,7 @@ export default function Admin() {
                     <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={4}/></div>
                   {renderContentBlocksEditor()}
 
-                  <div className="border-t border-black/10 pt-4 mt-4 space-y-4">
+                  <div className="pt-2">
                     {(() => {
                       const sortedProducts = [...products].sort((a, b) => {
                         const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
@@ -4976,34 +4998,56 @@ export default function Admin() {
                         if (bIdx !== -1) return -1;
                         return 0;
                       });
-                      return (
-                        <>
-                          <RelatedContentPicker
-                            title="Amplify with (Linked Products - 연관 제품 선택)"
-                            items={sortedProducts.map(p => ({
-                              id: p.id,
-                              title: p.name,
-                              subtitle: p.category,
-                              image: getSafeItemImage(p)
-                            }))}
-                            selectedIds={Array.isArray(form.appliedProductIds) ? form.appliedProductIds : []}
-                            onChange={(next) => setForm({ ...form, appliedProductIds: next })}
-                            searchPlaceholder="연결할 제품 검색..."
-                          />
+                      const totalSelected = (form.appliedProductIds?.length || 0) + (form.relatedJournalIds?.length || 0);
 
-                          <RelatedContentPicker
-                            title="Related Journal Articles (하단 연관 저널 선택)"
-                            items={journals.filter(j => j.id !== form.id).map(j => ({
-                              id: j.id,
-                              title: j.title,
-                              subtitle: j.category || 'Journal',
-                              image: getSafeItemImage(j)
-                            }))}
-                            selectedIds={Array.isArray(form.relatedJournalIds) ? form.relatedJournalIds : []}
-                            onChange={(next) => setForm({ ...form, relatedJournalIds: next })}
-                            searchPlaceholder="연관 저널 검색..."
-                          />
-                        </>
+                      return (
+                        <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
+                          <button 
+                            type="button"
+                            onClick={() => toggleSection('linked')}
+                            className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5 cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black uppercase text-cobalt tracking-wider">Linked contents</span>
+                              {totalSelected > 0 && (
+                                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-cobalt/10 text-cobalt border border-cobalt/20 rounded-full">
+                                  {totalSelected}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-ink/30">{activeSections.linked ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                          </button>
+
+                          {activeSections.linked && (
+                            <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                              <RelatedContentPicker
+                                title="Linked Collection"
+                                items={sortedProducts.map(p => ({
+                                  id: p.id,
+                                  title: p.name,
+                                  subtitle: p.category,
+                                  image: getSafeItemImage(p)
+                                }))}
+                                selectedIds={Array.isArray(form.appliedProductIds) ? form.appliedProductIds : []}
+                                onChange={(next) => setForm({ ...form, appliedProductIds: next })}
+                                searchPlaceholder="Search products..."
+                              />
+
+                              <RelatedContentPicker
+                                title="Linked Journals"
+                                items={journals.filter(j => j.id !== form.id).map(j => ({
+                                  id: j.id,
+                                  title: j.title,
+                                  subtitle: j.category || 'Journal',
+                                  image: getSafeItemImage(j)
+                                }))}
+                                selectedIds={Array.isArray(form.relatedJournalIds) ? form.relatedJournalIds : []}
+                                onChange={(next) => setForm({ ...form, relatedJournalIds: next })}
+                                searchPlaceholder="Search journals..."
+                              />
+                            </div>
+                          )}
+                        </div>
                       );
                     })()}
                   </div>
@@ -5018,7 +5062,7 @@ export default function Admin() {
                     <textarea required value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-black/20 p-2 bg-transparent outline-none focus:border-cobalt" rows={4}/></div>
                   {renderContentBlocksEditor()}
 
-                  <div className="border-t border-black/10 pt-4 mt-4 space-y-4">
+                  <div className="pt-2">
                     {(() => {
                       const sortedProducts = [...products].sort((a, b) => {
                         const aIdx = (homeSettings.globalProductOrder || []).indexOf(a.id);
@@ -5028,34 +5072,56 @@ export default function Admin() {
                         if (bIdx !== -1) return -1;
                         return 0;
                       });
-                      return (
-                        <>
-                          <RelatedContentPicker
-                            title="Amplify with (Linked Products - 연관 제품 선택)"
-                            items={sortedProducts.map(p => ({
-                              id: p.id,
-                              title: p.name,
-                              subtitle: p.category,
-                              image: getSafeItemImage(p)
-                            }))}
-                            selectedIds={Array.isArray(form.appliedProductIds) ? form.appliedProductIds : []}
-                            onChange={(next) => setForm({ ...form, appliedProductIds: next })}
-                            searchPlaceholder="연결할 제품 검색..."
-                          />
+                      const totalSelected = (form.appliedProductIds?.length || 0) + (form.relatedSpaceIds?.length || 0);
 
-                          <RelatedContentPicker
-                            title="Related Spaces (하단 연관 스페이스 선택)"
-                            items={spaces.filter(s => s.id !== form.id).map(s => ({
-                              id: s.id,
-                              title: s.title,
-                              subtitle: s.location || 'Space',
-                              image: getSafeItemImage(s)
-                            }))}
-                            selectedIds={Array.isArray(form.relatedSpaceIds) ? form.relatedSpaceIds : []}
-                            onChange={(next) => setForm({ ...form, relatedSpaceIds: next })}
-                            searchPlaceholder="연관 스페이스 검색..."
-                          />
-                        </>
+                      return (
+                        <div className="bg-white rounded-none border border-black/5 shadow-sm overflow-hidden">
+                          <button 
+                            type="button"
+                            onClick={() => toggleSection('linked')}
+                            className="w-full text-left px-6 py-4 flex justify-between items-center bg-black/[0.01] hover:bg-black/[0.03] transition-colors border-b border-black/5 cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black uppercase text-cobalt tracking-wider">Linked contents</span>
+                              {totalSelected > 0 && (
+                                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-cobalt/10 text-cobalt border border-cobalt/20 rounded-full">
+                                  {totalSelected}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-ink/30">{activeSections.linked ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</span>
+                          </button>
+
+                          {activeSections.linked && (
+                            <div className="p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                              <RelatedContentPicker
+                                title="Linked Collection"
+                                items={sortedProducts.map(p => ({
+                                  id: p.id,
+                                  title: p.name,
+                                  subtitle: p.category,
+                                  image: getSafeItemImage(p)
+                                }))}
+                                selectedIds={Array.isArray(form.appliedProductIds) ? form.appliedProductIds : []}
+                                onChange={(next) => setForm({ ...form, appliedProductIds: next })}
+                                searchPlaceholder="Search products..."
+                              />
+
+                              <RelatedContentPicker
+                                title="Linked Spaces"
+                                items={spaces.filter(s => s.id !== form.id).map(s => ({
+                                  id: s.id,
+                                  title: s.title,
+                                  subtitle: s.location || 'Space',
+                                  image: getSafeItemImage(s)
+                                }))}
+                                selectedIds={Array.isArray(form.relatedSpaceIds) ? form.relatedSpaceIds : []}
+                                onChange={(next) => setForm({ ...form, relatedSpaceIds: next })}
+                                searchPlaceholder="Search spaces..."
+                              />
+                            </div>
+                          )}
+                        </div>
                       );
                     })()}
                   </div>

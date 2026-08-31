@@ -168,9 +168,12 @@ export function RelatedContentPicker({
             const isVideo = isVideoUrl(item.image);
 
             return (
-              <label
+              <div
                 key={item.id}
-                onClick={() => handleToggle(item.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleToggle(item.id);
+                }}
                 className={`flex items-center gap-2.5 p-2 border transition-all cursor-pointer group rounded-[2px] ${
                   isSelected
                     ? 'border-cobalt/70 bg-cobalt/[0.06] shadow-xs ring-1 ring-cobalt/30'
@@ -178,12 +181,13 @@ export function RelatedContentPicker({
                 }`}
                 title={item.title}
               >
-                {/* Checkbox indicator */}
+                {/* Checkbox indicator: pointer-events-none prevents double event firing */}
                 <input
                   type="checkbox"
                   checked={isSelected}
-                  onChange={() => handleToggle(item.id)}
-                  className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt cursor-pointer shrink-0"
+                  readOnly
+                  tabIndex={-1}
+                  className="rounded-none border-gray-300 text-cobalt focus:ring-cobalt cursor-pointer shrink-0 pointer-events-none"
                 />
 
                 {/* Compact Still Thumbnail */}
@@ -235,7 +239,7 @@ export function RelatedContentPicker({
                     </p>
                   )}
                 </div>
-              </label>
+              </div>
             );
           })
         )}
